@@ -767,8 +767,8 @@ export type Database = {
       app_create_advancing_session: {
         Args: {
           p_show_id: string
-          p_session_name: string
-          p_session_date?: string
+          p_session_title: string
+          p_expires_at?: string
         }
         Returns: string
       }
