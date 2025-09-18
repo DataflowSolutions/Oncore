@@ -12,13 +12,8 @@
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "react": "19.1.0",
-<<<<<<< HEAD
     "react-dom": "19.1.0",
-    "next": "15.5.3",
     "@supabase/supabase-js": "^2.48.1"
-=======
-    "react-dom": "19.1.0"
->>>>>>> 4df55c26d47bd702da940ea99df39eca6bc66b66
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -28,12 +23,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-<<<<<<< HEAD
-    "@eslint/eslintrc": "^3",
-    "supabase": "^1.225.0"
-=======
+    "supabase": "^1.225.0",
     "tailwindcss": "^4",
     "typescript": "^5"
->>>>>>> 4df55c26d47bd702da940ea99df39eca6bc66b66
   }
 }
