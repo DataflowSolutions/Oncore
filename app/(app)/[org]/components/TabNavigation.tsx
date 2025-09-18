@@ -1,11 +1,17 @@
 "use client";
 import React from "react";
-import { tabLinks } from "../constants/navlinks";
+import { getTabLinks } from "../constants/navlinks";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const TabNavigation = () => {
+interface TabNavigationProps {
+  orgSlug: string;
+  userRole: string;
+}
+
+const TabNavigation = ({ orgSlug, userRole }: TabNavigationProps) => {
   const pathname = usePathname();
+  const tabLinks = getTabLinks(orgSlug, userRole);
 
   return (
     <div

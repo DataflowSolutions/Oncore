@@ -5,6 +5,7 @@ import {
   Users,
   FileText,
   ChartColumn,
+  Settings,
 } from "lucide-react";
 
 export interface TabLink {
@@ -14,36 +15,51 @@ export interface TabLink {
   icon?: LucideIcon;
 }
 
-export const tabLinks: TabLink[] = [
-  // Add your tab links here
+export const getTabLinks = (orgSlug: string, userRole: string = 'viewer'): TabLink[] => [
   {
     id: "day",
     label: "Day",
-    href: "/tour/day",
+    href: `/${orgSlug}/day`,
     icon: CalendarDays,
   },
   {
     id: "shows",
     label: "Shows",
-    href: "/tour/shows",
+    href: `/${orgSlug}/shows`,
     icon: Calendar,
   },
   {
     id: "team",
     label: "Team",
-    href: "/tour/team",
+    href: `/${orgSlug}/team`,
     icon: Users,
   },
   {
     id: "advancing",
     label: "Advancing",
-    href: "/tour/advancing",
+    href: `/${orgSlug}/advancing`,
     icon: FileText,
   },
   {
     id: "back-office",
     label: "Back Office",
-    href: "/tour/back-office",
+    href: `/${orgSlug}/back-office`,
     icon: ChartColumn,
   },
+  {
+    id: "profile",
+    label: "Profile (bort)",
+    href: `/${orgSlug}/profile`,
+    icon: Settings,
+  },
+  // Add billing debug for owners
+  ...(userRole === 'owner' ? [{
+    id: "billing-debug",
+    label: "Billing (bort)",
+    href: `/${orgSlug}/billing-debug`,
+    icon: undefined,
+  }] : []),
 ];
+
+// Backwards compatibility
+export const tabLinks: TabLink[] = getTabLinks('tour');

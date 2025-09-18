@@ -76,7 +76,21 @@ export type Database = {
             foreignKeyName: "activity_log_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "activity_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
         ]
@@ -124,7 +138,21 @@ export type Database = {
             foreignKeyName: "advancing_comments_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "advancing_comments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_comments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
         ]
@@ -165,7 +193,21 @@ export type Database = {
             foreignKeyName: "advancing_documents_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "advancing_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -228,7 +270,21 @@ export type Database = {
             foreignKeyName: "advancing_fields_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "advancing_fields_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_fields_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -279,7 +335,21 @@ export type Database = {
             foreignKeyName: "advancing_sessions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "advancing_sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -321,10 +391,115 @@ export type Database = {
             foreignKeyName: "artists_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "artists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "artists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      billing_actions_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_state: Json | null
+          org_id: string | null
+          previous_state: Json | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_state?: Json | null
+          org_id?: string | null
+          previous_state?: Json | null
+          triggered_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_state?: Json | null
+          org_id?: string | null
+          previous_state?: Json | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_actions_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_actions_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_actions_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_plans: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          id: string
+          max_artists: number | null
+          max_collaborators: number | null
+          max_members: number | null
+          name: string
+          price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id: string
+          max_artists?: number | null
+          max_collaborators?: number | null
+          max_members?: number | null
+          name: string
+          price_cents: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          max_artists?: number | null
+          max_collaborators?: number | null
+          max_members?: number | null
+          name?: string
+          price_cents?: number
+        }
+        Relationships: []
       }
       files: {
         Row: {
@@ -388,7 +563,21 @@ export type Database = {
             foreignKeyName: "files_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "files_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -396,6 +585,49 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_feature_overrides: {
+        Row: {
+          created_at: string
+          key: string
+          org_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          org_id: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          org_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_feature_overrides_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_feature_overrides_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_feature_overrides_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
         ]
@@ -427,7 +659,132 @@ export type Database = {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_seats: {
+        Row: {
+          org_id: string
+          seat_type: string
+          updated_at: string
+          used: number
+        }
+        Insert: {
+          org_id: string
+          seat_type: string
+          updated_at?: string
+          used?: number
+        }
+        Update: {
+          org_id?: string
+          seat_type?: string
+          updated_at?: string
+          used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_seats_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_seats_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_seats_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          org_id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          org_id: string
+          plan_id: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          org_id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "orgs_requiring_attention"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -498,7 +855,21 @@ export type Database = {
             foreignKeyName: "people_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "people_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
         ]
@@ -548,7 +919,21 @@ export type Database = {
             foreignKeyName: "schedule_items_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "schedule_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -641,7 +1026,21 @@ export type Database = {
             foreignKeyName: "show_collaborators_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "show_collaborators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_collaborators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -708,7 +1107,21 @@ export type Database = {
             foreignKeyName: "shows_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "shows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
           {
@@ -762,16 +1175,94 @@ export type Database = {
             foreignKeyName: "venues_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "venues_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venues_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs_requiring_attention"
             referencedColumns: ["id"]
           },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      org_seat_usage: {
+        Row: {
+          artists_used: number | null
+          collaborators_used: number | null
+          members_used: number | null
+          org_id: string | null
+          org_name: string | null
+        }
+        Insert: {
+          artists_used?: never
+          collaborators_used?: never
+          members_used?: never
+          org_id?: string | null
+          org_name?: string | null
+        }
+        Update: {
+          artists_used?: never
+          collaborators_used?: never
+          members_used?: never
+          org_id?: string | null
+          org_name?: string | null
+        }
+        Relationships: []
+      }
+      orgs_requiring_attention: {
+        Row: {
+          artists_used: number | null
+          collaborators_used: number | null
+          current_period_end: string | null
+          days_until_expiry: number | null
+          id: string | null
+          members_used: number | null
+          name: string | null
+          plan_id: string | null
+          requires_immediate_action: boolean | null
+          slug: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      admin_set_feature_override: {
+        Args: {
+          p_org_id: string
+          p_key: string
+          p_value: Json
+        }
+        Returns: undefined
+      }
+      admin_update_subscription: {
+        Args: {
+          p_org_id: string
+          p_plan_id?: string
+          p_status?: string
+          p_extend_days?: number
+        }
+        Returns: undefined
+      }
       app_accept_show_invite:
         | {
             Args: {
@@ -786,6 +1277,14 @@ export type Database = {
             }
             Returns: boolean
           }
+      app_assign_plan_debug: {
+        Args: {
+          p_org_id: string
+          p_plan_id: string
+          p_trial_days?: number
+        }
+        Returns: undefined
+      }
       app_can_access_show: {
         Args: {
           p_show_id: string
@@ -812,6 +1311,22 @@ export type Database = {
           p_show_id: string
         }
         Returns: string
+      }
+      app_invite_collaborator: {
+        Args: {
+          p_show_id: string
+          p_email: string
+          p_role?: Database["public"]["Enums"]["show_collab_role"]
+        }
+        Returns: string
+      }
+      app_invite_collaborator_enhanced: {
+        Args: {
+          p_show_id: string
+          p_email: string
+          p_role?: Database["public"]["Enums"]["show_collab_role"]
+        }
+        Returns: Json
       }
       app_log_activity: {
         Args: {
@@ -852,6 +1367,30 @@ export type Database = {
           days_to_keep?: number
         }
         Returns: number
+      }
+      auto_downgrade_expired_orgs: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          org_id: string
+          previous_plan: string
+          action: string
+        }[]
+      }
+      check_org_limits: {
+        Args: {
+          p_org_id: string
+          p_check_type: string
+          p_additional_count?: number
+        }
+        Returns: boolean
+      }
+      check_org_limits_detailed: {
+        Args: {
+          p_org_id: string
+          p_check_type: string
+          p_additional_count?: number
+        }
+        Returns: Json
       }
       citext:
         | {
@@ -930,6 +1469,41 @@ export type Database = {
           p_org: string
         }
         Returns: boolean
+      }
+      is_supabase_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      org_billing_dashboard: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      org_entitlements: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
+      }
+      org_is_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      org_is_active_with_grace: {
+        Args: {
+          p_org: string
+          p_grace_days?: number
+        }
+        Returns: boolean
+      }
+      org_subscription_status: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
       }
       verify_storage_metadata: {
         Args: {
