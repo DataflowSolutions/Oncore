@@ -22,7 +22,7 @@ port = 54322
 shadow_port = 54320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version_num;` on the remote database to check.
-major_version = 17
+major_version = 15
 
 [db.pooler]
 enabled = false
@@ -156,10 +156,6 @@ backend = "postgres"
 [experimental]
 # Configures Postgres stored procedures to be accessible via GraphQL API.
 orioledb_version = ""
-# Configure third-party auth providers.
-s3_host_bucket_name = false
-# Configures storage backend to use either file system or S3.
-storage_backend = "file"
 
 # CAN BE OVERRIDDEN BY ENVIRONMENT VARIABLES:
 # You can override any `supabase/config.toml` configuration value by setting a corresponding environment

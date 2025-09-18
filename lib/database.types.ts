@@ -34,16 +34,904 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          org_id: string
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          org_id: string
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          org_id?: string
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advancing_comments: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          body: string
+          created_at: string
+          field_id: string
+          id: string
+          org_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          body: string
+          created_at?: string
+          field_id: string
+          id?: string
+          org_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          field_id?: string
+          id?: string
+          org_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advancing_comments_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_comments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advancing_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          org_id: string
+          party_type: Database["public"]["Enums"]["party"]
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          org_id: string
+          party_type: Database["public"]["Enums"]["party"]
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          org_id?: string
+          party_type?: Database["public"]["Enums"]["party"]
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advancing_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_documents_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advancing_fields: {
+        Row: {
+          created_at: string
+          created_by: string
+          field_name: string
+          field_type: string
+          id: string
+          org_id: string
+          party_type: Database["public"]["Enums"]["party"]
+          section: string
+          session_id: string
+          sort_order: number
+          status: Database["public"]["Enums"]["field_status"]
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          field_name: string
+          field_type?: string
+          id?: string
+          org_id: string
+          party_type: Database["public"]["Enums"]["party"]
+          section: string
+          session_id: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["field_status"]
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          org_id?: string
+          party_type?: Database["public"]["Enums"]["party"]
+          section?: string
+          session_id?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["field_status"]
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advancing_fields_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_fields_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advancing_sessions: {
+        Row: {
+          access_code_hash: string | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          org_id: string
+          show_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_code_hash?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          org_id: string
+          show_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_code_hash?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          org_id?: string
+          show_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advancing_sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advancing_sessions_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      files: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          document_id: string | null
+          field_id: string | null
+          id: string
+          org_id: string
+          original_name: string | null
+          session_id: string | null
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          document_id?: string | null
+          field_id?: string | null
+          id?: string
+          org_id: string
+          original_name?: string | null
+          session_id?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          document_id?: string | null
+          field_id?: string | null
+          id?: string
+          org_id?: string
+          original_name?: string | null
+          session_id?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          created_at: string
+          invited_email: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          invited_email?: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          invited_email?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      people: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          phone: string | null
+          role_title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          phone?: string | null
+          role_title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          phone?: string | null
+          role_title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          org_id: string
+          show_id: string | null
+          starts_at: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          org_id: string
+          show_id?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          org_id?: string
+          show_id?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_assignments: {
+        Row: {
+          duty: string | null
+          person_id: string
+          show_id: string
+        }
+        Insert: {
+          duty?: string | null
+          person_id: string
+          show_id: string
+        }
+        Update: {
+          duty?: string | null
+          person_id?: string
+          show_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_assignments_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_assignments_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_collaborators: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["show_collab_role"]
+          show_id: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["show_collab_role"]
+          show_id: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["show_collab_role"]
+          show_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_collaborators_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shows: {
+        Row: {
+          artist_id: string | null
+          created_at: string
+          date: string
+          doors_at: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          set_time: string | null
+          status: Database["public"]["Enums"]["show_status"]
+          title: string | null
+          updated_at: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          artist_id?: string | null
+          created_at?: string
+          date: string
+          doors_at?: string | null
+          id?: string
+          notes?: string | null
+          org_id: string
+          set_time?: string | null
+          status?: Database["public"]["Enums"]["show_status"]
+          title?: string | null
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          artist_id?: string | null
+          created_at?: string
+          date?: string
+          doors_at?: string | null
+          id?: string
+          notes?: string | null
+          org_id?: string
+          set_time?: string | null
+          status?: Database["public"]["Enums"]["show_status"]
+          title?: string | null
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shows_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shows_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          address: string | null
+          capacity: number | null
+          city: string | null
+          contacts: Json | null
+          country: string | null
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          capacity?: number | null
+          city?: string | null
+          contacts?: Json | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          capacity?: number | null
+          city?: string | null
+          contacts?: Json | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      app_accept_show_invite:
+        | {
+            Args: {
+              invite_token: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_show_id: string
+              p_email: string
+            }
+            Returns: boolean
+          }
+      app_create_advancing_session: {
+        Args: {
+          p_show_id: string
+          p_session_name: string
+          p_session_date?: string
+        }
+        Returns: string
+      }
+      app_create_organization_with_owner: {
+        Args: {
+          org_name: string
+          org_slug: string
+        }
+        Returns: string
+      }
+      app_log_activity: {
+        Args: {
+          p_org_id: string
+          p_action: string
+          p_resource_type: string
+          p_resource_id?: string
+          p_details?: Json
+        }
+        Returns: undefined
+      }
+      app_send_show_invite: {
+        Args: {
+          p_show_id: string
+          p_email: string
+          p_role?: string
+        }
+        Returns: string
+      }
+      app_upload_file: {
+        Args: {
+          bucket_name: string
+          file_path: string
+          p_org_id: string
+          p_show_id?: string
+          p_session_id?: string
+          p_document_id?: string
+          p_field_id?: string
+          p_party_type?: string
+          p_original_name?: string
+          p_content_type?: string
+          p_size_bytes?: number
+        }
+        Returns: string
+      }
+      app_upload_file_enforced: {
+        Args: {
+          bucket_name: string
+          file_path: string
+          p_org_id: string
+          p_show_id?: string
+          p_session_id?: string
+          p_document_id?: string
+          p_field_id?: string
+          p_party_type?: Database["public"]["Enums"]["party"]
+          p_original_name?: string
+          p_content_type?: string
+          p_size_bytes?: number
+        }
+        Returns: Json
+      }
+      archive_old_activity_logs: {
+        Args: {
+          days_to_keep?: number
+        }
+        Returns: number
+      }
+      citext:
+        | {
+            Args: {
+              "": boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              "": string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              "": unknown
+            }
+            Returns: string
+          }
+      citext_hash: {
+        Args: {
+          "": string
+        }
+        Returns: number
+      }
+      citextin: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      citextout: {
+        Args: {
+          "": string
+        }
+        Returns: unknown
+      }
+      citextrecv: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      citextsend: {
+        Args: {
+          "": string
+        }
+        Returns: string
+      }
+      cleanup_unverified_files: {
+        Args: {
+          hours_old?: number
+        }
+        Returns: {
+          cleaned_file_id: string
+          storage_path: string
+          reason: string
+        }[]
+      }
+      has_show_access: {
+        Args: {
+          p_show: string
+          min_role: string
+        }
+        Returns: boolean
+      }
+      is_org_editor: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      verify_storage_metadata: {
+        Args: {
+          hours_back?: number
+        }
+        Returns: {
+          file_id: string
+          storage_path: string
+          expected_metadata: Json
+          verification_status: string
+          requires_edge_function: boolean
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      field_status: "pending" | "confirmed"
+      org_role: "owner" | "admin" | "editor" | "viewer"
+      party: "from_us" | "from_you"
+      show_collab_role: "promoter_editor" | "promoter_viewer"
+      show_status: "draft" | "confirmed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never

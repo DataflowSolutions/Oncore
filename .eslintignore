@@ -1,0 +1,10 @@
+# Ignore Edge Functions (they run in Deno, not Node.js)
+supabase/functions/**/*
+
+# Standard ignores
+node_modules/
+.next/
+out/
+build/
+.env*
+next-env.d.ts

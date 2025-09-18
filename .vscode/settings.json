@@ -1,0 +1,16 @@
+{
+  "typescript.preferences.exclude": [
+    "**/supabase/functions/**/*"
+  ],
+  "typescript.suggest.paths": false,
+  "typescript.validate.enable": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "files.exclude": {
+    "**/supabase/functions/**/*.js": true,
+    "**/supabase/functions/**/*.map": true
+  },
+  "search.exclude": {
+    "**/supabase/functions/**/*.js": true,
+    "**/supabase/functions/**/*.map": true
+  }
+}
