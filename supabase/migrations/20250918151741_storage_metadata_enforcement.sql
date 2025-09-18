@@ -39,7 +39,7 @@ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM advancing_sessions s
       WHERE s.id = p_session_id 
-        AND (is_org_member(s.org_id) OR has_show_access(s.show_id, current_user_id))
+        AND (is_org_member(s.org_id) OR has_show_access(s.show_id, 'edit'))
     ) THEN
       RAISE EXCEPTION 'No permission to upload to this session';
     END IF;

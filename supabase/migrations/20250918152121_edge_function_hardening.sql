@@ -241,7 +241,7 @@ BEGIN
   END IF;
 
   -- Verify user has access to the show
-  IF NOT has_show_access(p_show_id, current_user_id) THEN
+  IF NOT has_show_access(p_show_id, 'edit') THEN
     RAISE EXCEPTION 'Access denied to show';
   END IF;
 
@@ -294,7 +294,7 @@ BEGIN
   END IF;
 
   -- Verify user has access to invite to this show
-  IF NOT has_show_access(p_show_id, current_user_id) THEN
+  IF NOT has_show_access(p_show_id, 'edit') THEN
     RAISE EXCEPTION 'Access denied to show';
   END IF;
 
