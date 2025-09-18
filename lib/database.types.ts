@@ -599,12 +599,12 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          invited_by: string | null
           invite_token: string | null
+          invited_by: string | null
           org_id: string
           role: Database["public"]["Enums"]["show_collab_role"]
-          status: Database["public"]["Enums"]["show_invite_status"]
           show_id: string
+          status: Database["public"]["Enums"]["show_invite_status"]
           updated_at: string
           user_id: string | null
         }
@@ -613,12 +613,12 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
-          invited_by?: string | null
           invite_token?: string | null
+          invited_by?: string | null
           org_id: string
           role?: Database["public"]["Enums"]["show_collab_role"]
-          status?: Database["public"]["Enums"]["show_invite_status"]
           show_id: string
+          status?: Database["public"]["Enums"]["show_invite_status"]
           updated_at?: string
           user_id?: string | null
         }
@@ -627,12 +627,12 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          invited_by?: string | null
           invite_token?: string | null
+          invited_by?: string | null
           org_id?: string
           role?: Database["public"]["Enums"]["show_collab_role"]
-          status?: Database["public"]["Enums"]["show_invite_status"]
           show_id?: string
+          status?: Database["public"]["Enums"]["show_invite_status"]
           updated_at?: string
           user_id?: string | null
         }
@@ -786,6 +786,12 @@ export type Database = {
             }
             Returns: boolean
           }
+      app_can_access_show: {
+        Args: {
+          p_show_id: string
+        }
+        Returns: boolean
+      }
       app_create_advancing_session: {
         Args: {
           p_show_id: string
@@ -798,6 +804,12 @@ export type Database = {
         Args: {
           org_name: string
           org_slug: string
+        }
+        Returns: string
+      }
+      app_get_show_role: {
+        Args: {
+          p_show_id: string
         }
         Returns: string
       }
@@ -829,22 +841,6 @@ export type Database = {
           p_document_id?: string
           p_field_id?: string
           p_party_type?: string
-          p_original_name?: string
-          p_content_type?: string
-          p_size_bytes?: number
-        }
-        Returns: string
-      }
-      app_upload_file_enforced: {
-        Args: {
-          bucket_name: string
-          file_path: string
-          p_org_id: string
-          p_show_id?: string
-          p_session_id?: string
-          p_document_id?: string
-          p_field_id?: string
-          p_party_type?: Database["public"]["Enums"]["party"]
           p_original_name?: string
           p_content_type?: string
           p_size_bytes?: number
