@@ -5,7 +5,7 @@ import { LimitCheck } from '@/lib/billing'
 import { checkOrgLimitsClient } from '@/lib/billing-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { UserPlus, UserCheck, Crown, AlertTriangle } from 'lucide-react'
+import { UserPlus, UserCheck, Crown } from 'lucide-react'
 
 interface LimitGuardProps {
   orgId: string
