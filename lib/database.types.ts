@@ -435,18 +435,21 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           name: string
           slug: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name: string
           slug: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name?: string
           slug?: string
@@ -597,8 +600,12 @@ export type Database = {
           email: string
           id: string
           invited_by: string | null
+          invite_token: string | null
+          org_id: string
           role: Database["public"]["Enums"]["show_collab_role"]
+          status: Database["public"]["Enums"]["show_invite_status"]
           show_id: string
+          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -607,8 +614,12 @@ export type Database = {
           email: string
           id?: string
           invited_by?: string | null
+          invite_token?: string | null
+          org_id: string
           role?: Database["public"]["Enums"]["show_collab_role"]
+          status?: Database["public"]["Enums"]["show_invite_status"]
           show_id: string
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -617,11 +628,22 @@ export type Database = {
           email?: string
           id?: string
           invited_by?: string | null
+          invite_token?: string | null
+          org_id?: string
           role?: Database["public"]["Enums"]["show_collab_role"]
+          status?: Database["public"]["Enums"]["show_invite_status"]
           show_id?: string
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "show_collaborators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "show_collaborators_show_id_fkey"
             columns: ["show_id"]
@@ -931,6 +953,7 @@ export type Database = {
       org_role: "owner" | "admin" | "editor" | "viewer"
       party: "from_us" | "from_you"
       show_collab_role: "promoter_editor" | "promoter_viewer"
+      show_invite_status: "invited" | "accepted" | "revoked"
       show_status: "draft" | "confirmed" | "cancelled"
     }
     CompositeTypes: {
