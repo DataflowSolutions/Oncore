@@ -435,18 +435,21 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           name: string
           slug: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name: string
           slug: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           name?: string
           slug?: string
@@ -596,9 +599,13 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          invite_token: string | null
           invited_by: string | null
+          org_id: string
           role: Database["public"]["Enums"]["show_collab_role"]
           show_id: string
+          status: Database["public"]["Enums"]["show_invite_status"]
+          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -606,9 +613,13 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          invite_token?: string | null
           invited_by?: string | null
+          org_id: string
           role?: Database["public"]["Enums"]["show_collab_role"]
           show_id: string
+          status?: Database["public"]["Enums"]["show_invite_status"]
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -616,12 +627,23 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          invite_token?: string | null
           invited_by?: string | null
+          org_id?: string
           role?: Database["public"]["Enums"]["show_collab_role"]
           show_id?: string
+          status?: Database["public"]["Enums"]["show_invite_status"]
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "show_collaborators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "show_collaborators_show_id_fkey"
             columns: ["show_id"]
@@ -764,11 +786,17 @@ export type Database = {
             }
             Returns: boolean
           }
+      app_can_access_show: {
+        Args: {
+          p_show_id: string
+        }
+        Returns: boolean
+      }
       app_create_advancing_session: {
         Args: {
           p_show_id: string
-          p_session_name: string
-          p_session_date?: string
+          p_session_title: string
+          p_expires_at?: string
         }
         Returns: string
       }
@@ -776,6 +804,12 @@ export type Database = {
         Args: {
           org_name: string
           org_slug: string
+        }
+        Returns: string
+      }
+      app_get_show_role: {
+        Args: {
+          p_show_id: string
         }
         Returns: string
       }
@@ -807,22 +841,6 @@ export type Database = {
           p_document_id?: string
           p_field_id?: string
           p_party_type?: string
-          p_original_name?: string
-          p_content_type?: string
-          p_size_bytes?: number
-        }
-        Returns: string
-      }
-      app_upload_file_enforced: {
-        Args: {
-          bucket_name: string
-          file_path: string
-          p_org_id: string
-          p_show_id?: string
-          p_session_id?: string
-          p_document_id?: string
-          p_field_id?: string
-          p_party_type?: Database["public"]["Enums"]["party"]
           p_original_name?: string
           p_content_type?: string
           p_size_bytes?: number
@@ -931,6 +949,7 @@ export type Database = {
       org_role: "owner" | "admin" | "editor" | "viewer"
       party: "from_us" | "from_you"
       show_collab_role: "promoter_editor" | "promoter_viewer"
+      show_invite_status: "invited" | "accepted" | "revoked"
       show_status: "draft" | "confirmed" | "cancelled"
     }
     CompositeTypes: {

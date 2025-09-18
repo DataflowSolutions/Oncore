@@ -38,8 +38,9 @@ const result = await uploadFile(file, {
 
 **How it works**:
 1. Clients upload directly to storage (with potential metadata inconsistencies)
-2. Scheduled job runs `verify_storage_metadata()` to cross-check
-3. Mismatches are flagged for correction or cleanup
+2. Scheduled job/Edge Function calls the DB helper `verify_storage_metadata(hours_back := 1)`
+3. For each returned row, the function fetches storage object metadata and compares it to `expected_metadata`
+4. Mismatches are flagged for correction or cleanup
 
 **Advantages**:
 - ✅ Works with existing direct upload patterns
@@ -50,6 +51,29 @@ const result = await uploadFile(file, {
 - ❌ Window of inconsistency between upload and verification
 - ❌ More complex error handling
 - ❌ Requires additional infrastructure (scheduled jobs)
+
+### Verification Workflow Contract
+
+To keep the Edge Function and SQL helper aligned, the verification loop should follow this contract:
+
+1. **Fetch expectations**
+   ```sql
+   SELECT *
+   FROM verify_storage_metadata(1); -- files uploaded in the last hour
+   ```
+   - `expected_metadata` always includes `org_id`, `uploaded_by`, `upload_timestamp`, and `verified: true`.
+   - When available, the payload also contains `session_id`, the derived `show_id`, and a `party_type` sourced from the related advancing field or document.
+2. **Compare against storage**
+   - The Edge Function should call the Supabase Storage API (`getObjectMetadata`) for each `storage_path`/bucket combination.
+   - Compare the API response to `expected_metadata` and record any diffs (activity log, observability tooling, etc.).
+3. **Act on the `verification_status` flag**
+   - `needs_storage_api_verification`: within the verification window; run comparisons immediately.
+   - `verification_window_expired`: still report mismatches, but consider escalating/archiving because the file fell outside the defined window.
+4. **Respect `requires_edge_function`**
+   - Currently `true` for every row—full verification requires server-side storage access.
+   - Once the Edge Function performs the comparison, update the metadata (e.g., add `verified_at`) or log the result so future runs can short-circuit.
+
+> 📌 **Tip:** Align any storage verification Edge Function implementation with this contract so metadata keys remain consistent across the DB helper, storage payload, and observability tooling.
 
 ## Activity Log Management
 

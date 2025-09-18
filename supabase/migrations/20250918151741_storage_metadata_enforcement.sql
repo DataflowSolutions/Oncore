@@ -4,8 +4,8 @@
 -- =====================================
 -- 1. CREATE NEW ENFORCED UPLOAD FUNCTION
 -- =====================================
--- New function with proper metadata enforcement (different name to avoid conflicts)
-CREATE OR REPLACE FUNCTION app_upload_file_enforced(
+-- Main upload function with proper metadata enforcement
+CREATE OR REPLACE FUNCTION app_upload_file(
   bucket_name text,
   file_path text,
   p_org_id uuid,
@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION app_upload_file_enforced(
   p_session_id uuid DEFAULT NULL,
   p_document_id uuid DEFAULT NULL,
   p_field_id uuid DEFAULT NULL,
-  p_party_type party DEFAULT NULL,
+  p_party_type text DEFAULT NULL,
   p_original_name text DEFAULT NULL,
   p_content_type text DEFAULT NULL,
   p_size_bytes int DEFAULT NULL
@@ -39,7 +39,7 @@ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM advancing_sessions s
       WHERE s.id = p_session_id 
-        AND (is_org_member(s.org_id) OR has_show_access(s.show_id, current_user_id))
+        AND (is_org_member(s.org_id) OR has_show_access(s.show_id, 'edit'))
     ) THEN
       RAISE EXCEPTION 'No permission to upload to this session';
     END IF;
@@ -125,16 +125,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_user_time ON activity_log(user_id, c
 CREATE INDEX IF NOT EXISTS idx_activity_log_resource ON activity_log(resource_type, resource_id) WHERE resource_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_activity_log_action ON activity_log(action, created_at DESC);
 
--- Enable RLS on activity log
-ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
-
--- Activity log policies (org members can read their org's logs)
-CREATE POLICY activity_log_select ON activity_log FOR SELECT
-  USING (is_org_member(org_id));
-
--- Only system can insert activity logs (via triggers or RPCs)
-CREATE POLICY activity_log_insert ON activity_log FOR INSERT
-  WITH CHECK (false); -- Prevent direct inserts, use RPC only
+-- Note: RLS and policies for activity_log already defined in optimize_consistency migration
 
 -- =====================================
 -- 3. ACTIVITY LOG MANAGEMENT FUNCTIONS

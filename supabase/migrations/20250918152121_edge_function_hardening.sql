@@ -223,8 +223,8 @@ $$;
 -- Function to create advancing session with logging
 CREATE OR REPLACE FUNCTION app_create_advancing_session(
   p_show_id uuid,
-  p_session_name text,
-  p_session_date date DEFAULT NULL
+  p_session_title text,
+  p_expires_at timestamptz DEFAULT NULL
 )
 RETURNS uuid
 LANGUAGE plpgsql  
@@ -241,7 +241,7 @@ BEGIN
   END IF;
 
   -- Verify user has access to the show
-  IF NOT has_show_access(p_show_id, current_user_id) THEN
+  IF NOT has_show_access(p_show_id, 'edit') THEN
     RAISE EXCEPTION 'Access denied to show';
   END IF;
 
@@ -251,8 +251,8 @@ BEGIN
   WHERE s.id = p_show_id;
 
   -- Create the advancing session
-  INSERT INTO advancing_sessions (show_id, name, session_date, created_by)
-  VALUES (p_show_id, p_session_name, p_session_date, current_user_id)
+  INSERT INTO advancing_sessions (show_id, title, expires_at, created_by)
+  VALUES (p_show_id, p_session_title, p_expires_at, current_user_id)
   RETURNING id INTO session_id;
 
   -- Log session creation
@@ -262,8 +262,8 @@ BEGIN
     'advancing_session',
     session_id,
     jsonb_build_object(
-      'session_name', p_session_name,
-      'session_date', p_session_date,
+      'session_title', p_session_title,
+      'expires_at', p_expires_at,
       'show_id', p_show_id,
       'created_by', current_user_id
     )
@@ -294,7 +294,7 @@ BEGIN
   END IF;
 
   -- Verify user has access to invite to this show
-  IF NOT has_show_access(p_show_id, current_user_id) THEN
+  IF NOT has_show_access(p_show_id, 'edit') THEN
     RAISE EXCEPTION 'Access denied to show';
   END IF;
 
