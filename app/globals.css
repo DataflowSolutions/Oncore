@@ -3,6 +3,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-tab-bg: var(--tab-bg);
+  --color-input: var(--input);
+  --color-card: var(--card);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -10,6 +13,8 @@
     --background: #080808;
     --foreground: #f2f2f2;
     --tab-bg: #262626;
+    --input: #262626;
+    --card: #141414;
   }
 }
 

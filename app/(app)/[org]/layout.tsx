@@ -1,12 +1,16 @@
-export default function OrgLayout({
+import TabNavigation from "./components/TabNavigation";
+
+export default function TourLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <div>
-      {/* Org navigation will be implemented here */}
+      <div className="pt-10 lg:flex justify-end mb-4 hidden">
+        <TabNavigation />
+      </div>
       {children}
     </div>
-  )
+  );
 }
