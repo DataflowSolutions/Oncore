@@ -15,12 +15,18 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
       - HOSTNAME=0.0.0.0
       - WATCHPACK_POLLING=true
+    env_file:
+      - .env.local
     ports:
       - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
+    depends_on:
+      - supabase-local
+    networks:
+      - app-network
 
   # Prod: optimized image from final stage (runner)
   web-prod:
@@ -35,8 +41,28 @@ services:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - HOSTNAME=0.0.0.0
-    # For secrets, prefer: env_file: .env.production
-    # env_file: .env.production
+    env_file:
+      - .env.local
     ports:
       - "3000:3000"
     restart: unless-stopped
+    networks:
+      - app-network
+
+  # Local Supabase proxy (when not using CLI)
+  supabase-local:
+    profiles: ["dev"]
+    image: nginx:alpine
+    container_name: supabase-proxy
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "54321:54321"
+    networks:
+      - app-network
+    command: ["nginx", "-g", "daemon off;"]
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

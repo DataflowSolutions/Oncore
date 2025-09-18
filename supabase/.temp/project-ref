@@ -1,0 +1,5 @@
+# Reference to the remote Supabase project
+project_ref = "tabcxfaqqkfbchbxgogl"
+
+# You can get the remote project ref from your Supabase dashboard URL:
+# https://supabase.com/dashboard/project/PROJECT_REF
