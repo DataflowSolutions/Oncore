@@ -1,6 +1,7 @@
 'use client'
 
 import { AddMemberButton, InviteCollaboratorButton } from '@/components/billing/LimitGuards'
+import AddPersonButton from '@/app/(app)/[org]/team/components/AddPersonButton'
 
 interface TeamActionsProps {
   orgId: string
@@ -19,6 +20,7 @@ export function TeamActions({ orgId }: TeamActionsProps) {
 
   return (
     <div className="flex flex-col sm:flex-row gap-3">
+      <AddPersonButton orgId={orgId} />
       <AddMemberButton 
         orgId={orgId}
         onAdd={handleAddMember}

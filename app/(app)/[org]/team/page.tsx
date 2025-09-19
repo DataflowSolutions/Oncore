@@ -1,104 +1,181 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { TeamActions } from '@/components/team/TeamActions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getPeopleByOrg } from '@/lib/actions/team'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Users, Mail, Phone, FileText, Music, Building, Wrench } from 'lucide-react'
 
 interface TeamPageProps {
-  params: { org: string }
+  params: Promise<{ org: string }>
+}
+
+const getRoleIcon = (memberType: string | null) => {
+  switch (memberType) {
+    case 'Artist':
+      return Music
+    case 'Agent':
+    case 'Manager':
+      return Building
+    case 'Crew':
+      return Wrench
+    default:
+      return Users
+  }
 }
 
 export default async function TeamPage({ params }: TeamPageProps) {
-  const supabase = await getSupabaseServer()
-  const resolvedParams = await params
+  const { org: orgSlug } = await params
   
-  // Get org info
+  const supabase = await getSupabaseServer()
   const { data: org } = await supabase
     .from('organizations')
     .select('id, name, slug')
-    .eq('slug', resolvedParams.org)
+    .eq('slug', orgSlug)
     .single()
 
   if (!org) {
     return <div>Organization not found</div>
   }
 
-  // Get current team members
-  const { data: members } = await supabase
-    .from('org_members')
-    .select(`
-      user_id,
-      role,
-      created_at
-    `)
-    .eq('org_id', org.id)
+  // Get all people
+  const allPeople = await getPeopleByOrg(org.id)
+
+  // Group by member type for display
+  const artistTeam = allPeople.filter(person => 
+    person.member_type === 'Artist'
+  )
+
+  const promoterTeam = allPeople.filter(person => 
+    person.member_type === 'Agent' || person.member_type === 'Manager'
+  )
+
+  const crewTeam = allPeople.filter(person => 
+    person.member_type === 'Crew'
+  )
+
+
 
   return (
-    <div className="mb-16 mt-4">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Team</h1>
-          <p className="mt-2 text-foreground/50">Manage your team members and external collaborators</p>
-        </div>
-        <TeamActions orgId={org.id} />
+    <div className="space-y-6">
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-2xl font-bold">{allPeople.length}</p>
+                <p className="text-xs text-muted-foreground">Total Members</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Music className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-2xl font-bold">{artistTeam.length}</p>
+                <p className="text-xs text-muted-foreground">Artists</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Building className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-2xl font-bold">{promoterTeam.length}</p>
+                <p className="text-xs text-muted-foreground">Business</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-2xl font-bold">{crewTeam.length}</p>
+                <p className="text-xs text-muted-foreground">Crew</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Current Team Members */}
-      <Card className="mb-6">
+      {/* All Team Members */}
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CardTitle className="text-lg">Team Members</CardTitle>
-            {members && (
-              <Badge variant="secondary">
-                {members.length} {members.length === 1 ? "member" : "members"}
-              </Badge>
-            )}
+            <Users className="w-5 h-5" />
+            <CardTitle className="text-lg">All Team Members ({allPeople.length})</CardTitle>
           </div>
-          <CardDescription>
-            Active team members in your organization
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          {members && members.length > 0 ? (
-            <div className="flex flex-col gap-2.5">
-              {members.map((member) => (
-                <div
-                  key={member.user_id}
-                  className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex justify-between items-center"
-                >
-                  <div className="flex flex-col gap-2">
-                    <h4 className="font-semibold text-sm truncate">
-                      User {member.user_id.slice(0, 8)}...
-                    </h4>
-                    <Badge variant="outline" className="w-fit capitalize">
-                      {member.role}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col gap-2 text-right">
-                    <span className="text-xs text-foreground/50 font-medium">
-                      Joined {new Date(member.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
+          {allPeople.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No team members added yet. Add your first team member to get started!</p>
             </div>
           ) : (
-            <p className="text-foreground/50">No team members found</p>
+            <div className="space-y-3">
+              {allPeople.map((person) => {
+                const RoleIcon = getRoleIcon(person.member_type)
+                return (
+                  <div
+                    key={person.id}
+                    className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-foreground">{person.name}</h4>
+                          {person.member_type && (
+                            <Badge variant="outline" className="text-xs">
+                              <RoleIcon className="w-3 h-3 mr-1" />
+                              {person.member_type}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          {person.email && (
+                            <div className="flex items-center gap-1">
+                              <Mail className="w-3 h-3" />
+                              <span>{person.email}</span>
+                            </div>
+                          )}
+                          {person.phone && (
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              <span>{person.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {person.notes && (
+                          <div className="flex items-start gap-1 text-sm text-muted-foreground">
+                            <FileText className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span className="line-clamp-2">{person.notes}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 text-right text-xs text-muted-foreground">
+                        <span>Added {new Date(person.created_at).toLocaleDateString()}</span>
+                        {person.user_id && (
+                          <Badge variant="secondary" className="text-xs">
+                            Has Account
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Info about cross-org collaboration */}
-      <Card className="border-blue-200 bg-blue-50/10">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            💡 About Collaborators & Billing
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2">
-          <p className="text-foreground/80">• <strong>Team Members</strong> are part of your organization and count toward your member limit</p>
-          <p className="text-foreground/80">• <strong>External Collaborators</strong> are promoters/venues invited to specific shows</p>
-          <p className="text-foreground/80">• Collaborators use your plan&apos;s limits but don&apos;t need their own subscription</p>
-          <p className="text-foreground/80">• This creates viral growth - satisfied collaborators often become customers</p>
         </CardContent>
       </Card>
     </div>

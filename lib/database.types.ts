@@ -818,6 +818,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          member_type: Database["public"]["Enums"]["member_type"] | null
           name: string
           notes: string | null
           org_id: string
@@ -830,6 +831,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          member_type?: Database["public"]["Enums"]["member_type"] | null
           name: string
           notes?: string | null
           org_id: string
@@ -842,6 +844,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          member_type?: Database["public"]["Enums"]["member_type"] | null
           name?: string
           notes?: string | null
           org_id?: string
@@ -1520,6 +1523,7 @@ export type Database = {
     }
     Enums: {
       field_status: "pending" | "confirmed"
+      member_type: "Artist" | "Crew" | "Agent" | "Manager"
       org_role: "owner" | "admin" | "editor" | "viewer"
       party: "from_us" | "from_you"
       show_collab_role: "promoter_editor" | "promoter_viewer"
