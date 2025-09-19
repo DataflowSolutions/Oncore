@@ -1,20 +1,36 @@
 import ShowsSearchbar from "./components/ShowsSearchbar";
 import ShowsTable from "./components/ShowsTable";
 import ShowViewToggler from "./components/ShowViewToggler";
-import { Plus } from "lucide-react";
+import CreateShowButton from "./components/CreateShowButton";
+import { getSupabaseServer } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 
-export default function ShowsPage() {
+interface ShowsPageProps {
+  params: Promise<{ org: string }>
+}
+
+export default async function ShowsPage({ params }: ShowsPageProps) {
+  const { org: orgSlug } = await params
+  
+  // Get the actual organization ID from the slug
+  const supabase = await getSupabaseServer()
+  const { data: org, error } = await supabase
+    .from("organizations")
+    .select("id, name, slug")
+    .eq("slug", orgSlug)
+    .single()
+
+  if (error || !org) {
+    notFound()
+  }
   return (
     <div className="mb-16 mt-4">
       <div className="flex justify-end gap-4">
         <ShowViewToggler />
-        <button className="inline-flex items-center justify-center gap-4 text-sm font-semibold ring-offset-background  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-foreground text-background hover:bg-foreground/90 px-4 rounded-md cursor-pointer hover:scale-[1.05] transition-all">
-          <Plus className="h-4 w-4" />
-          Create Show
-        </button>
+        <CreateShowButton orgId={org.id} />
       </div>
       <ShowsSearchbar />
-      <ShowsTable />
+      <ShowsTable orgId={org.id} />
     </div>
   );
 }
