@@ -64,9 +64,9 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
             )}
             
             {success && (
-              <div className="mb-4 p-3 rounded-md bg-green-500/10 border border-green-500/30 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-green-600 dark:text-green-400">Show created successfully!</span>
+              <div className="mb-4 p-3 rounded-md bg-primary/10 border border-primary/20 flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <span className="text-sm text-foreground">Show created successfully!</span>
               </div>
             )}
             

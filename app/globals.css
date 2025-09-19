@@ -48,15 +48,15 @@
 }
 
 .dark {
-  /* Dark theme - using original colors */
+  /* Dark theme - using neutral colors */
   --background: #080808;
   --foreground: #f2f2f2;
   --card: #141414;
   --card-foreground: #f2f2f2;
   --popover: #141414;
   --popover-foreground: #f2f2f2;
-  --primary: #3b82f6;
-  --primary-foreground: #f2f2f2;
+  --primary: #f2f2f2;
+  --primary-foreground: #171717;
   --secondary: #262626;
   --secondary-foreground: #f2f2f2;
   --muted: #262626;

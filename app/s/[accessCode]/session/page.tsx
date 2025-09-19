@@ -1,30 +1,28 @@
+import { verifyAccessCode, getAdvancingFields, getAdvancingDocuments } from '@/lib/actions/advancing'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { getAdvancingSession, getAdvancingFields, getAdvancingDocuments } from '@/lib/actions/advancing'
 import { DocumentsBox } from '@/components/advancing/DocumentsBox'
 import { FieldRow } from '@/components/advancing/FieldRow'
+import { redirect } from 'next/navigation'
 
-interface AdvancingSessionPageProps {
-  params: Promise<{ org: string; sessionId: string }>
+interface AccessCodeSessionPageProps {
+  params: Promise<{ accessCode: string }>
 }
 
-export default async function AdvancingSessionPage({ params }: AdvancingSessionPageProps) {
-  const { org: orgSlug, sessionId } = await params
+export default async function AccessCodeSessionPage({ params }: AccessCodeSessionPageProps) {
+  const { accessCode } = await params
   
-  // Handle the "new" route case - this should not happen with proper routing
-  if (sessionId === 'new') {
-    return <div>Invalid route - please use /advancing/new</div>
-  }
+  // Verify access code and get session
+  const result = await verifyAccessCode(accessCode)
   
-  const session = await getAdvancingSession(sessionId)
-  
-  if (!session) {
-    return <div>Session not found</div>
+  if (!result.success || !result.sessionId) {
+    redirect(`/s/${accessCode}?error=invalid`)
   }
 
+  const sessionId = result.sessionId
   const fields = await getAdvancingFields(sessionId)
   const documents = await getAdvancingDocuments(sessionId)
 
@@ -50,48 +48,54 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
   const fromYouSections = groupFieldsBySection(fromYouFields)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/${orgSlug}/advancing`}>
+            <Link href={`/s/${accessCode}`}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Sessions
+              Back
             </Link>
           </Button>
         </div>
         
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">{session.title}</h1>
+          <h1 className="text-2xl font-bold">Advancing Session</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            {session.show_id && (
-              <>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  Show Date
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  Venue
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  Artist
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              Show Date
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              Venue
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              Artist
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Access Notice */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-4">
+          <p className="text-sm text-foreground">
+            <strong>External Access:</strong> You&apos;re viewing this session with limited access. 
+            You can view and respond to items in the &quot;FROM YOU&quot; section.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Documents Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DocumentsBox
           sessionId={sessionId}
-          orgSlug={orgSlug}
+          orgSlug="" // Not needed for access code flow
           partyType="from_us"
           documents={fromUsDocuments}
           title="FROM US - Documents"
@@ -99,7 +103,7 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
         
         <DocumentsBox
           sessionId={sessionId}
-          orgSlug={orgSlug}
+          orgSlug="" // Not needed for access code flow
           partyType="from_you"
           documents={fromYouDocuments}
           title="FROM YOU - Documents"
@@ -108,20 +112,21 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
 
       {/* Fields Section - Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* FROM US Column */}
+        {/* FROM US Column (Read Only) */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">FROM US</h2>
             <Badge variant="outline">
               {fromUsFields.length} {fromUsFields.length === 1 ? 'field' : 'fields'}
             </Badge>
+            <Badge variant="secondary" className="text-xs">Read Only</Badge>
           </div>
           
           {Object.keys(fromUsSections).length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <p className="text-muted-foreground text-center">
-                  No fields yet. Add fields to start collaborating.
+                  No fields yet.
                 </p>
               </CardContent>
             </Card>
@@ -145,9 +150,10 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
                           status: field.status as "pending" | "confirmed",
                           party_type: field.party_type as "from_us" | "from_you"
                         }}
-                        orgSlug={orgSlug}
+                        orgSlug=""
                         sessionId={sessionId}
                         comments={[]} // TODO: Load comments for each field
+
                       />
                     ))}
                   </div>
@@ -157,20 +163,21 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
           )}
         </div>
 
-        {/* FROM YOU Column */}
+        {/* FROM YOU Column (Editable) */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">FROM YOU</h2>
             <Badge variant="outline">
               {fromYouFields.length} {fromYouFields.length === 1 ? 'field' : 'fields'}
             </Badge>
+            <Badge variant="default" className="text-xs">Editable</Badge>
           </div>
           
           {Object.keys(fromYouSections).length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <p className="text-muted-foreground text-center">
-                  No fields yet. Add fields to start collaborating.
+                  No fields yet. Fields will appear here when the organizer adds them.
                 </p>
               </CardContent>
             </Card>
@@ -194,9 +201,10 @@ export default async function AdvancingSessionPage({ params }: AdvancingSessionP
                           status: field.status as "pending" | "confirmed",
                           party_type: field.party_type as "from_us" | "from_you"
                         }}
-                        orgSlug={orgSlug}
+                        orgSlug=""
                         sessionId={sessionId}
                         comments={[]} // TODO: Load comments for each field
+
                       />
                     ))}
                   </div>
