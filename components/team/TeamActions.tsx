@@ -1,7 +1,7 @@
 'use client'
 
 import { AddMemberButton, InviteCollaboratorButton } from '@/components/billing/LimitGuards'
-import AddPersonButton from '@/app/(app)/[org]/team/components/AddPersonButton'
+import AddPersonButton from '@/app/(app)/[org]/people/components/AddPersonButton'
 
 interface TeamActionsProps {
   orgId: string

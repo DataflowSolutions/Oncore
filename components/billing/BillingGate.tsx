@@ -55,7 +55,11 @@ export function BillingGate({ billingStatus, orgName }: BillingGateProps) {
                       Expires:{" "}
                       {new Date(
                         billingStatus.gracePeriodEnds
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </span>
                   )}
                 </p>

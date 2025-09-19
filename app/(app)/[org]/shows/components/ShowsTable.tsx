@@ -1,8 +1,11 @@
 import React from "react";
+import Link from "next/link";
 import { getShowsByOrg, ShowWithVenue } from "@/lib/actions/shows";
+import { VenueLink } from "./VenueLink";
 
 interface ShowsTableProps {
   orgId: string
+  orgSlug: string
 }
 
 function getShowsByMonth(shows: ShowWithVenue[]) {
@@ -39,7 +42,7 @@ function getShowsByMonth(shows: ShowWithVenue[]) {
   return Object.fromEntries(sortedEntries)
 }
 
-const ShowsTable = async ({ orgId }: ShowsTableProps) => {
+const ShowsTable = async ({ orgId, orgSlug }: ShowsTableProps) => {
   const shows = await getShowsByOrg(orgId)
   const showsByMonth = getShowsByMonth(shows)
 
@@ -68,19 +71,29 @@ const ShowsTable = async ({ orgId }: ShowsTableProps) => {
 
           <div className="flex flex-col gap-2.5">
             {shows.map((show: ShowWithVenue) => (
-              <div
-                key={show.id}
-                className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex justify-between items-center"
-              >
-                <div className="flex flex-col gap-2">
-                  <h4 className="font-semibold text-sm truncate">
-                    {show.title || 'Untitled Show'}
-                  </h4>
-                  <span className="text-xs text-foreground/50 font-medium">
-                    {show.venue?.name || 'No venue set'}
-                  </span>
+              <div key={show.id} className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex justify-between items-center group">
+                <div className="flex flex-col gap-2 flex-1">
+                  <Link
+                    href={`/${orgSlug}/shows/${show.id}`}
+                    className="cursor-pointer"
+                  >
+                    <h4 className="font-semibold text-sm truncate group-hover:text-primary">
+                      {show.title || 'Untitled Show'}
+                    </h4>
+                  </Link>
+                  {show.venue ? (
+                    <VenueLink
+                      href={`/${orgSlug}/venues/${show.venue?.id}`}
+                      venueName={show.venue.name}
+                      className="text-xs text-foreground/50 font-medium hover:text-primary hover:underline"
+                    />
+                  ) : (
+                    <span className="text-xs text-foreground/50 font-medium">
+                      No venue set
+                    </span>
+                  )}
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 text-right">
                   <span className="text-xs text-foreground/50 font-medium">
                     {show.venue?.city || 'Location TBD'}
                   </span>

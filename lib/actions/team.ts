@@ -28,6 +28,52 @@ export async function getPeopleByOrg(orgId: string): Promise<Person[]> {
   return data || []
 }
 
+// Get detailed person information including show assignments
+export async function getPersonDetails(personId: string) {
+  const supabase = await getSupabaseServer()
+  
+  // Get person basic info
+  const { data: person, error: personError } = await supabase
+    .from('people')
+    .select('*')
+    .eq('id', personId)
+    .single()
+
+  if (personError) {
+    console.error('Error fetching person:', personError)
+    throw new Error(`Failed to fetch person: ${personError.message}`)
+  }
+
+  // Get show assignments with show details
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from('show_assignments')
+    .select(`
+      duty,
+      shows (
+        id,
+        title,
+        date,
+        status,
+        venues (
+          name,
+          city
+        )
+      )
+    `)
+    .eq('person_id', personId)
+    .order('shows(date)', { ascending: false })
+
+  if (assignmentsError) {
+    console.error('Error fetching show assignments:', assignmentsError)
+    // Don't throw error, just return empty assignments
+  }
+
+  return {
+    person,
+    assignments: assignments || []
+  }
+}
+
 // Get organization members (users with accounts)
 export async function getOrgMembers(orgId: string): Promise<OrgMember[]> {
   const supabase = await getSupabaseServer()

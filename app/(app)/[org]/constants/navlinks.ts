@@ -6,6 +6,7 @@ import {
   FileText,
   ChartColumn,
   Settings,
+  MapPin,
 } from "lucide-react";
 
 export interface TabLink {
@@ -29,10 +30,16 @@ export const getTabLinks = (orgSlug: string, userRole: string = 'viewer'): TabLi
     icon: Calendar,
   },
   {
-    id: "team",
-    label: "Team",
-    href: `/${orgSlug}/team`,
+    id: "people",
+    label: "People",
+    href: `/${orgSlug}/people`,
     icon: Users,
+  },
+  {
+    id: "venues",
+    label: "Venues",
+    href: `/${orgSlug}/venues`,
+    icon: MapPin,
   },
   {
     id: "advancing",

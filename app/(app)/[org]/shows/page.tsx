@@ -30,7 +30,7 @@ export default async function ShowsPage({ params }: ShowsPageProps) {
         <CreateShowButton orgId={org.id} />
       </div>
       <ShowsSearchbar />
-      <ShowsTable orgId={org.id} />
+      <ShowsTable orgId={org.id} orgSlug={orgSlug} />
     </div>
   );
 }

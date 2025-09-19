@@ -28,8 +28,8 @@ export default async function TeamLayout({ children, params }: TeamLayoutProps) 
     <div className="mb-16 mt-4">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Team</h1>
-          <p className="mt-2 text-foreground/50">Manage your team members and external collaborators</p>
+          <h1 className="text-2xl font-bold text-foreground">People</h1>
+          <p className="mt-2 text-foreground/50">Manage your team members and internal staff</p>
         </div>
         <AddPersonButton orgId={org.id} />
       </div>
