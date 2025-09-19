@@ -1,11 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
-import {
-  // BillingGate,
-  SubscriptionBanner,
-} from "@/components/billing/BillingGate";
+// import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
 import TabNavigation from "./components/TabNavigation";
+import MobileNavigation from "./components/MobileNavigation";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -73,7 +71,12 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
         />
       </div>
 
-      <div>{children}</div>
+      <div className="pb-24 lg:pb-0">{children}</div>
+
+      <MobileNavigation
+        orgSlug={resolvedParams.org}
+        userRole={membership.role}
+      />
     </div>
   );
 }
