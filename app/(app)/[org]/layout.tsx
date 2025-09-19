@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
+// import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 import {
-  BillingGate,
+  // BillingGate,
   SubscriptionBanner,
 } from "@/components/billing/BillingGate";
 import TabNavigation from "./components/TabNavigation";
@@ -50,21 +50,21 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
   }
 
   // Check billing status
-  const billingStatus = await checkOrgBilling(org.id);
+  // const billingStatus = await checkOrgBilling(org.id);
 
   // Show billing gate if subscription is inactive (except for billing-debug page)
-  if (
-    billingStatus &&
-    shouldShowBillingGate(billingStatus) &&
-    !resolvedParams.org.includes("billing-debug")
-  ) {
-    return <BillingGate billingStatus={billingStatus} orgName={org.name} />;
-  }
+  // if (
+  //   billingStatus &&
+  //   shouldShowBillingGate(billingStatus) &&
+  //   !resolvedParams.org.includes("billing-debug")
+  // ) {
+  //   return <BillingGate billingStatus={billingStatus} orgName={org.name} />;
+  // }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Show subscription banner for trials or issues */}
-      {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />}
+      {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
       <div className="pt-10 lg:flex justify-end mb-4 hidden">
         <TabNavigation

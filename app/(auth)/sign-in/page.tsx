@@ -1,56 +1,39 @@
-'use client'
-
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { SignInForm } from "@/components/auth/SignInForm";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const router = useRouter()
-  
-  const supabase = createClient()
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setMessage(error.message)
-    } else {
-      router.push('/create-org')
-    }
-    setLoading(false)
-  }
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    if (error) {
-      setMessage(error.message)
-    } else {
-      setMessage('Check your email for confirmation link!')
-    }
-    setLoading(false)
-  }
-
   return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md">
+        <Card className="p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Sign In</h2>
+            <p className="text-muted-foreground text-sm">
+              Sign in to your account
+            </p>
+          </div>
+
+          <SignInForm />
+
+          <div className="text-center mt-6 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/sign-up"
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                Sign up
+              </Link>
+            </p>
+            <Link
+              href="/"
+              className="block text-sm text-foreground hover:text-foreground/80 transition-colors"
+            >
+              ← Back to home
+            </Link>
+          </div>
+        </Card>
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full space-y-8 p-8">
         <div>
@@ -133,5 +116,5 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
