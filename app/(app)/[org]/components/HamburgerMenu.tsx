@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getHamburgerMenuItems } from "../constants/navlinks";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading";
 
 interface HamburgerMenuProps {
   orgSlug: string;
@@ -13,8 +14,14 @@ interface HamburgerMenuProps {
 const HamburgerMenu = ({ orgSlug, userRole }: HamburgerMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const [loadingTab, setLoadingTab] = useState<string | null>(null);
   const mobileNavIds = ["day", "shows", "people", "advancing"];
   const allMenuItems = getHamburgerMenuItems(orgSlug, userRole);
+
+  // Clear loading state when pathname changes
+  useEffect(() => {
+    setLoadingTab(null);
+  }, [pathname]);
 
   // Filter out items that are already in bottom navigation
   const menuItems = allMenuItems.filter(
@@ -23,6 +30,16 @@ const HamburgerMenu = ({ orgSlug, userRole }: HamburgerMenuProps) => {
 
   const handleClose = () => {
     setIsOpen(false);
+  };
+
+  const handleMenuItemClick = (tabId: string, tabHref: string) => {
+    // Don't set loading state if already on this page
+    if (pathname === tabHref) {
+      handleClose();
+      return;
+    }
+    setLoadingTab(tabId);
+    handleClose();
   };
 
   return (
@@ -78,15 +95,17 @@ const HamburgerMenu = ({ orgSlug, userRole }: HamburgerMenuProps) => {
           <div className="space-y-2">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
+              const isLoading = loadingTab === item.id;
               const Icon = item.icon!;
 
               return (
                 <Link
                   key={item.id}
                   href={item.href}
-                  onClick={handleClose}
+                  onClick={() => handleMenuItemClick(item.id, item.href)}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                    ${isLoading ? "opacity-75" : ""}
                     ${
                       isActive
                         ? "text-foreground bg-foreground/10 border border-foreground/20"
@@ -94,7 +113,11 @@ const HamburgerMenu = ({ orgSlug, userRole }: HamburgerMenuProps) => {
                     }
                   `}
                 >
-                  <Icon size={20} />
+                  {isLoading ? (
+                    <LoadingSpinner size={20} />
+                  ) : (
+                    <Icon size={20} />
+                  )}
                   <span className="font-medium">{item.label}</span>
                 </Link>
               );
