@@ -7,6 +7,8 @@ export default function CreateOrgPage() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Auto-generate slug from name
   useEffect(() => {
@@ -26,6 +28,29 @@ export default function CreateOrgPage() {
     setSlugManuallyEdited(true)
   }
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError('')
+    setIsSubmitting(true)
+
+    const formData = new FormData()
+    formData.append('name', name)
+    formData.append('slug', slug)
+
+    try {
+      const result = await createOrganization(formData)
+      if (result?.error) {
+        setError(result.error)
+      }
+      // If no error, the server action will redirect
+    } catch (err) {
+      console.error('Form submission error:', err)
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full space-y-8">
@@ -36,7 +61,7 @@ export default function CreateOrgPage() {
           </p>
         </div>
         
-        <form action={createOrganization} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium">
               Organization Name
@@ -76,12 +101,19 @@ export default function CreateOrgPage() {
               </p>
             )}
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
           
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create Organization
+            {isSubmitting ? 'Creating Organization...' : 'Create Organization'}
           </button>
         </form>
       </div>

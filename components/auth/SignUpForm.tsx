@@ -19,17 +19,23 @@ export function SignUpForm() {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("Check your email for confirmation link!");
+      if (error) {
+        setMessage(error.message);
+      } else {
+        setMessage("Check your email for confirmation link!");
+      }
+    } catch (err) {
+      console.error('SignUp error:', err);
+      setMessage("Network error. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

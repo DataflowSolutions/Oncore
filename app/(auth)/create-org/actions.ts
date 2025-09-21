@@ -10,14 +10,27 @@ const createOrgSchema = z.object({
 })
 
 export async function createOrganization(formData: FormData) {
-  try {
-    const data = {
-      name: formData.get('name') as string,
-      slug: formData.get('slug') as string,
-    }
+  const data = {
+    name: formData.get('name') as string,
+    slug: formData.get('slug') as string,
+  }
 
-    const validatedData = createOrgSchema.parse(data)
-    
+  let validatedData
+  try {
+    validatedData = createOrgSchema.parse(data)
+  } catch (error) {
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return {
+        error: error.issues.map((issue) => issue.message).join(', ')
+      }
+    }
+    return {
+      error: 'Invalid input data.'
+    }
+  }
+
+  try {
     const supabase = await getSupabaseServer()
     
     // Check if slug is already taken
@@ -28,7 +41,9 @@ export async function createOrganization(formData: FormData) {
       .single()
 
     if (existingOrg) {
-      throw new Error(`The slug "${validatedData.slug}" is already taken. Please choose a different one.`)
+      return {
+        error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
+      }
     }
     
     // Call the RPC function we created in the database
@@ -42,17 +57,22 @@ export async function createOrganization(formData: FormData) {
       console.error('Failed to create organization:', error)
       // Check if it's a duplicate key error
       if (error.message.includes('duplicate key') || error.message.includes('unique')) {
-        throw new Error(`The slug "${validatedData.slug}" is already taken. Please choose a different one.`)
+        return {
+          error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
+        }
       }
-      throw new Error('Failed to create organization')
+      return {
+        error: 'Failed to create organization. Please try again.'
+      }
     }
-
-    // Redirect to the new org
-    redirect(`/${validatedData.slug}`)
     
   } catch (error) {
     console.error('Error creating organization:', error)
-    // In a real app, you'd show user-friendly error messages
-    throw error
+    return {
+      error: 'An unexpected error occurred. Please try again.'
+    }
   }
+
+  // If we reach here, organization was created successfully
+  redirect(`/${validatedData.slug}`)
 }
