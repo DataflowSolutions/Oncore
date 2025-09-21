@@ -1,36 +1,43 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ThemeToggle } from '@/components/theme-toggle'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Shield, Settings } from "lucide-react";
 
 export default function ProfileSettingsPage() {
   return (
     <div className="mb-16 mt-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
-        <p className="mt-2 text-foreground/50">Manage your account settings and preferences</p>
+      <div className="flex items-center mb-6 gap-2">
+        <Settings width={32} height={32} />
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-foreground/50">
+            Manage your account and application preferences
+          </p>
+        </div>
       </div>
-      
+
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
+            <CardTitle>Your Roles & Permissions</CardTitle>
             <CardDescription>
-              Customize how the application looks and feels
+              Your current roles determine what you can access in the
+              application
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="text-base">Theme</div>
-                  <div className="text-sm text-muted-foreground">
-                    Choose between light and dark mode
-                  </div>
-                </div>
-                <ThemeToggle />
-              </div>
-              <div className="text-xs text-muted-foreground border-t pt-4">
-                The theme preference is saved locally and will persist across sessions.
-                Current background: <span className="font-mono bg-muted px-1 rounded">bg-background</span>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center items-center text-muted-foreground flex flex-col gap-2">
+              <Shield width={48} height={48} />
+
+              <div className="mt-2">No roles assigned yet</div>
+              <div className="text-xs text-muted-foreground">
+                Contact an administrator to get roles assigned
               </div>
             </div>
           </CardContent>
@@ -38,18 +45,52 @@ export default function ProfileSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Account</CardTitle>
+            <CardTitle>Account Preferences</CardTitle>
             <CardDescription>
-              Manage your account information
+              Customize your application experience
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Account settings coming soon...
-            </p>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b">
+              <div>
+                <div className="font-medium">Email Notifications</div>
+                <div className="text-sm text-muted-foreground">
+                  Receive updates about your shows and tours
+                </div>
+              </div>
+              <div>
+                <Button size="sm" className="cursor-pointer">
+                  Configure
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-b">
+              <div>
+                <div className="font-medium">Theme</div>
+                <div className="text-sm text-muted-foreground">
+                  Switch between light, dark, and system theme
+                </div>
+              </div>
+              <ThemeToggle />
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <div className="font-medium">Dashboard Layout</div>
+                <div className="text-sm text-muted-foreground">
+                  Customize your dashboard view
+                </div>
+              </div>
+              <div>
+                <Button size="sm" className="cursor-pointer">
+                  Customize
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
