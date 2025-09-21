@@ -1,47 +1,51 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { assignPlanDebug } from './actions'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useState } from "react";
+import { assignPlanDebug } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Replace the custom Select with a native <select> for simpler behavior
 
 interface BillingDebugFormProps {
-  orgId: string
+  orgId: string;
   plans: Array<{
-    id: string
-    name: string
-    description: string | null
-    price_cents: number
-    max_artists: number | null
-    max_members: number | null
-    max_collaborators: number | null
-  }>
+    id: string;
+    name: string;
+    description: string | null;
+    price_cents: number;
+    max_artists: number | null;
+    max_members: number | null;
+    max_collaborators: number | null;
+  }>;
 }
 
 export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
-  const [selectedPlan, setSelectedPlan] = useState('')
-  const [trialDays, setTrialDays] = useState(7)
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [trialDays, setTrialDays] = useState(7);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedPlan) return
+    e.preventDefault();
+    if (!selectedPlan) return;
 
-    setIsLoading(true)
-    setMessage('')
+    setIsLoading(true);
+    setMessage("");
 
     try {
-      await assignPlanDebug(orgId, selectedPlan, trialDays)
-      setMessage('Plan assigned successfully! Refresh the page to see changes.')
+      await assignPlanDebug(orgId, selectedPlan, trialDays);
+      setMessage(
+        "Plan assigned successfully! Refresh the page to see changes."
+      );
     } catch (error) {
-      setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessage(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -50,21 +54,32 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
           <label className="block text-sm font-medium text-foreground/80 mb-2">
             Select Plan
           </label>
-          <Select value={selectedPlan} onValueChange={setSelectedPlan} required>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose a plan..." />
-            </SelectTrigger>
-            <SelectContent>
+          <div>
+            <select
+              value={selectedPlan}
+              onChange={(e) => setSelectedPlan(e.target.value)}
+              required
+              className="border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-9"
+            >
+              <option value="" disabled className="bg-card">
+                Choose a plan...
+              </option>
               {plans.map((plan) => (
-                <SelectItem key={plan.id} value={plan.id}>
-                  {plan.name} - ${plan.price_cents / 100}/month 
-                  {plan.max_artists && ` (${plan.max_artists} artists)`}
-                  {plan.max_members && ` (${plan.max_members} members)`}
-                  {plan.max_collaborators && ` (${plan.max_collaborators} collaborators)`}
-                </SelectItem>
+                <option
+                  key={plan.id}
+                  value={plan.id}
+                  className="text-foreground bg-card"
+                >
+                  {plan.name} - ${plan.price_cents / 100}/month
+                  {plan.max_artists ? ` (${plan.max_artists} artists)` : ""}
+                  {plan.max_members ? ` (${plan.max_members} members)` : ""}
+                  {plan.max_collaborators
+                    ? ` (${plan.max_collaborators} collaborators)`
+                    : ""}
+                </option>
               ))}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -86,18 +101,24 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
           disabled={isLoading || !selectedPlan}
           variant="default"
         >
-          {isLoading ? 'Assigning...' : 'Assign Plan'}
+          {isLoading ? "Assigning..." : "Assign Plan"}
         </Button>
       </form>
 
       {message && (
-        <Card className={`mt-4 ${
-          message.startsWith('Error') 
-            ? 'border-red-500 bg-red-900/20'
-            : 'border-green-500 bg-green-900/20'
-        }`}>
-          <CardContent className="pt-6">
-            <p className={message.startsWith('Error') ? 'text-red-400' : 'text-green-400'}>
+        <Card
+          className={`mt-4 ${
+            message.startsWith("Error")
+              ? "border-red-500 bg-red-900/20"
+              : "border-green-500 bg-green-900/20"
+          }`}
+        >
+          <CardContent>
+            <p
+              className={
+                message.startsWith("Error") ? "text-red-400" : "text-green-400"
+              }
+            >
               {message}
             </p>
           </CardContent>
@@ -111,15 +132,34 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
             <CardTitle className="text-base">Plan Details</CardTitle>
           </CardHeader>
           <CardContent>
-            {plans.find(p => p.id === selectedPlan) && (
+            {plans.find((p) => p.id === selectedPlan) && (
               <div className="text-sm text-foreground/80 space-y-1">
-                <p><strong>Name:</strong> {plans.find(p => p.id === selectedPlan)?.name}</p>
-                <p><strong>Description:</strong> {plans.find(p => p.id === selectedPlan)?.description || 'N/A'}</p>
-                <p><strong>Price:</strong> ${(plans.find(p => p.id === selectedPlan)?.price_cents || 0) / 100}/month</p>
-                <p><strong>Limits:</strong> 
-                  {plans.find(p => p.id === selectedPlan)?.max_artists || 'Unlimited'} artists, {' '}
-                  {plans.find(p => p.id === selectedPlan)?.max_members || 'Unlimited'} members, {' '}
-                  {plans.find(p => p.id === selectedPlan)?.max_collaborators || 'Unlimited'} collaborators
+                <p>
+                  <strong>Name:</strong>{" "}
+                  {plans.find((p) => p.id === selectedPlan)?.name}
+                </p>
+                <p>
+                  <strong>Description:</strong>{" "}
+                  {plans.find((p) => p.id === selectedPlan)?.description ||
+                    "N/A"}
+                </p>
+                <p>
+                  <strong>Price:</strong> $
+                  {(plans.find((p) => p.id === selectedPlan)?.price_cents ||
+                    0) / 100}
+                  /month
+                </p>
+                <p>
+                  <strong>Limits:</strong>
+                  {plans.find((p) => p.id === selectedPlan)?.max_artists ||
+                    "Unlimited"}{" "}
+                  artists,{" "}
+                  {plans.find((p) => p.id === selectedPlan)?.max_members ||
+                    "Unlimited"}{" "}
+                  members,{" "}
+                  {plans.find((p) => p.id === selectedPlan)
+                    ?.max_collaborators || "Unlimited"}{" "}
+                  collaborators
                 </p>
               </div>
             )}
@@ -127,5 +167,5 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
         </Card>
       )}
     </div>
-  )
+  );
 }
