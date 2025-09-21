@@ -42,24 +42,31 @@ export async function createShow(formData: FormData) {
   const date = formData.get('date') as string
   const setTime = formData.get('setTime') as string
   const notes = formData.get('notes') as string
+  
+  // New venue selection logic
+  const venueId = formData.get('venueId') as string
   const venueName = formData.get('venueName') as string
-  const city = formData.get('city') as string
-  const address = formData.get('address') as string
+  const venueCity = formData.get('venueCity') as string
+  const venueAddress = formData.get('venueAddress') as string
 
   if (!orgId || !title || !date) {
     throw new Error('Missing required fields')
   }
 
-  let venueId = null
+  let finalVenueId = null
 
-  // Create venue if venue name and city are provided
-  if (venueName && city) {
+  // Use existing venue if selected
+  if (venueId) {
+    finalVenueId = venueId
+  }
+  // Create new venue if venue data is provided
+  else if (venueName && venueCity) {
     const { data: venue, error: venueError } = await supabase
       .from('venues')
       .insert({
         name: venueName,
-        city,
-        address: address || null,
+        city: venueCity,
+        address: venueAddress || null,
         org_id: orgId
       })
       .select()
@@ -67,9 +74,12 @@ export async function createShow(formData: FormData) {
 
     if (venueError) {
       console.error('Error creating venue:', venueError)
-      // Continue without venue if creation fails
+      throw new Error(`Failed to create venue: ${venueError.message}`)
     } else {
-      venueId = venue.id
+      finalVenueId = venue.id
+      
+      // Clear venue cache when new venue is created
+      // Note: This will be cleared on next page load since cache is client-side
     }
   }
 
@@ -84,7 +94,7 @@ export async function createShow(formData: FormData) {
     org_id: orgId,
     title,
     date,
-    venue_id: venueId,
+    venue_id: finalVenueId,
     set_time: formattedSetTime,
     doors_at: null,
     notes: notes || null,

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
 import { createShow } from '@/lib/actions/shows'
+import VenueFormFields from '@/components/advancing/VenueFormFields'
 
 interface CreateShowButtonProps {
   orgId: string
@@ -15,6 +16,8 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [selectedVenue, setSelectedVenue] = useState<{id: string, name: string, city: string | null} | null>(null)
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true)
@@ -71,7 +74,15 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
             )}
             
           <form action={handleSubmit} className="space-y-4">
+            {/* Layout exactly as requested:
+                Row 1: Show Name, Venue Name
+                Row 2: City, Address  
+                Row 3: Performance Date, Performance Time
+                Row 4: Artist, Show Type
+                Row 5: Crew Requirements */}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Row 1: Show Name, Venue Name */}
               <div>
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="name">
                   Show Name *
@@ -83,44 +94,13 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="venue_name">
-                  Venue Name *
-                </label>
-                <Input
-                  id="venue_name"
-                  name="venueName"
-                  placeholder="Enter venue name"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="city">
-                  City *
-                </label>
-                <Input
-                  id="city"
-                  name="city"
-                  placeholder="Enter city"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="address">
-                  Address
-                </label>
-                <Input
-                  id="address"
-                  name="address"
-                  placeholder="Enter full address"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <VenueFormFields
+                orgId={orgId}
+                onVenueSelect={(venue) => setSelectedVenue(venue)}
+              />
+              
+              {/* Row 3: Performance Date, Performance Time */}
               <div>
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="performance_date">
                   Performance Date *
@@ -132,6 +112,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
+              
               <div>
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="performance_time">
                   Performance Time *
@@ -143,9 +124,8 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* Row 4: Artist, Show Type */}
               <div>
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="artist">
                   Artist *
@@ -157,6 +137,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
+              
               <div>
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="show_type">
                   Show Type
@@ -174,6 +155,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
               </div>
             </div>
             
+            {/* Row 5: Crew Requirements (full width) */}
             <div>
               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="crew_requirements">
                 Crew Requirements

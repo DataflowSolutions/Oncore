@@ -19,6 +19,26 @@ export async function getVenuesByOrg(orgId: string) {
   return data || []
 }
 
+// Search venues by name and city for an organization
+export async function searchVenues(orgId: string, searchTerm: string) {
+  const supabase = await getSupabaseServer()
+  
+  const { data, error } = await supabase
+    .from('venues')
+    .select('*')
+    .eq('org_id', orgId)
+    .or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%`)
+    .order('name')
+    .limit(10)
+
+  if (error) {
+    console.error('Error searching venues:', error)
+    throw new Error(`Failed to search venues: ${error.message}`)
+  }
+
+  return data || []
+}
+
 // Get venue details with shows
 export async function getVenueDetails(venueId: string) {
   const supabase = await getSupabaseServer()
