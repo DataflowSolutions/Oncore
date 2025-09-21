@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Upload, File, Download, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { createAdvancingDocument } from '@/lib/actions/advancing'
@@ -72,28 +72,28 @@ export function DocumentsBox({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="bg-neutral-900 rounded-lg border border-neutral-800">
+      <div className="p-4 border-b border-neutral-800">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              {documents.length} {documents.length === 1 ? 'document' : 'documents'}
-            </Badge>
+          <h3 className="text-sm font-medium text-neutral-100">{title}</h3>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-neutral-500">
+              {documents.length} documents
+            </span>
             {!isAddingDocument && (
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => setIsAddingDocument(true)}
+                className="h-7 px-3 text-xs bg-white text-black hover:bg-neutral-200"
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-3 h-3 mr-1" />
                 Add
               </Button>
             )}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      <div className="p-4 space-y-4">
         {/* Add Document Form */}
         {isAddingDocument && (
           <div className="space-y-3 p-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
@@ -200,7 +200,7 @@ export function DocumentsBox({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

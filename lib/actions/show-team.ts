@@ -3,13 +3,17 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
+import { unstable_noStore as noStore } from 'next/cache'
 import { z } from 'zod'
 
 type Person = Database['public']['Tables']['people']['Row']
 type ShowAssignmentInsert = Database['public']['Tables']['show_assignments']['Insert']
 
-// Get all people assigned to a specific show
-export async function getShowTeam(showId: string): Promise<(Person & { duty?: string })[]> {
+// Get all people assigned to a specific show, optionally filtered by party type
+export async function getShowTeam(showId: string, partyType?: 'from_us' | 'from_you'): Promise<(Person & { duty?: string })[]> {
+  noStore() // Prevent caching to ensure fresh data
+  console.log(`[SERVER] getShowTeam called with showId: ${showId}, partyType: ${partyType}`)
+  
   const supabase = await getSupabaseServer()
   
   const { data, error } = await supabase
@@ -26,29 +30,68 @@ export async function getShowTeam(showId: string): Promise<(Person & { duty?: st
   }
 
   // Transform the data to include duty in the person object
-  const teamMembers = (data || []).map(assignment => ({
+  let teamMembers = (data || []).map(assignment => ({
     ...assignment.people,
     duty: assignment.duty
   })) as (Person & { duty?: string })[]
 
+  console.log(`[SERVER] Raw team members before filtering:`, teamMembers.length)
+
+  // Filter by party type based on member_type
+  if (partyType) {
+    const beforeFilter = teamMembers.length
+    teamMembers = teamMembers.filter(member => {
+      if (partyType === 'from_us') {
+        // Artist team: Artists, Crew, Managers, Agents
+        const isArtistTeam = ['Artist', 'Crew', 'Manager', 'Agent'].includes(member.member_type || '')
+        console.log(`[SERVER] Member ${member.name} (${member.member_type}) - Artist team: ${isArtistTeam}`)
+        return isArtistTeam
+      } else {
+        // Promoter team: Only show people with promoter-specific member types
+        // Since no promoter member types exist yet, return empty for promoter team
+        // TODO: Add member types like "Promoter", "Venue Staff", "Sound Engineer", etc.
+        const promoterTypes = ['Promoter', 'Venue Staff', 'Sound Engineer', 'Local Crew']
+        const isPromoterTeam = promoterTypes.includes(member.member_type || '')
+        console.log(`[SERVER] Member ${member.name} (${member.member_type}) - Promoter team: ${isPromoterTeam}`)
+        return isPromoterTeam
+      }
+    })
+    console.log(`[SERVER] Filtered team members: ${beforeFilter} -> ${teamMembers.length} for party ${partyType}`)
+  }
+
   return teamMembers
 }
 
-// Get all available people from the organization (people pool)
-export async function getAvailablePeople(orgId: string): Promise<Person[]> {
+// Get all available people from the organization (people pool), optionally filtered by party type
+export async function getAvailablePeople(orgId: string, partyType?: 'from_us' | 'from_you'): Promise<Person[]> {
+  noStore() // Prevent caching to ensure fresh data
+  console.log(`[SERVER] getAvailablePeople called with orgId: ${orgId}, partyType: ${partyType}`)
+  
   const supabase = await getSupabaseServer()
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('people')
     .select('*')
     .eq('org_id', orgId)
-    .order('name')
+
+  // Filter by member type based on party
+  if (partyType === 'from_us') {
+    // Artist team: Artists, Crew, Managers, Agents
+    query = query.in('member_type', ['Artist', 'Crew', 'Manager', 'Agent'])
+  } else if (partyType === 'from_you') {
+    // Promoter team: No promoter member types exist in the current schema
+    // Return empty result by filtering to impossible condition
+    query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+  }
+
+  const { data, error } = await query.order('name')
 
   if (error) {
     console.error('Error fetching available people:', error)
     throw new Error(`Failed to fetch available people: ${error.message}`)
   }
 
+  console.log(`[SERVER] Available people fetched: ${(data || []).length} for party ${partyType}`)
   return data || []
 }
 

@@ -1,208 +1,153 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Users, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { getAdvancingSession, getAdvancingFields, getAdvancingDocuments } from '@/lib/actions/advancing'
-import { DocumentsBox } from '@/components/advancing/DocumentsBox'
-import { FieldRow } from '@/components/advancing/FieldRow'
+import { getAdvancingSession, getAdvancingFields } from '@/lib/actions/advancing'
+import { getAvailablePeople, getShowTeam } from '@/lib/actions/show-team'
+import { Section } from '@/components/advancing/Section'
+import { PartyToggle } from '@/components/advancing/PartyToggle'
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { unstable_noStore as noStore } from 'next/cache'
 
 interface AdvancingSessionPageProps {
   params: Promise<{ org: string; sessionId: string }>
+  searchParams?: Promise<{ party?: 'from_us' | 'from_you' }>
 }
 
-export default async function AdvancingSessionPage({ params }: AdvancingSessionPageProps) {
-  const { org: orgSlug, sessionId } = await params
+export default async function AdvancingSessionPage({ params, searchParams }: AdvancingSessionPageProps) {
+  // Disable caching to ensure fresh data on party changes
+  noStore()
   
+  const { org: orgSlug, sessionId } = await params
+  const searchParamsObj = await searchParams
+  const party = searchParamsObj?.party || 'from_us'
+  
+  console.log(`[PAGE] AdvancingSessionPage called with party: ${party}, sessionId: ${sessionId}`)
+
   // Handle the "new" route case - this should not happen with proper routing
   if (sessionId === 'new') {
-    return <div>Invalid route - please use /advancing/new</div>
+    return <div className="container mx-auto p-6">Invalid route - please use /advancing/new</div>
   }
-  
+
+  // Get session details
   const session = await getAdvancingSession(sessionId)
-  
   if (!session) {
-    return <div>Session not found</div>
+    return <div className="container mx-auto p-6">Session not found</div>
   }
 
-  const fields = await getAdvancingFields(sessionId)
-  const documents = await getAdvancingDocuments(sessionId)
-
-  // Group fields by party type and section
-  const fromUsFields = fields.filter(f => f.party_type === 'from_us')
-  const fromYouFields = fields.filter(f => f.party_type === 'from_you')
-  
-  const fromUsDocuments = documents.filter(d => d.party_type === 'from_us')
-  const fromYouDocuments = documents.filter(d => d.party_type === 'from_you')
-
-  const groupFieldsBySection = (fieldList: Record<string, unknown>[]) => {
-    return fieldList.reduce((groups: Record<string, Record<string, unknown>[]>, field) => {
-      const section = String(field.section || 'General')
-      if (!groups[section]) {
-        groups[section] = []
+  // Type assertion for session with show data
+  const sessionWithShow = session as typeof session & {
+    shows: {
+      id: string
+      title: string
+      date: string
+      venues: {
+        name: string
+        city: string
+        address?: string
       }
-      groups[section].push(field)
-      return groups
-    }, {} as Record<string, Record<string, unknown>[]>)
+      artists?: {
+        name: string
+      }[]
+    }
   }
 
-  const fromUsSections = groupFieldsBySection(fromUsFields)
-  const fromYouSections = groupFieldsBySection(fromYouFields)
+  // Get fields
+  const fields = await getAdvancingFields(sessionId)
+
+  // Get organization ID for fetching people
+  const supabase = await getSupabaseServer()
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id')
+    .eq('slug', orgSlug)
+    .single()
+
+  // Get available people from the organization and current show team, filtered by party
+  console.log(`[PAGE] About to fetch team data for party: ${party}`)
+  const availablePeople = org ? await getAvailablePeople(org.id, party) : []
+  const showTeam = await getShowTeam(sessionWithShow.shows.id, party)
+  console.log(`[PAGE] Fetched ${availablePeople.length} available people and ${showTeam.length} team members for party: ${party}`)
+
+  // Filter by party type
+  const partyFields = fields.filter(f => f.party_type === party)
+
+  // Group fields by section
+  const fieldsBySection = partyFields.reduce((acc, field) => {
+    const section = field.section || 'General'
+    if (!acc[section]) {
+      acc[section] = []
+    }
+    acc[section].push(field)
+    return acc
+  }, {} as Record<string, typeof fields>)
+
+  // Add default sections for grid display if they don't exist
+  const defaultSections = ['Team & Travel']
+  defaultSections.forEach(section => {
+    if (!fieldsBySection[section]) {
+      fieldsBySection[section] = []
+    }
+  })
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100">
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link href={`/${orgSlug}/advancing`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Sessions
-            </Link>
-          </Button>
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">{session.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            {session.show_id && (
-              <>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  Show Date
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  Venue
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  Artist
-                </div>
-              </>
-            )}
+      <div className="border-b border-neutral-800 bg-neutral-900/50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-semibold text-neutral-100">{sessionWithShow.shows.title}</h1>
+              <p className="text-sm text-neutral-400">
+                {sessionWithShow.shows.venues.name} • {new Date(sessionWithShow.shows.date).toLocaleDateString()}
+              </p>
+            </div>
+            <PartyToggle current={party} basePath={`/${orgSlug}/advancing/${sessionId}`} />
           </div>
         </div>
       </div>
 
-      {/* Documents Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DocumentsBox
-          sessionId={sessionId}
-          orgSlug={orgSlug}
-          partyType="from_us"
-          documents={fromUsDocuments}
-          title="FROM US - Documents"
-        />
-        
-        <DocumentsBox
-          sessionId={sessionId}
-          orgSlug={orgSlug}
-          partyType="from_you"
-          documents={fromYouDocuments}
-          title="FROM YOU - Documents"
-        />
-      </div>
-
-      {/* Fields Section - Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* FROM US Column */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">FROM US</h2>
-            <Badge variant="outline">
-              {fromUsFields.length} {fromUsFields.length === 1 ? 'field' : 'fields'}
-            </Badge>
-          </div>
-          
-          {Object.keys(fromUsSections).length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground text-center">
-                  No fields yet. Add fields to start collaborating.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(fromUsSections).map(([section, sectionFields]) => (
-                <div key={section} className="space-y-4">
-                  <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
-                    {section}
-                  </h3>
-                  <div className="space-y-4">
-                    {(sectionFields as Record<string, unknown>[]).map((field) => (
-                      <FieldRow
-                        key={String(field.id)}
-                        field={{
-                          id: String(field.id),
-                          section: String(field.section),
-                          field_name: String(field.field_name),
-                          field_type: String(field.field_type),
-                          value: field.value,
-                          status: field.status as "pending" | "confirmed",
-                          party_type: field.party_type as "from_us" | "from_you"
-                        }}
-                        orgSlug={orgSlug}
-                        sessionId={sessionId}
-                        comments={[]} // TODO: Load comments for each field
-                      />
-                    ))}
-                  </div>
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-6">
+        <div className="space-y-4">
+          {/* Documents Section */}
+          <div className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-900/30">
+            <div className="p-4 border-b border-neutral-800 bg-neutral-900/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-medium text-neutral-100">Documents</h3>
+                  <span className="text-xs text-neutral-500">
+                    0 comments
+                  </span>
+                  <span className="text-xs bg-neutral-700 text-neutral-300 px-2 py-0.5 rounded">
+                    Pending
+                  </span>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* FROM YOU Column */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">FROM YOU</h2>
-            <Badge variant="outline">
-              {fromYouFields.length} {fromYouFields.length === 1 ? 'field' : 'fields'}
-            </Badge>
+            <div className="p-6">
+              <div className="text-center py-12 text-neutral-500">
+                <p className="text-sm">No documents uploaded</p>
+              </div>
+            </div>
           </div>
-          
-          {Object.keys(fromYouSections).length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground text-center">
-                  No fields yet. Add fields to start collaborating.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(fromYouSections).map(([section, sectionFields]) => (
-                <div key={section} className="space-y-4">
-                  <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
-                    {section}
-                  </h3>
-                  <div className="space-y-4">
-                    {(sectionFields as Record<string, unknown>[]).map((field) => (
-                      <FieldRow
-                        key={String(field.id)}
-                        field={{
-                          id: String(field.id),
-                          section: String(field.section),
-                          field_name: String(field.field_name),
-                          field_type: String(field.field_type),
-                          value: field.value,
-                          status: field.status as "pending" | "confirmed",
-                          party_type: field.party_type as "from_us" | "from_you"
-                        }}
-                        orgSlug={orgSlug}
-                        sessionId={sessionId}
-                        comments={[]} // TODO: Load comments for each field
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+
+          {/* Other Sections */}
+          {Object.keys(fieldsBySection).length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-neutral-400">No fields configured for this session yet.</p>
             </div>
+          ) : (
+            <>
+              {Object.entries(fieldsBySection).map(([sectionName, sectionFields]) => (
+                <Section
+                  key={`${sectionName}-${party}`}
+                  title={sectionName}
+                  fields={sectionFields}
+                  orgSlug={orgSlug}
+                  sessionId={sessionId}
+                  showId={sessionWithShow.shows.id}
+                  availablePeople={availablePeople}
+                  currentTeam={showTeam}
+                />
+              ))}
+            </>
           )}
         </div>
       </div>
