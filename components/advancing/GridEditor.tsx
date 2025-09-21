@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Users } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -64,11 +64,7 @@ export function GridEditor({
     onDataChange(newData)
   }
 
-  const removeRow = (rowId: string) => {
-    const newData = localData.filter(row => row.id !== rowId)
-    setLocalData(newData)
-    onDataChange(newData)
-  }
+
 
   const formatPlaceholder = (placeholder: string, rowIndex: number) => {
     return placeholder.replace('{index}', (rowIndex + 1).toString())
@@ -143,7 +139,6 @@ export function GridEditor({
                   </span>
                 </th>
               ))}
-              <th className="w-12 px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -164,16 +159,6 @@ export function GridEditor({
                     />
                   </td>
                 ))}
-                <td className="px-4 py-3">
-                  <Button
-                    onClick={() => removeRow(row.id)}
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-950/30"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </td>
               </tr>
             ))}
           </tbody>

@@ -17,8 +17,6 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   const { org: orgSlug, sessionId } = await params
   const searchParamsObj = await searchParams
   const party = searchParamsObj?.party || 'from_us'
-  
-  console.log(`[PAGE] AdvancingSessionPage called with party: ${party}, sessionId: ${sessionId}`)
 
   // Handle the "new" route case - this should not happen with proper routing
   if (sessionId === 'new') {
@@ -60,10 +58,8 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     .single()
 
   // Get available people from the organization and current show team, filtered by party
-  console.log(`[PAGE] About to fetch team data for party: ${party}`)
   const availablePeople = org ? await getAvailablePeople(org.id, party) : []
   const showTeam = await getShowTeam(sessionWithShow.shows.id, party)
-  console.log(`[PAGE] Fetched ${availablePeople.length} available people and ${showTeam.length} team members for party: ${party}`)
 
   // Filter by party type
   const partyFields = fields.filter(f => f.party_type === party)

@@ -5,7 +5,8 @@ import { ChevronDown, ChevronRight, Users, Plane, PlaneLanding } from 'lucide-re
 import { FieldRow } from './FieldRow'
 import { GridEditor, GRID_CONFIGS } from './GridEditor'
 import { AddTeamMemberModal } from './AddTeamMemberModal'
-import { assignPersonToShow } from '@/lib/actions/show-team'
+import { TeamMembersGrid } from './TeamMembersGrid'
+import { assignPersonToShow, removePersonFromShow } from '@/lib/actions/show-team'
 
 interface SectionProps {
   title: string
@@ -69,8 +70,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
   
-  console.log('Section rendered:', title, 'availablePeople:', availablePeople.length)
-  console.log('Current team:', currentTeam)
+
 
   const handleAddTeamMembers = async (newMembers: Array<{
     id: string
@@ -79,7 +79,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
     phone: string | null
     role: string | null
   }>) => {
-    console.log('handleAddTeamMembers called with:', newMembers)
+
     
     if (!showId) {
       console.error('No showId provided for assignment')
@@ -95,7 +95,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
         formData.append('duty', member.role || '')
 
         await assignPersonToShow(formData)
-        console.log('Assigned person to show:', member.name)
+
       } catch (error) {
         console.error('Error assigning person to show:', error)
       }
@@ -103,6 +103,23 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
     
     // Refresh the page to show updated team
     window.location.reload()
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleUnassignTeamMember = async (personId: string, _personName: string) => {
+    if (!showId) {
+      console.error('No showId provided for unassignment')
+      return
+    }
+
+    try {
+      await removePersonFromShow(showId, personId)
+      
+      // Refresh the page to show updated team
+      window.location.reload()
+    } catch (error) {
+      console.error('Error unassigning person from show:', error)
+    }
   }
 
 
@@ -149,22 +166,11 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 </button>
               </div>
 
-              {/* Team Info Grid - No Add Button */}
-              <GridEditor
-                title={GRID_CONFIGS.teamInfo.title}
-                icon={<Users className="w-4 h-4" />}
-                columns={[...GRID_CONFIGS.teamInfo.columns]}
-                data={currentTeam.map(member => ({
-                  id: member.id,
-                  name: member.name,
-                  phone: member.phone || '',
-                  email: member.email || '',
-                  role: member.member_type || ''
-                }))}
-                onDataChange={(newData) => {
-                  console.log('Team Info data changed:', newData)
-                }}
-                hideAddButton={true}
+              {/* Team Members with Unassign functionality */}
+              <TeamMembersGrid
+                title="Team Info"
+                teamMembers={currentTeam}
+                onUnassign={handleUnassignTeamMember}
               />
 
               {/* Team Grid - No Add Button */}

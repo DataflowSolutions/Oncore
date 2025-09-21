@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, Music, Building, Wrench, Mail, Phone, Plus } from 'lucide-react'
 import TeamPageClient from './components/TeamPageClient'
+import UnassignButton from './components/UnassignButton'
 
 interface ShowTeamPageProps {
   params: Promise<{ org: string, showId: string }>
@@ -194,6 +195,14 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        <UnassignButton 
+                          showId={showId}
+                          personId={person.id}
+                          personName={person.name}
+                        />
                       </div>
                     </div>
                   </div>
