@@ -7,7 +7,7 @@ import MobileNavigation from "./components/MobileNavigation";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
-  params: { org: string };
+  params: Promise<{ org: string }>;
 }
 
 export default async function TourLayout({ children, params }: OrgLayoutProps) {

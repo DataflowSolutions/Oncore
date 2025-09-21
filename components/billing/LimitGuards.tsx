@@ -1,46 +1,58 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { LimitCheck } from '@/lib/billing'
-import { checkOrgLimitsClient } from '@/lib/billing-client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { UserPlus, UserCheck, Crown, AlertTriangle } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { LimitCheck } from "@/lib/billing";
+import { checkOrgLimitsClient } from "@/lib/billing-client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { UserPlus, UserCheck, Crown } from "lucide-react";
 
 interface LimitGuardProps {
-  orgId: string
-  checkType: 'members' | 'collaborators' | 'artists'
-  additionalCount?: number
-  children: (limitCheck: LimitCheck | null, isLoading: boolean) => React.ReactNode
+  orgId: string;
+  checkType: "members" | "collaborators" | "artists";
+  additionalCount?: number;
+  children: (
+    limitCheck: LimitCheck | null,
+    isLoading: boolean
+  ) => React.ReactNode;
 }
 
-export function LimitGuard({ orgId, checkType, additionalCount = 1, children }: LimitGuardProps) {
-  const [limitCheck, setLimitCheck] = useState<LimitCheck | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export function LimitGuard({
+  orgId,
+  checkType,
+  additionalCount = 1,
+  children,
+}: LimitGuardProps) {
+  const [limitCheck, setLimitCheck] = useState<LimitCheck | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLimits() {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const result = await checkOrgLimitsClient(orgId, checkType, additionalCount)
-        setLimitCheck(result)
+        const result = await checkOrgLimitsClient(
+          orgId,
+          checkType,
+          additionalCount
+        );
+        setLimitCheck(result);
       } catch (error) {
-        console.error('Failed to check limits:', error)
-        setLimitCheck(null)
+        console.error("Failed to check limits:", error);
+        setLimitCheck(null);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    fetchLimits()
-  }, [orgId, checkType, additionalCount])
+    fetchLimits();
+  }, [orgId, checkType, additionalCount]);
 
-  return <>{children(limitCheck, isLoading)}</>
+  return <>{children(limitCheck, isLoading)}</>;
 }
 
 interface UpgradePromptProps {
-  actionName: string // e.g., "invite collaborator", "add member"
-  onUpgrade?: () => void
+  actionName: string; // e.g., "invite collaborator", "add member"
+  onUpgrade?: () => void;
 }
 
 export function UpgradePrompt({ actionName, onUpgrade }: UpgradePromptProps) {
@@ -63,18 +75,22 @@ export function UpgradePrompt({ actionName, onUpgrade }: UpgradePromptProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 interface InviteCollaboratorButtonProps {
-  orgId: string
-  showId?: string
-  onInvite?: () => void
-  disabled?: boolean
+  orgId: string;
+  showId?: string;
+  onInvite?: () => void;
+  disabled?: boolean;
 }
 
-export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCollaboratorButtonProps) {
-  const [showForm, setShowForm] = useState(false)
+export function InviteCollaboratorButton({
+  orgId,
+  onInvite,
+  disabled,
+}: InviteCollaboratorButtonProps) {
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <div>
@@ -82,31 +98,39 @@ export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCo
         {(limitCheck, isLoading) => {
           if (isLoading) {
             return (
-              <Button disabled variant="outline" className="opacity-50 border-muted-foreground/20">
+              <Button
+                disabled
+                variant="outline"
+                className="opacity-50 border-muted-foreground/20"
+              >
                 <UserCheck className="w-4 h-4 mr-2 animate-pulse" />
                 Loading...
               </Button>
-            )
+            );
           }
 
           if (!limitCheck?.allowed) {
             return (
               <div className="space-y-2">
-                <Button disabled variant="outline" className="opacity-50 border-muted-foreground/20">
+                <Button
+                  disabled
+                  variant="outline"
+                  className="opacity-50 border-muted-foreground/20"
+                >
                   <UserCheck className="w-4 h-4 mr-2" />
                   Invite Collaborator
                 </Button>
                 {limitCheck && (
-                  <UpgradePrompt 
+                  <UpgradePrompt
                     actionName="invite more collaborators"
                     onUpgrade={() => {
                       // In a real app, redirect to billing page or open upgrade modal
-                      window.location.href = `/billing-debug`
+                      window.location.href = `/billing-debug`;
                     }}
                   />
                 )}
               </div>
-            )
+            );
           }
 
           return (
@@ -120,10 +144,11 @@ export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCo
                 <UserCheck className="w-4 h-4 mr-2" />
                 Invite Collaborator
               </Button>
-              
+
               {limitCheck && (
                 <p className="text-xs text-muted-foreground">
-                  {limitCheck.remaining} of {limitCheck.limit} collaborator slots available
+                  {limitCheck.remaining} of {limitCheck.limit} collaborator
+                  slots available
                 </p>
               )}
 
@@ -132,16 +157,18 @@ export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCo
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-3">
                       <UserCheck className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Invite Collaborator</span>
+                      <span className="text-sm font-medium">
+                        Invite Collaborator
+                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
                       Send an invitation to collaborate on this project.
                     </p>
                     <div className="flex gap-2">
-                      <Button 
+                      <Button
                         onClick={() => {
-                          setShowForm(false)
-                          onInvite?.()
+                          setShowForm(false);
+                          onInvite?.();
                         }}
                         size="sm"
                         variant="outline"
@@ -149,7 +176,7 @@ export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCo
                       >
                         Send Invite
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => setShowForm(false)}
                         size="sm"
                         variant="outline"
@@ -161,49 +188,61 @@ export function InviteCollaboratorButton({ orgId, onInvite, disabled }: InviteCo
                 </Card>
               )}
             </div>
-          )
+          );
         }}
       </LimitGuard>
     </div>
-  )
+  );
 }
 
 interface AddMemberButtonProps {
-  orgId: string
-  onAdd?: () => void
-  disabled?: boolean
+  orgId: string;
+  onAdd?: () => void;
+  disabled?: boolean;
 }
 
-export function AddMemberButton({ orgId, onAdd, disabled }: AddMemberButtonProps) {
+export function AddMemberButton({
+  orgId,
+  onAdd,
+  disabled,
+}: AddMemberButtonProps) {
   return (
     <LimitGuard orgId={orgId} checkType="members">
       {(limitCheck, isLoading) => {
         if (isLoading) {
           return (
-            <Button disabled variant="outline" className="opacity-50 border-muted-foreground/20">
+            <Button
+              disabled
+              variant="outline"
+              className="opacity-50 border-muted-foreground/20"
+            >
               <UserPlus className="w-4 h-4 mr-2 animate-pulse" />
               Loading...
             </Button>
-          )
+          );
         }
 
         if (!limitCheck?.allowed) {
           return (
             <div className="space-y-2">
-              <Button disabled variant="outline" className="opacity-50 border-muted-foreground/20">
+              <Button
+                disabled
+                variant="outline"
+                className="opacity-50 border-muted-foreground/20"
+              >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Add Member
               </Button>
               {limitCheck && (
-                <UpgradePrompt 
+                <UpgradePrompt
                   actionName="add more team members"
                   onUpgrade={() => {
-                    window.location.href = `/billing-debug`
+                    window.location.href = `/billing-debug`;
                   }}
                 />
               )}
             </div>
-          )
+          );
         }
 
         return (
@@ -219,12 +258,13 @@ export function AddMemberButton({ orgId, onAdd, disabled }: AddMemberButtonProps
             </Button>
             {limitCheck && (
               <p className="text-xs text-muted-foreground">
-                {limitCheck.remaining} of {limitCheck.limit} member slots available
+                {limitCheck.remaining} of {limitCheck.limit} member slots
+                available
               </p>
             )}
           </div>
-        )
+        );
       }}
     </LimitGuard>
-  )
+  );
 }
