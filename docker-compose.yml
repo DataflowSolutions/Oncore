@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Dev: hot reload, bind mounts, dev target
   web:
@@ -23,8 +21,6 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
-    depends_on:
-      - supabase-local
     networks:
       - app-network
 
@@ -51,7 +47,7 @@ services:
 
   # Local Supabase proxy (when not using CLI)
   supabase-local:
-    profiles: ["dev"]
+    profiles: ["dev-with-proxy"]
     image: nginx:alpine
     container_name: supabase-proxy
     volumes:
