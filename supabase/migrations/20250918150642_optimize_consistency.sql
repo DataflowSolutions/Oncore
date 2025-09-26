@@ -1,4 +1,4 @@
--- Optimization and consistency improvements for Oncore (MusicApp)
+-- Optimization and consistency improvements for Oncore (Oncore)
 -- 1. Remove redundant RLS policy (favor RPC approach for invites)
 -- 2. Add performance indexes
 -- 3. Improve storage RPC with metadata validation

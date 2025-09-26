@@ -1,4 +1,4 @@
--- Critical fixes for Oncore (MusicApp) database
+-- Critical fixes for Oncore (Oncore) database
 -- 1. Fix UUID extension mismatch
 -- 2. Add missing RLS policies for advancing_documents
 -- 3. Add org member bootstrap for new orgs

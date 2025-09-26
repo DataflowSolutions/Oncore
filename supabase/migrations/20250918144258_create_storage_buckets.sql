@@ -1,4 +1,4 @@
--- Storage buckets and policies for Oncore (MusicApp)
+-- Storage buckets and policies for Oncore (Oncore)
 -- Creates buckets for documents, advancing files, and images
 
 -- =====================================

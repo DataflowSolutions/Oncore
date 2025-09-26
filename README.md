@@ -1,4 +1,4 @@
-# MusicApp
+# Oncore
 
 A Next.js application with full Supabase integration for local development and production deployment.
 
@@ -23,7 +23,7 @@ A Next.js application with full Supabase integration for local development and p
 1. **Clone and install dependencies:**
    ```bash
    git clone <your-repo-url>
-   cd MusicApp
+   cd Oncore
    make install
    ```
 

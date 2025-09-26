@@ -1,4 +1,4 @@
--- Initial schema for Oncore (MusicApp)
+-- Initial schema for Oncore (Oncore)
 -- Creates organizations, members, shows, advancing, team, and all supporting tables
 
 -- Enable necessary extensions

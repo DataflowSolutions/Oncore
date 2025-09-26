@@ -1,4 +1,4 @@
-# Oncore (MusicApp) — Technical Architecture & Build Guide
+# Oncore — Technical Architecture & Build Guide
 
 > **What this is:** a single, comprehensive **Markdown spec** for building the app end‑to‑end with **Next.js (App Router) + Supabase**. It covers the product scope, SSR patterns, directory structure, auth & RBAC, database schema (DDL), RLS policies, storage, page‑by‑page build notes, code samples, and deployment workflow.
 > **Why this approach:** it aligns with your pitch (artist‑first UX, mobile/offline future, AI imports/exports) while shipping a secure and maintainable MVP.&#x20;

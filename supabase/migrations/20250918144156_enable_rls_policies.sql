@@ -1,26 +1,19 @@
--- Row Level Security (RLS) policies for Oncore (MusicApp)
+-- Row Level Security (RLS) policies for Oncore (Oncore)
 -- Enable RLS and create helper functions and policies
 
 -- =====================================
 -- HELPER FUNCTIONS
 -- =====================================
 
--- Helper function to get current user ID
-create or replace function auth.jwt() returns jsonb language sql stable as $$
-  select current_setting('request.jwt.claims', true)::jsonb;
-$$;
-
-create or replace function auth.uid() returns uuid language sql stable as $$
-  select coalesce(nullif((auth.jwt()->>'sub')::text, '' ), null)::uuid;
-$$;
+-- Note: auth.jwt() and auth.uid() are built-in Supabase functions
 
 -- Helper function to check org membership
-create or replace function is_org_member(p_org uuid) returns boolean language sql stable as $$
+create or replace function public.is_org_member(p_org uuid) returns boolean language sql stable as $$
   select exists(select 1 from org_members where org_id=p_org and user_id=auth.uid());
 $$;
 
 -- Helper function to check show access
-create or replace function has_show_access(p_show uuid, min_role text) returns boolean
+create or replace function public.has_show_access(p_show uuid, min_role text) returns boolean
 language sql stable as $$
   with me as (
     select role from show_collaborators where show_id=p_show and user_id=auth.uid()
@@ -56,9 +49,9 @@ alter table schedule_items enable row level security;
 -- ORGANIZATIONS POLICIES
 -- =====================================
 
-create policy org_select on organizations for select using (is_org_member(id));
+create policy org_select on organizations for select using (public.is_org_member(id));
 create policy org_insert on organizations for insert with check (true); -- Anyone can create an org
-create policy org_update on organizations for update using (is_org_member(id));
+create policy org_update on organizations for update using (public.is_org_member(id));
 create policy org_delete on organizations for delete using (
   exists(select 1 from org_members where org_id=id and user_id=auth.uid() and role='owner')
 );
@@ -67,7 +60,7 @@ create policy org_delete on organizations for delete using (
 -- ORG MEMBERS POLICIES
 -- =====================================
 
-create policy org_members_select on org_members for select using (is_org_member(org_id));
+create policy org_members_select on org_members for select using (public.is_org_member(org_id));
 create policy org_members_insert on org_members for insert with check (
   exists(select 1 from org_members where org_id=org_members.org_id and user_id=auth.uid() and role in ('owner','admin'))
 );
@@ -83,33 +76,33 @@ create policy org_members_delete on org_members for delete using (
 -- =====================================
 
 create policy shows_select on shows for select
-  using (is_org_member(org_id) or has_show_access(id,'view'));
-create policy shows_insert on shows for insert with check (is_org_member(org_id));
-create policy shows_update on shows for update using (is_org_member(org_id));
-create policy shows_delete on shows for delete using (is_org_member(org_id));
+  using (public.is_org_member(org_id) or public.has_show_access(id,'view'));
+create policy shows_insert on shows for insert with check (public.is_org_member(org_id));
+create policy shows_update on shows for update using (public.is_org_member(org_id));
+create policy shows_delete on shows for delete using (public.is_org_member(org_id));
 
 -- =====================================
 -- SHOW COLLABORATORS POLICIES
 -- =====================================
 
 create policy show_collaborators_select on show_collaborators for select
-  using (exists(select 1 from shows s where s.id=show_id and (is_org_member(s.org_id) or has_show_access(s.id,'view'))));
+  using (exists(select 1 from shows s where s.id=show_id and (public.is_org_member(s.org_id) or public.has_show_access(s.id,'view'))));
 create policy show_collaborators_insert on show_collaborators for insert
-  with check (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  with check (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 create policy show_collaborators_update on show_collaborators for update
-  using (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  using (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 create policy show_collaborators_delete on show_collaborators for delete
-  using (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  using (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 
 -- =====================================
 -- ADVANCING SESSIONS POLICIES
 -- =====================================
 
 create policy adv_sessions_select on advancing_sessions for select
-  using (is_org_member(org_id) or has_show_access(show_id,'view'));
-create policy adv_sessions_insert on advancing_sessions for insert with check (is_org_member(org_id));
-create policy adv_sessions_update on advancing_sessions for update using (is_org_member(org_id));
-create policy adv_sessions_delete on advancing_sessions for delete using (is_org_member(org_id));
+  using (public.is_org_member(org_id) or public.has_show_access(show_id,'view'));
+create policy adv_sessions_insert on advancing_sessions for insert with check (public.is_org_member(org_id));
+create policy adv_sessions_update on advancing_sessions for update using (public.is_org_member(org_id));
+create policy adv_sessions_delete on advancing_sessions for delete using (public.is_org_member(org_id));
 
 -- =====================================
 -- ADVANCING FIELDS POLICIES
@@ -117,18 +110,18 @@ create policy adv_sessions_delete on advancing_sessions for delete using (is_org
 
 create policy adv_fields_select on advancing_fields for select
   using (exists (select 1 from advancing_sessions s
-        where s.id=session_id and (is_org_member(s.org_id) or has_show_access(s.show_id,'view'))));
+        where s.id=session_id and (public.is_org_member(s.org_id) or public.has_show_access(s.show_id,'view'))));
 create policy adv_fields_insert on advancing_fields for insert with check (
   exists (select 1 from advancing_sessions s
-        where s.id=session_id and (is_org_member(s.org_id) or has_show_access(s.show_id,'edit')))
+        where s.id=session_id and (public.is_org_member(s.org_id) or public.has_show_access(s.show_id,'edit')))
 );
 create policy adv_fields_update on advancing_fields for update using (
   exists (select 1 from advancing_sessions s
-        where s.id=session_id and (is_org_member(s.org_id) or has_show_access(s.show_id,'edit')))
+        where s.id=session_id and (public.is_org_member(s.org_id) or public.has_show_access(s.show_id,'edit')))
 );
 create policy adv_fields_delete on advancing_fields for delete using (
   exists (select 1 from advancing_sessions s
-        where s.id=session_id and is_org_member(s.org_id))
+        where s.id=session_id and public.is_org_member(s.org_id))
 );
 
 -- =====================================
@@ -138,11 +131,11 @@ create policy adv_fields_delete on advancing_fields for delete using (
 create policy adv_comments_select on advancing_comments for select
   using (exists (select 1 from advancing_fields f
                 join advancing_sessions s on s.id=f.session_id
-                where f.id=field_id and (is_org_member(s.org_id) or has_show_access(s.show_id,'view'))));
+                where f.id=field_id and (public.is_org_member(s.org_id) or public.has_show_access(s.show_id,'view'))));
 create policy adv_comments_insert on advancing_comments for insert with check (
   exists (select 1 from advancing_fields f
                 join advancing_sessions s on s.id=f.session_id
-                where f.id=field_id and (is_org_member(s.org_id) or has_show_access(s.show_id,'edit')))
+                where f.id=field_id and (public.is_org_member(s.org_id) or public.has_show_access(s.show_id,'edit')))
 );
 
 -- =====================================
@@ -150,51 +143,51 @@ create policy adv_comments_insert on advancing_comments for insert with check (
 -- =====================================
 
 create policy files_select on files for select
-  using (is_org_member(org_id) or 
+  using (public.is_org_member(org_id) or 
          (session_id is not null and exists(select 1 from advancing_sessions s
-                                           where s.id=session_id and has_show_access(s.show_id,'view'))));
+                                           where s.id=session_id and public.has_show_access(s.show_id,'view'))));
 create policy files_insert on files for insert with check (
-  is_org_member(org_id) or 
+  public.is_org_member(org_id) or 
   (session_id is not null and exists(select 1 from advancing_sessions s
-                                    where s.id=session_id and has_show_access(s.show_id,'edit')))
+                                    where s.id=session_id and public.has_show_access(s.show_id,'edit')))
 );
 create policy files_delete on files for delete using (
-  is_org_member(org_id)
+  public.is_org_member(org_id)
 );
 
 -- =====================================
 -- ARTISTS, VENUES, PEOPLE POLICIES
 -- =====================================
 
-create policy artists_select on artists for select using (is_org_member(org_id));
-create policy artists_insert on artists for insert with check (is_org_member(org_id));
-create policy artists_update on artists for update using (is_org_member(org_id));
-create policy artists_delete on artists for delete using (is_org_member(org_id));
+create policy artists_select on artists for select using (public.is_org_member(org_id));
+create policy artists_insert on artists for insert with check (public.is_org_member(org_id));
+create policy artists_update on artists for update using (public.is_org_member(org_id));
+create policy artists_delete on artists for delete using (public.is_org_member(org_id));
 
-create policy venues_select on venues for select using (is_org_member(org_id));
-create policy venues_insert on venues for insert with check (is_org_member(org_id));
-create policy venues_update on venues for update using (is_org_member(org_id));
-create policy venues_delete on venues for delete using (is_org_member(org_id));
+create policy venues_select on venues for select using (public.is_org_member(org_id));
+create policy venues_insert on venues for insert with check (public.is_org_member(org_id));
+create policy venues_update on venues for update using (public.is_org_member(org_id));
+create policy venues_delete on venues for delete using (public.is_org_member(org_id));
 
-create policy people_select on people for select using (is_org_member(org_id));
-create policy people_insert on people for insert with check (is_org_member(org_id));
-create policy people_update on people for update using (is_org_member(org_id));
-create policy people_delete on people for delete using (is_org_member(org_id));
+create policy people_select on people for select using (public.is_org_member(org_id));
+create policy people_insert on people for insert with check (public.is_org_member(org_id));
+create policy people_update on people for update using (public.is_org_member(org_id));
+create policy people_delete on people for delete using (public.is_org_member(org_id));
 
 -- =====================================
 -- SCHEDULE AND ASSIGNMENTS POLICIES
 -- =====================================
 
-create policy schedule_items_select on schedule_items for select using (is_org_member(org_id));
-create policy schedule_items_insert on schedule_items for insert with check (is_org_member(org_id));
-create policy schedule_items_update on schedule_items for update using (is_org_member(org_id));
-create policy schedule_items_delete on schedule_items for delete using (is_org_member(org_id));
+create policy schedule_items_select on schedule_items for select using (public.is_org_member(org_id));
+create policy schedule_items_insert on schedule_items for insert with check (public.is_org_member(org_id));
+create policy schedule_items_update on schedule_items for update using (public.is_org_member(org_id));
+create policy schedule_items_delete on schedule_items for delete using (public.is_org_member(org_id));
 
 create policy show_assignments_select on show_assignments for select
-  using (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  using (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 create policy show_assignments_insert on show_assignments for insert
-  with check (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  with check (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 create policy show_assignments_update on show_assignments for update
-  using (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  using (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
 create policy show_assignments_delete on show_assignments for delete
-  using (exists(select 1 from shows s where s.id=show_id and is_org_member(s.org_id)));
+  using (exists(select 1 from shows s where s.id=show_id and public.is_org_member(s.org_id)));
