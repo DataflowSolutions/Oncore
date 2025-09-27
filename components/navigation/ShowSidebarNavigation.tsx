@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -5,7 +7,7 @@ import {
   Users,
   FileText,
 } from "lucide-react";
-import ShowSwitcher from "./ShowSwitcher";
+import ClientShowSwitcher from "./ClientShowSwitcher";
 
 interface ShowSidebarNavigationProps {
   orgSlug: string;
@@ -77,49 +79,56 @@ const ShowSidebarNavigation = ({
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-full flex flex-col">
       {/* Logo/Brand */}
-      <div className="mb-8 mt-12 lg:mt-0">
+      <div className="mb-6 mt-12 lg:mt-0">
         <h2 className="text-xl font-bold text-foreground">Oncore</h2>
         <p className="text-sm text-muted-foreground mt-1">Tour Management</p>
       </div>
 
       {/* Show Switcher */}
-      <ShowSwitcher 
+      <ClientShowSwitcher 
         orgSlug={orgSlug} 
         currentShowId={showId} 
         orgId={orgId} 
       />
 
       {/* Show-specific Navigation */}
-      <div className="mb-6">
-        <h4 className="text-sm font-semibold text-foreground mb-3 px-2">
-          Show Navigation
+      <div className="mb-6 flex-1">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-2">
+          Show Pages
         </h4>
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           {showNavItems.map((item) => renderNavItem(item))}
         </nav>
       </div>
 
-      {/* Global Navigation Shortcut */}
-      <div className="border-t border-border pt-4">
-        <h4 className="text-sm font-semibold text-foreground mb-3 px-2">
+      {/* Global Navigation Shortcuts */}
+      <div className="border-t border-border pt-4 mt-auto">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-2">
           Quick Access
         </h4>
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           <Link
             href={`/${orgSlug}/day`}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-base text-muted-foreground hover:text-foreground hover:bg-accent/60"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60"
           >
-            <Calendar size={18} />
+            <Calendar size={16} />
             <span className="font-medium">Day View</span>
           </Link>
           <Link
             href={`/${orgSlug}/people`}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-base text-muted-foreground hover:text-foreground hover:bg-accent/60"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60"
           >
-            <Users size={18} />
+            <Users size={16} />
             <span className="font-medium">People</span>
+          </Link>
+          <Link
+            href={`/${orgSlug}/shows`}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60"
+          >
+            <Calendar size={16} />
+            <span className="font-medium">All Shows</span>
           </Link>
         </nav>
       </div>
