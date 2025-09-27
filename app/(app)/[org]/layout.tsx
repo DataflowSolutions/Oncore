@@ -1,9 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 // import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
-import TabNavigation from "./components/TabNavigation";
-import MobileNavigation from "./components/MobileNavigation";
+import SidebarNavigation from "@/components/navigation/SidebarNavigation";
+import ShowSidebarNavigation from "@/components/navigation/ShowSidebarNavigation";
+import MobileSidebarToggle from "@/components/navigation/MobileSidebarToggle";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,15 @@ interface OrgLayoutProps {
 export default async function TourLayout({ children, params }: OrgLayoutProps) {
   const supabase = await getSupabaseServer();
   const resolvedParams = await params;
+  
+  // Get current path for navigation highlighting
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+  
+  // Detect if we're in a show context
+  const showMatch = pathname.match(new RegExp(`/${resolvedParams.org}/shows/([^/]+)`));
+  const isInShowContext = showMatch && showMatch[1] !== undefined;
+  const currentShowId = isInShowContext ? showMatch[1] : null;
 
   // Check if user is authenticated
   const {
@@ -64,19 +75,30 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
       {/* Show subscription banner for trials or issues */}
       {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
-      <div className="pt-10 lg:flex justify-end mb-4 hidden">
-        <TabNavigation
-          orgSlug={resolvedParams.org}
-          userRole={membership.role}
-        />
+      {/* Mobile Sidebar Toggle with Context-Aware Sidebar Navigation */}
+      <MobileSidebarToggle>
+        {isInShowContext && currentShowId ? (
+          <ShowSidebarNavigation
+            orgSlug={resolvedParams.org}
+            showId={currentShowId}
+            orgId={org.id}
+            currentPath={pathname}
+          />
+        ) : (
+          <SidebarNavigation
+            orgSlug={resolvedParams.org}
+            userRole={membership.role}
+            currentPath={pathname}
+          />
+        )}
+      </MobileSidebarToggle>
+
+      {/* Main Content Area */}
+      <div className="lg:ml-64 min-h-screen">
+        <div className="p-6 pt-16 lg:pt-6">
+          {children}
+        </div>
       </div>
-
-      <div className="pb-24 lg:pb-0">{children}</div>
-
-      <MobileNavigation
-        orgSlug={resolvedParams.org}
-        userRole={membership.role}
-      />
     </div>
   );
 }

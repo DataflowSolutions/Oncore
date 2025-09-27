@@ -1,6 +1,4 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getShowTabLinks } from '../constants/show-navlinks'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 interface ShowLayoutProps {
@@ -35,30 +33,11 @@ export default async function ShowLayout({ children, params }: ShowLayoutProps) 
     notFound()
   }
 
-  const showNavLinks = getShowTabLinks(orgSlug, showId)
+
 
   return (
-    <div className="space-y-6">
-      {/* Show-specific navigation */}
-      <div className="border-b">
-        <div className="flex space-x-8 overflow-x-auto">
-          {showNavLinks.map((link) => {
-            const Icon = link.icon
-            return (
-              <Link
-                key={link.id}
-                href={link.href}
-                className="inline-flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 border-transparent hover:border-primary hover:text-primary transition-colors whitespace-nowrap"
-              >
-                {Icon && <Icon className="w-4 h-4" />}
-                {link.label}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Page content */}
+    <div>
+      {/* Page content - navigation is now handled by the sidebar */}
       {children}
     </div>
   )

@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import TeamTabs from './components/TeamTabs'
 import TeamSearch from './components/TeamSearch'
 import AddPersonButton from './components/AddPersonButton'
 
@@ -25,7 +24,7 @@ export default async function TeamLayout({ children, params }: TeamLayoutProps) 
   }
 
   return (
-    <div className="mb-16 mt-4">
+    <div className="mt-4">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">People</h1>
@@ -34,7 +33,6 @@ export default async function TeamLayout({ children, params }: TeamLayoutProps) 
         <AddPersonButton orgId={org.id} />
       </div>
       
-      <TeamTabs orgSlug={orgSlug} />
       <TeamSearch placeholder="Search" />
       
       {children}
