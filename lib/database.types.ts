@@ -879,43 +879,64 @@ export type Database = {
       }
       schedule_items: {
         Row: {
+          auto_generated: boolean | null
           created_at: string
           created_by: string | null
           ends_at: string | null
           id: string
+          item_type: string | null
           location: string | null
           notes: string | null
           org_id: string
+          person_id: string | null
+          priority: number | null
+          session_id: string | null
           show_id: string | null
+          source_field_id: string | null
           starts_at: string
           title: string
           updated_at: string | null
+          visibility: string | null
         }
         Insert: {
+          auto_generated?: boolean | null
           created_at?: string
           created_by?: string | null
           ends_at?: string | null
           id?: string
+          item_type?: string | null
           location?: string | null
           notes?: string | null
           org_id: string
+          person_id?: string | null
+          priority?: number | null
+          session_id?: string | null
           show_id?: string | null
+          source_field_id?: string | null
           starts_at: string
           title: string
           updated_at?: string | null
+          visibility?: string | null
         }
         Update: {
+          auto_generated?: boolean | null
           created_at?: string
           created_by?: string | null
           ends_at?: string | null
           id?: string
+          item_type?: string | null
           location?: string | null
           notes?: string | null
           org_id?: string
+          person_id?: string | null
+          priority?: number | null
+          session_id?: string | null
           show_id?: string | null
+          source_field_id?: string | null
           starts_at?: string
           title?: string
           updated_at?: string | null
+          visibility?: string | null
         }
         Relationships: [
           {
@@ -940,10 +961,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "schedule_items_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "schedule_items_show_id_fkey"
             columns: ["show_id"]
             isOneToOne: false
             referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_source_field_id_fkey"
+            columns: ["source_field_id"]
+            isOneToOne: false
+            referencedRelation: "advancing_fields"
             referencedColumns: ["id"]
           },
         ]
@@ -1907,6 +1949,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_leaf_prefixes: {
+        Args: {
+          bucket_ids: string[]
+          names: string[]
+        }
+        Returns: undefined
+      }
       delete_prefix: {
         Args: {
           _bucket_id: string
@@ -1988,6 +2037,13 @@ export type Database = {
           updated_at: string
         }[]
       }
+      lock_top_prefixes: {
+        Args: {
+          bucket_ids: string[]
+          names: string[]
+        }
+        Returns: undefined
+      }
       operation: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2059,6 +2115,9 @@ export type Database = {
           limits?: number
           levels?: number
           start_after?: string
+          sort_order?: string
+          sort_column?: string
+          sort_column_after?: string
         }
         Returns: {
           key: string
@@ -2066,6 +2125,7 @@ export type Database = {
           id: string
           updated_at: string
           created_at: string
+          last_accessed_at: string
           metadata: Json
         }[]
       }

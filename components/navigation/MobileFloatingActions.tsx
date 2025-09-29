@@ -16,7 +16,6 @@ import {
   Building,
   Settings,
   Search,
-  Edit,
   Clock,
 } from "lucide-react";
 
@@ -146,40 +145,15 @@ export default function MobileFloatingActions({ orgSlug }: MobileFloatingActions
       ];
     }
 
-    // Day page
-    if (pathname === `/${orgSlug}/day`) {
-      return [
-        {
-          id: "quick-note",
-          label: "Quick Note",
-          href: `/${orgSlug}/advancing/new?quick=true`,
-          icon: Edit,
-          color: "bg-yellow-500 hover:bg-yellow-600",
-        },
-        {
-          id: "todays-shows",
-          label: "Today's Shows",
-          href: `/${orgSlug}/shows?date=today`,
-          icon: Calendar,
-          color: "bg-purple-500 hover:bg-purple-600",
-        },
-        {
-          id: "people",
-          label: "People",
-          href: `/${orgSlug}/people`,
-          icon: Users,
-          color: "bg-green-500 hover:bg-green-600",
-        },
-      ];
-    }
+    // Day page - removed since day scheduling is now show-specific
 
     // Settings pages
     if (pathname.startsWith(`/${orgSlug}/settings`) || pathname.startsWith(`/${orgSlug}/profile`)) {
       return [
         {
-          id: "back-to-day",
-          label: "Back to Day",
-          href: `/${orgSlug}/day`,
+          id: "back-to-shows",
+          label: "Back to Shows",
+          href: `/${orgSlug}/shows`,
           icon: Calendar,
           color: "bg-blue-500 hover:bg-blue-600",
         },
@@ -202,13 +176,6 @@ export default function MobileFloatingActions({ orgSlug }: MobileFloatingActions
 
     // Default/fallback actions for other pages
     return [
-      {
-        id: "day",
-        label: "Today",
-        href: `/${orgSlug}/day`,
-        icon: Calendar,
-        color: "bg-blue-500 hover:bg-blue-600",
-      },
       {
         id: "shows",
         label: "Shows",

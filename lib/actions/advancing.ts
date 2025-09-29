@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database, Json } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
+import { generateScheduleFromAdvancing } from './schedule'
 
 type AdvancingSession = Database['public']['Tables']['advancing_sessions']['Row']
 type AdvancingField = Database['public']['Tables']['advancing_fields']['Row']
@@ -384,17 +385,154 @@ export async function createAdvancingDocument(
   return { success: true, data }
 }
 
+// Grid Data Management
+export async function loadAdvancingGridData(
+  sessionId: string,
+  gridType: 'team' | 'arrival_flight' | 'departure_flight',
+  teamMemberIds: string[]
+): Promise<Array<{ id: string; [key: string]: string | number | boolean }>> {
+  const supabase = await getSupabaseServer()
+  
+  try {
+    // Get all fields for this session that match the grid type pattern
+    const { data: fields, error } = await supabase
+      .from('advancing_fields')
+      .select('field_name, value')
+      .eq('session_id', sessionId)
+      .like('field_name', `${gridType}_%`)
+      
+    if (error) {
+      console.error('Error loading grid data:', error)
+      return teamMemberIds.map(id => ({ id: `${gridType}_${id}` }))
+    }
+    
+    // Group fields by row ID and build grid data
+    const gridData: { [rowId: string]: { id: string; [key: string]: string | number | boolean } } = {}
+    
+    teamMemberIds.forEach(memberId => {
+      const rowId = `${gridType}_${memberId}`
+      gridData[rowId] = { id: rowId }
+    })
+    
+    fields?.forEach(field => {
+      // Parse field name: gridType_rowId_columnKey
+      const parts = field.field_name.split('_')
+      if (parts.length >= 3) {
+        const rowId = parts.slice(0, -1).join('_') // Everything except the last part
+        const columnKey = parts[parts.length - 1] // Last part is the column key
+        
+        if (gridData[rowId]) {
+          gridData[rowId][columnKey] = String(field.value || '')
+        }
+      }
+    })
+    
+    return Object.values(gridData)
+    
+  } catch (error) {
+    console.error('Error loading grid data:', error)
+    return teamMemberIds.map(id => ({ id: `${gridType}_${id}` }))
+  }
+}
+
+export async function saveAdvancingGridData(
+  orgSlug: string,
+  sessionId: string,
+  showId: string,
+  gridType: 'team' | 'arrival_flight' | 'departure_flight',
+  gridData: Array<{ id: string; [key: string]: string | number | boolean }>
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await getSupabaseServer()
+  
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
+    // Get org_id from session
+    const { data: session, error: sessionError } = await supabase
+      .from('advancing_sessions')
+      .select('org_id')
+      .eq('id', sessionId)
+      .single()
+      
+    if (sessionError || !session) {
+      return { success: false, error: 'Session not found' }
+    }
+
+    // Process each row of grid data
+    for (const row of gridData) {
+      for (const [columnKey, value] of Object.entries(row)) {
+        if (columnKey === 'id' || !value) continue
+        
+        const fieldName = `${gridType}_${row.id}_${columnKey}`
+        const section = gridType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+        
+        // Check if field exists
+        const { data: existingField } = await supabase
+          .from('advancing_fields')
+          .select('id')
+          .eq('session_id', sessionId)
+          .eq('field_name', fieldName)
+          .single()
+          
+        if (existingField) {
+          // Update existing field
+          await supabase
+            .from('advancing_fields')
+            .update({ value: String(value) })
+            .eq('id', existingField.id)
+        } else {
+          // Create new field
+          await supabase
+            .from('advancing_fields')
+            .insert({
+              org_id: session.org_id,
+              session_id: sessionId,
+              section,
+              field_name: fieldName,
+              field_type: 'text',
+              value: String(value),
+              party_type: 'from_you',
+              sort_order: 1000,
+              created_by: user.id
+            })
+        }
+      }
+    }
+    
+    // Generate schedule items if this is flight data
+    if (gridType.includes('flight')) {
+      try {
+        await generateScheduleFromAdvancing(orgSlug, showId, sessionId)
+      } catch (error) {
+        console.error('Failed to generate schedule from grid data:', error)
+        // Don't fail the save if schedule generation fails
+      }
+    }
+    
+    revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+    return { success: true }
+    
+  } catch (error) {
+    console.error('Error saving grid data:', error)
+    return { success: false, error: 'Failed to save grid data' }
+  }
+}
+
 // Access Code Verification (for external collaborators)
 export async function verifyAccessCode(
   accessCode: string
-): Promise<{ success: boolean; sessionId?: string; error?: string }> {
+): Promise<{ success: boolean; sessionId?: string; showId?: string; error?: string }> {
   const supabase = await getSupabaseServer()
   
   const accessCodeHash = crypto.createHash('sha256').update(accessCode).digest('hex')
   
   const { data: session, error } = await supabase
     .from('advancing_sessions')
-    .select('id, expires_at')
+    .select('id, show_id, expires_at')
     .eq('access_code_hash', accessCodeHash)
     .single()
     
@@ -407,5 +545,5 @@ export async function verifyAccessCode(
     return { success: false, error: 'Access code has expired' }
   }
   
-  return { success: true, sessionId: session.id }
+  return { success: true, sessionId: session.id, showId: session.show_id }
 }

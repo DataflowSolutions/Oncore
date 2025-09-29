@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="px-1 md:px-8 lg:px-16 xl:px-20 max-w-[1440px] mx-auto">
+      <body className="px-1 md:px-8 lg:px-16 xl:px-20 mx-auto">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

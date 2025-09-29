@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import {
   Calendar,
+  CalendarDays,
   Users,
   FileText,
 } from "lucide-react";
@@ -36,6 +37,12 @@ const ShowSidebarNavigation = ({
       label: "Show Details",
       href: `/${orgSlug}/shows/${showId}`,
       icon: Calendar,
+    },
+    {
+      id: "day-schedule",
+      label: "Day Schedule",
+      href: `/${orgSlug}/shows/${showId}/day`,
+      icon: CalendarDays,
     },
     {
       id: "team",

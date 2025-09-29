@@ -2,7 +2,7 @@ import { verifyAccessCode, getAdvancingFields, getAdvancingDocuments } from '@/l
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Users, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { DocumentsBox } from '@/components/advancing/DocumentsBox'
 import { FieldRow } from '@/components/advancing/FieldRow'
@@ -23,6 +23,7 @@ export default async function AccessCodeSessionPage({ params }: AccessCodeSessio
   }
 
   const sessionId = result.sessionId
+  const showId = result.showId || ''
   const fields = await getAdvancingFields(sessionId)
   const documents = await getAdvancingDocuments(sessionId)
 
@@ -48,170 +49,148 @@ export default async function AccessCodeSessionPage({ params }: AccessCodeSessio
   const fromYouSections = groupFieldsBySection(fromYouFields)
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link href={`/s/${accessCode}`}>
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link href={`/s/${accessCode}`}>
+            <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Link>
-          </Button>
+              Back to Show Info
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold">Advancing Session</h1>
+            <p className="text-neutral-400">Review and update advancing information</p>
+          </div>
         </div>
-        
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">Advancing Session</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              Show Date
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* FROM US Column (Read-only) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">FROM US</h2>
+              <Badge variant="outline">
+                {fromUsFields.length} {fromUsFields.length === 1 ? 'field' : 'fields'}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">Read Only</Badge>
             </div>
             
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              Venue
+            {/* Documents */}
+            {fromUsDocuments.length > 0 && (
+              <DocumentsBox
+                title="Documents from us"
+                documents={fromUsDocuments}
+                orgSlug=""
+                sessionId={sessionId}
+                partyType="from_us"
+              />
+            )}
+            
+            {Object.keys(fromUsSections).length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <p className="text-muted-foreground text-center">
+                    No information provided yet. Check back later for updates from the organizer.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(fromUsSections).map(([section, sectionFields]) => (
+                  <div key={section} className="space-y-4">
+                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                      {section}
+                    </h3>
+                    <div className="space-y-4">
+                      {(sectionFields as Record<string, unknown>[]).map((field) => (
+                        <FieldRow
+                          key={String(field.id)}
+                          field={{
+                            id: String(field.id),
+                            section: String(field.section),
+                            field_name: String(field.field_name),
+                            field_type: String(field.field_type),
+                            value: field.value,
+                            status: field.status as "pending" | "confirmed",
+                            party_type: field.party_type as "from_us" | "from_you"
+                          }}
+                          orgSlug=""
+                          sessionId={sessionId}
+                          showId={showId}
+                          comments={[]} // TODO: Load comments for each field
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* FROM YOU Column (Editable) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">FROM YOU</h2>
+              <Badge variant="outline">
+                {fromYouFields.length} {fromYouFields.length === 1 ? 'field' : 'fields'}
+              </Badge>
+              <Badge variant="default" className="text-xs">Editable</Badge>
             </div>
             
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              Artist
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Access Notice */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <p className="text-sm text-foreground">
-            <strong>External Access:</strong> You&apos;re viewing this session with limited access. 
-            You can view and respond to items in the &quot;FROM YOU&quot; section.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Documents Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DocumentsBox
-          sessionId={sessionId}
-          orgSlug="" // Not needed for access code flow
-          partyType="from_us"
-          documents={fromUsDocuments}
-          title="FROM US - Documents"
-        />
-        
-        <DocumentsBox
-          sessionId={sessionId}
-          orgSlug="" // Not needed for access code flow
-          partyType="from_you"
-          documents={fromYouDocuments}
-          title="FROM YOU - Documents"
-        />
-      </div>
-
-      {/* Fields Section - Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* FROM US Column (Read Only) */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">FROM US</h2>
-            <Badge variant="outline">
-              {fromUsFields.length} {fromUsFields.length === 1 ? 'field' : 'fields'}
-            </Badge>
-            <Badge variant="secondary" className="text-xs">Read Only</Badge>
-          </div>
-          
-          {Object.keys(fromUsSections).length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground text-center">
-                  No fields yet.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(fromUsSections).map(([section, sectionFields]) => (
-                <div key={section} className="space-y-4">
-                  <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
-                    {section}
-                  </h3>
-                  <div className="space-y-4">
-                    {(sectionFields as Record<string, unknown>[]).map((field) => (
-                      <FieldRow
-                        key={String(field.id)}
-                        field={{
-                          id: String(field.id),
-                          section: String(field.section),
-                          field_name: String(field.field_name),
-                          field_type: String(field.field_type),
-                          value: field.value,
-                          status: field.status as "pending" | "confirmed",
-                          party_type: field.party_type as "from_us" | "from_you"
-                        }}
-                        orgSlug=""
-                        sessionId={sessionId}
-                        comments={[]} // TODO: Load comments for each field
-
-                      />
-                    ))}
+            {/* Documents */}
+            {fromYouDocuments.length > 0 && (
+              <DocumentsBox
+                title="Documents from you"
+                documents={fromYouDocuments}
+                orgSlug=""
+                sessionId={sessionId}
+                partyType="from_you"
+              />
+            )}
+            
+            {Object.keys(fromYouSections).length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <p className="text-muted-foreground text-center">
+                    No fields yet. Fields will appear here when the organizer adds them.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(fromYouSections).map(([section, sectionFields]) => (
+                  <div key={section} className="space-y-4">
+                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                      {section}
+                    </h3>
+                    <div className="space-y-4">
+                      {(sectionFields as Record<string, unknown>[]).map((field) => (
+                        <FieldRow
+                          key={String(field.id)}
+                          field={{
+                            id: String(field.id),
+                            section: String(field.section),
+                            field_name: String(field.field_name),
+                            field_type: String(field.field_type),
+                            value: field.value,
+                            status: field.status as "pending" | "confirmed",
+                            party_type: field.party_type as "from_us" | "from_you"
+                          }}
+                          orgSlug=""
+                          sessionId={sessionId}
+                          showId={showId}
+                          comments={[]} // TODO: Load comments for each field
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* FROM YOU Column (Editable) */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">FROM YOU</h2>
-            <Badge variant="outline">
-              {fromYouFields.length} {fromYouFields.length === 1 ? 'field' : 'fields'}
-            </Badge>
-            <Badge variant="default" className="text-xs">Editable</Badge>
+                ))}
+              </div>
+            )}
           </div>
-          
-          {Object.keys(fromYouSections).length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground text-center">
-                  No fields yet. Fields will appear here when the organizer adds them.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(fromYouSections).map(([section, sectionFields]) => (
-                <div key={section} className="space-y-4">
-                  <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
-                    {section}
-                  </h3>
-                  <div className="space-y-4">
-                    {(sectionFields as Record<string, unknown>[]).map((field) => (
-                      <FieldRow
-                        key={String(field.id)}
-                        field={{
-                          id: String(field.id),
-                          section: String(field.section),
-                          field_name: String(field.field_name),
-                          field_type: String(field.field_type),
-                          value: field.value,
-                          status: field.status as "pending" | "confirmed",
-                          party_type: field.party_type as "from_us" | "from_you"
-                        }}
-                        orgSlug=""
-                        sessionId={sessionId}
-                        comments={[]} // TODO: Load comments for each field
-
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

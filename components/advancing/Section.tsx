@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight, Users, Plane, PlaneLanding } from 'lucide-react'
 import { FieldRow } from './FieldRow'
 import { GridEditor, GRID_CONFIGS } from './GridEditor'
+import { SaveableGridEditor } from './SaveableGridEditor'
 import { AddTeamMemberModal } from './AddTeamMemberModal'
 import { TeamMembersGrid } from './TeamMembersGrid'
 import { assignPersonToShow, removePersonFromShow } from '@/lib/actions/show-team'
@@ -38,6 +39,8 @@ interface SectionProps {
     duty?: string
   }>
   defaultExpanded?: boolean
+  arrivalFlightData?: Array<{ id: string; [key: string]: string | number | boolean }>
+  departureFlightData?: Array<{ id: string; [key: string]: string | number | boolean }>
 }
 
 // Helper function to determine if a section should use grid layout
@@ -66,7 +69,7 @@ const getSectionIcon = (title: string) => {
   return null
 }
 
-export function Section({ title, fields, orgSlug, sessionId, showId, availablePeople = [], currentTeam = [], defaultExpanded = true }: SectionProps) {
+export function Section({ title, fields, orgSlug, sessionId, showId, availablePeople = [], currentTeam = [], defaultExpanded = true, arrivalFlightData = [], departureFlightData = [] }: SectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
   
@@ -101,8 +104,8 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
       }
     }
     
-    // Refresh the page to show updated team
-    window.location.reload()
+    // Close the modal - the server action will handle revalidation
+    setShowAddMemberModal(false)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -115,8 +118,8 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
     try {
       await removePersonFromShow(showId, personId)
       
-      // Refresh the page to show updated team
-      window.location.reload()
+      // The server action will handle revalidation
+      console.log('Person removed from show successfully')
     } catch (error) {
       console.error('Error unassigning person from show:', error)
     }
@@ -191,12 +194,13 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 hideAddButton={true}
               />
 
-              {/* Arrival Flight Grid - No Add Button */}
-              <GridEditor
+              {/* Arrival Flight Grid - Saveable */}
+              <SaveableGridEditor
                 title={GRID_CONFIGS.arrivalFlight.title}
+                gridType="arrival_flight"
                 icon={<PlaneLanding className="w-4 h-4" />}
                 columns={[...GRID_CONFIGS.arrivalFlight.columns]}
-                data={currentTeam.map(member => ({
+                data={arrivalFlightData.length > 0 ? arrivalFlightData : currentTeam.map(member => ({
                   id: `arrival_${member.id}`,
                   flightNumber: '',
                   departureTime: '',
@@ -210,14 +214,18 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   console.log('Arrival Flight data changed:', newData)
                 }}
                 hideAddButton={true}
+                orgSlug={orgSlug}
+                sessionId={sessionId}
+                showId={showId}
               />
 
-              {/* Departure Flight Grid - No Add Button */}
-              <GridEditor
+              {/* Departure Flight Grid - Saveable */}
+              <SaveableGridEditor
                 title={GRID_CONFIGS.departureFlight.title}
+                gridType="departure_flight"
                 icon={<Plane className="w-4 h-4" />}
                 columns={[...GRID_CONFIGS.departureFlight.columns]}
-                data={currentTeam.map(member => ({
+                data={departureFlightData.length > 0 ? departureFlightData : currentTeam.map(member => ({
                   id: `departure_${member.id}`,
                   flightNumber: '',
                   departureTime: '',
@@ -231,6 +239,9 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   console.log('Departure Flight data changed:', newData)
                 }}
                 hideAddButton={true}
+                orgSlug={orgSlug}
+                sessionId={sessionId}
+                showId={showId}
               />
             </div>
           )}
@@ -318,7 +329,12 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
               field={field}
               orgSlug={orgSlug}
               sessionId={sessionId}
+              showId={showId}
               comments={[]} // TODO: Load comments for each field
+              onFieldUpdate={() => {
+                // Let the server action handle revalidation
+                console.log('Field updated successfully')
+              }}
             />
           ))}
         </div>

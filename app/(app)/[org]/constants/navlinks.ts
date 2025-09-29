@@ -1,6 +1,5 @@
 import {
   LucideIcon,
-  CalendarDays,
   Calendar,
   Users,
   FileText,
@@ -20,12 +19,6 @@ export const getTabLinks = (
   orgSlug: string,
   userRole: string = "viewer"
 ): TabLink[] => [
-  {
-    id: "day",
-    label: "Day",
-    href: `/${orgSlug}/day`,
-    icon: CalendarDays,
-  },
   {
     id: "shows",
     label: "Shows",
@@ -77,12 +70,6 @@ export const getTabLinks = (
 
 // Default mobile navigation items (most frequently used)
 export const getDefaultMobileNav = (orgSlug: string): TabLink[] => [
-  {
-    id: "day",
-    label: "Day",
-    href: `/${orgSlug}/day`,
-    icon: CalendarDays,
-  },
   {
     id: "shows",
     label: "Shows",

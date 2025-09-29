@@ -15,6 +15,15 @@ interface ScheduleManagerProps {
   showId: string
   showDate: string
   scheduleItems: ScheduleItem[]
+  assignedPeople?: Array<{
+    person_id: string
+    duty: string | null
+    people: {
+      id: string
+      name: string
+      member_type: string | null
+    } | null
+  }>
 }
 
 interface ScheduleFormData {
@@ -23,9 +32,10 @@ interface ScheduleFormData {
   ends_at: string
   location: string
   notes: string
+  person_id: string // For person-specific assignments
 }
 
-export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: ScheduleManagerProps) {
+export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems, assignedPeople = [] }: ScheduleManagerProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<ScheduleFormData>({
@@ -33,7 +43,8 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: Sc
     starts_at: '',
     ends_at: '',
     location: '',
-    notes: ''
+    notes: '',
+    person_id: '' // Empty means team-wide
   })
 
   const resetForm = () => {
@@ -42,7 +53,8 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: Sc
       starts_at: '',
       ends_at: '',
       location: '',
-      notes: ''
+      notes: '',
+      person_id: ''
     })
     setIsAdding(false)
     setEditingId(null)
@@ -89,7 +101,8 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: Sc
       starts_at: startTime,
       ends_at: endTime,
       location: item.location || '',
-      notes: item.notes || ''
+      notes: item.notes || '',
+      person_id: '' // TODO: Get from item once person_id column is added
     })
     setEditingId(item.id)
     setIsAdding(true)
@@ -147,7 +160,7 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: Sc
           <Card className="border-2 border-dashed">
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-sm font-medium">Title *</label>
                     <Input
@@ -166,6 +179,23 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems }: Sc
                       onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                       placeholder="e.g., Stage, Lobby, Green Room"
                     />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Assigned To</label>
+                    <select
+                      value={formData.person_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, person_id: e.target.value }))}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Team Event</option>
+                      {assignedPeople.map((assignment) => (
+                        assignment.people && (
+                          <option key={assignment.person_id} value={assignment.person_id}>
+                            {assignment.people.name} {assignment.duty && `(${assignment.duty})`}
+                          </option>
+                        )
+                      ))}
+                    </select>
                   </div>
                 </div>
                 

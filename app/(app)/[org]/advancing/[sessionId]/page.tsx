@@ -1,4 +1,4 @@
-import { getAdvancingSession, getAdvancingFields } from '@/lib/actions/advancing'
+import { getAdvancingSession, getAdvancingFields, loadAdvancingGridData } from '@/lib/actions/advancing'
 import { getAvailablePeople, getShowTeam } from '@/lib/actions/show-team'
 import { Section } from '@/components/advancing/Section'
 import { PartyToggle } from '@/components/advancing/PartyToggle'
@@ -60,6 +60,19 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   // Get available people from the organization and current show team, filtered by party
   const availablePeople = org ? await getAvailablePeople(org.id, party) : []
   const showTeam = await getShowTeam(sessionWithShow.shows.id, party)
+
+  // Load existing grid data for flight information
+  const teamMemberIds = showTeam.map(member => member.id)
+  const arrivalFlightData = await loadAdvancingGridData(
+    sessionId,
+    'arrival_flight',
+    teamMemberIds
+  )
+  const departureFlightData = await loadAdvancingGridData(
+    sessionId,
+    'departure_flight',
+    teamMemberIds
+  )
 
   // Filter by party type
   const partyFields = fields.filter(f => f.party_type === party)
@@ -141,6 +154,8 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
                   showId={sessionWithShow.shows.id}
                   availablePeople={availablePeople}
                   currentTeam={showTeam}
+                  arrivalFlightData={arrivalFlightData}
+                  departureFlightData={departureFlightData}
                 />
               ))}
             </>

@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
   Calendar,
   Users,
   FileText,
@@ -24,20 +23,12 @@ export default function MobileQuickAccess({ orgSlug }: Omit<MobileQuickAccessPro
 
   const quickActions = [
     {
-      id: "today",
-      label: "Today's Schedule",
-      href: `/${orgSlug}/day`,
-      icon: CalendarDays,
-      color: "bg-blue-500",
-      description: "View today's events"
-    },
-    {
       id: "shows",
       label: "Shows",
       href: `/${orgSlug}/shows`,
       icon: Calendar,
       color: "bg-purple-500",
-      description: "Manage shows"
+      description: "Manage shows & schedules"
     },
     {
       id: "people",

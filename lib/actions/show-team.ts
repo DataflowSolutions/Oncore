@@ -150,6 +150,7 @@ export async function assignPersonToShow(formData: FormData) {
     throw new Error(`Failed to assign person to show: ${error.message}`)
   }
 
+  // Revalidate both the layout and the specific show pages
   revalidatePath('/', 'layout')
   return data
 }
@@ -197,5 +198,6 @@ export async function removePersonFromShow(showId: string, personId: string) {
     throw new Error(`Failed to remove person from show: ${error.message}`)
   }
 
+  // Revalidate both the layout and the specific show pages
   revalidatePath('/', 'layout')
 }
