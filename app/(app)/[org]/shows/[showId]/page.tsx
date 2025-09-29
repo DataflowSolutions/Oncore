@@ -98,7 +98,7 @@ export default async function ShowDetailPage({
           Manage Team
         </Link>
         <Link 
-          href={`/${orgSlug}/shows/${showId}/advancing`}
+          href={`/${orgSlug}/advancing?show=${showId}`}
           className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md transition-colors"
         >
           <Music className="w-4 h-4" />
