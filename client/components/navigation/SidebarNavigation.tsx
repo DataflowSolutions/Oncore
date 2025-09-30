@@ -29,14 +29,18 @@ interface NavItem {
   children?: NavItem[];
 }
 
-const SidebarNavigation = ({ orgSlug, userRole, currentPath }: SidebarNavigationProps) => {
+const SidebarNavigation = ({
+  orgSlug,
+  userRole,
+  currentPath,
+}: SidebarNavigationProps) => {
   const navItems: NavItem[] = [
-    {
-      id: "day",
-      label: "Day",
-      href: `/${orgSlug}/day`,
-      icon: CalendarDays,
-    },
+    // {
+    //   id: "day",
+    //   label: "Day",
+    //   href: `/${orgSlug}/day`,
+    //   icon: CalendarDays,
+    // },
     {
       id: "shows",
       label: "Shows",
@@ -81,32 +85,32 @@ const SidebarNavigation = ({ orgSlug, userRole, currentPath }: SidebarNavigation
       href: `/${orgSlug}/venues`,
       icon: MapPin,
     },
-    {
-      id: "advancing",
-      label: "Advancing",
-      href: `/${orgSlug}/advancing`,
-      icon: FileText,
-      children: [
-        {
-          id: "advancing-new",
-          label: "New Session",
-          href: `/${orgSlug}/advancing/new`,
-          icon: Plus,
-        },
-      ],
-    },
-    {
-      id: "back-office",
-      label: "Back Office",
-      href: `/${orgSlug}/back-office`,
-      icon: ChartColumn,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      href: `/${orgSlug}/settings`,
-      icon: Settings,
-    },
+    // {
+    //   id: "advancing",
+    //   label: "Advancing",
+    //   href: `/${orgSlug}/advancing`,
+    //   icon: FileText,
+    //   children: [
+    //     {
+    //       id: "advancing-new",
+    //       label: "New Session",
+    //       href: `/${orgSlug}/advancing/new`,
+    //       icon: Plus,
+    //     },
+    //   ],
+    // },
+    // {
+    //   id: "back-office",
+    //   label: "Back Office",
+    //   href: `/${orgSlug}/back-office`,
+    //   icon: ChartColumn,
+    // },
+    // {
+    //   id: "settings",
+    //   label: "Settings",
+    //   href: `/${orgSlug}/settings`,
+    //   icon: Settings,
+    // },
     {
       id: "profile",
       label: "Profile",
@@ -130,18 +134,20 @@ const SidebarNavigation = ({ orgSlug, userRole, currentPath }: SidebarNavigation
     if (currentPath === href) {
       return true;
     }
-    
+
     // For parent routes, only highlight if no child is more specific
-    if (currentPath.startsWith(href + '/')) {
+    if (currentPath.startsWith(href + "/")) {
       // Check if any child route is more specific
-      const item = allNavItems.find(navItem => navItem.href === href);
+      const item = allNavItems.find((navItem) => navItem.href === href);
       if (item?.children) {
-        const hasActiveChild = item.children.some(child => currentPath === child.href);
+        const hasActiveChild = item.children.some(
+          (child) => currentPath === child.href
+        );
         return !hasActiveChild; // Only active if no child is exactly active
       }
       return true;
     }
-    
+
     return false;
   };
 
