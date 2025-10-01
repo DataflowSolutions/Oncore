@@ -106,38 +106,40 @@ export async function createAdvancingSession(
     return { success: false, error: 'Organization not found' }
   }
 
-  // Hash the access code if provided
-  let accessCodeHash = null
-  if (sessionData.accessCode) {
-    accessCodeHash = crypto.createHash('sha256').update(sessionData.accessCode).digest('hex')
-  }
-
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { success: false, error: 'User not authenticated' }
-  }
-
+  // Use the RPC function to create session (no access code - use invitation system)
   const { data, error } = await supabase
-    .from('advancing_sessions')
-    .insert({
-      org_id: org.id,
-      show_id: sessionData.showId,
-      title: sessionData.title,
-      access_code_hash: accessCodeHash,
-      expires_at: sessionData.expiresAt || null,
-      created_by: user.id
+    .rpc('create_advancing_session', {
+      p_show_id: sessionData.showId,
+      p_org_id: org.id,
+      p_title: sessionData.title
     })
-    .select()
-    .single()
     
   if (error) {
     console.error('Error creating advancing session:', error)
     return { success: false, error: error.message }
   }
   
+  // The RPC returns the session data directly
+  const result = data as { id: string }
+  
+  // Fetch the full session data
+  const { data: session, error: fetchError } = await supabase
+    .from('advancing_sessions')
+    .select('*')
+    .eq('id', result.id)
+    .single()
+  
+  if (fetchError || !session) {
+    console.error('Error fetching created session:', fetchError)
+    return { success: false, error: 'Session created but could not be fetched' }
+  }
+  
   revalidatePath(`/${orgSlug}/advancing`)
-  return { success: true, data }
+  
+  return { 
+    success: true, 
+    data: session
+  }
 }
 
 // Field Management

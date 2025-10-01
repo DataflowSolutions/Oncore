@@ -17,7 +17,6 @@ RETURNS json
 AS $$
 DECLARE
   v_session_id uuid;
-  v_access_code text;
   v_result json;
 BEGIN
   -- Verify user has permission (must be org editor)
@@ -30,14 +29,6 @@ BEGIN
     RAISE EXCEPTION 'Show not found or does not belong to organization';
   END IF;
 
-  -- Generate random 8-character access code (uppercase alphanumeric)
-  v_access_code := upper(substr(md5(random()::text), 1, 8));
-  
-  -- Ensure uniqueness
-  WHILE EXISTS (SELECT 1 FROM advancing_sessions WHERE access_code_hash = crypt(v_access_code, access_code_hash)) LOOP
-    v_access_code := upper(substr(md5(random()::text), 1, 8));
-  END LOOP;
-
   -- Get show title if not provided
   IF p_title IS NULL THEN
     SELECT COALESCE(s.title, 'Show at ' || v.name)
@@ -47,19 +38,17 @@ BEGIN
     WHERE s.id = p_show_id;
   END IF;
 
-  -- Create advancing session
+  -- Create advancing session (no access code needed - use invitation system instead)
   INSERT INTO advancing_sessions (
     org_id,
     show_id,
     title,
-    access_code_hash,
     expires_at,
     created_by
   ) VALUES (
     p_org_id,
     p_show_id,
     p_title,
-    crypt(v_access_code, gen_salt('bf')),
     now() + interval '30 days',
     auth.uid()
   )
@@ -82,10 +71,9 @@ BEGIN
     json_build_object('show_id', p_show_id, 'title', p_title)
   );
 
-  -- Return session details with plain access code
+  -- Return session details
   SELECT json_build_object(
     'id', v_session_id,
-    'access_code', v_access_code,
     'show_id', p_show_id,
     'org_id', p_org_id,
     'title', p_title,

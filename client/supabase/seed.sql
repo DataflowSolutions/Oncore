@@ -18,7 +18,7 @@ INSERT INTO public.venues (id, org_id, name, address, city, country, capacity, c
 INSERT INTO public.shows (id, org_id, artist_id, venue_id, date, doors_at, set_time, status, title, notes, created_at, updated_at) VALUES ('380f36c2-b89b-4f01-9a35-3414fa36a637', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'b1216d05-b54d-4609-9476-b90934614ba6', '2025-10-29', NULL, '2025-10-29 19:00:00+00', 'draft', 'Alive', 'Need big crew', '2025-10-01 16:50:41.996643+00', '2025-10-01 16:50:41.996643+00');
 
 -- public.org_members
-INSERT INTO public.org_members (org_id, user_id, role, invited_email, created_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'a43f0f1c-1b37-4119-89d8-cbad45122958', 'owner', NULL, '2025-10-01 16:47:09.771331+00');
+INSERT INTO public.org_members (org_id, user_id, role, created_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'a43f0f1c-1b37-4119-89d8-cbad45122958', 'owner', '2025-10-01 16:47:09.771331+00');
 
 -- public.org_subscriptions
 INSERT INTO public.org_subscriptions (org_id, plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'solo_artist', 'trialing', NULL, NULL, '2025-10-01 16:47:09.771331+00', '2025-10-08 16:47:09.771331+00', false, '2025-10-01 16:47:09.771331+00', '2025-10-01 16:47:09.771331+00');

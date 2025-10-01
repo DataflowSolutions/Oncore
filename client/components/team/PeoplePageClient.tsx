@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSectionContainer } from "@/components/ui/CardSectionContainer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Users,
   Mail,
@@ -12,8 +14,17 @@ import {
   Music,
   Building,
   Wrench,
+  UserPlus,
+  Send,
+  Ghost,
+  CheckCircle2,
+  AlertCircle,
+  Crown,
 } from "lucide-react";
 import PersonDetailModal from "@/components/team/PersonDetailModal";
+import { invitePerson } from "@/lib/actions/invitations";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Person {
   id: string;
@@ -24,10 +35,32 @@ interface Person {
   notes: string | null;
   created_at: string;
   user_id: string | null;
+  role_title?: string | null;
+}
+
+interface Invitation {
+  id: string;
+  person_id: string;
+  email: string;
+  expires_at: string;
+  created_at: string;
+}
+
+interface SeatInfo {
+  org_id: string;
+  plan_id: string;
+  max_seats: number;
+  used_seats: number;
+  available_seats: number;
+  can_invite: boolean;
 }
 
 interface PeoplePageClientProps {
   allPeople: Person[];
+  orgId: string;
+  orgSlug: string;
+  seatInfo: SeatInfo | null;
+  invitations: Invitation[];
 }
 
 const getRoleIcon = (memberType: string | null) => {
@@ -44,9 +77,18 @@ const getRoleIcon = (memberType: string | null) => {
   }
 };
 
-export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
+export default function PeoplePageClient({ 
+  allPeople, 
+  orgId, 
+  orgSlug,
+  seatInfo,
+  invitations 
+}: PeoplePageClientProps) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
+  const router = useRouter();
 
   const handlePersonClick = (personId: string) => {
     setSelectedPersonId(personId);
@@ -56,6 +98,52 @@ export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedPersonId(null);
+  };
+
+  const handleInvite = async (personId: string, personName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (!seatInfo?.can_invite) {
+      toast.error("No available seats", {
+        description: "Upgrade your plan to invite more team members"
+      });
+      return;
+    }
+
+    setInvitingPersonId(personId);
+    
+    startTransition(async () => {
+      const result = await invitePerson(personId);
+      
+      if (result.success) {
+        toast.success("Invitation sent!", {
+          description: `${personName} will receive an email to join the team`
+        });
+        router.refresh();
+      } else {
+        toast.error("Failed to send invitation", {
+          description: result.error || "Please try again"
+        });
+      }
+      
+      setInvitingPersonId(null);
+    });
+  };
+
+  // Create a map of person_id to invitation for quick lookup
+  const invitationMap = new Map(invitations.map(inv => [inv.person_id, inv]));
+
+  const getPersonStatus = (person: Person) => {
+    if (person.user_id) {
+      return { type: 'active' as const, label: 'Active', icon: CheckCircle2, variant: 'default' as const };
+    }
+    if (invitationMap.has(person.id)) {
+      return { type: 'invited' as const, label: 'Invited', icon: Send, variant: 'secondary' as const };
+    }
+    if (person.email) {
+      return { type: 'not_invited' as const, label: 'Not Invited', icon: Ghost, variant: 'outline' as const };
+    }
+    return { type: 'no_email' as const, label: 'No Email', icon: AlertCircle, variant: 'destructive' as const };
   };
 
   const formatDate = (dateString: string) => {
@@ -80,9 +168,53 @@ export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
 
   const crewTeam = allPeople.filter((person) => person.member_type === "Crew");
 
+  const seatPercentage = seatInfo ? (seatInfo.used_seats / seatInfo.max_seats) * 100 : 0;
+  const getProgressColorClass = () => {
+    if (seatPercentage >= 100) return '[&>div]:bg-destructive';
+    if (seatPercentage >= 80) return '[&>div]:bg-amber-500';
+    return '[&>div]:bg-primary';
+  };
+
   return (
     <>
       <div className="space-y-6">
+        {/* Seat Usage Banner */}
+        {seatInfo && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold">Team Seats</h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {seatInfo.used_seats} / {seatInfo.max_seats} seats used
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {seatInfo.plan_id.replace('_', ' ')} plan
+                    </p>
+                  </div>
+                </div>
+                <Progress value={seatPercentage} className={`h-2 ${getProgressColorClass()}`} />
+                {!seatInfo.can_invite && (
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <AlertCircle className="w-4 h-4 text-amber-500" />
+                      <span>No available seats</span>
+                    </div>
+                    <Button variant="outline" size="sm" className="border-primary/30">
+                      <Crown className="w-3 h-3 mr-2" />
+                      Upgrade Plan
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Overview Stats */}
         <CardSectionContainer>
           <Card>
@@ -154,15 +286,18 @@ export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
               <div className="space-y-3">
                 {allPeople.map((person) => {
                   const RoleIcon = getRoleIcon(person.member_type);
+                  const status = getPersonStatus(person);
+                  const StatusIcon = status.icon;
+                  
                   return (
                     <div
                       key={person.id}
-                      className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+                      className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
                       onClick={() => handlePersonClick(person.id)}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-foreground">
                               {person.name}
                             </h4>
@@ -172,6 +307,10 @@ export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
                                 {person.member_type}
                               </Badge>
                             )}
+                            <Badge variant={status.variant} className="text-xs">
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {status.label}
+                            </Badge>
                           </div>
 
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -199,11 +338,46 @@ export default function PeoplePageClient({ allPeople }: PeoplePageClientProps) {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-1 text-right text-xs text-muted-foreground">
-                          <span>Added {formatDate(person.created_at)}</span>
-                          {person.user_id && (
-                            <Badge variant="secondary" className="text-xs">
-                              Has Account
+                        <div className="flex flex-col gap-2 items-end">
+                          <div className="text-xs text-muted-foreground">
+                            Added {formatDate(person.created_at)}
+                          </div>
+                          
+                          {/* Invite Button for users without account */}
+                          {!person.user_id && person.email && !invitationMap.has(person.id) && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              disabled={!seatInfo?.can_invite || invitingPersonId === person.id}
+                              onClick={(e) => handleInvite(person.id, person.name, e)}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            >
+                              {invitingPersonId === person.id ? (
+                                <>
+                                  <FileText className="w-3 h-3 mr-2 animate-pulse" />
+                                  Sending...
+                                </>
+                              ) : (
+                                <>
+                                  <UserPlus className="w-3 h-3 mr-2" />
+                                  Invite
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          {/* Show invitation sent date */}
+                          {invitationMap.has(person.id) && (
+                            <div className="text-xs text-muted-foreground">
+                              Invited {formatDate(invitationMap.get(person.id)!.created_at)}
+                            </div>
+                          )}
+
+                          {/* Show warning if no email */}
+                          {!person.email && !person.user_id && (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              No Email
                             </Badge>
                           )}
                         </div>
