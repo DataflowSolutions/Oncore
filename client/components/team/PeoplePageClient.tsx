@@ -22,9 +22,10 @@ import {
   Crown,
 } from "lucide-react";
 import PersonDetailModal from "@/components/team/PersonDetailModal";
-import { invitePerson } from "@/lib/actions/invitations";
+import { invitePerson, type SeatCheckResult } from "@/lib/actions/invitations";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import type { Database } from "@/lib/database.types";
 
 interface Person {
   id: string;
@@ -38,28 +39,19 @@ interface Person {
   role_title?: string | null;
 }
 
-interface Invitation {
-  id: string;
-  person_id: string;
-  email: string;
-  expires_at: string;
-  created_at: string;
-}
-
-interface SeatInfo {
-  org_id: string;
-  plan_id: string;
-  max_seats: number;
-  used_seats: number;
-  available_seats: number;
-  can_invite: boolean;
-}
+type Invitation = Database['public']['Tables']['invitations']['Row'] & {
+  people: {
+    id: string;
+    name: string;
+    email: string | null;
+    role_title: string | null;
+    member_type: "Artist" | "Crew" | "Agent" | "Manager" | null;
+  };
+};
 
 interface PeoplePageClientProps {
   allPeople: Person[];
-  orgId: string;
-  orgSlug: string;
-  seatInfo: SeatInfo | null;
+  seatInfo: SeatCheckResult | null;
   invitations: Invitation[];
 }
 
@@ -79,14 +71,12 @@ const getRoleIcon = (memberType: string | null) => {
 
 export default function PeoplePageClient({ 
   allPeople, 
-  orgId, 
-  orgSlug,
   seatInfo,
-  invitations 
+  invitations = [] // Default to empty array
 }: PeoplePageClientProps) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -367,9 +357,9 @@ export default function PeoplePageClient({
                           )}
 
                           {/* Show invitation sent date */}
-                          {invitationMap.has(person.id) && (
+                          {invitationMap.has(person.id) && invitationMap.get(person.id)!.created_at && (
                             <div className="text-xs text-muted-foreground">
-                              Invited {formatDate(invitationMap.get(person.id)!.created_at)}
+                              Invited {formatDate(invitationMap.get(person.id)!.created_at!)}
                             </div>
                           )}
 

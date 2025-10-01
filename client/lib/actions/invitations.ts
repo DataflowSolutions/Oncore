@@ -4,6 +4,38 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 
+// Type definitions for RPC function returns
+export type SeatCheckResult = {
+  can_invite: boolean;
+  seats_used: number;
+  seats_available: number;
+  plan_name: string | null;
+  max_seats: number;
+  used_seats: number;
+  plan_id: string;
+  org_id: string;
+};
+
+export type AcceptInvitationResult = {
+  success: boolean;
+  message: string;
+  org_id: string;
+  person_id: string;
+};
+
+export type InvitationData = {
+  id: string;
+  org_id: string;
+  person_id: string;
+  email: string;
+  expires_at: string;
+  org_name: string;
+  org_slug: string;
+  person_first_name: string | null;
+  person_last_name: string | null;
+  role: string;
+};
+
 /**
  * Invite a person (ghost account) to join the organization
  * Creates an invitation with a secure token and sends an email
@@ -39,12 +71,14 @@ export async function invitePerson(personId: string) {
   }
 
   // Check available seats
-  const { data: seatCheck, error: seatError } = await supabase
+  const { data: seatCheckData, error: seatError } = await supabase
     .rpc('check_available_seats', { p_org_id: person.org_id })
 
-  if (seatError || !seatCheck) {
+  if (seatError || !seatCheckData) {
     return { success: false, error: 'Failed to check seat availability' }
   }
+
+  const seatCheck = seatCheckData as SeatCheckResult
 
   if (!seatCheck.can_invite) {
     return {
@@ -133,7 +167,7 @@ export async function getInvitation(token: string) {
   const supabase = await getSupabaseServer()
 
   try {
-    const { data, error } = await supabase
+    const { data: rpcData, error } = await supabase
       .rpc('get_invitation_by_token', { p_token: token })
 
     if (error) {
@@ -141,11 +175,13 @@ export async function getInvitation(token: string) {
       return { success: false, error: error.message }
     }
 
-    if (!data) {
+    if (!rpcData) {
       return { success: false, error: 'Invitation not found or expired' }
     }
 
-    return { success: true, invitation: data }
+    const invitation = rpcData as InvitationData
+
+    return { success: true, invitation }
   } catch (err) {
     console.error('Error getting invitation:', err)
     return { success: false, error: 'Failed to get invitation' }
@@ -167,7 +203,7 @@ export async function acceptInvitation(token: string) {
 
   try {
     // Call RPC to accept invitation
-    const { data, error } = await supabase
+    const { data: rpcData, error } = await supabase
       .rpc('accept_invitation', {
         p_token: token,
         p_user_id: user.id
@@ -177,6 +213,8 @@ export async function acceptInvitation(token: string) {
       console.error('Error accepting invitation:', error)
       return { success: false, error: error.message }
     }
+
+    const data = rpcData as AcceptInvitationResult
 
     if (!data || !data.success) {
       return { success: false, error: data?.message || 'Failed to accept invitation' }
@@ -399,7 +437,7 @@ export async function getPersonInvitationStatus(personId: string) {
 /**
  * Check available seats for an organization
  */
-export async function checkAvailableSeats(orgId: string) {
+export async function checkAvailableSeats(orgId: string): Promise<SeatCheckResult | null> {
   const supabase = await getSupabaseServer()
 
   try {
@@ -411,7 +449,7 @@ export async function checkAvailableSeats(orgId: string) {
       return null
     }
 
-    return data
+    return data as SeatCheckResult
   } catch (err) {
     console.error('Error checking seats:', err)
     return null

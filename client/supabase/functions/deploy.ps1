@@ -9,7 +9,6 @@ if (!(Get-Command supabase -ErrorAction SilentlyContinue)) {
 }
 
 # Check if we're logged in
-$loginCheck = supabase functions list 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Not logged in to Supabase. Running login..." -ForegroundColor Yellow
     supabase login

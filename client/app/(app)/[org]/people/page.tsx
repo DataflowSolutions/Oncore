@@ -31,10 +31,8 @@ export default async function TeamPage({ params }: TeamPageProps) {
   return (
     <PeoplePageClient 
       allPeople={allPeople} 
-      orgId={org.id}
-      orgSlug={org.slug}
       seatInfo={seatInfo}
-      invitations={invitations}
+      invitations={invitations ?? []}
     />
   )
 }
