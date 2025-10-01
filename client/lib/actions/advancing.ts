@@ -469,7 +469,15 @@ export async function saveAdvancingGridData(
       for (const [columnKey, value] of Object.entries(row)) {
         if (columnKey === 'id' || !value) continue
         
-        const fieldName = `${gridType}_${row.id}_${columnKey}`
+        // Extract person ID from row.id (remove gridType prefix if present)
+        // row.id format: "team_personId" or "arrival_flight_personId"
+        const rowIdStr = String(row.id)
+        const gridTypePrefix = `${gridType}_`
+        const personId = rowIdStr.startsWith(gridTypePrefix) 
+          ? rowIdStr.substring(gridTypePrefix.length)
+          : rowIdStr
+        
+        const fieldName = `${gridType}_${personId}_${columnKey}`
         const section = gridType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
         
         // Check if field exists

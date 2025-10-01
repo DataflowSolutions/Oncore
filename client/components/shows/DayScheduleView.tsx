@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Clock, MapPin, User, Users, Filter, Eye } from 'lucide-react'
 import { Database } from '@/lib/database.types'
+import { PersonSelector } from '@/components/advancing/PersonSelector'
 
 type ScheduleItem = Database['public']['Tables']['schedule_items']['Row']
 type ScheduleVisibility = 'all' | 'artist_team' | 'promoter_team' | 'crew' | 'management' | 'venue_staff' | 'security' | 'session_specific'
@@ -25,6 +26,7 @@ interface DayScheduleViewProps {
     } | null
   }>
   userRole?: string // For determining default visibility filter
+  currentUserId?: string | null // Current logged-in user ID
 }
 
 export function DayScheduleView({ 
@@ -32,11 +34,33 @@ export function DayScheduleView({
   showDate, 
   doorsAt, 
   setTime,
-  userRole = 'viewer'
+  assignedPeople,
+  userRole = 'viewer',
+  currentUserId
 }: DayScheduleViewProps) {
   // Role-based filtering state
   const [activeFilter, setActiveFilter] = useState<'all' | 'global' | 'role_specific'>('all')
   const [showFilters, setShowFilters] = useState(false)
+  
+  // Person selector state
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(() => {
+    // Default to current user if they're in the team
+    if (currentUserId && assignedPeople.some(p => p.person_id === currentUserId)) {
+      return currentUserId
+    }
+    // Otherwise default to first person
+    return assignedPeople[0]?.person_id || null
+  })
+  
+  // Get team members for the selector
+  const teamMembers = assignedPeople
+    .filter(p => p.people)
+    .map(p => ({
+      id: p.person_id,
+      name: p.people!.name,
+      duty: p.duty,
+      email: null
+    }))
 
   // Get user's role-specific visibility options
   const getUserVisibilityOptions = (role: string): ScheduleVisibility[] => {
@@ -57,17 +81,28 @@ export function DayScheduleView({
     }
   }
 
-  // Filter schedule items based on current filters
+  // Filter schedule items based on current filters and selected person
   const filteredItems = scheduleItems.filter(() => {
+    // Filter by person - show global items (person_id is null) OR items for the selected person
+    // Note: person_id column needs to be added to schedule_items table
+    // For now, we'll show all items and enhance this after DB migration
+    const isPersonSpecific = false // Will be: _item.person_id === selectedPersonId
+    const isGlobal = true // Will be: _item.person_id === null
+    
+    // Always show items that match the selected person or are global
+    const matchesPerson = !selectedPersonId || isGlobal || isPersonSpecific
+    
+    if (!matchesPerson) return false
+    
     if (activeFilter === 'global') {
       // Show only global/shared items (this would check session_id is null when DB is updated)
-      return true // For now, show all items
+      return isGlobal
     }
     if (activeFilter === 'role_specific') {
       // Show only role-specific items (this would filter by visibility when DB is updated)
-      return true // For now, show all items
+      return isPersonSpecific
     }
-    return true // Show all items
+    return true // Show all items that match the person filter
   })
 
   // Create combined timeline items including show times and schedule items
@@ -173,6 +208,8 @@ export function DayScheduleView({
     return Math.max(0, Math.min(100, (relativeMinutes / totalTimespan) * 100))
   }
 
+  const currentPerson = teamMembers.find(p => p.id === selectedPersonId) || null
+
   return (
     <Card className="bg-[#111] border-muted">
       <CardHeader>
@@ -191,7 +228,17 @@ export function DayScheduleView({
             </p>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/* Person Selector */}
+            {teamMembers.length > 0 && (
+              <PersonSelector
+                currentPerson={currentPerson}
+                availablePeople={teamMembers}
+                onPersonChange={(personId) => setSelectedPersonId(personId)}
+                className="mr-2"
+              />
+            )}
+            
             <Button
               variant={showFilters ? "default" : "outline"}
               size="sm"

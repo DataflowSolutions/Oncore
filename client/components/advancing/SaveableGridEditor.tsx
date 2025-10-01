@@ -1,19 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Save, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Save, Loader2, Copy, Clipboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SmartTimeInput, SmartDateInput } from '@/components/ui/smart-inputs'
 import { saveAdvancingGridData } from '@/lib/actions/advancing'
-
-interface GridColumn {
-  key: string
-  label: string
-  type: 'text' | 'email' | 'phone' | 'date' | 'time'
-  placeholder?: string
-  width?: string
-}
+import type { GridColumn } from './constants/grid-config'
 
 interface GridRow {
   id: string
@@ -54,6 +47,13 @@ export function SaveableGridEditor({
   const [localData, setLocalData] = useState(data)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [copiedData, setCopiedData] = useState<Record<string, string> | null>(null)
+
+  // Update local data when prop data changes (e.g., on refresh with loaded data)
+  useEffect(() => {
+    setLocalData(data)
+    setHasUnsavedChanges(false)
+  }, [data])
 
   const handleCellChange = (rowId: string, columnKey: string, value: string) => {
     const newData = localData.map(row => 
@@ -113,6 +113,35 @@ export function SaveableGridEditor({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const copyRow = (rowId: string) => {
+    const row = localData.find(r => r.id === rowId)
+    if (!row) return
+
+    // Copy all non-empty fields except id
+    const dataToCopy: Record<string, string> = {}
+    Object.entries(row).forEach(([key, value]) => {
+      if (key !== 'id' && value && String(value).trim() !== '') {
+        dataToCopy[key] = String(value)
+      }
+    })
+    
+    setCopiedData(dataToCopy)
+  }
+
+  const pasteRow = (rowId: string) => {
+    if (!copiedData || Object.keys(copiedData).length === 0) return
+
+    const newData = localData.map(row => {
+      if (row.id === rowId) {
+        return { ...row, ...copiedData }
+      }
+      return row
+    })
+    setLocalData(newData)
+    setHasUnsavedChanges(true)
+    onDataChange(newData)
   }
 
   const formatPlaceholder = (placeholder: string, rowIndex: number) => {
@@ -202,7 +231,8 @@ export function SaveableGridEditor({
                 onClick={handleSave}
                 size="sm"
                 disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                variant="outline"
+                className="border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200"
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -240,16 +270,45 @@ export function SaveableGridEditor({
                   {column.label}
                 </th>
               ))}
+              <th className="text-right p-3 w-24 text-xs font-medium text-neutral-300 uppercase tracking-wider bg-neutral-900/50">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {localData.map((row, rowIndex) => (
-              <tr key={row.id} className="border-b border-neutral-800 hover:bg-neutral-900/20">
+              <tr 
+                key={row.id} 
+                className="border-b border-neutral-800 hover:bg-neutral-900/20"
+              >
                 {columns.map((column) => (
                   <td key={column.key} className="p-3">
                     {renderInput(column, row, rowIndex)}
                   </td>
                 ))}
+                <td className="p-3">
+                  <div className="flex gap-1 justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 hover:bg-neutral-800 cursor-pointer"
+                      onClick={() => copyRow(row.id)}
+                      title="Copy this row"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 hover:bg-neutral-800 disabled:opacity-30 cursor-pointer"
+                      onClick={() => pasteRow(row.id)}
+                      disabled={!copiedData}
+                      title="Paste copied data"
+                    >
+                      <Clipboard className="w-3.5 h-3.5 text-neutral-400" />
+                    </Button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

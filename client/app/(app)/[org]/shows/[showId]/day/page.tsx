@@ -1,21 +1,41 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Music, Clock, ArrowLeft } from 'lucide-react'
+import { Calendar, MapPin, Music, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getScheduleItemsForShow } from '@/lib/actions/schedule'
-import { DayScheduleView } from '@/components/shows/DayScheduleView'
+import { CalendarDayView } from '@/components/shows/CalendarDayView'
 import { ScheduleManager } from '@/components/shows/ScheduleManager'
 
 interface ShowDayPageProps {
   params: Promise<{ org: string, showId: string }>
+  searchParams: Promise<{ people?: string; date?: string }> // Comma-separated person IDs and date
 }
 
 export default async function ShowDayPage({
-  params
+  params,
+  searchParams
 }: ShowDayPageProps) {
   const { org: orgSlug, showId } = await params
+  const { people: selectedPeopleParam, date: dateParam } = await searchParams
+  
+  // Parse selected people from query params
+  const selectedPeopleIds = selectedPeopleParam 
+    ? selectedPeopleParam.split(',').filter(Boolean)
+    : []
+
+  // Parse date from query params (default to today)
+  // Use UTC to avoid timezone issues with date-only strings
+  let currentDate: Date
+  if (dateParam) {
+    // Parse as local date (YYYY-MM-DD) without timezone conversion
+    const [year, month, day] = dateParam.split('-').map(Number)
+    currentDate = new Date(year, month - 1, day)
+    currentDate.setHours(0, 0, 0, 0)
+  } else {
+    currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0)
+  }
   
   const supabase = await getSupabaseServer()
   
@@ -77,6 +97,66 @@ export default async function ShowDayPage({
     `)
     .eq('show_id', showId)
 
+  // Get advancing session for this show to fetch flight data
+  const { data: advancingSession } = await supabase
+    .from('advancing_sessions')
+    .select('id')
+    .eq('show_id', showId)
+    .single()
+
+  // Fetch advancing data (flight times) for the calendar
+  let advancingData = undefined
+  if (advancingSession && assignedPeople) {
+    const { data: advancingFields } = await supabase
+      .from('advancing_fields')
+      .select('field_name, value')
+      .eq('session_id', advancingSession.id)
+      .or('field_name.like.arrival_flight_%,field_name.like.departure_flight_%')
+
+    if (advancingFields) {
+      const arrivalFlights: Array<{ personId: string; time: string; flightNumber: string; from: string; to: string }> = []
+      const departureFlights: Array<{ personId: string; time: string; flightNumber: string; from: string; to: string }> = []
+
+      assignedPeople.forEach(person => {
+        // Extract arrival flight data
+        const arrivalTime = advancingFields.find(f => f.field_name === `arrival_flight_${person.person_id}_arrivalTime`)
+        const arrivalDate = advancingFields.find(f => f.field_name === `arrival_flight_${person.person_id}_arrivalDate`)
+        const flightNumber = advancingFields.find(f => f.field_name === `arrival_flight_${person.person_id}_flightNumber`)
+        const fromCity = advancingFields.find(f => f.field_name === `arrival_flight_${person.person_id}_fromCity`)
+        const toCity = advancingFields.find(f => f.field_name === `arrival_flight_${person.person_id}_toCity`)
+
+        if (arrivalTime?.value && arrivalDate?.value) {
+          arrivalFlights.push({
+            personId: person.person_id,
+            time: `${arrivalDate.value}T${arrivalTime.value}`,
+            flightNumber: String(flightNumber?.value || ''),
+            from: String(fromCity?.value || ''),
+            to: String(toCity?.value || '')
+          })
+        }
+
+        // Extract departure flight data
+        const departureTime = advancingFields.find(f => f.field_name === `departure_flight_${person.person_id}_departureTime`)
+        const departureDate = advancingFields.find(f => f.field_name === `departure_flight_${person.person_id}_departureDate`)
+        const deptFlightNumber = advancingFields.find(f => f.field_name === `departure_flight_${person.person_id}_flightNumber`)
+        const deptFromCity = advancingFields.find(f => f.field_name === `departure_flight_${person.person_id}_fromCity`)
+        const deptToCity = advancingFields.find(f => f.field_name === `departure_flight_${person.person_id}_toCity`)
+
+        if (departureTime?.value && departureDate?.value) {
+          departureFlights.push({
+            personId: person.person_id,
+            time: `${departureDate.value}T${departureTime.value}`,
+            flightNumber: String(deptFlightNumber?.value || ''),
+            from: String(deptFromCity?.value || ''),
+            to: String(deptToCity?.value || '')
+          })
+        }
+      })
+
+      advancingData = { arrivalFlights, departureFlights }
+    }
+  }
+
   const showDate = new Date(show.date)
   const today = new Date()
   const isToday = showDate.toDateString() === today.toDateString()
@@ -125,56 +205,15 @@ export default async function ShowDayPage({
         </div>
       </div>
 
-      {/* Show Key Times */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Show Times
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {show.doors_at && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Doors Open</p>
-                <p className="text-lg font-semibold">
-                  {new Date(show.doors_at).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            )}
-            {show.set_time && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Set Time</p>
-                <p className="text-lg font-semibold">
-                  {new Date(show.set_time).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <Badge variant={show.status === 'confirmed' ? 'default' : 'secondary'}>
-                {show.status}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Main Day Schedule View - Multi-Layer Timeline */}
-      <DayScheduleView
-        scheduleItems={scheduleItems}
+      <CalendarDayView
+        currentDate={currentDate}
         showDate={show.date}
         doorsAt={show.doors_at}
         setTime={show.set_time}
         assignedPeople={assignedPeople || []}
-        userRole="viewer" // TODO: Get actual user role from session
+        selectedPeopleIds={selectedPeopleIds}
+        advancingData={advancingData}
       />
 
       {/* Schedule Management */}

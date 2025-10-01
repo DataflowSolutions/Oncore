@@ -61,8 +61,13 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   const availablePeople = org ? await getAvailablePeople(org.id, party) : []
   const showTeam = await getShowTeam(sessionWithShow.shows.id, party)
 
-  // Load existing grid data for flight information
+  // Load existing grid data for team and flight information
   const teamMemberIds = showTeam.map(member => member.id)
+  const teamData = await loadAdvancingGridData(
+    sessionId,
+    'team',
+    teamMemberIds
+  )
   const arrivalFlightData = await loadAdvancingGridData(
     sessionId,
     'arrival_flight',
@@ -154,6 +159,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
                   showId={sessionWithShow.shows.id}
                   availablePeople={availablePeople}
                   currentTeam={showTeam}
+                  teamData={teamData}
                   arrivalFlightData={arrivalFlightData}
                   departureFlightData={departureFlightData}
                 />

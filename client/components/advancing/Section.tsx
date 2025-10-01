@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Users, Plane, PlaneLanding } from 'lucide-react'
 import { FieldRow } from './FieldRow'
-import { GridEditor, GRID_CONFIGS } from './GridEditor'
+import { GRID_CONFIGS } from './constants/grid-config'
 import { SaveableGridEditor } from './SaveableGridEditor'
 import { AddTeamMemberModal } from './AddTeamMemberModal'
 import { TeamMembersGrid } from './TeamMembersGrid'
@@ -39,37 +39,12 @@ interface SectionProps {
     duty?: string
   }>
   defaultExpanded?: boolean
+  teamData?: Array<{ id: string; [key: string]: string | number | boolean }>
   arrivalFlightData?: Array<{ id: string; [key: string]: string | number | boolean }>
   departureFlightData?: Array<{ id: string; [key: string]: string | number | boolean }>
 }
 
-// Helper function to determine if a section should use grid layout
-const isGridSection = (title: string): boolean => {
-  const gridSections = ['team info', 'team', 'arrival flight', 'departure flight']
-  return gridSections.includes(title.toLowerCase())
-}
-
-// Helper function to get grid configuration for a section
-const getGridConfig = (title: string) => {
-  const titleLower = title.toLowerCase()
-  if (titleLower === 'team info') return GRID_CONFIGS.teamInfo
-  if (titleLower === 'team') return GRID_CONFIGS.team
-  if (titleLower === 'arrival flight') return GRID_CONFIGS.arrivalFlight
-  if (titleLower === 'departure flight') return GRID_CONFIGS.departureFlight
-  return null
-}
-
-// Helper function to get section icon
-const getSectionIcon = (title: string) => {
-  const titleLower = title.toLowerCase()
-  if (titleLower === 'team info') return <Users className="w-4 h-4" />
-  if (titleLower === 'team') return <Users className="w-4 h-4" />
-  if (titleLower === 'arrival flight') return <PlaneLanding className="w-4 h-4" />
-  if (titleLower === 'departure flight') return <Plane className="w-4 h-4" />
-  return null
-}
-
-export function Section({ title, fields, orgSlug, sessionId, showId, availablePeople = [], currentTeam = [], defaultExpanded = true, arrivalFlightData = [], departureFlightData = [] }: SectionProps) {
+export function Section({ title, fields, orgSlug, sessionId, showId, availablePeople = [], currentTeam = [], defaultExpanded = true, teamData = [], arrivalFlightData = [], departureFlightData = [] }: SectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
   
@@ -176,12 +151,13 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 onUnassign={handleUnassignTeamMember}
               />
 
-              {/* Team Grid - No Add Button */}
-              <GridEditor
+              {/* Team Grid - Saveable */}
+              <SaveableGridEditor
                 title={GRID_CONFIGS.team.title}
+                gridType="team"
                 columns={[...GRID_CONFIGS.team.columns]}
-                data={currentTeam.map(member => ({
-                  id: member.id,
+                data={teamData.length > 0 ? teamData : currentTeam.map(member => ({
+                  id: `team_${member.id}`,
                   rooming: '',
                   luggage: '',
                   visa: '',
@@ -192,6 +168,9 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   console.log('Team data changed:', newData)
                 }}
                 hideAddButton={true}
+                orgSlug={orgSlug}
+                sessionId={sessionId}
+                showId={showId}
               />
 
               {/* Arrival Flight Grid - Saveable */}
@@ -201,7 +180,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 icon={<PlaneLanding className="w-4 h-4" />}
                 columns={[...GRID_CONFIGS.arrivalFlight.columns]}
                 data={arrivalFlightData.length > 0 ? arrivalFlightData : currentTeam.map(member => ({
-                  id: `arrival_${member.id}`,
+                  id: `arrival_flight_${member.id}`,
                   flightNumber: '',
                   departureTime: '',
                   departureDate: '',
@@ -226,7 +205,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 icon={<Plane className="w-4 h-4" />}
                 columns={[...GRID_CONFIGS.departureFlight.columns]}
                 data={departureFlightData.length > 0 ? departureFlightData : currentTeam.map(member => ({
-                  id: `departure_${member.id}`,
+                  id: `departure_flight_${member.id}`,
                   flightNumber: '',
                   departureTime: '',
                   departureDate: '',
@@ -265,41 +244,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
     )
   }
 
-  if (fields.length === 0 && !isGridSection(title)) return null
-
-  // If this is a grid section, render with GridEditor
-  if (isGridSection(title)) {
-    const gridConfig = getGridConfig(title)
-    const icon = getSectionIcon(title)
-    
-    if (!gridConfig) return null
-
-    // Convert fields to grid data (for now, just create empty rows to match the expected structure)
-    const gridData = fields.length > 0 
-      ? fields.map((field) => ({
-          id: field.id,
-          ...gridConfig.columns.reduce((acc, col) => ({ 
-            ...acc, 
-            [col.key]: field.value || '' 
-          }), {})
-        }))
-      : []
-
-    return (
-      <GridEditor
-        title={gridConfig.title}
-        icon={icon}
-        columns={[...gridConfig.columns]}
-        data={gridData}
-        onDataChange={(newData) => {
-          // TODO: Handle data changes - update fields in database
-          console.log('Grid data changed:', newData)
-        }}
-        addButtonText={gridConfig.addButtonText}
-        className="mb-4"
-      />
-    )
-  }
+  if (fields.length === 0) return null
 
   // Regular section layout for non-grid sections
   return (
