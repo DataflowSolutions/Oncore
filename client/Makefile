@@ -28,7 +28,10 @@ logs-prod:
 
 # Install dependencies
 install:
-	npm install
+	@echo "Installing client dependencies..."
+	powershell -Command "npm install"
+	@echo "Installing backend dependencies..."
+	powershell -Command "cd ../backend; npm install"
 
 # Initialize Supabase (run once)
 supabase-init:
@@ -84,11 +87,11 @@ db-reset:
 
 # Generate TypeScript types
 generate-types:
-	npx supabase gen types typescript --linked > lib/database.types.ts
+	powershell -Command "npx supabase gen types typescript --linked | Out-File -FilePath lib/database.types.ts -Encoding UTF8"
 
 # Generate TypeScript types (local)
 generate-types-local:
-	npx supabase gen types typescript --local > lib/database.types.ts
+	powershell -Command "npx supabase gen types typescript --local | Out-File -FilePath lib/database.types.ts -Encoding UTF8"
 
 # ===================
 # DEPLOYMENT & LINKING
@@ -111,12 +114,17 @@ seed:
 # DEVELOPMENT WORKFLOWS
 # ===================
 
-# Full local development setup
-setup-local:
+# Full local development setup (separate terminals)
+setup-local-terminals:
 	$(MAKE) install
-	npx supabase start
+	@echo "Starting Supabase in new terminal..."
+	powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd $$PWD; npx supabase start'"
+	@echo "Starting Next.js client in new terminal..."
+	powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd $$PWD; npm run dev'"
+	@echo "Waiting for services to start..."
+	@powershell -Command "Start-Sleep -Seconds 10"
+	@echo "Generating TypeScript types..."
 	$(MAKE) generate-types-local
-	$(MAKE) dev-d
 
 # Setup for production deployment
 setup-prod:
@@ -150,25 +158,26 @@ db-console:
 # Help
 help:
 	@echo "Available commands:"
-	@echo "  install          - Install all dependencies"
-	@echo "  setup-local      - Complete local development setup"
-	@echo "  setup-prod       - Setup for production deployment"
+	@echo "  install                - Install all dependencies"
+	@echo "  setup-local           - Complete local development setup (Docker)"
+	@echo "  setup-local-terminals - Complete local development setup (separate terminals)"
+	@echo "  setup-prod            - Setup for production deployment"
 	@echo ""
 	@echo "Local Development:"
-	@echo "  supabase-start   - Start local Supabase + Next.js"
-	@echo "  supabase-stop    - Stop local Supabase"
-	@echo "  supabase-studio  - Open Supabase Studio"
-	@echo "  dev              - Start Next.js development server"
+	@echo "  supabase-start        - Start local Supabase + Next.js"
+	@echo "  supabase-stop         - Stop local Supabase"
+	@echo "  supabase-studio       - Open Supabase Studio"
+	@echo "  dev                   - Start Next.js development server"
 	@echo ""
 	@echo "Database Management:"
-	@echo "  migration-new    - Create new migration"
-	@echo "  migration-diff   - Generate migration from remote changes"
-	@echo "  db-push          - Push local schema to production"
-	@echo "  db-pull          - Pull remote schema to local"
-	@echo "  db-reset         - Reset local database"
-	@echo "  deploy           - Deploy to production"
+	@echo "  migration-new         - Create new migration"
+	@echo "  migration-diff        - Generate migration from remote changes"
+	@echo "  db-push               - Push local schema to production"
+	@echo "  db-pull               - Pull remote schema to local"
+	@echo "  db-reset              - Reset local database"
+	@echo "  deploy                - Deploy to production"
 	@echo ""
 	@echo "Utilities:"
-	@echo "  generate-types   - Generate TypeScript types"
-	@echo "  status           - Show Supabase status"
-	@echo "  help             - Show this help message"
+	@echo "  generate-types        - Generate TypeScript types"
+	@echo "  status                - Show Supabase status"
+	@echo "  help                  - Show this help message"

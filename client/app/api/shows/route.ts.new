@@ -1,0 +1,12 @@
+// Next.js API Route Handler for Shows
+// This file connects Next.js API routes to the backend controller
+// Path: client/app/api/shows/route.ts
+
+import { NextRequest } from 'next/server'
+import { GET, POST } from '@/../backend/src/routes/shows.routes'
+
+export { GET, POST }
+
+// Export route config
+export const runtime = 'nodejs' // or 'edge' if using Edge Runtime
+export const dynamic = 'force-dynamic' // Always run dynamically

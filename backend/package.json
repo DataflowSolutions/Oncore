@@ -1,0 +1,23 @@
+{
+  "name": "oncore-backend",
+  "version": "1.0.0",
+  "description": "Oncore Backend API - Reusable for Web and Mobile",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "next": "15.5.3",
+    "zod": "^4.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.7.0",
+    "typescript": "^5"
+  }
+}
