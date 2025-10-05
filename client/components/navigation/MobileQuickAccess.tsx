@@ -39,12 +39,12 @@ export default function MobileQuickAccess({ orgSlug }: Omit<MobileQuickAccessPro
       description: "View team members"
     },
     {
-      id: "advancing",
-      label: "Advancing",
-      href: `/${orgSlug}/advancing`,
-      icon: FileText,
-      color: "bg-orange-500",
-      description: "Advance shows"
+      id: "venues",
+      label: "Venues",
+      href: `/${orgSlug}/venues`,
+      icon: MapPin,
+      color: "bg-blue-500",
+      description: "Manage venues"
     },
   ];
 

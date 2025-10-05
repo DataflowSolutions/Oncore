@@ -50,6 +50,12 @@ const ShowSidebar = ({
       href: `/${orgSlug}/shows/${showId}/team`,
       icon: Users,
     },
+    {
+      id: "advancing",
+      label: "Advancing",
+      href: `/${orgSlug}/shows/${showId}/advancing`,
+      icon: FileText,
+    },
   ];
 
   const isActiveRoute = (href: string) => {

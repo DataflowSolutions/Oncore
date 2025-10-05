@@ -134,7 +134,7 @@ export async function createAdvancingSession(
     return { success: false, error: 'Session created but could not be fetched' }
   }
   
-  revalidatePath(`/${orgSlug}/advancing`)
+  revalidatePath(`/${orgSlug}/shows/${sessionData.showId}/advancing`)
   
   return { 
     success: true, 
@@ -212,7 +212,17 @@ export async function createAdvancingField(
     return { success: false, error: error.message }
   }
   
-  revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+  // Fetch the session to get showId for revalidation
+  const { data: sessionData } = await supabase
+    .from('advancing_sessions')
+    .select('show_id')
+    .eq('id', sessionId)
+    .single()
+  
+  if (sessionData?.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${sessionData.show_id}/advancing/${sessionId}`)
+  }
+  
   return { success: true, data }
 }
 
@@ -236,7 +246,17 @@ export async function updateAdvancingField(
     return { success: false, error: error.message }
   }
   
-  revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+  // Fetch the session to get showId for revalidation
+  const { data: sessionData } = await supabase
+    .from('advancing_sessions')
+    .select('show_id')
+    .eq('id', sessionId)
+    .single()
+  
+  if (sessionData?.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${sessionData.show_id}/advancing/${sessionId}`)
+  }
+  
   return { success: true, data }
 }
 
@@ -270,10 +290,10 @@ export async function createAdvancingComment(
   // Get current user
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Get org_id from session
+  // Get org_id and show_id from session
   const { data: session, error: sessionError } = await supabase
     .from('advancing_sessions')
-    .select('org_id')
+    .select('org_id, show_id')
     .eq('id', sessionId)
     .single()
     
@@ -298,7 +318,10 @@ export async function createAdvancingComment(
     return { success: false, error: error.message }
   }
   
-  revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+  if (session.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+  }
+  
   return { success: true, data }
 }
 
@@ -355,10 +378,10 @@ export async function createAdvancingDocument(
     return { success: false, error: 'User not authenticated' }
   }
 
-  // Get org_id from session
+  // Get org_id and show_id from session
   const { data: session, error: sessionError } = await supabase
     .from('advancing_sessions')
-    .select('org_id')
+    .select('org_id, show_id')
     .eq('id', sessionId)
     .single()
     
@@ -383,7 +406,10 @@ export async function createAdvancingDocument(
     return { success: false, error: error.message }
   }
   
-  revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+  if (session.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+  }
+  
   return { success: true, data }
 }
 
@@ -523,7 +549,7 @@ export async function saveAdvancingGridData(
       }
     }
     
-    revalidatePath(`/${orgSlug}/advancing/${sessionId}`)
+    revalidatePath(`/${orgSlug}/shows/${showId}/advancing/${sessionId}`)
     return { success: true }
     
   } catch (error) {

@@ -35,9 +35,9 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="sm">
-          <Link href={`/${orgSlug}/advancing`}>
+          <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Sessions
+            Back to Show Advancing
           </Link>
         </Button>
       </div>
@@ -71,7 +71,7 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
             })
             
             if (result.success && result.data) {
-              redirect(`/${orgSlug}/advancing/${result.data.id}`)
+              redirect(`/${orgSlug}/shows/${showId}/advancing/${result.data.id}`)
             }
           }} className="space-y-6">
             <div className="space-y-2">
@@ -116,7 +116,7 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
               </button>
               
               <Button asChild variant="outline">
-                <Link href={`/${orgSlug}/advancing`}>
+                <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
                   Cancel
                 </Link>
               </Button>

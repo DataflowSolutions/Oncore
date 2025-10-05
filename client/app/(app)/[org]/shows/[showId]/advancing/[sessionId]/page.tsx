@@ -6,7 +6,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { unstable_noStore as noStore } from 'next/cache'
 
 interface AdvancingSessionPageProps {
-  params: Promise<{ org: string; sessionId: string }>
+  params: Promise<{ org: string; showId: string; sessionId: string }>
   searchParams?: Promise<{ party?: 'from_us' | 'from_you' }>
 }
 
@@ -14,7 +14,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   // Disable caching to ensure fresh data on party changes
   noStore()
   
-  const { org: orgSlug, sessionId } = await params
+  const { org: orgSlug, showId, sessionId } = await params
   const searchParamsObj = await searchParams
   const party = searchParamsObj?.party || 'from_us'
 
@@ -112,7 +112,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
                 {sessionWithShow.shows.venues.name} • {new Date(sessionWithShow.shows.date).toLocaleDateString()}
               </p>
             </div>
-            <PartyToggle current={party} basePath={`/${orgSlug}/advancing/${sessionId}`} />
+            <PartyToggle current={party} basePath={`/${orgSlug}/shows/${showId}/advancing/${sessionId}`} />
           </div>
         </div>
       </div>

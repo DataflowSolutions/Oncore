@@ -74,7 +74,7 @@ export default function MobileShowNavigation({ orgSlug, showId, orgId }: MobileS
     {
       id: "advancing",
       label: "Advancing",
-      href: `/${orgSlug}/advancing?show=${showId}`,
+      href: `/${orgSlug}/shows/${showId}/advancing`,
       icon: FileText,
       color: "bg-orange-500",
       description: "Advance show"

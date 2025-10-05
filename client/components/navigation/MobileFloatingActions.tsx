@@ -11,12 +11,10 @@ import {
   Menu,
   UserPlus,
   CalendarPlus,
-  FileText,
   Music,
   Building,
   Settings,
   Search,
-  Clock,
 } from "lucide-react";
 
 interface MobileFloatingActionsProps {
@@ -118,32 +116,7 @@ export default function MobileFloatingActions({ orgSlug }: MobileFloatingActions
       ];
     }
 
-    // Advancing pages
-    if (pathname.startsWith(`/${orgSlug}/advancing`)) {
-      return [
-        {
-          id: "new-session",
-          label: "New Session",
-          href: `/${orgSlug}/advancing/new`,
-          icon: Plus,
-          color: "bg-orange-500 hover:bg-orange-600",
-        },
-        {
-          id: "templates",
-          label: "Templates",
-          href: `/${orgSlug}/advancing/templates`,
-          icon: FileText,
-          color: "bg-blue-500 hover:bg-blue-600",
-        },
-        {
-          id: "schedule",
-          label: "Schedule",
-          href: `/${orgSlug}/shows/schedule`,
-          icon: Clock,
-          color: "bg-green-500 hover:bg-green-600",
-        },
-      ];
-    }
+    // Advancing is now show-specific, removed from global navigation
 
     // Day page - removed since day scheduling is now show-specific
 

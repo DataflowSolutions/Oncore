@@ -111,6 +111,12 @@ export default async function ShowDetailPage({
                 Team
               </Button>
             </Link>
+            <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
+              <Button size="lg" variant="outline" className="gap-2">
+                <FileText className="w-5 h-5" />
+                Advancing
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

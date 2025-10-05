@@ -52,8 +52,8 @@ const ShowSidebarNavigation = ({
     },
     {
       id: "advancing",
-      label: "Show Advancing",
-      href: `/${orgSlug}/advancing?show=${showId}`,
+      label: "Advancing",
+      href: `/${orgSlug}/shows/${showId}/advancing`,
       icon: FileText,
     },
   ];

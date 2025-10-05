@@ -11,13 +11,15 @@ import { ShowWithVenue } from '@/lib/actions/shows'
 
 interface CreateAdvancingSessionFormProps {
   orgSlug: string
+  showId: string
   orgId: string
   shows: ShowWithVenue[]
   preselectedShowId?: string
 }
 
 export function CreateAdvancingSessionForm({ 
-  orgSlug, 
+  orgSlug,
+  showId,
   shows, 
   preselectedShowId 
 }: CreateAdvancingSessionFormProps) {
@@ -39,7 +41,7 @@ export function CreateAdvancingSessionForm({
       })
       
       if (result.success && result.data) {
-        router.push(`/${orgSlug}/advancing/${result.data.id}`)
+        router.push(`/${orgSlug}/shows/${showId}/advancing/${result.data.id}`)
       } else {
         setError(result.error || 'Failed to create session')
       }

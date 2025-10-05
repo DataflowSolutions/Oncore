@@ -16,13 +16,15 @@ interface PersonSelectorClientProps {
   currentUserId?: string | null
   orgSlug: string
   sessionId: string
+  showId: string
 }
 
 export function PersonSelectorClient({ 
   showTeam, 
   currentUserId,
   orgSlug,
-  sessionId
+  sessionId,
+  showId
 }: PersonSelectorClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -56,7 +58,7 @@ export function PersonSelectorClient({
       // Update URL with person parameter
       const params = new URLSearchParams(searchParams.toString())
       params.set('person', personId)
-      router.push(`/${orgSlug}/advancing/${sessionId}?${params.toString()}`)
+      router.push(`/${orgSlug}/shows/${showId}/advancing/${sessionId}?${params.toString()}`)
     }
   }
 

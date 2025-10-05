@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import SidebarNavigation from "./SidebarNavigation";
 import ShowSidebar from "./ShowSidebar";
 import MobileSidebarToggle from "./MobileSidebarToggle";
-import MobileQuickAccess from "./MobileQuickAccess";
 
 interface DynamicSidebarProps {
   orgSlug: string;
@@ -52,7 +51,7 @@ export default function DynamicSidebar({ orgSlug, userRole }: DynamicSidebarProp
         )}
       </div>
 
-      {/* Mobile Navigation - Simplified */}
+      {/* Mobile Navigation - Same as Desktop */}
       <div className="lg:hidden h-full overflow-y-auto">
         {isInShowContext && currentShowId ? (
           <ShowSidebar
@@ -62,7 +61,11 @@ export default function DynamicSidebar({ orgSlug, userRole }: DynamicSidebarProp
             currentPath={pathname}
           />
         ) : (
-          <MobileQuickAccess orgSlug={orgSlug} />
+          <SidebarNavigation
+            orgSlug={orgSlug}
+            userRole={userRole}
+            currentPath={pathname}
+          />
         )}
       </div>
     </MobileSidebarToggle>
