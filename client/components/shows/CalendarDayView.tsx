@@ -1,18 +1,27 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plane, PlaneLanding, MapPin, Music } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Plane, PlaneLanding, MapPin, Music, Plus, X, Trash2 } from 'lucide-react'
 import { PersonScheduleSelector } from './PersonScheduleSelector'
 import { DateNavigator } from './DateNavigator'
+import { Database } from '@/lib/database.types'
+import { createScheduleItem, deleteScheduleItem } from '@/lib/actions/schedule'
+
+type DBScheduleItem = Database['public']['Tables']['schedule_items']['Row']
 
 interface ScheduleItem {
   id: string
   time: string // ISO datetime string
   title: string
   location?: string
-  type: 'arrival' | 'departure' | 'show' | 'venue'
+  type: 'arrival' | 'departure' | 'show' | 'venue' | 'schedule'
   personId?: string
   personName?: string
+  endTime?: string
+  notes?: string
 }
 
 interface CalendarDayViewProps {
@@ -34,6 +43,9 @@ interface CalendarDayViewProps {
     arrivalFlights: Array<{ personId: string; time?: string; flightNumber?: string; from?: string; to?: string }>
     departureFlights: Array<{ personId: string; time?: string; flightNumber?: string; from?: string; to?: string }>
   }
+  scheduleItems?: DBScheduleItem[]
+  orgSlug: string
+  showId: string
 }
 
 interface TimeSlot {
@@ -48,15 +60,27 @@ export function CalendarDayView({
   setTime,
   selectedPeopleIds,
   assignedPeople,
-  advancingData
+  advancingData,
+  scheduleItems: dbScheduleItems = [],
+  orgSlug,
+  showId
 }: CalendarDayViewProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    starts_at: '',
+    ends_at: '',
+    location: '',
+    notes: ''
+  })
   // Debug logging
   console.log('CalendarDayView Debug:', {
     currentDate: currentDate.toISOString(),
     currentDateStr: currentDate.toISOString().split('T')[0],
     selectedPeopleIds,
     advancingData,
-    assignedPeople: assignedPeople.map(p => ({ id: p.person_id, name: p.people?.name }))
+    assignedPeople: assignedPeople.map(p => ({ id: p.person_id, name: p.people?.name })),
+    dbScheduleItems: dbScheduleItems.length
   })
 
   // Build schedule items
@@ -94,6 +118,25 @@ export function CalendarDayView({
       type: 'show'
     })
   }
+
+  // Add schedule_items from database (Load In, Sound Check, etc.)
+  dbScheduleItems.forEach(item => {
+    const itemDate = new Date(item.starts_at)
+    const itemDateStr = getLocalDateStr(itemDate)
+    
+    // Only show items for the current date
+    if (itemDateStr === currentDateStr) {
+      scheduleItems.push({
+        id: item.id,
+        time: item.starts_at,
+        title: item.title,
+        location: item.location || undefined,
+        type: 'schedule',
+        endTime: item.ends_at || undefined,
+        notes: item.notes || undefined
+      })
+    }
+  })
 
   // Add person-specific items from advancing data - filter by current date
   if (advancingData && selectedPeopleIds.length > 0) {
@@ -179,6 +222,8 @@ export function CalendarDayView({
         return 'bg-red-500/20 border-red-500/40 text-red-100'
       case 'venue':
         return 'bg-purple-500/20 border-purple-500/40 text-purple-100'
+      case 'schedule':
+        return 'bg-orange-500/20 border-orange-500/40 text-orange-100'
       default:
         return 'bg-neutral-500/20 border-neutral-500/40 text-neutral-100'
     }
@@ -194,6 +239,8 @@ export function CalendarDayView({
         return <MapPin className="w-3.5 h-3.5" />
       case 'show':
         return <Music className="w-3.5 h-3.5" />
+      case 'schedule':
+        return <MapPin className="w-3.5 h-3.5" />
       default:
         return null
     }
@@ -206,6 +253,14 @@ export function CalendarDayView({
   if (doorsAt || setTime) {
     datesWithEvents.push(showDateNormalized)
   }
+
+  // Add dates from schedule items
+  dbScheduleItems.forEach(item => {
+    const itemDateStr = getLocalDateStr(new Date(item.starts_at))
+    if (!datesWithEvents.includes(itemDateStr)) {
+      datesWithEvents.push(itemDateStr)
+    }
+  })
 
   // Add dates from advancing data
   if (advancingData && selectedPeopleIds.length > 0) {
@@ -288,12 +343,119 @@ export function CalendarDayView({
             />
           </div>
 
-          {scheduleItems.length > 0 && (
-            <div className="mb-4 text-right">
+          {/* Header with event count and Add button */}
+          <div className="mb-4 flex items-center justify-between">
+            {scheduleItems.length > 0 && (
               <span className="text-xs text-neutral-400">
                 {scheduleItems.length} event{scheduleItems.length !== 1 ? 's' : ''}
               </span>
-            </div>
+            )}
+            <Button
+              size="sm"
+              onClick={() => setIsAdding(!isAdding)}
+              className="ml-auto flex items-center gap-2"
+              variant={isAdding ? "outline" : "default"}
+            >
+              {isAdding ? (
+                <>
+                  <X className="w-4 h-4" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Add Item
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Add Item Form */}
+          {isAdding && (
+            <Card className="mb-4 border-dashed border-2">
+              <CardContent className="pt-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const startsAt = new Date(`${currentDateStr}T${formData.starts_at}:00`).toISOString()
+                    const endsAt = formData.ends_at ? new Date(`${currentDateStr}T${formData.ends_at}:00`).toISOString() : null
+                    
+                    await createScheduleItem(orgSlug, showId, {
+                      title: formData.title,
+                      starts_at: startsAt,
+                      ends_at: endsAt,
+                      location: formData.location || null,
+                      notes: formData.notes || null
+                    })
+                    
+                    setFormData({ title: '', starts_at: '', ends_at: '', location: '', notes: '' })
+                    setIsAdding(false)
+                  }}
+                  className="space-y-3"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium">Title *</label>
+                      <Input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="e.g., Load In, Sound Check"
+                        required
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Location</label>
+                      <Input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                        placeholder="e.g., Main Stage"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium">Start Time *</label>
+                      <Input
+                        type="time"
+                        value={formData.starts_at}
+                        onChange={(e) => setFormData(prev => ({ ...prev, starts_at: e.target.value }))}
+                        required
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">End Time</label>
+                      <Input
+                        type="time"
+                        value={formData.ends_at}
+                        onChange={(e) => setFormData(prev => ({ ...prev, ends_at: e.target.value }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium">Notes</label>
+                    <Input
+                      type="text"
+                      value={formData.notes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Additional details..."
+                      className="h-8 text-sm"
+                    />
+                  </div>
+
+                  <Button type="submit" size="sm" className="w-full">
+                    Add to Schedule
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           )}
 
           {timeSlots.length === 0 ? (
@@ -324,7 +486,7 @@ export function CalendarDayView({
                     {slot.items.map(item => (
                       <div
                         key={item.id}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md border ${getItemColor(item.type)} flex-1`}
+                        className={`group/item relative flex items-center gap-2 px-3 py-2 rounded-md border ${getItemColor(item.type)} flex-1`}
                       >
                         {getItemIcon(item.type)}
                         <div className="flex-1 min-w-0">
@@ -334,13 +496,45 @@ export function CalendarDayView({
                             )}
                             {item.personName && <span className="text-xs">•</span>}
                             <span className="text-xs font-medium truncate">{item.title}</span>
+                            {item.endTime && (
+                              <>
+                                <span className="text-xs">→</span>
+                                <span className="text-xs font-mono">
+                                  {new Date(item.endTime).toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
+                                </span>
+                              </>
+                            )}
                           </div>
                           {item.location && (
                             <p className="text-xs text-neutral-400 mt-0.5 truncate">
                               {item.location}
                             </p>
                           )}
+                          {item.notes && (
+                            <p className="text-xs text-neutral-400 mt-0.5 truncate italic">
+                              {item.notes}
+                            </p>
+                          )}
                         </div>
+                        {/* Delete button only for schedule items, not show/venue/flight items */}
+                        {item.type === 'schedule' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              if (confirm('Delete this schedule item?')) {
+                                await deleteScheduleItem(orgSlug, showId, item.id)
+                              }
+                            }}
+                            className="opacity-0 group-hover/item:opacity-100 transition-opacity absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>

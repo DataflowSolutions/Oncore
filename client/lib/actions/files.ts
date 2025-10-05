@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/app/utils/supabase/server'
+import { parseContractFromURL } from '@/lib/services/contract-parser'
 import { z } from 'zod'
 
 const uploadFileSchema = z.object({
@@ -71,5 +72,74 @@ export async function uploadFile(
   } catch (error: unknown) {
     const err = error as { message?: string }
     return { error: err.message || 'Failed to upload file' }
+  }
+}
+
+const parseContractSchema = z.object({
+  orgId: z.string().uuid(),
+  fileUrl: z.string().url(),
+  fileName: z.string(),
+})
+
+export async function parseContract(params: z.infer<typeof parseContractSchema>) {
+  const supabase = await createClient()
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  const validation = parseContractSchema.safeParse(params)
+  if (!validation.success) {
+    return { error: validation.error.issues[0].message }
+  }
+
+  const { orgId, fileUrl, fileName } = validation.data
+
+  try {
+    // Verify user has access to this org
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select('role')
+      .eq('org_id', orgId)
+      .eq('user_id', session.user.id)
+      .single()
+
+    if (!membership) {
+      return { error: 'Access denied to this organization' }
+    }
+
+    // Parse the contract
+    const parsedData = await parseContractFromURL(fileUrl)
+
+    // Store the parsed contract
+    const { data: contractRecord, error: contractError } = await supabase
+      .from('parsed_contracts')
+      .insert({
+        org_id: orgId,
+        file_name: fileName,
+        file_url: fileUrl,
+        parsed_data: parsedData,
+        status: 'pending_review',
+        confidence: parsedData.confidence || 0,
+      })
+      .select()
+      .single()
+
+    if (contractError) {
+      throw contractError
+    }
+
+    return {
+      success: true,
+      data: {
+        contractId: contractRecord.id,
+        ...parsedData,
+      },
+    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    console.error('Contract parsing error:', err)
+    return { error: err.message || 'Failed to parse contract' }
   }
 }

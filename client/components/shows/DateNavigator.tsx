@@ -92,12 +92,16 @@ export function DateNavigator({ currentDate, datesWithEvents }: DateNavigatorPro
               initialFocus
               modifiers={{
                 hasEvents: (date) => {
-                  const dateStr = date.toISOString().split('T')[0]
+                  // Format date in local timezone to match datesWithEvents format
+                  const year = date.getFullYear()
+                  const month = String(date.getMonth() + 1).padStart(2, '0')
+                  const day = String(date.getDate()).padStart(2, '0')
+                  const dateStr = `${year}-${month}-${day}`
                   return eventDatesSet.has(dateStr)
                 }
               }}
               modifiersClassNames={{
-                hasEvents: 'relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-emerald-400 after:rounded-full'
+                hasEvents: 'relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-500 after:rounded-full after:ring-1 after:ring-emerald-400/50'
               }}
             />
           </PopoverContent>

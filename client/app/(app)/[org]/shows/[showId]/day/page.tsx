@@ -5,7 +5,6 @@ import { Calendar, MapPin, Music, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getScheduleItemsForShow } from '@/lib/actions/schedule'
 import { CalendarDayView } from '@/components/shows/CalendarDayView'
-import { ScheduleManager } from '@/components/shows/ScheduleManager'
 
 interface ShowDayPageProps {
   params: Promise<{ org: string, showId: string }>
@@ -214,15 +213,9 @@ export default async function ShowDayPage({
         assignedPeople={assignedPeople || []}
         selectedPeopleIds={selectedPeopleIds}
         advancingData={advancingData}
-      />
-
-      {/* Schedule Management */}
-      <ScheduleManager
+        scheduleItems={scheduleItems}
         orgSlug={orgSlug}
         showId={showId}
-        showDate={show.date}
-        scheduleItems={scheduleItems}
-        assignedPeople={assignedPeople || []}
       />
     </div>
   )
