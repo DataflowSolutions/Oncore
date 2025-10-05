@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 
 interface MobileSidebarToggleProps {
@@ -13,18 +14,20 @@ export default function MobileSidebarToggle({ children }: MobileSidebarTogglePro
   return (
     <>
       {/* Mobile Menu Button */}
-      <button
+      <Button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed top-4 left-4 z-50 p-3 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg lg:hidden transition-all duration-200 hover:bg-accent/50"
+        variant="outline"
+        size="icon"
+        className="fixed top-4 left-4 z-50 lg:hidden shadow-lg bg-background"
         aria-label="Toggle navigation"
       >
         {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
-      </button>
+      </Button>
 
       {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden animate-in fade-in duration-200"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -32,9 +35,9 @@ export default function MobileSidebarToggle({ children }: MobileSidebarTogglePro
       {/* Sidebar */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-72 bg-card/95 backdrop-blur-sm border-r border-border shadow-2xl z-40 transition-transform duration-300 ease-out
+          fixed left-0 top-0 h-full w-80 bg-background border-r border-border shadow-2xl z-40 transition-transform duration-300 ease-out
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:w-64 lg:shadow-lg lg:translate-x-0
+          lg:w-64 lg:shadow-lg lg:translate-x-0 lg:bg-card
         `}
       >
         <div className="h-full overflow-y-auto overscroll-contain">

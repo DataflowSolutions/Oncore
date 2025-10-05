@@ -23,13 +23,24 @@ export default async function ShowsPage({ params }: ShowsPageProps) {
   if (error || !org) {
     notFound()
   }
+  
   return (
-    <div className="mb-16 mt-4">
-      <div className="flex justify-end gap-4">
-        <ShowViewToggler />
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl lg:text-4xl font-bold">Shows</h1>
+          <p className="text-muted-foreground mt-1">Manage your tour schedule</p>
+        </div>
         <CreateShowButton orgId={org.id} />
       </div>
-      <ShowsSearchbar />
+      
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="flex-1">
+          <ShowsSearchbar />
+        </div>
+        <ShowViewToggler />
+      </div>
+      
       <ShowsTable orgId={org.id} orgSlug={orgSlug} />
     </div>
   );

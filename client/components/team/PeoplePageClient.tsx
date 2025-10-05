@@ -195,7 +195,7 @@ export default function PeoplePageClient({
                       <span>No available seats</span>
                     </div>
                     <Button variant="outline" size="sm" className="border-primary/30">
-                      <Crown className="w-3 h-3 mr-2" />
+                      <Crown className="w-3 h-3" />
                       Upgrade Plan
                     </Button>
                   </div>

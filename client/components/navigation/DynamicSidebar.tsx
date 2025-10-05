@@ -1,11 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import SidebarNavigation from "./SidebarNavigation";
-import ShowSidebarNavigation from "./ShowSidebarNavigation";
+import ShowSidebar from "./ShowSidebar";
 import MobileSidebarToggle from "./MobileSidebarToggle";
 import MobileQuickAccess from "./MobileQuickAccess";
-import MobileShowNavigation from "./MobileShowNavigation";
 
 interface DynamicSidebarProps {
   orgSlug: string;
@@ -13,23 +13,34 @@ interface DynamicSidebarProps {
   userRole: string;
 }
 
-export default function DynamicSidebar({ orgSlug, orgId, userRole }: DynamicSidebarProps) {
+export default function DynamicSidebar({ orgSlug, userRole }: DynamicSidebarProps) {
   const pathname = usePathname();
+  const [showTitle, setShowTitle] = useState<string>("");
   
-  // Detect if we're in a show context
+  // Detect if we're in a show detail context (not just /shows list)
   const showMatch = pathname.match(new RegExp(`/${orgSlug}/shows/([^/]+)`));
-  const isInShowContext = showMatch && showMatch[1] !== undefined;
+  const isInShowContext = showMatch && showMatch[1] !== undefined && showMatch[1] !== '';
   const currentShowId = isInShowContext ? showMatch[1] : null;
+
+  // Fetch show title when in show context
+  useEffect(() => {
+    if (currentShowId) {
+      fetch(`/api/shows/${currentShowId}/title`)
+        .then(res => res.json())
+        .then(data => setShowTitle(data.title || 'Show'))
+        .catch(() => setShowTitle('Show'));
+    }
+  }, [currentShowId]);
 
   return (
     <MobileSidebarToggle>
       {/* Desktop Navigation */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block h-full">
         {isInShowContext && currentShowId ? (
-          <ShowSidebarNavigation
+          <ShowSidebar
             orgSlug={orgSlug}
             showId={currentShowId}
-            orgId={orgId}
+            showTitle={showTitle || 'Loading...'}
             currentPath={pathname}
           />
         ) : (
@@ -41,13 +52,14 @@ export default function DynamicSidebar({ orgSlug, orgId, userRole }: DynamicSide
         )}
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation - Simplified */}
       <div className="lg:hidden h-full overflow-y-auto">
         {isInShowContext && currentShowId ? (
-          <MobileShowNavigation
+          <ShowSidebar
             orgSlug={orgSlug}
             showId={currentShowId}
-            orgId={orgId}
+            showTitle={showTitle || 'Loading...'}
+            currentPath={pathname}
           />
         ) : (
           <MobileQuickAccess orgSlug={orgSlug} />

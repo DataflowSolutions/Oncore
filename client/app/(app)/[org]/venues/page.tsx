@@ -2,7 +2,8 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { getVenuesWithShowCounts } from '@/lib/actions/venues'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Globe, Calendar, Users, Building } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { MapPin, Globe, Calendar, Building, Plus, Users } from 'lucide-react'
 import Link from 'next/link'
 
 interface VenuesPageProps {
@@ -30,13 +31,16 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
   const totalShows = allVenues.reduce((sum, venue) => sum + (venue.shows?.[0]?.count || 0), 0)
 
   return (
-    <div className="mb-16 mt-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Venues</h1>
-          <p className="mt-2 text-foreground/50">Manage venue contacts, technical specs, and show history</p>
+          <h1 className="text-3xl lg:text-4xl font-bold">Venues</h1>
+          <p className="text-muted-foreground mt-1">Locations and contacts</p>
         </div>
-        {/* TODO: Add venue button */}
+        <Button size="lg">
+          <Plus className="w-5 h-5" />
+          Add Venue
+        </Button>
       </div>
 
       <div className="space-y-6">

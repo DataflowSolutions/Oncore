@@ -194,11 +194,12 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
   return (
     <Button
       onClick={() => setShowForm(true)}
-      className="bg-foreground text-background hover:bg-foreground/90 h-10 rounded-md px-4 py-2 flex items-center gap-2 font-medium"
+      size="lg"
       type="button"
+      className="font-semibold"
     >
-      <Plus className="w-4 h-4" />
-      <span>Create Show</span>
+      <Plus className="w-5 h-5" />
+      Create Show
     </Button>
   )
 }

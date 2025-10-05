@@ -75,7 +75,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
 
       {/* Main Content Area */}
       <div className="lg:ml-64 min-h-screen">
-        <div className="p-4 lg:p-6 pt-16 lg:pt-6">
+        <div className="p-6 lg:p-8 pt-20 lg:pt-8">
           {children}
         </div>
       </div>
