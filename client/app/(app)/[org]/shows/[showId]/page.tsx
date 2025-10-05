@@ -1,7 +1,8 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Music, Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Calendar, MapPin, Music, Users, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { getScheduleItemsForShow } from '@/lib/actions/schedule'
 import { ScheduleManager } from '@/components/shows/ScheduleManager'
@@ -62,76 +63,110 @@ export default async function ShowDetailPage({
   const scheduleItems = await getScheduleItemsForShow(showId)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-4">
-          <Link 
-            href={`/${orgSlug}/shows`}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Shows
-          </Link>
-        </div>
-        <h1 className="text-3xl font-bold">{show.title || 'Untitled Show'}</h1>
-        <div className="flex items-center gap-2">
-          <Badge variant={show.status === 'confirmed' ? 'default' : 'secondary'}>
-            {show.status}
-          </Badge>
+    <div className="space-y-8">
+      {/* Header with Back Button */}
+      <div className="space-y-4">
+        <Link href={`/${orgSlug}/shows`}>
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Shows
+          </Button>
+        </Link>
+        
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="space-y-3">
+            <h1 className="text-4xl font-bold">{show.title || 'Untitled Show'}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge 
+                variant={show.status === 'confirmed' ? 'default' : 'secondary'}
+                className="text-sm px-3 py-1"
+              >
+                {show.status}
+              </Badge>
+              {show.date && (
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(show.date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Primary Actions */}
+          <div className="flex gap-2 flex-wrap">
+            <Link href={`/${orgSlug}/shows/${showId}/day`}>
+              <Button size="lg" className="gap-2">
+                <Calendar className="w-5 h-5" />
+                Day Schedule
+              </Button>
+            </Link>
+            <Link href={`/${orgSlug}/shows/${showId}/team`}>
+              <Button size="lg" variant="outline" className="gap-2">
+                <Users className="w-5 h-5" />
+                Team
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex gap-3">
-        <Link 
-          href={`/${orgSlug}/shows/${showId}/day`}
-          className="inline-flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md transition-colors"
-        >
-          <Calendar className="w-4 h-4" />
-          Day Schedule
-        </Link>
-        <Link 
-          href={`/${orgSlug}/shows/${showId}/team`}
-          className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors"
-        >
-          <Users className="w-4 h-4" />
-          Manage Team
-        </Link>
-        <Link 
-          href={`/${orgSlug}/advancing?show=${showId}`}
-          className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md transition-colors"
-        >
-          <Music className="w-4 h-4" />
-          Advancing
-        </Link>
-      </div>
-
-      {/* Show Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Date & Time */}
-        <Card>
+      {/* Show Details - Simplified Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Venue - Most Important */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Date & Time
+            <CardTitle className="text-xl flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Venue
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="font-semibold">Date</p>
-              <p className="text-muted-foreground">
-                {new Date(show.date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            </div>
+          <CardContent>
+            {show.venues ? (
+              <div className="space-y-4">
+                <div>
+                  <Link 
+                    href={`/${orgSlug}/venues/${show.venues.id}`}
+                    className="text-2xl font-bold text-primary hover:underline"
+                  >
+                    {show.venues.name}
+                  </Link>
+                </div>
+                <div className="flex flex-col gap-2 text-muted-foreground">
+                  {show.venues.address && <p>{show.venues.address}</p>}
+                  <p className="font-medium">
+                    {show.venues.city}{show.venues.country && `, ${show.venues.country}`}
+                  </p>
+                  {show.venues.capacity && (
+                    <Badge variant="outline" className="w-fit">
+                      Capacity: {show.venues.capacity}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No venue set</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Time Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {show.doors_at && (
               <div>
-                <p className="font-semibold">Doors</p>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">Doors</p>
+                <p className="text-xl font-bold">
                   {new Date(show.doors_at).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit'
@@ -141,8 +176,8 @@ export default async function ShowDetailPage({
             )}
             {show.set_time && (
               <div>
-                <p className="font-semibold">Set Time</p>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">Set Time</p>
+                <p className="text-xl font-bold">
                   {new Date(show.set_time).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit'
@@ -150,48 +185,8 @@ export default async function ShowDetailPage({
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Venue */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Venue
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {show.venues ? (
-              <>
-                <div>
-                  <Link 
-                    href={`/${orgSlug}/venues/${show.venues.id}`}
-                    className="font-semibold text-primary hover:underline"
-                  >
-                    {show.venues.name}
-                  </Link>
-                </div>
-                {show.venues.address && (
-                  <div>
-                    <p className="text-muted-foreground">{show.venues.address}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-muted-foreground">
-                    {show.venues.city}{show.venues.country && `, ${show.venues.country}`}
-                  </p>
-                </div>
-                {show.venues.capacity && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Capacity: {show.venues.capacity}
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-muted-foreground">No venue set</p>
+            {!show.doors_at && !show.set_time && (
+              <p className="text-muted-foreground">Times TBD</p>
             )}
           </CardContent>
         </Card>
@@ -201,36 +196,39 @@ export default async function ShowDetailPage({
       {show.artists && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="text-xl flex items-center gap-2">
               <Music className="w-5 h-5" />
               Artist
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-semibold">{show.artists.name}</p>
+            <p className="text-lg font-semibold">{show.artists.name}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Notes */}
-      {show.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap">{show.notes}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Schedule */}
+      {/* Schedule - Most Important for Day-of */}
       <ScheduleManager
         orgSlug={orgSlug}
         showId={showId}
         showDate={show.date}
         scheduleItems={scheduleItems}
       />
+
+      {/* Notes - Less Priority */}
+      {show.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{show.notes}</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
