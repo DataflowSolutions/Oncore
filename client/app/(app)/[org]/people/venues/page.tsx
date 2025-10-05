@@ -108,60 +108,69 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
                 return (
                   <div
                     key={venue.id}
-                    className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                    className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground">
-                            {venue.name}
-                          </h4>
+                    <div className="flex flex-col gap-3">
+                      {/* Header with name and badges */}
+                      <div className="flex flex-col gap-2">
+                        <h4 className="font-semibold text-foreground text-base">
+                          {venue.name}
+                        </h4>
+                        <div className="flex items-center gap-2 flex-wrap">
                           {showCount > 0 && (
                             <Badge variant="secondary" className="text-xs">
                               <Calendar className="w-3 h-3 mr-1" />
                               {showCount} show{showCount !== 1 ? "s" : ""}
                             </Badge>
                           )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          {venue.city && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>
-                                {venue.city}
-                                {venue.country && `, ${venue.country}`}
-                              </span>
-                            </div>
-                          )}
-                          {venue.address && (
-                            <div className="flex items-center gap-1">
-                              <Globe className="w-3 h-3" />
-                              <span>{venue.address}</span>
-                            </div>
+                          {venue.capacity && (
+                            <Badge variant="outline" className="text-xs">
+                              Cap. {venue.capacity}
+                            </Badge>
                           )}
                         </div>
+                      </div>
 
-                        {venue.contacts && (
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <FileText className="w-3 h-3" />
-                              <span>Contact info available</span>
-                            </div>
+                      {/* Location information */}
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                        {venue.city && (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span>
+                              {venue.city}
+                              {venue.country && `, ${venue.country}`}
+                            </span>
+                          </div>
+                        )}
+                        {venue.address && (
+                          <div className="flex items-start gap-1.5">
+                            <Globe className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                            <span className="break-words">{venue.address}</span>
                           </div>
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-1 text-right text-xs text-muted-foreground">
-                        <span>
+                      {/* Contact info */}
+                      {venue.contacts && (
+                        <div className="flex items-start gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
+                          <FileText className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                          <span>Contact info available</span>
+                        </div>
+                      )}
+
+                      {/* Footer with date */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-border/50">
+                        <div className="text-xs text-muted-foreground">
                           Added{" "}
-                          {new Date(venue.created_at).toLocaleDateString()}
-                        </span>
-                        {venue.capacity && (
-                          <Badge variant="outline" className="text-xs">
-                            Cap. {venue.capacity}
-                          </Badge>
-                        )}
+                          {new Date(venue.created_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
