@@ -33,14 +33,12 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Show Advancing
-          </Link>
-        </Button>
-      </div>
+      <Button asChild variant="outline" size="sm" className="w-fit mb-4">
+        <Link href={`/${orgSlug}/shows/${showId}/advancing`} className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Advancing
+        </Link>
+      </Button>
       
       <div>
         <h1 className="text-2xl font-bold">Create Advancing Session</h1>

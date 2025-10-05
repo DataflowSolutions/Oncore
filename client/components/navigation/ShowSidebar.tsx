@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Music,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ShowSidebarProps {
   orgSlug: string;
@@ -66,13 +67,12 @@ const ShowSidebar = ({
     <div className="h-full flex flex-col bg-card">
       {/* Back to Shows */}
       <div className="p-6 border-b border-border">
-        <Link 
-          href={`/${orgSlug}/shows`}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          <ArrowLeft size={16} />
-          <span className="text-sm">All Shows</span>
-        </Link>
+        <Button asChild variant="outline" size="sm" className="w-fit mb-4">
+          <Link href={`/${orgSlug}/shows`} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Shows
+          </Link>
+        </Button>
         <div className="flex items-center gap-2">
           <Music className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-bold text-foreground truncate">{showTitle}</h2>

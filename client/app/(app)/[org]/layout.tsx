@@ -3,7 +3,6 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 // import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
 import DynamicSidebar from "@/components/navigation/DynamicSidebar";
-import MobileFloatingActions from "@/components/navigation/MobileFloatingActions";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -79,9 +78,6 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
           {children}
         </div>
       </div>
-
-      {/* Mobile Floating Actions */}
-      <MobileFloatingActions orgSlug={resolvedParams.org} />
     </div>
   );
 }

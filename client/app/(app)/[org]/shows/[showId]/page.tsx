@@ -67,7 +67,7 @@ export default async function ShowDetailPage({
       {/* Header with Back Button */}
       <div className="space-y-4">
         <Link href={`/${orgSlug}/shows`}>
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2 hover:bg-accent">
             <ArrowLeft className="w-4 h-4" />
             Back to Shows
           </Button>

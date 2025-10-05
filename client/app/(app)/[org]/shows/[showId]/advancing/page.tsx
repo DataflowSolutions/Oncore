@@ -57,14 +57,12 @@ export default async function AdvancingPage({ params }: AdvancingPageProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link href={`/${orgSlug}/shows/${showId}`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Show
-            </Link>
-          </Button>
-        </div>
+        <Button asChild variant="outline" size="sm" className="w-fit">
+          <Link href={`/${orgSlug}/shows/${showId}`} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Show
+          </Link>
+        </Button>
         
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
