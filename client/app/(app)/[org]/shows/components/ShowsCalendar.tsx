@@ -195,7 +195,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
     { month: "short" }
   );
 
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   // Swipe handlers
   const handlers = useSwipeable({
