@@ -12,8 +12,6 @@ interface OrgLayoutProps {
 export default async function TourLayout({ children, params }: OrgLayoutProps) {
   const supabase = await getSupabaseServer();
   const resolvedParams = await params;
-  
-
 
   // Check if user is authenticated
   const {
@@ -74,9 +72,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
 
       {/* Main Content Area */}
       <div className="lg:ml-64 min-h-screen">
-        <div className="p-6 lg:p-8 pt-20 lg:pt-8">
-          {children}
-        </div>
+        <div className="py-6 lg:p-8 pt-20 lg:pt-8">{children}</div>
       </div>
     </div>
   );

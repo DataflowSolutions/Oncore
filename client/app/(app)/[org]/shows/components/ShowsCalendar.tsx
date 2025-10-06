@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useSwipeable } from "react-swipeable";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShowWithVenue } from "@/lib/actions/shows";
-import styles from "./ShowsCalendar.module.css";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -34,6 +34,10 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedArtist, setSelectedArtist] = useState<string>("all");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
+    null
+  );
 
   // Get the first day of the month and how many days in the month
   const year = currentDate.getFullYear();
@@ -43,13 +47,27 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
   const daysInMonth = lastDay.getDate();
   const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday, 6 = Saturday
 
-  // Navigation functions
+  // Navigation functions with transitions
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
+    if (isTransitioning) return;
+    setSlideDirection("right");
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentDate(new Date(year, month - 1, 1));
+      setIsTransitioning(false);
+      setSlideDirection(null);
+    }, 300);
   };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
+    if (isTransitioning) return;
+    setSlideDirection("left");
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentDate(new Date(year, month + 1, 1));
+      setIsTransitioning(false);
+      setSlideDirection(null);
+    }, 300);
   };
 
   const goToPreviousYear = () => {
@@ -167,28 +185,57 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
     year: "numeric",
   });
 
+  // Get previous and next month names
+  const prevMonthName = new Date(year, month - 1, 1).toLocaleDateString(
+    "en-US",
+    { month: "short" }
+  );
+  const nextMonthName = new Date(year, month + 1, 1).toLocaleDateString(
+    "en-US",
+    { month: "short" }
+  );
+
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Swipe handlers
+  const handlers = useSwipeable({
+    onSwipedLeft: () => goToNextMonth(),
+    onSwipedRight: () => goToPreviousMonth(),
+    trackMouse: false,
+    trackTouch: true,
+    preventScrollOnSwipe: true,
+    delta: 50,
+  });
 
   return (
     <div className="space-y-4">
       {/* Calendar Header */}
       <div className="flex flex-col gap-4">
         {/* Title and Main Navigation */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{monthYearString}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold">{monthYearString}</h2>
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={goToToday}
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer hidden sm:flex"
             >
               <CalendarIcon className="h-4 w-4" />
               Today
             </Button>
+            <Button
+              variant="outline"
+              onClick={goToToday}
+              className="cursor-pointer sm:hidden"
+              size="icon"
+              title="Today"
+            >
+              <CalendarIcon className="h-4 w-4" />
+            </Button>
             <div className="flex gap-1">
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer hidden lg:flex"
                 size="icon"
                 onClick={goToPreviousYear}
                 title="Previous Year"
@@ -215,7 +262,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
               </Button>
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer hidden lg:flex"
                 size="icon"
                 onClick={goToNextYear}
                 title="Next Year"
@@ -226,8 +273,27 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
           </div>
         </div>
 
-        {/* Filters and Quick Month Selector */}
-        <div className="flex flex-wrap gap-3 items-center">
+        {/* Mobile Month Navigation - Only on mobile (lg and under) */}
+        <div className="flex lg:hidden items-center justify-center gap-4 py-2">
+          <button
+            onClick={goToPreviousMonth}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            {prevMonthName}
+          </button>
+          <div className="text-base font-semibold px-4">
+            {currentDate.toLocaleDateString("en-US", { month: "long" })}
+          </div>
+          <button
+            onClick={goToNextMonth}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            {nextMonthName}
+          </button>
+        </div>
+
+        {/* Desktop Month Selector - Hidden on mobile */}
+        <div className="hidden lg:flex flex-wrap gap-3 items-center">
           {/* Month Quick Selector */}
           <div className="flex gap-1 flex-wrap">
             {[
@@ -258,7 +324,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
 
           <div className="flex-1" />
 
-          {/* Filters */}
+          {/* Filters - Desktop */}
           <div className="flex gap-2 items-center flex-wrap">
             <Filter className="h-4 w-4 text-muted-foreground" />
 
@@ -312,6 +378,57 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
           </div>
         </div>
 
+        {/* Mobile Filters - Shown on mobile only */}
+        <div className="flex lg:hidden gap-2 items-center justify-center flex-wrap">
+          {/* City Filter */}
+          <Select value={selectedCity} onValueChange={setSelectedCity}>
+            <SelectTrigger className="w-[130px] h-9">
+              <MapPin className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="City" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cities</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Artist Filter */}
+          <Select value={selectedArtist} onValueChange={setSelectedArtist}>
+            <SelectTrigger className="w-[130px] h-9">
+              <Music className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Artist" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Artists</SelectItem>
+              {artists.map((artist) => (
+                <SelectItem key={artist} value={artist}>
+                  {artist}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Clear Filters */}
+          {(selectedCity !== "all" || selectedArtist !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedCity("all");
+                setSelectedArtist("all");
+              }}
+              className="h-9 gap-1"
+            >
+              <X className="h-3 w-3" />
+              <span className="hidden sm:inline">Clear</span>
+            </Button>
+          )}
+        </div>
+
         {/* Active Filters Display */}
         {(selectedCity !== "all" || selectedArtist !== "all") && (
           <div className="flex gap-2 items-center flex-wrap">
@@ -343,7 +460,10 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="border border-input rounded-lg overflow-hidden">
+      <div
+        {...handlers}
+        className="border border-input rounded-lg overflow-hidden select-none"
+      >
         {/* Week day headers */}
         <div className="grid grid-cols-7 bg-muted">
           {weekDays.map((day) => (
@@ -351,19 +471,28 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
               key={day}
               className="p-2 text-center text-sm font-semibold border-r border-input last:border-r-0"
             >
-              {day}
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day[0]}</span>
             </div>
           ))}
         </div>
 
         {/* Calendar days */}
-        <div className="grid grid-cols-7" style={{ gridAutoRows: "140px" }}>
+        <div
+          className={`grid grid-cols-7 lg:auto-rows-[140px] auto-rows-[100px] sm:auto-rows-[120px] transition-all duration-300 ease-in-out ${
+            isTransitioning
+              ? slideDirection === "left"
+                ? "-translate-x-4 opacity-80"
+                : "translate-x-4 opacity-80"
+              : "translate-x-0 opacity-100"
+          }`}
+        >
           {calendarDays.map((day, index) => {
             if (day === null) {
               return (
                 <div
                   key={`empty-${index}`}
-                  className="h-[140px] border-r border-b border-input bg-muted/30"
+                  className="h-full border-r border-b border-input bg-muted/30"
                 />
               );
             }
@@ -375,7 +504,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
             return (
               <div
                 key={day}
-                className={`h-[140px] border-r border-b border-input last:border-r-0 p-2 transition-colors overflow-hidden hover:bg-accent/5 ${
+                className={`h-full border-r border-b border-input last:border-r-0 p-1 sm:p-2 transition-colors overflow-hidden hover:bg-accent/5 ${
                   isTodayDate
                     ? "bg-primary/10 ring-2 ring-primary/20"
                     : "bg-card "
@@ -384,9 +513,9 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between mb-1 flex-shrink-0">
                     <div
-                      className={`text-sm font-semibold ${
+                      className={`text-xs sm:text-sm font-semibold ${
                         isTodayDate
-                          ? "bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center"
+                          ? "bg-primary text-primary-foreground rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center"
                           : ""
                       }`}
                     >
@@ -395,7 +524,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                     {showCount > 0 && (
                       <Badge
                         variant={showCount > 2 ? "default" : "secondary"}
-                        className="h-5 px-1.5 text-[10px]"
+                        className="h-4 sm:h-5 px-1 sm:px-1.5 text-[9px] sm:text-[10px]"
                       >
                         {showCount}
                       </Badge>
@@ -423,12 +552,12 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                           className="block "
                           title={`${show.title} - ${artistNames} - ${show.venue?.name}`}
                         >
-                          <div className="text-xs p-1.5 rounded bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors cursor-pointer ">
-                            <div className="flex gap-1 justify-between">
-                              <div className="max-w-1/2 font-semibold truncate text-foreground">
+                          <div className="text-[10px] sm:text-xs p-1 sm:p-1.5 rounded bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors cursor-pointer ">
+                            <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-1 sm:justify-between">
+                              <div className="font-semibold truncate text-foreground">
                                 {artistNames}
                               </div>
-                              <div className="max-w-1/2 text-muted-foreground truncate">
+                              <div className="text-muted-foreground truncate text-[9px] sm:text-xs">
                                 {show.venue?.city || "No city"}
                               </div>
                             </div>
@@ -445,8 +574,8 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
       </div>
 
       {/* Shows count and stats */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
           <span>
             {
               filteredShows.filter((show) => {
@@ -475,7 +604,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
             </span>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-3 sm:gap-4">
           <span>{cities.length} cities</span>
           <span>{artists.length} artists</span>
         </div>
