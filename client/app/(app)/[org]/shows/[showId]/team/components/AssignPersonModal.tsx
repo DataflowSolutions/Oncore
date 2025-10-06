@@ -1,56 +1,60 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { UserPlus, CheckCircle, AlertCircle, X } from 'lucide-react'
-import { assignPersonToShow } from '@/lib/actions/show-team'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { UserPlus, CheckCircle, AlertCircle, X } from "lucide-react";
+import { assignPersonToShow } from "@/lib/actions/show-team";
 
 interface AssignPersonModalProps {
-  showId: string
+  showId: string;
   availablePeople: Array<{
-    id: string
-    name: string
-    member_type: string | null
-    email: string | null
-  }>
-  onSuccess: () => void
+    id: string;
+    name: string;
+    member_type: string | null;
+    email: string | null;
+  }>;
+  onSuccess: () => void;
 }
 
-export default function AssignPersonModal({ showId, availablePeople, onSuccess }: AssignPersonModalProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [selectedPersonId, setSelectedPersonId] = useState<string>('')
+export default function AssignPersonModal({
+  showId,
+  availablePeople,
+  onSuccess,
+}: AssignPersonModalProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState<string>("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setError(null)
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      const formData = new FormData(event.currentTarget)
-      await assignPersonToShow(formData)
-      setSuccess(true)
-      
+      const formData = new FormData(event.currentTarget);
+      await assignPersonToShow(formData);
+      setSuccess(true);
+
       setTimeout(() => {
-        setIsOpen(false)
-        setSuccess(false)
-        setSelectedPersonId('')
-        onSuccess()
-      }, 1500)
+        setIsOpen(false);
+        setSuccess(false);
+        setSelectedPersonId("");
+        onSuccess();
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign person')
+      setError(err instanceof Error ? err.message : "Failed to assign person");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (!isOpen) {
     return (
-      <Button 
+      <Button
         onClick={() => setIsOpen(true)}
         className="flex items-center gap-2"
         disabled={availablePeople.length === 0}
@@ -58,7 +62,7 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
         <UserPlus className="w-4 h-4" />
         Assign Person
       </Button>
-    )
+    );
   }
 
   return (
@@ -90,7 +94,9 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
         {success && (
           <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-            <p className="text-green-700 dark:text-green-300 text-sm">Person assigned successfully!</p>
+            <p className="text-green-700 dark:text-green-300 text-sm">
+              Person assigned successfully!
+            </p>
           </div>
         )}
 
@@ -108,9 +114,10 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
                   onClick={() => setSelectedPersonId(person.id)}
                   className={`
                     p-3 rounded-lg border-2 cursor-pointer transition-all duration-200
-                    ${selectedPersonId === person.id 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'
+                    ${
+                      selectedPersonId === person.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
                     }
                   `}
                 >
@@ -118,7 +125,9 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
                     <div>
                       <p className="font-medium">{person.name}</p>
                       {person.email && (
-                        <p className="text-sm text-muted-foreground">{person.email}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {person.email}
+                        </p>
                       )}
                     </div>
                     {person.member_type && (
@@ -144,15 +153,15 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
 
           {/* Submit Button */}
           <div className="flex gap-2 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!selectedPersonId || isSubmitting || success}
               className="flex-1"
             >
-              {isSubmitting ? 'Assigning...' : 'Assign Person'}
+              {isSubmitting ? "Assigning..." : "Assign Person"}
             </Button>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
               disabled={isSubmitting}
@@ -163,5 +172,5 @@ export default function AssignPersonModal({ showId, availablePeople, onSuccess }
         </form>
       </div>
     </div>
-  )
+  );
 }

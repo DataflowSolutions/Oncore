@@ -1,52 +1,61 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Calendar, Users, MapPin } from 'lucide-react'
-import Link from 'next/link'
-import { getSupabaseServer } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar, Users, MapPin } from "lucide-react";
+import Link from "next/link";
+import { getSupabaseServer } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 
 interface OrgHomePageProps {
-  params: Promise<{ org: string }>
+  params: Promise<{ org: string }>;
 }
 
 export default async function OrgHomePage({ params }: OrgHomePageProps) {
-  const { org: orgSlug } = await params
-  
-  const supabase = await getSupabaseServer()
+  const { org: orgSlug } = await params;
+
+  const supabase = await getSupabaseServer();
   const { data: org, error } = await supabase
     .from("organizations")
     .select("id, name, slug")
     .eq("slug", orgSlug)
-    .single()
+    .single();
 
   if (error || !org) {
-    notFound()
+    notFound();
   }
 
   // Get upcoming shows
   const { data: upcomingShows } = await supabase
-    .from('shows')
-    .select('id, title, date, set_time, venues(name, city)')
-    .eq('org_id', org.id)
-    .gte('date', new Date().toISOString().split('T')[0])
-    .order('date', { ascending: true })
-    .limit(5)
+    .from("shows")
+    .select("id, title, date, set_time, venues(name, city)")
+    .eq("org_id", org.id)
+    .gte("date", new Date().toISOString().split("T")[0])
+    .order("date", { ascending: true })
+    .limit(5);
 
-  const today = new Date().toISOString().split('T')[0]
-  const todaysShows = upcomingShows?.filter(show => show.date === today) || []
-  const nextWeekShows = upcomingShows?.filter(show => show.date !== today) || []
+  const today = new Date().toISOString().split("T")[0];
+  const todaysShows =
+    upcomingShows?.filter((show) => show.date === today) || [];
+  const nextWeekShows =
+    upcomingShows?.filter((show) => show.date !== today) || [];
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-bold text-foreground">{org.name}</h1>
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
+            {org.name}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <Link href={`/${orgSlug}/shows`}>
             <Button size="lg" className="text-base">
@@ -80,7 +89,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                       </p>
                     </div>
                     <Badge className="text-base px-3 py-1">
-                      {show.set_time || 'TBD'}
+                      {show.set_time || "TBD"}
                     </Badge>
                   </div>
                 </div>
@@ -98,13 +107,15 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
             <Button variant="outline">View All</Button>
           </Link>
         </div>
-        
+
         {nextWeekShows.length === 0 && todaysShows.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Calendar className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Upcoming Shows</h3>
-              <p className="text-muted-foreground mb-6">Get started by creating your first show</p>
+              <p className="text-muted-foreground mb-6">
+                Get started by creating your first show
+              </p>
               <Link href={`/${orgSlug}/shows`}>
                 <Button size="lg">
                   <Calendar className="w-5 h-5" />
@@ -126,11 +137,15 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                             {new Date(show.date).getDate()}
                           </div>
                           <div className="text-xs text-muted-foreground uppercase">
-                            {new Date(show.date).toLocaleDateString('en-US', { month: 'short' })}
+                            {new Date(show.date).toLocaleDateString("en-US", {
+                              month: "short",
+                            })}
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{show.title}</h3>
+                          <h3 className="font-semibold text-lg">
+                            {show.title}
+                          </h3>
                           <p className="text-muted-foreground flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             {show.venues?.name} • {show.venues?.city}
@@ -138,7 +153,10 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                         </div>
                       </div>
                       {show.set_time && (
-                        <Badge variant="outline" className="text-base px-3 py-1">
+                        <Badge
+                          variant="outline"
+                          className="text-base px-3 py-1"
+                        >
                           {show.set_time}
                         </Badge>
                       )}
@@ -160,32 +178,38 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
               <CardContent className="py-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-3 text-blue-500" />
                 <h3 className="font-bold text-xl mb-1">People</h3>
-                <p className="text-sm text-muted-foreground">Manage team & contacts</p>
+                <p className="text-sm text-muted-foreground">
+                  Manage team & contacts
+                </p>
               </CardContent>
             </Card>
           </Link>
-          
+
           <Link href={`/${orgSlug}/venues`}>
             <Card className="hover:shadow-xl hover:scale-105 transition-all cursor-pointer h-full bg-gradient-to-br from-green-500/10 to-transparent border-2 hover:border-green-500/50">
               <CardContent className="py-8 text-center">
                 <MapPin className="h-12 w-12 mx-auto mb-3 text-green-500" />
                 <h3 className="font-bold text-xl mb-1">Venues</h3>
-                <p className="text-sm text-muted-foreground">Find & manage venues</p>
+                <p className="text-sm text-muted-foreground">
+                  Find & manage venues
+                </p>
               </CardContent>
             </Card>
           </Link>
-          
+
           <Link href={`/${orgSlug}/profile`}>
             <Card className="hover:shadow-xl hover:scale-105 transition-all cursor-pointer h-full bg-gradient-to-br from-purple-500/10 to-transparent border-2 hover:border-purple-500/50">
               <CardContent className="py-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-3 text-purple-500" />
                 <h3 className="font-bold text-xl mb-1">Settings</h3>
-                <p className="text-sm text-muted-foreground">Organization settings</p>
+                <p className="text-sm text-muted-foreground">
+                  Organization settings
+                </p>
               </CardContent>
             </Card>
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }
