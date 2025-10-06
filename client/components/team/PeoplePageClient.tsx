@@ -315,61 +315,32 @@ export default function PeoplePageClient({
                   return (
                     <div
                       key={person.id}
-                      className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
+                      className="rounded-lg border border-input bg-card text-foreground shadow-sm p-2.5 sm:p-3 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
                       onClick={() => handlePersonClick(person.id)}
                     >
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2">
                         {/* Header with name and badges */}
-                        <div className="flex flex-col gap-2">
-                          <h4 className="font-semibold text-foreground text-base">
-                            {person.name}
-                          </h4>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {person.member_type && (
-                              <Badge variant="outline" className="text-xs">
-                                <RoleIcon className="w-3 h-3 mr-1" />
-                                {person.member_type}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="flex flex-col gap-1.5">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              {person.name}
+                            </h4>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {person.member_type && (
+                                <Badge variant="outline" className="text-xs h-5">
+                                  <RoleIcon className="w-3 h-3 mr-1" />
+                                  {person.member_type}
+                                </Badge>
+                              )}
+                              <Badge variant={status.variant} className="text-xs h-5">
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {status.label}
                               </Badge>
-                            )}
-                            <Badge variant={status.variant} className="text-xs">
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {status.label}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {/* Contact information */}
-                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                          {person.email && (
-                            <div className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span className="break-all">{person.email}</span>
                             </div>
-                          )}
-                          {person.phone && (
-                            <div className="flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span>{person.phone}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Notes */}
-                        {person.notes && (
-                          <div className="flex items-start gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
-                            <FileText className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-2">{person.notes}</span>
-                          </div>
-                        )}
-
-                        {/* Footer with date and actions */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-border/50">
-                          <div className="text-xs text-muted-foreground">
-                            Added {formatDate(person.created_at)}
                           </div>
 
-                          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                            {/* Invite Button for users without account */}
+                          {/* Actions - desktop */}
+                          <div className="hidden sm:flex gap-2 items-center">
                             {!person.user_id &&
                               person.email &&
                               !invitationMap.has(person.id) && (
@@ -383,7 +354,7 @@ export default function PeoplePageClient({
                                   onClick={(e) =>
                                     handleInvite(person.id, person.name, e)
                                   }
-                                  className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                 >
                                   {invitingPersonId === person.id ? (
                                     <>
@@ -398,19 +369,6 @@ export default function PeoplePageClient({
                                   )}
                                 </Button>
                               )}
-
-                            {/* Show invitation sent date */}
-                            {invitationMap.has(person.id) &&
-                              invitationMap.get(person.id)!.created_at && (
-                                <div className="text-xs text-muted-foreground sm:text-right">
-                                  Invited{" "}
-                                  {formatDate(
-                                    invitationMap.get(person.id)!.created_at!
-                                  )}
-                                </div>
-                              )}
-
-                            {/* Show warning if no email */}
                             {!person.email && !person.user_id && (
                               <Badge
                                 variant="destructive"
@@ -421,6 +379,78 @@ export default function PeoplePageClient({
                               </Badge>
                             )}
                           </div>
+                        </div>
+
+                        {/* Contact information and dates */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            {person.email && (
+                              <div className="flex items-center gap-1">
+                                <Mail className="w-3 h-3 flex-shrink-0" />
+                                <span className="break-all">{person.email}</span>
+                              </div>
+                            )}
+                            {person.phone && (
+                              <div className="flex items-center gap-1">
+                                <Phone className="w-3 h-3 flex-shrink-0" />
+                                <span>{person.phone}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span>Added {formatDate(person.created_at)}</span>
+                            {invitationMap.has(person.id) &&
+                              invitationMap.get(person.id)!.created_at && (
+                                <span>
+                                  Invited{" "}
+                                  {formatDate(
+                                    invitationMap.get(person.id)!.created_at!
+                                  )}
+                                </span>
+                              )}
+                          </div>
+                        </div>
+
+                        {/* Actions - mobile */}
+                        <div className="flex sm:hidden flex-col gap-2">
+                          {!person.user_id &&
+                            person.email &&
+                            !invitationMap.has(person.id) && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                disabled={
+                                  !seatInfo?.can_invite ||
+                                  invitingPersonId === person.id
+                                }
+                                onClick={(e) =>
+                                  handleInvite(person.id, person.name, e)
+                                }
+                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              >
+                                {invitingPersonId === person.id ? (
+                                  <>
+                                    <FileText className="w-3 h-3 mr-2 animate-pulse" />
+                                    Sending...
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserPlus className="w-3 h-3 mr-2" />
+                                    Invite
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          {!person.email && !person.user_id && (
+                            <Badge
+                              variant="destructive"
+                              className="text-xs w-fit"
+                            >
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              No Email
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
