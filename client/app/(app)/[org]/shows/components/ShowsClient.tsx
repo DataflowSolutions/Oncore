@@ -13,7 +13,11 @@ interface ShowsClientProps {
   view: string;
 }
 
-export default function ShowsClient({ shows, orgSlug, view }: ShowsClientProps) {
+export default function ShowsClient({
+  shows,
+  orgSlug,
+  view,
+}: ShowsClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter shows based on search query

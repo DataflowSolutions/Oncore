@@ -3,6 +3,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 // import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
 import DynamicSidebar from "@/components/navigation/DynamicSidebar";
+import { TopBar } from "@/components/navigation/TopBar";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -72,7 +73,10 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
 
       {/* Main Content Area */}
       <div className="lg:ml-64 min-h-screen">
-        <div className="py-6 lg:p-8 pt-20 lg:pt-8">{children}</div>
+        {/* Top Navigation Bar */}
+        <TopBar />
+
+        <div className="py-6 lg:p-8 pt-6 lg:pt-6">{children}</div>
       </div>
     </div>
   );

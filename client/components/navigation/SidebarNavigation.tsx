@@ -2,12 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import {
-  Calendar,
-  Users,
-  Settings,
-  MapPin,
-} from "lucide-react";
+import { NAVIGATION_ITEMS } from "@/lib/constants/navigation";
 
 interface SidebarNavigationProps {
   orgSlug: string;
@@ -15,49 +10,16 @@ interface SidebarNavigationProps {
   currentPath: string;
 }
 
-interface NavItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-}
-
 const SidebarNavigation = ({
   orgSlug,
   currentPath,
 }: SidebarNavigationProps) => {
-  const navItems: NavItem[] = [
-    {
-      id: "home",
-      label: "Home",
-      href: `/${orgSlug}`,
-      icon: Calendar,
-    },
-    {
-      id: "shows",
-      label: "Shows",
-      href: `/${orgSlug}/shows`,
-      icon: Calendar,
-    },
-    {
-      id: "people",
-      label: "People",
-      href: `/${orgSlug}/people`,
-      icon: Users,
-    },
-    {
-      id: "venues",
-      label: "Venues",
-      href: `/${orgSlug}/venues`,
-      icon: MapPin,
-    },
-    {
-      id: "profile",
-      label: "Settings",
-      href: `/${orgSlug}/profile`,
-      icon: Settings,
-    },
-  ];
+  const navItems = NAVIGATION_ITEMS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    href: item.href(orgSlug),
+    icon: item.icon,
+  }));
 
   const isActiveRoute = (href: string) => {
     // Exact match or starts with the href for nested routes
