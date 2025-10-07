@@ -125,7 +125,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4">
             {nextWeekShows.map((show) => (
               <Link key={show.id} href={`/${orgSlug}/shows/${show.id}`}>
                 <Card className="hover:shadow-md transition-all hover:border-primary/50">

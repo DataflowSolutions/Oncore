@@ -1,7 +1,4 @@
-import ShowsSearchbar from "./components/ShowsSearchbar";
-import ShowsTable from "./components/ShowsTable";
-import ShowsCalendar from "./components/ShowsCalendar";
-import ShowViewToggler from "./components/ShowViewToggler";
+import ShowsClient from "./components/ShowsClient";
 import CreateShowButton from "./components/CreateShowButton";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getShowsByOrg } from "@/lib/actions/shows";
@@ -46,18 +43,7 @@ export default async function ShowsPage({
         <CreateShowButton orgId={org.id} />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="flex-1">
-          <ShowsSearchbar />
-        </div>
-        <ShowViewToggler />
-      </div>
-
-      {view === "calendar" ? (
-        <ShowsCalendar shows={shows} orgSlug={orgSlug} />
-      ) : (
-        <ShowsTable orgId={org.id} orgSlug={orgSlug} />
-      )}
+      <ShowsClient shows={shows} orgSlug={orgSlug} view={view} />
     </div>
   );
 }

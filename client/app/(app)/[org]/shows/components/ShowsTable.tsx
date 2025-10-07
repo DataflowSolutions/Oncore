@@ -1,11 +1,11 @@
 import React from "react";
 import Link from "next/link";
-import { getShowsByOrg, ShowWithVenue } from "@/lib/actions/shows";
+import { ShowWithVenue } from "@/lib/actions/shows";
 import { VenueLink } from "./VenueLink";
 
 interface ShowsTableProps {
-  orgId: string
-  orgSlug: string
+  shows: ShowWithVenue[];
+  orgSlug: string;
 }
 
 function getShowsByMonth(shows: ShowWithVenue[]) {
@@ -42,8 +42,7 @@ function getShowsByMonth(shows: ShowWithVenue[]) {
   return Object.fromEntries(sortedEntries)
 }
 
-const ShowsTable = async ({ orgId, orgSlug }: ShowsTableProps) => {
-  const shows = await getShowsByOrg(orgId)
+const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
   const showsByMonth = getShowsByMonth(shows)
 
   if (shows.length === 0) {
