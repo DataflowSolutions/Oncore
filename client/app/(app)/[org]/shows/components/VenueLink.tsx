@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
+import Link from "next/link";
 
 interface VenueLinkProps {
-  href: string
-  venueName: string
-  className?: string
+  href: string;
+  venueName: string;
+  className?: string;
 }
 
 export function VenueLink({ href, venueName, className }: VenueLinkProps) {
@@ -15,7 +15,7 @@ export function VenueLink({ href, venueName, className }: VenueLinkProps) {
       className={className}
       onClick={(e) => e.stopPropagation()}
     >
-      📍 {venueName}
+      {venueName}
     </Link>
-  )
+  );
 }

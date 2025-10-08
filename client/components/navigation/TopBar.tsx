@@ -16,7 +16,7 @@ export function TopBar() {
             <div className="w-full flex-1 md:w-auto md:flex-none">
               <Button
                 variant="outline"
-                className="relative h-9 w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
+                className="relative h-9 w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64 cursor-text"
                 onClick={() => setOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />

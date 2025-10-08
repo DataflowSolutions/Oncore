@@ -1,52 +1,58 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Plus, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
-import { createShow } from '@/lib/actions/shows'
-import VenueFormFields from '@/components/advancing/VenueFormFields'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, Calendar, AlertCircle, CheckCircle } from "lucide-react";
+import { createShow } from "@/lib/actions/shows";
+import VenueFormFields from "@/components/advancing/VenueFormFields";
 
 interface CreateShowButtonProps {
-  orgId: string
+  orgId: string;
 }
 
 export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
-  const [showForm, setShowForm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedVenue, setSelectedVenue] = useState<{id: string, name: string, city: string | null} | null>(null)
+  const [selectedVenue, setSelectedVenue] = useState<{
+    id: string;
+    name: string;
+    city: string | null;
+  } | null>(null);
 
   const handleSubmit = async (formData: FormData) => {
-    setIsLoading(true)
-    setError(null)
-    
+    setIsLoading(true);
+    setError(null);
+
     try {
       // Add orgId to formData
-      formData.append('orgId', orgId)
-      await createShow(formData)
-      setSuccess(true)
-      
+      formData.append("orgId", orgId);
+      await createShow(formData);
+      setSuccess(true);
+
       // Close form after brief success message
       setTimeout(() => {
-        setShowForm(false)
-        setSuccess(false)
-      }, 1500)
+        setShowForm(false);
+        setSuccess(false);
+      }, 1500);
     } catch (error) {
-      console.error('Error creating show:', error)
-      setError(error instanceof Error ? error.message : 'Failed to create show')
+      console.error("Error creating show:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to create show"
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (showForm) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div 
-          role="dialog" 
+        <div
+          role="dialog"
           className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg sm:max-w-[600px]"
           tabIndex={-1}
         >
@@ -59,20 +65,22 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
               Add a new show to your schedule. Fill in the basic details below.
             </p>
           </div>
-            {error && (
-              <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <span className="text-sm text-destructive">{error}</span>
-              </div>
-            )}
-            
-            {success && (
-              <div className="mb-4 p-3 rounded-md bg-primary/10 border border-primary/20 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="text-sm text-foreground">Show created successfully!</span>
-              </div>
-            )}
-            
+          {error && (
+            <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-destructive">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-3 rounded-md bg-primary/10 border border-primary/20 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              <span className="text-sm text-foreground">
+                Show created successfully!
+              </span>
+            </div>
+          )}
+
           <form action={handleSubmit} className="space-y-4">
             {/* Layout exactly as requested:
                 Row 1: Show Name, Venue Name
@@ -80,11 +88,14 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                 Row 3: Performance Date, Performance Time
                 Row 4: Artist, Show Type
                 Row 5: Crew Requirements */}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Row 1: Show Name, Venue Name */}
               <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="name">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="name"
+                >
                   Show Name *
                 </label>
                 <Input
@@ -94,27 +105,28 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
-              
+
               <VenueFormFields
                 orgId={orgId}
                 onVenueSelect={(venue) => setSelectedVenue(venue)}
               />
-              
+
               {/* Row 3: Performance Date, Performance Time */}
               <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="performance_date">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="performance_date"
+                >
                   Performance Date *
                 </label>
-                <Input
-                  id="performance_date"
-                  name="date"
-                  type="date"
-                  required
-                />
+                <Input id="performance_date" name="date" type="date" required />
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="performance_time">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="performance_time"
+                >
                   Performance Time *
                 </label>
                 <Input
@@ -124,10 +136,13 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
-              
+
               {/* Row 4: Artist, Show Type */}
               <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="artist">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="artist"
+                >
                   Artist *
                 </label>
                 <Input
@@ -137,9 +152,12 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="show_type">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="show_type"
+                >
                   Show Type
                 </label>
                 <select
@@ -154,10 +172,13 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                 </select>
               </div>
             </div>
-            
+
             {/* Row 5: Crew Requirements (full width) */}
             <div>
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="crew_requirements">
+              <label
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                htmlFor="crew_requirements"
+              >
                 Crew Requirements
               </label>
               <textarea
@@ -167,7 +188,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
               />
             </div>
-            
+
             <div className="flex justify-end space-x-3 pt-6">
               <Button
                 type="button"
@@ -182,13 +203,13 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                 disabled={isLoading}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isLoading ? 'Creating...' : 'Create Show'}
+                {isLoading ? "Creating..." : "Create Show"}
               </Button>
             </div>
           </form>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -196,10 +217,10 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
       onClick={() => setShowForm(true)}
       size="lg"
       type="button"
-      className="font-semibold"
+      className="font-semibold cursor-pointer"
     >
-      <Plus className="w-5 h-5" />
+      <Plus className="w-5 h-5 " />
       Create Show
     </Button>
-  )
+  );
 }

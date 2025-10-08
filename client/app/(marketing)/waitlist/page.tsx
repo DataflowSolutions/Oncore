@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -12,54 +12,60 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { addToWaitlist } from '@/lib/actions/waitlist'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+} from "@/components/ui/select";
+import { addToWaitlist } from "@/lib/actions/waitlist";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 export default function WaitlistPage() {
   const [formData, setFormData] = useState({
-    email: '',
-    name: '',
-    role: 'artist' as 'artist' | 'manager' | 'agent' | 'venue' | 'promoter' | 'other',
-    company: '',
-    phone: '',
-    notes: '',
-  })
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+    email: "",
+    name: "",
+    role: "artist" as
+      | "artist"
+      | "manager"
+      | "agent"
+      | "venue"
+      | "promoter"
+      | "other",
+    company: "",
+    phone: "",
+    notes: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const result = await addToWaitlist(formData)
+      const result = await addToWaitlist(formData);
 
       if (result.success) {
-        setSubmitted(true)
+        setSubmitted(true);
       } else {
-        setError(result.error || 'Something went wrong. Please try again.')
+        setError(result.error || "Something went wrong. Please try again.");
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.')
-      console.error(err)
+      setError("Something went wrong. Please try again.");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted/20">
@@ -77,31 +83,33 @@ export default function WaitlistPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Get Early Access</CardTitle>
             <CardDescription>
-              Launch date: October 31st, 2025. Sign up now to secure your spot and get notified when we go live.
+              Launch date: October 31st, 2025. Sign up now to secure your spot
+              and get notified when we go live.
             </CardDescription>
           </CardHeader>
 
           {submitted ? (
             <CardContent className="text-center py-12 space-y-4">
               <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-              <h3 className="text-2xl font-bold">You're on the list!</h3>
+              <h3 className="text-2xl font-bold">You are on the list!</h3>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Thanks for joining, <strong>{formData.name || formData.email}</strong>. 
-                We'll be in touch soon with exclusive updates and early access details.
+                Thanks for joining,{" "}
+                <strong>{formData.name || formData.email}</strong>. We will be
+                in touch soon with exclusive updates and early access details.
               </p>
               <div className="pt-4">
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setSubmitted(false)
+                    setSubmitted(false);
                     setFormData({
-                      email: '',
-                      name: '',
-                      role: 'artist',
-                      company: '',
-                      phone: '',
-                      notes: '',
-                    })
+                      email: "",
+                      name: "",
+                      role: "artist",
+                      company: "",
+                      phone: "",
+                      notes: "",
+                    });
                   }}
                 >
                   Add Another Person
@@ -118,7 +126,7 @@ export default function WaitlistPage() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
+                      onChange={(e) => handleChange("email", e.target.value)}
                       placeholder="your@email.com"
                       required
                     />
@@ -130,7 +138,7 @@ export default function WaitlistPage() {
                       id="name"
                       type="text"
                       value={formData.name}
-                      onChange={(e) => handleChange('name', e.target.value)}
+                      onChange={(e) => handleChange("name", e.target.value)}
                       placeholder="Your name"
                     />
                   </div>
@@ -140,7 +148,7 @@ export default function WaitlistPage() {
                   <Label htmlFor="role">I am a... *</Label>
                   <Select
                     value={formData.role}
-                    onValueChange={(value) => handleChange('role', value)}
+                    onValueChange={(value) => handleChange("role", value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a role" />
@@ -149,7 +157,9 @@ export default function WaitlistPage() {
                       <SelectItem value="artist">Artist / Performer</SelectItem>
                       <SelectItem value="manager">Tour Manager</SelectItem>
                       <SelectItem value="agent">Booking Agent</SelectItem>
-                      <SelectItem value="venue">Venue Representative</SelectItem>
+                      <SelectItem value="venue">
+                        Venue Representative
+                      </SelectItem>
                       <SelectItem value="promoter">Promoter</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
@@ -163,7 +173,7 @@ export default function WaitlistPage() {
                       id="company"
                       type="text"
                       value={formData.company}
-                      onChange={(e) => handleChange('company', e.target.value)}
+                      onChange={(e) => handleChange("company", e.target.value)}
                       placeholder="Optional"
                     />
                   </div>
@@ -174,7 +184,7 @@ export default function WaitlistPage() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
+                      onChange={(e) => handleChange("phone", e.target.value)}
                       placeholder="Optional"
                     />
                   </div>
@@ -185,7 +195,7 @@ export default function WaitlistPage() {
                   <Textarea
                     id="notes"
                     value={formData.notes}
-                    onChange={(e) => handleChange('notes', e.target.value)}
+                    onChange={(e) => handleChange("notes", e.target.value)}
                     placeholder="What features are you most excited about? Any specific challenges you're facing?"
                     rows={3}
                   />
@@ -199,18 +209,24 @@ export default function WaitlistPage() {
               </CardContent>
 
               <CardFooter className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={loading}
+                >
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Joining...
                     </>
                   ) : (
-                    'Join Waitlist'
+                    "Join Waitlist"
                   )}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  By joining, you'll receive updates about Oncore's launch and exclusive early access opportunities.
+                  By joining, you will receive updates about Oncore&#39;s launch
+                  and exclusive early access opportunities.
                 </p>
               </CardFooter>
             </form>
@@ -221,20 +237,26 @@ export default function WaitlistPage() {
           <div className="p-4">
             <div className="text-3xl font-bold">📧</div>
             <div className="text-sm font-medium mt-2">Email Parsing</div>
-            <div className="text-xs text-muted-foreground">Auto-extract show details</div>
+            <div className="text-xs text-muted-foreground">
+              Auto-extract show details
+            </div>
           </div>
           <div className="p-4">
             <div className="text-3xl font-bold">📄</div>
             <div className="text-sm font-medium mt-2">Contract AI</div>
-            <div className="text-xs text-muted-foreground">Parse contracts instantly</div>
+            <div className="text-xs text-muted-foreground">
+              Parse contracts instantly
+            </div>
           </div>
           <div className="p-4">
             <div className="text-3xl font-bold">📅</div>
             <div className="text-sm font-medium mt-2">Calendar Sync</div>
-            <div className="text-xs text-muted-foreground">Keep everything in sync</div>
+            <div className="text-xs text-muted-foreground">
+              Keep everything in sync
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

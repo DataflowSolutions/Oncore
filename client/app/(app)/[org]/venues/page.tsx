@@ -110,23 +110,26 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
                     <Link
                       key={venue.id}
                       href={`/${orgSlug}/venues/${venue.id}`}
-                      className="block rounded-lg border border-input bg-card text-foreground shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
+                      className="block rounded-lg border border-input bg-card text-foreground shadow-sm p-2.5 sm:p-3 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
                     >
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2">
                         {/* Header with name and badges */}
-                        <div className="flex flex-col gap-2">
-                          <h4 className="font-semibold text-foreground text-base">
+                        <div className="flex flex-col gap-1.5">
+                          <h4 className="font-semibold text-foreground text-sm">
                             {venue.name}
                           </h4>
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {showCount > 0 && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge
+                                variant="secondary"
+                                className="text-xs h-5"
+                              >
                                 <Calendar className="w-3 h-3 mr-1" />
                                 {showCount} show{showCount !== 1 ? "s" : ""}
                               </Badge>
                             )}
                             {venue.capacity && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs h-5">
                                 <Building className="w-3 h-3 mr-1" />
                                 Cap. {venue.capacity}
                               </Badge>
@@ -134,47 +137,46 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
                           </div>
                         </div>
 
-                        {/* Location information */}
-                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                          {venue.city && (
-                            <div className="flex items-center gap-1.5">
-                              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span>
-                                {venue.city}
-                                {venue.country && `, ${venue.country}`}
-                              </span>
-                            </div>
-                          )}
-                          {venue.address && (
-                            <div className="flex items-start gap-1.5">
-                              <Globe className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                              <span className="break-words">
-                                {venue.address}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Contact info */}
-                        {venue.contacts && (
-                          <div className="flex items-start gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
-                            <Users className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                            <span>Contact info available</span>
-                          </div>
-                        )}
-
-                        {/* Footer with date */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-border/50">
-                          <div className="text-xs text-muted-foreground">
-                            Added{" "}
-                            {new Date(venue.created_at).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
+                        {/* Location and contact information */}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+                            {venue.city && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span>
+                                  {venue.city}
+                                  {venue.country && `, ${venue.country}`}
+                                </span>
+                              </div>
                             )}
+                            {venue.address && (
+                              <div className="flex items-center gap-1">
+                                <Globe className="w-3 h-3 flex-shrink-0" />
+                                <span className="break-all">
+                                  {venue.address}
+                                </span>
+                              </div>
+                            )}
+                            {venue.contacts && (
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3 h-3 flex-shrink-0" />
+                                <span>Contact info available</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span>
+                              Added{" "}
+                              {new Date(venue.created_at).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>

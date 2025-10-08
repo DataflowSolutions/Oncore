@@ -2,8 +2,8 @@ import {
   LucideIcon,
   Calendar,
   Users,
-  FileText,
-  ChartColumn,
+  // FileText,
+  // ChartColumn,
   Settings,
   MapPin,
 } from "lucide-react";
