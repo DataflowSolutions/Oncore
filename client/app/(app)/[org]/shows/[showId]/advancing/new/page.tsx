@@ -1,34 +1,37 @@
-import { getSupabaseServer } from '@/lib/supabase/server'
-import { getShowsByOrg } from '@/lib/actions/shows'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { getSupabaseServer } from "@/lib/supabase/server";
+import { getShowsByOrg } from "@/lib/actions/shows";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface NewAdvancingSessionPageProps {
-  params: Promise<{ org: string }>
-  searchParams: Promise<{ showId?: string }>
+  params: Promise<{ org: string }>;
+  searchParams: Promise<{ showId?: string }>;
 }
 
-export default async function NewAdvancingSessionPage({ params, searchParams }: NewAdvancingSessionPageProps) {
-  const { org: orgSlug } = await params
-  const { showId } = await searchParams
-  
-  const supabase = await getSupabaseServer()
-  
+export default async function NewAdvancingSessionPage({
+  params,
+  searchParams,
+}: NewAdvancingSessionPageProps) {
+  const { org: orgSlug } = await params;
+  const { showId } = await searchParams;
+
+  const supabase = await getSupabaseServer();
+
   // Get org_id from org slug
   const { data: organization } = await supabase
-    .from('organizations')
-    .select('id, name')
-    .eq('slug', orgSlug)
-    .single()
-  
+    .from("organizations")
+    .select("id, name")
+    .eq("slug", orgSlug)
+    .single();
+
   if (!organization) {
-    return <div>Organization not found</div>
+    return <div>Organization not found</div>;
   }
 
   // Get shows for the organization
-  const shows = await getShowsByOrg(organization.id)
+  const shows = await getShowsByOrg(organization.id);
 
   return (
     <div className="space-y-6">
@@ -39,11 +42,12 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
           Back to Advancing
         </Link>
       </Button>
-      
+
       <div>
         <h1 className="text-2xl font-bold">Create Advancing Session</h1>
         <p className="text-muted-foreground">
-          Start a new advancing session to collaborate with venues and manage show details.
+          Start a new advancing session to collaborate with venues and manage
+          show details.
         </p>
       </div>
 
@@ -53,25 +57,32 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
           <CardTitle>Session Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={async (formData: FormData) => {
-            'use server'
-            const { createAdvancingSession } = await import('@/lib/actions/advancing')
-            const { redirect } = await import('next/navigation')
-            
-            const title = formData.get('title') as string
-            const showId = formData.get('showId') as string
-            
-            if (!title.trim()) return
-            
-            const result = await createAdvancingSession(orgSlug, {
-              title,
-              showId: showId === 'none' ? '' : showId,
-            })
-            
-            if (result.success && result.data) {
-              redirect(`/${orgSlug}/shows/${showId}/advancing/${result.data.id}`)
-            }
-          }} className="space-y-6">
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              const { createAdvancingSession } = await import(
+                "@/lib/actions/advancing"
+              );
+              const { redirect } = await import("next/navigation");
+
+              const title = formData.get("title") as string;
+              const showId = formData.get("showId") as string;
+
+              if (!title.trim()) return;
+
+              const result = await createAdvancingSession(orgSlug, {
+                title,
+                showId: showId === "none" ? "" : showId,
+              });
+
+              if (result.success && result.data) {
+                redirect(
+                  `/${orgSlug}/shows/${showId}/advancing/${result.data.id}`
+                );
+              }
+            }}
+            className="space-y-6"
+          >
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">
                 Session Title
@@ -88,31 +99,38 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
 
             <div className="space-y-2">
               <label htmlFor="showId" className="text-sm font-medium">
-                Associated Show (Optional)
+                Associated Show
               </label>
               <select
                 id="showId"
                 name="showId"
-                defaultValue={showId || 'none'}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                defaultValue={showId || "none"}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 "
               >
-                <option value="none">No show selected</option>
+                <option className="text-background/50" value="none">
+                  No show selected
+                </option>
                 {shows.map((show) => (
-                  <option key={show.id} value={show.id}>
-                    {show.title}{show.venue ? ` • ${show.venue.name}` : ''}
+                  <option
+                    className="text-background"
+                    key={show.id}
+                    value={show.id}
+                  >
+                    {show.title}
+                    {show.venue ? ` • ${show.venue.name}` : ""}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="flex gap-3">
-              <button 
+              <button
                 type="submit"
                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
               >
                 Create Session
               </button>
-              
+
               <Button asChild variant="outline">
                 <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
                   Cancel
@@ -123,5 +141,5 @@ export default async function NewAdvancingSessionPage({ params, searchParams }: 
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

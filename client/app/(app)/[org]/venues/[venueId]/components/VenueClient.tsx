@@ -1,73 +1,66 @@
-import { getSupabaseServer } from "@/lib/supabase/server";
-import { getVenueDetails } from "@/lib/actions/venues";
+"use client";
+
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  MapPin,
-  Globe,
-  Calendar,
-  Users,
-  Building,
-  ArrowLeft,
-  Phone,
-} from "lucide-react";
+import { MapPin, Globe, Calendar, Users, Building } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import VenueViewToggler from "./VenueViewToggler";
+import PromotersListPlaceholder from "./PromotersListPlaceholder";
 
-interface VenueDetailPageProps {
-  params: Promise<{ org: string; venueId: string }>;
+interface Show {
+  id: string;
+  title: string | null;
+  date: string;
+  status: string;
 }
 
-export default async function VenueDetailPage({
-  params,
-}: VenueDetailPageProps) {
-  const { org: orgSlug, venueId } = await params;
+interface Venue {
+  id: string;
+  name: string;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  capacity: number | null;
+  created_at: string;
+  org_id: string;
+}
 
-  const supabase = await getSupabaseServer();
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+interface VenueClientProps {
+  venue: Venue;
+  shows: Show[];
+  orgSlug: string;
+  view: string;
+}
 
-  if (!org) {
-    return <div>Organization not found</div>;
-  }
+export default function VenueClient({
+  venue,
+  shows,
+  orgSlug,
+  view,
+}: VenueClientProps) {
+  const upcomingShows = shows.filter(
+    (show) => new Date(show.date) >= new Date()
+  );
+  const pastShows = shows.filter((show) => new Date(show.date) < new Date());
 
-  try {
-    const { venue, shows } = await getVenueDetails(venueId);
-
-    // Verify venue belongs to this org
-    if (venue.org_id !== org.id) {
-      notFound();
-    }
-
-    const upcomingShows = shows.filter(
-      (show) => new Date(show.date) >= new Date()
-    );
-    const pastShows = shows.filter((show) => new Date(show.date) < new Date());
-
-    return (
-      <div className="mb-16 mt-4">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/${orgSlug}/venues`}>
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Venues
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">{venue.name}</h1>
-            <p className="mt-2 text-foreground/50">
-              {venue.city && venue.country
-                ? `${venue.city}, ${venue.country}`
-                : venue.city || venue.country || "Venue details"}
-            </p>
-          </div>
-          {/* TODO: Add edit venue button */}
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-foreground">{venue.name}</h1>
+          <p className="mt-2 text-foreground/50">
+            {venue.city && venue.country
+              ? `${venue.city}, ${venue.country}`
+              : venue.city || venue.country || "Venue details"}
+          </p>
         </div>
+        <VenueViewToggler />
+      </div>
 
+      {view === "promoters" ? (
+        <PromotersListPlaceholder />
+      ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Venue Information */}
           <div className="lg:col-span-2 space-y-6">
@@ -126,27 +119,6 @@ export default async function VenueDetailPage({
                 </div>
               </CardContent>
             </Card>
-
-            {/* Contact Information */}
-            {venue.contacts && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="w-5 h-5" />
-                    Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">
-                    <p>Contact details are stored in venue records</p>
-                    <p className="mt-1">
-                      Use this for production contacts, technical coordinators,
-                      and venue management
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Shows at this venue */}
@@ -284,10 +256,7 @@ export default async function VenueDetailPage({
             )}
           </div>
         </div>
-      </div>
-    );
-  } catch (error) {
-    console.error("Error loading venue details:", error);
-    notFound();
-  }
+      )}
+    </>
+  );
 }
