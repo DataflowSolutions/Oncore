@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Globe, Calendar, Users, Building } from "lucide-react";
 import Link from "next/link";
 import VenueViewToggler from "./VenueViewToggler";
+import VenuesSearchbar from "./VenuesSearchbar";
 
 interface Venue {
   id: string;
@@ -30,104 +31,101 @@ export default function VenuesClient({
   orgSlug,
   view,
 }: VenuesClientProps) {
-  const totalShows = venues.reduce(
-    (sum, venue) => sum + (venue.shows?.[0]?.count || 0),
-    0
-  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter venues based on search query
+  const filteredVenues = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return venues;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return venues.filter((venue) => {
+      // Search in venue name
+      const nameMatch = venue.name?.toLowerCase().includes(query);
+
+      // Search in city
+      const cityMatch = venue.city?.toLowerCase().includes(query);
+
+      // Search in country
+      const countryMatch = venue.country?.toLowerCase().includes(query);
+
+      // Search in address
+      const addressMatch = venue.address?.toLowerCase().includes(query);
+
+      return nameMatch || cityMatch || countryMatch || addressMatch;
+    });
+  }, [venues, searchQuery]);
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Venues</h1>
-          <p className="mt-2 text-foreground/50">
-            Manage venue contacts, technical specs, and show history
-          </p>
-        </div>
-        <VenueViewToggler />
-      </div>
-
-      <div className="space-y-6">
-        {view === "promoters" ? (
-          // Promoters placeholder
-          <Card>
-            <CardContent className="text-center py-16">
-              <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Promoters</h3>
-              <p className="text-muted-foreground mb-4">
-                Manage promoters and external collaborators
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Promoter list functionality coming soon
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Overview Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-2xl font-bold">{venues.length}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Total Venues
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-2xl font-bold">{totalShows}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Total Shows
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {venues.filter((v) => v.city).length}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Cities</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      {view === "promoters" ? (
+        // Promoters view - placeholder with static content
+        <>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="flex-1">
+              <div className="relative my-6">
+                <input
+                  type="text"
+                  placeholder="Search promoters (coming soon)..."
+                  disabled
+                  className="w-full h-10 bg-muted/50 px-10 py-2 border border-input rounded-md cursor-not-allowed opacity-60"
+                />
+              </div>
             </div>
+            <VenueViewToggler />
+          </div>
 
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="text-center py-16">
+                <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Promoters</h3>
+                <p className="text-muted-foreground mb-4">
+                  Manage promoters and external collaborators
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Promoter management functionality coming soon
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      ) : (
+        // Venues view - full functionality
+        <>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="flex-1">
+              <VenuesSearchbar value={searchQuery} onChange={setSearchQuery} />
+            </div>
+            <VenueViewToggler />
+          </div>
+
+          <div className="space-y-6">
             {/* All Venues */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Building className="w-5 h-5" />
                   <CardTitle className="text-lg">
-                    All Venues ({venues.length})
+                    All Venues ({filteredVenues.length})
                   </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                {venues.length === 0 ? (
+                {filteredVenues.length === 0 ? (
                   <div className="text-center py-12">
                     <Building className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      No venues added yet. Add your first venue to get started!
+                      {searchQuery.trim()
+                        ? "No venues found matching your search."
+                        : "No venues added yet. Add your first venue to get started!"}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {venues.map((venue) => {
+                    {filteredVenues.map((venue) => {
                       const showCount = venue.shows?.[0]?.count || 0;
                       return (
                         <Link
@@ -213,9 +211,9 @@ export default function VenuesClient({
                 )}
               </CardContent>
             </Card>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
