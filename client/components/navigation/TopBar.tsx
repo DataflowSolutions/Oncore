@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Search } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
+import { Notifications } from "./Notifications";
 import { Button } from "@/components/ui/button";
 
 export function TopBar() {
@@ -27,6 +28,7 @@ export function TopBar() {
                 </kbd>
               </Button>
             </div>
+            <Notifications />
           </div>
         </div>
       </header>
