@@ -1,9 +1,19 @@
-import { Home, Users, MapPin, Settings, Music, LucideIcon } from "lucide-react";
+import {
+  Home,
+  Users,
+  MapPin,
+  Settings,
+  LucideIcon,
+  Calendar,
+  FileText,
+  Globe,
+  Ticket,
+} from "lucide-react";
 
 export interface NavigationItem {
   id: string;
   label: string;
-  href: (orgSlug: string) => string;
+  href: (orgSlug: string, showId?: string) => string;
   icon: LucideIcon;
   group?: string;
 }
@@ -20,7 +30,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     id: "shows",
     label: "Shows",
     href: (orgSlug: string) => `/${orgSlug}/shows`,
-    icon: Music,
+    icon: Ticket,
     group: "Navigation",
   },
   {
@@ -32,9 +42,9 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     id: "venues",
-    label: "Venues",
+    label: "Network",
     href: (orgSlug: string) => `/${orgSlug}/venues`,
-    icon: MapPin,
+    icon: Globe,
     group: "Navigation",
   },
   {
@@ -43,6 +53,57 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     href: (orgSlug: string) => `/${orgSlug}/profile`,
     icon: Settings,
     group: "Settings",
+  },
+];
+
+export const SHOW_NAVIGATION_ITEMS: NavigationItem[] = [
+  {
+    id: "overview",
+    label: "Overview",
+    href: (orgSlug: string, showId?: string) => `/${orgSlug}/shows/${showId}`,
+    icon: FileText,
+    group: "Show Navigation",
+  },
+  {
+    id: "day",
+    label: "Day Schedule",
+    href: (orgSlug: string, showId?: string) =>
+      `/${orgSlug}/shows/${showId}/day`,
+    icon: Calendar,
+    group: "Show Navigation",
+  },
+  {
+    id: "team",
+    label: "Team",
+    href: (orgSlug: string, showId?: string) =>
+      `/${orgSlug}/shows/${showId}/team`,
+    icon: Users,
+    group: "Show Navigation",
+  },
+  {
+    id: "advancing",
+    label: "Advancing",
+    href: (orgSlug: string, showId?: string) =>
+      `/${orgSlug}/shows/${showId}/advancing`,
+    icon: FileText,
+    group: "Show Navigation",
+  },
+];
+
+export const SHOW_QUICK_ACCESS_ITEMS: NavigationItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    href: (orgSlug: string) => `/${orgSlug}`,
+    icon: Calendar,
+    group: "Quick Access",
+  },
+  {
+    id: "venues",
+    label: "Venues",
+    href: (orgSlug: string) => `/${orgSlug}/venues`,
+    icon: MapPin,
+    group: "Quick Access",
   },
 ];
 
