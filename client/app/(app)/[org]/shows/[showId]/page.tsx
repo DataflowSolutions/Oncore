@@ -2,10 +2,20 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Music, Users, ArrowLeft, FileText } from 'lucide-react'
+import { Calendar, MapPin, Music, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { getScheduleItemsForShow } from '@/lib/actions/schedule'
 import { ScheduleManager } from '@/components/shows/ScheduleManager'
+import { getShowTeam, getAvailablePeople } from '@/lib/actions/show-team'
+import { ShowClient } from './ShowClient'
+import { getVenuesByOrg } from '@/lib/actions/shows'
+import { 
+  EditableTitle, 
+  EditableDate, 
+  EditableTime, 
+  EditableVenue, 
+  EditableNotes 
+} from '@/components/shows/EditableShowFields'
 
 interface ShowDetailPageProps {
   params: Promise<{ org: string, showId: string }>
@@ -59,8 +69,11 @@ export default async function ShowDetailPage({
     return <div>Show not found</div>
   }
 
-  // Get schedule items for this show
+  // Get schedule items and team data for this show
   const scheduleItems = await getScheduleItemsForShow(showId)
+  const assignedTeam = await getShowTeam(showId)
+  const availablePeople = await getAvailablePeople(org.id)
+  const venues = await getVenuesByOrg(org.id)
 
   return (
     <div className="space-y-8">
@@ -75,7 +88,11 @@ export default async function ShowDetailPage({
         
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="space-y-3">
-            <h1 className="text-4xl font-bold">{show.title || 'Untitled Show'}</h1>
+            <EditableTitle 
+              showId={showId}
+              currentValue={show.title || ''}
+              className="text-4xl font-bold"
+            />
             <div className="flex items-center gap-3 flex-wrap">
               <Badge 
                 variant={show.status === 'confirmed' ? 'default' : 'secondary'}
@@ -84,15 +101,11 @@ export default async function ShowDetailPage({
                 {show.status}
               </Badge>
               {show.date && (
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {new Date(show.date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
+                <EditableDate
+                  showId={showId}
+                  currentValue={show.date}
+                  className="text-muted-foreground"
+                />
               )}
             </div>
           </div>
@@ -105,12 +118,11 @@ export default async function ShowDetailPage({
                 Day Schedule
               </Button>
             </Link>
-            <Link href={`/${orgSlug}/shows/${showId}/team`}>
-              <Button size="lg" variant="outline" className="gap-2">
-                <Users className="w-5 h-5" />
-                Team
-              </Button>
-            </Link>
+            <ShowClient 
+              showId={showId}
+              assignedTeam={assignedTeam}
+              availablePeople={availablePeople}
+            />
             <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
               <Button size="lg" variant="outline" className="gap-2">
                 <FileText className="w-5 h-5" />
@@ -134,28 +146,23 @@ export default async function ShowDetailPage({
           <CardContent>
             {show.venues ? (
               <div className="space-y-4">
-                <div>
-                  <Link 
-                    href={`/${orgSlug}/venues/${show.venues.id}`}
-                    className="text-2xl font-bold text-primary hover:underline"
-                  >
-                    {show.venues.name}
-                  </Link>
-                </div>
-                <div className="flex flex-col gap-2 text-muted-foreground">
-                  {show.venues.address && <p>{show.venues.address}</p>}
-                  <p className="font-medium">
-                    {show.venues.city}{show.venues.country && `, ${show.venues.country}`}
-                  </p>
-                  {show.venues.capacity && (
-                    <Badge variant="outline" className="w-fit">
-                      Capacity: {show.venues.capacity}
-                    </Badge>
-                  )}
-                </div>
+                <EditableVenue
+                  showId={showId}
+                  currentVenueId={show.venues.id}
+                  venues={venues}
+                />
+                {show.venues.capacity && (
+                  <Badge variant="outline" className="w-fit">
+                    Capacity: {show.venues.capacity}
+                  </Badge>
+                )}
               </div>
             ) : (
-              <p className="text-muted-foreground">No venue set</p>
+              <EditableVenue
+                showId={showId}
+                currentVenueId={null}
+                venues={venues}
+              />
             )}
           </CardContent>
         </Card>
@@ -169,28 +176,18 @@ export default async function ShowDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {show.doors_at && (
-              <div>
-                <p className="text-sm text-muted-foreground">Doors</p>
-                <p className="text-xl font-bold">
-                  {new Date(show.doors_at).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            )}
-            {show.set_time && (
-              <div>
-                <p className="text-sm text-muted-foreground">Set Time</p>
-                <p className="text-xl font-bold">
-                  {new Date(show.set_time).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            )}
+            <EditableTime
+              showId={showId}
+              currentValue={show.doors_at}
+              fieldName="doors_at"
+              label="Doors"
+            />
+            <EditableTime
+              showId={showId}
+              currentValue={show.set_time}
+              fieldName="set_time"
+              label="Set Time"
+            />
             {!show.doors_at && !show.set_time && (
               <p className="text-muted-foreground">Times TBD</p>
             )}
@@ -222,19 +219,20 @@ export default async function ShowDetailPage({
       />
 
       {/* Notes - Less Priority */}
-      {show.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{show.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EditableNotes
+            showId={showId}
+            currentValue={show.notes}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
