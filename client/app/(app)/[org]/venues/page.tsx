@@ -27,10 +27,12 @@ export default async function VenuesPage({
   }
 
   // Get venues with show counts and promoters in parallel
-  const [allVenues, allPromoters] = await Promise.all([
+  const [allVenues, promotersResult] = await Promise.all([
     getVenuesWithShowCounts(org.id),
     getPromotersByOrg(org.id),
   ]);
+
+  const allPromoters = promotersResult.success ? promotersResult.data || [] : [];
 
   return (
     <div className="mb-16 mt-4">

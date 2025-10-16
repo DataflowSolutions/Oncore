@@ -84,70 +84,106 @@ const linkPromoterToVenueSchema = z.object({
 /**
  * Get all promoters for an organization
  */
-export async function getPromotersByOrg(orgId: string): Promise<PromoterWithVenues[]> {
+export async function getPromotersByOrg(
+  orgId: string
+): Promise<ActionResponse<PromoterWithVenues[]>> {
   const supabase = await createClient()
 
-  const { data: promoters, error } = await supabase
-    .from('promoters')
-    .select(`
-      *,
-      venue_promoters (
-        venue_id,
-        is_primary,
-        venues (
-          id,
-          name,
-          city
+  try {
+    const { data: promoters, error } = await supabase
+      .from('promoters')
+      .select(`
+        *,
+        venue_promoters (
+          venue_id,
+          is_primary,
+          venues (
+            id,
+            name,
+            city
+          )
         )
-      )
-    `)
-    .eq('org_id', orgId)
-    .eq('status', 'active')
-    .order('name')
+      `)
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .order('name')
 
-  if (error) {
-    console.error('Error fetching promoters:', error)
-    throw new Error(`Failed to fetch promoters: ${error.message}`)
+    if (error) {
+      console.error('Error fetching promoters:', error)
+      return {
+        success: false,
+        error: `Failed to fetch promoters: ${error.message}`,
+      }
+    }
+
+    // Transform the data to include venues array
+    const transformedPromoters = (promoters || []).map((promoter) => ({
+      ...promoter,
+      venues: promoter.venue_promoters?.map((vp) => ({
+        id: vp.venues.id,
+        name: vp.venues.name,
+        city: vp.venues.city,
+        is_primary: vp.is_primary,
+      })) || [],
+      venue_promoters: undefined, // Remove the nested structure
+    })) as PromoterWithVenues[]
+
+    return {
+      success: true,
+      data: transformedPromoters,
+    }
+  } catch (error) {
+    console.error('Error in getPromotersByOrg:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    }
   }
-
-  // Transform the data to include venues array
-  return (promoters || []).map((promoter) => ({
-    ...promoter,
-    venues: promoter.venue_promoters?.map((vp) => ({
-      id: vp.venues.id,
-      name: vp.venues.name,
-      city: vp.venues.city,
-      is_primary: vp.is_primary,
-    })) || [],
-    venue_promoters: undefined, // Remove the nested structure
-  })) as PromoterWithVenues[]
 }
 
 /**
  * Get all promoters linked to a specific venue
  */
-export async function getPromotersByVenue(venueId: string): Promise<Promoter[]> {
+export async function getPromotersByVenue(
+  venueId: string
+): Promise<ActionResponse<(Promoter & { is_primary?: boolean })[]>> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('venue_promoters')
-    .select(`
-      is_primary,
-      notes,
-      promoters (*)
-    `)
-    .eq('venue_id', venueId)
-    .order('is_primary', { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from('venue_promoters')
+      .select(`
+        is_primary,
+        notes,
+        promoters (*)
+      `)
+      .eq('venue_id', venueId)
+      .order('is_primary', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching venue promoters:', error)
-    throw new Error(`Failed to fetch venue promoters: ${error.message}`)
+    if (error) {
+      console.error('Error fetching venue promoters:', error)
+      return {
+        success: false,
+        error: `Failed to fetch venue promoters: ${error.message}`,
+      }
+    }
+
+    const promoters = (data || []).map((item) => ({
+      ...item.promoters,
+      is_primary: item.is_primary,
+    })) as (Promoter & { is_primary?: boolean })[]
+
+    return {
+      success: true,
+      data: promoters,
+    }
+  } catch (error) {
+    console.error('Error in getPromotersByVenue:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    }
   }
-
-  return (data || []).map((item) => ({
-    ...item.promoters,
-    is_primary: item.is_primary,
-  })) as Promoter[]
 }
 
 /**
@@ -546,43 +582,45 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
 /**
  * Search promoters by name, company, city, or email
  */
-export async function searchPromoters(orgId: string, query: string): Promise<PromoterWithVenues[]> {
+export async function searchPromoters(
+  orgId: string, 
+  query: string = ''
+): Promise<ActionResponse<Promoter[]>> {
   const supabase = await createClient()
 
-  const searchTerm = `%${query.toLowerCase()}%`
+  try {
+    let dbQuery = supabase
+      .from('promoters')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .order('name')
 
-  const { data: promoters, error } = await supabase
-    .from('promoters')
-    .select(`
-      *,
-      venue_promoters (
-        venue_id,
-        is_primary,
-        venues (
-          id,
-          name,
-          city
-        )
-      )
-    `)
-    .eq('org_id', orgId)
-    .eq('status', 'active')
-    .or(`name.ilike.${searchTerm},company.ilike.${searchTerm},city.ilike.${searchTerm},email.ilike.${searchTerm}`)
-    .order('name')
+    // Only apply search filter if query is not empty
+    if (query && query.trim().length > 0) {
+      const searchTerm = `%${query.toLowerCase()}%`
+      dbQuery = dbQuery.or(`name.ilike.${searchTerm},company.ilike.${searchTerm},city.ilike.${searchTerm},email.ilike.${searchTerm}`)
+    }
 
-  if (error) {
-    console.error('Error searching promoters:', error)
-    throw new Error(`Failed to search promoters: ${error.message}`)
+    const { data: promoters, error } = await dbQuery
+
+    if (error) {
+      console.error('Error searching promoters:', error)
+      return {
+        success: false,
+        error: `Failed to search promoters: ${error.message}`,
+      }
+    }
+
+    return {
+      success: true,
+      data: promoters as Promoter[],
+    }
+  } catch (error) {
+    console.error('Error in searchPromoters:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    }
   }
-
-  return (promoters || []).map((promoter) => ({
-    ...promoter,
-    venues: promoter.venue_promoters?.map((vp) => ({
-      id: vp.venues.id,
-      name: vp.venues.name,
-      city: vp.venues.city,
-      is_primary: vp.is_primary,
-    })) || [],
-    venue_promoters: undefined,
-  })) as PromoterWithVenues[]
 }

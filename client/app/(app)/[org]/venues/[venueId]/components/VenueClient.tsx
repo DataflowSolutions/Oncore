@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Globe, Calendar, Users, Building } from "lucide-react";
 import Link from "next/link";
 import VenueViewToggler from "./VenueViewToggler";
-import PromotersListPlaceholder from "./PromotersListPlaceholder";
+import { VenuePromotersList } from "./VenuePromotersList";
+import type { Promoter } from "@/lib/actions/promoters";
 
 interface Show {
   id: string;
@@ -29,6 +30,7 @@ interface Venue {
 interface VenueClientProps {
   venue: Venue;
   shows: Show[];
+  promoters: (Promoter & { is_primary?: boolean })[];
   orgSlug: string;
   view: string;
 }
@@ -36,6 +38,7 @@ interface VenueClientProps {
 export default function VenueClient({
   venue,
   shows,
+  promoters,
   orgSlug,
   view,
 }: VenueClientProps) {
@@ -59,7 +62,12 @@ export default function VenueClient({
       </div>
 
       {view === "promoters" ? (
-        <PromotersListPlaceholder />
+        <VenuePromotersList
+          venueId={venue.id}
+          venueName={venue.name}
+          promoters={promoters}
+          orgId={venue.org_id}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Venue Information */}
