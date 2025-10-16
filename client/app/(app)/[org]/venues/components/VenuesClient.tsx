@@ -7,6 +7,8 @@ import { MapPin, Globe, Calendar, Users, Building } from "lucide-react";
 import Link from "next/link";
 import VenueViewToggler from "./VenueViewToggler";
 import VenuesSearchbar from "./VenuesSearchbar";
+import { PromotersList } from "@/components/promoters/PromotersList";
+import type { PromoterWithVenues } from "@/lib/actions/promoters";
 
 interface Venue {
   id: string;
@@ -22,12 +24,16 @@ interface Venue {
 
 interface VenuesClientProps {
   venues: Venue[];
+  promoters: PromoterWithVenues[];
+  orgId: string;
   orgSlug: string;
   view: string;
 }
 
 export default function VenuesClient({
   venues,
+  promoters,
+  orgId,
   orgSlug,
   view,
 }: VenuesClientProps) {
@@ -61,36 +67,18 @@ export default function VenuesClient({
   return (
     <>
       {view === "promoters" ? (
-        // Promoters view - placeholder with static content
+        // Promoters view - show actual promoters
         <>
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <div className="flex-1">
-              <div className="relative my-6">
-                <input
-                  type="text"
-                  placeholder="Search promoters (coming soon)..."
-                  disabled
-                  className="w-full h-10 bg-muted/50 px-10 py-2 border border-input rounded-md cursor-not-allowed opacity-60"
-                />
-              </div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">Promoters</h2>
+              <p className="text-muted-foreground mt-1">
+                Manage promoters and their venue relationships
+              </p>
             </div>
             <VenueViewToggler />
           </div>
-
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="text-center py-16">
-                <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Promoters</h3>
-                <p className="text-muted-foreground mb-4">
-                  Manage promoters and external collaborators
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Promoter management functionality coming soon
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <PromotersList promoters={promoters} orgId={orgId} />
         </>
       ) : (
         // Venues view - full functionality

@@ -1,5 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getVenuesWithShowCounts } from "@/lib/actions/venues";
+import { getPromotersByOrg } from "@/lib/actions/promoters";
 import VenuesClient from "./components/VenuesClient";
 
 interface VenuesPageProps {
@@ -25,12 +26,21 @@ export default async function VenuesPage({
     return <div>Organization not found</div>;
   }
 
-  // Get venues with show counts using server action
-  const allVenues = await getVenuesWithShowCounts(org.id);
+  // Get venues with show counts and promoters in parallel
+  const [allVenues, allPromoters] = await Promise.all([
+    getVenuesWithShowCounts(org.id),
+    getPromotersByOrg(org.id),
+  ]);
 
   return (
     <div className="mb-16 mt-4">
-      <VenuesClient venues={allVenues} orgSlug={orgSlug} view={view} />
+      <VenuesClient 
+        venues={allVenues} 
+        promoters={allPromoters}
+        orgId={org.id}
+        orgSlug={orgSlug} 
+        view={view} 
+      />
     </div>
   );
 }
