@@ -8,6 +8,7 @@ import Link from "next/link";
 import VenueViewToggler from "./VenueViewToggler";
 import VenuesSearchbar from "./VenuesSearchbar";
 import { PromotersList } from "@/components/promoters/PromotersList";
+import { UnifiedSearchResults } from "./UnifiedSearchResults";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
 
 interface Venue {
@@ -64,6 +65,27 @@ export default function VenuesClient({
     });
   }, [venues, searchQuery]);
 
+  // Filter promoters based on search query
+  const filteredPromoters = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return [];
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return promoters.filter((promoter) => {
+      const nameMatch = promoter.name?.toLowerCase().includes(query);
+      const companyMatch = promoter.company?.toLowerCase().includes(query);
+      const cityMatch = promoter.city?.toLowerCase().includes(query);
+      const emailMatch = promoter.email?.toLowerCase().includes(query);
+
+      return nameMatch || companyMatch || cityMatch || emailMatch;
+    });
+  }, [promoters, searchQuery]);
+
+  // Check if we should show unified search results
+  const showUnifiedSearch = searchQuery.trim().length > 0;
+
   return (
     <>
       {view === "promoters" ? (
@@ -90,7 +112,16 @@ export default function VenuesClient({
             <VenueViewToggler />
           </div>
 
-          <div className="space-y-6">
+          {/* Show unified search results when searching */}
+          {showUnifiedSearch ? (
+            <UnifiedSearchResults
+              venues={filteredVenues}
+              promoters={filteredPromoters}
+              searchQuery={searchQuery}
+              orgSlug={orgSlug}
+            />
+          ) : (
+            <div className="space-y-6">
             {/* All Venues */}
             <Card>
               <CardHeader>
@@ -200,6 +231,7 @@ export default function VenuesClient({
               </CardContent>
             </Card>
           </div>
+          )}
         </>
       )}
     </>
