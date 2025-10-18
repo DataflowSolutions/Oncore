@@ -1,66 +1,68 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { createOrganization } from './actions'
+import { useState, useEffect } from "react";
+import { createOrganization } from "./actions";
 
 export default function CreateOrgPage() {
-  const [name, setName] = useState('')
-  const [slug, setSlug] = useState('')
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
-  const [error, setError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-generate slug from name
   useEffect(() => {
     if (!slugManuallyEdited && name) {
       const autoSlug = name
         .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .replace(/-+/g, '-') // Replace multiple hyphens with single
-        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-      setSlug(autoSlug)
+        .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+        .replace(/\s+/g, "-") // Replace spaces with hyphens
+        .replace(/-+/g, "-") // Replace multiple hyphens with single
+        .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+      setSlug(autoSlug);
     }
-  }, [name, slugManuallyEdited])
+  }, [name, slugManuallyEdited]);
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSlug(e.target.value)
-    setSlugManuallyEdited(true)
-  }
+    setSlug(e.target.value);
+    setSlugManuallyEdited(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError('')
-    setIsSubmitting(true)
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
 
-    const formData = new FormData()
-    formData.append('name', name)
-    formData.append('slug', slug)
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("slug", slug);
 
     try {
-      const result = await createOrganization(formData)
+      const result = await createOrganization(formData);
       if (result?.error) {
-        setError(result.error)
+        setError(result.error);
       }
       // If no error, the server action will redirect
     } catch (err) {
-      console.error('Form submission error:', err)
-      setError('An unexpected error occurred. Please try again.')
+      console.error("Form submission error:", err);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="text-center text-3xl font-bold">Create Organization</h2>
+          <h2 className="text-center text-3xl font-bold">
+            Create Organization
+          </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Set up your tour organization to get started
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium">
@@ -77,7 +79,7 @@ export default function CreateOrgPage() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
-          
+
           <div>
             <label htmlFor="slug" className="block text-sm font-medium">
               URL Slug
@@ -93,7 +95,7 @@ export default function CreateOrgPage() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Used in URLs: /{slug || 'your-org'}/dashboard
+              Used in URLs: /{slug || "your-org"}/dashboard
             </p>
             {!slugManuallyEdited && (
               <p className="mt-1 text-xs text-blue-600">
@@ -107,16 +109,16 @@ export default function CreateOrgPage() {
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
-          
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {isSubmitting ? 'Creating Organization...' : 'Create Organization'}
+            {isSubmitting ? "Creating Organization..." : "Create Organization"}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }
