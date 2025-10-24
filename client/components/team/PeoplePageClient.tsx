@@ -7,6 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Users,
   Mail,
   Phone,
@@ -20,6 +35,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Crown,
+  Eye,
+  Edit,
+  Shield,
 } from "lucide-react";
 import PersonDetailModal from "@/components/team/PersonDetailModal";
 import { invitePerson, type SeatCheckResult } from "@/lib/actions/invitations";
@@ -78,6 +96,9 @@ export default function PeoplePageClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [, startTransition] = useTransition();
   const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [selectedInvitePerson, setSelectedInvitePerson] = useState<{ id: string; name: string } | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'viewer' | 'editor' | 'admin' | 'owner'>('viewer');
   const router = useRouter();
 
   const handlePersonClick = (personId: string) => {
@@ -90,11 +111,7 @@ export default function PeoplePageClient({
     setSelectedPersonId(null);
   };
 
-  const handleInvite = async (
-    personId: string,
-    personName: string,
-    e: React.MouseEvent
-  ) => {
+  const openInviteDialog = (personId: string, personName: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
 
     if (!seatInfo?.can_invite) {
@@ -104,14 +121,23 @@ export default function PeoplePageClient({
       return;
     }
 
-    setInvitingPersonId(personId);
+    setSelectedInvitePerson({ id: personId, name: personName });
+    setSelectedRole('viewer'); // Reset to default
+    setInviteDialogOpen(true);
+  };
+
+  const handleInvite = async () => {
+    if (!selectedInvitePerson) return;
+
+    setInvitingPersonId(selectedInvitePerson.id);
+    setInviteDialogOpen(false);
 
     startTransition(async () => {
-      const result = await invitePerson(personId);
+      const result = await invitePerson(selectedInvitePerson.id, selectedRole);
 
       if (result.success) {
         toast.success("Invitation sent!", {
-          description: `${personName} will receive an email to join the team`,
+          description: `${selectedInvitePerson.name} will receive an email to join the team as ${selectedRole}`,
         });
         router.refresh();
       } else {
@@ -121,6 +147,7 @@ export default function PeoplePageClient({
       }
 
       setInvitingPersonId(null);
+      setSelectedInvitePerson(null);
     });
   };
 
@@ -352,7 +379,7 @@ export default function PeoplePageClient({
                                     invitingPersonId === person.id
                                   }
                                   onClick={(e) =>
-                                    handleInvite(person.id, person.name, e)
+                                    openInviteDialog(person.id, person.name, e)
                                   }
                                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                 >
@@ -425,7 +452,7 @@ export default function PeoplePageClient({
                                   invitingPersonId === person.id
                                 }
                                 onClick={(e) =>
-                                  handleInvite(person.id, person.name, e)
+                                  openInviteDialog(person.id, person.name, e)
                                 }
                                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                               >
@@ -467,6 +494,79 @@ export default function PeoplePageClient({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
+
+      {/* Invite Role Selection Dialog */}
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogDescription>
+              Choose the role for {selectedInvitePerson?.name}. They will receive an email invitation to join your organization.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="role" className="text-sm font-medium">
+                Role
+              </label>
+              <Select value={selectedRole} onValueChange={(value: 'viewer' | 'editor' | 'admin' | 'owner') => setSelectedRole(value)}>
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">Viewer</div>
+                        <div className="text-xs text-muted-foreground">Can view all data but cannot make changes</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="editor">
+                    <div className="flex items-center gap-2">
+                      <Edit className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">Editor</div>
+                        <div className="text-xs text-muted-foreground">Can create and edit content</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">Admin</div>
+                        <div className="text-xs text-muted-foreground">Can manage team members and settings</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="owner">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">Owner</div>
+                        <div className="text-xs text-muted-foreground">Full control (use with caution)</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleInvite}>
+              <Send className="w-4 h-4 mr-2" />
+              Send Invitation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

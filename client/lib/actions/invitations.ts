@@ -33,14 +33,17 @@ export type InvitationData = {
   org_slug: string;
   person_first_name: string | null;
   person_last_name: string | null;
-  role: string;
+  role: 'owner' | 'admin' | 'editor' | 'viewer';
 };
 
 /**
  * Invite a person (ghost account) to join the organization
  * Creates an invitation with a secure token and sends an email
  */
-export async function invitePerson(personId: string) {
+export async function invitePerson(
+  personId: string, 
+  role: 'owner' | 'admin' | 'editor' | 'viewer' = 'viewer'
+) {
   const supabase = await getSupabaseServer()
   
   // Get authenticated user
@@ -119,6 +122,7 @@ export async function invitePerson(personId: string) {
       org_id: person.org_id,
       person_id: personId,
       email: person.email,
+      role,
       token,
       expires_at: expiresAt.toISOString(),
       created_by: user.id
