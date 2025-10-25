@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/app/utils/supabase/server'
 import type { Database } from '@/lib/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -123,7 +124,7 @@ export class CalendarService {
       'METHOD:PUBLISH',
     ].join('\r\n')
 
-    shows.forEach(show => {
+    shows.forEach((show: any) => {
       const showDate = new Date(show.date)
       const dateStr = showDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
       
@@ -146,7 +147,7 @@ export class CalendarService {
 
       // Add schedule items for this show
       if (show.schedule_items && Array.isArray(show.schedule_items)) {
-        show.schedule_items.forEach((item: unknown) => {
+        show.schedule_items.forEach((item: any) => {
           const startDate = new Date(item.starts_at)
           const endDate = new Date(item.ends_at)
           const startStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'

@@ -32,7 +32,7 @@ export async function parseEmail(data: z.infer<typeof parseEmailSchema>) {
   try {
     // Verify user has access to this org
     const { data: membership } = await supabase
-      .from('organization_members')
+      .from('org_members')
       .select('role')
       .eq('org_id', orgId)
       .eq('user_id', session.user.id)
@@ -134,7 +134,7 @@ export async function confirmParsedEmail(
 
     // Verify user has access
     const { data: membership } = await supabase
-      .from('organization_members')
+      .from('org_members')
       .select('role')
       .eq('org_id', parsedEmail.org_id)
       .eq('user_id', session.user.id)
@@ -178,7 +178,7 @@ export async function confirmParsedEmail(
         venue_id: venueId,
         fee: showData.fee,
         notes: showData.notes,
-        status: 'upcoming',
+        status: 'confirmed',
       })
       .select()
       .single()

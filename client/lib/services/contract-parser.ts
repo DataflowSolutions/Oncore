@@ -29,7 +29,6 @@ export const ParsedContractSchema = z.object({
   promoterName: z.string().optional(),
   promoterEmail: z.string().optional(),
   promoterPhone: z.string().optional(),
-  venueName: z.string().optional(),
   venueContactEmail: z.string().optional(),
   venueContactPhone: z.string().optional(),
 

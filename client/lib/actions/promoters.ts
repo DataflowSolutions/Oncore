@@ -8,6 +8,12 @@ import { z } from 'zod'
 // TYPES
 // =====================================
 
+export interface ActionResponse<T = void> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
 export interface Promoter {
   id: string
   org_id: string

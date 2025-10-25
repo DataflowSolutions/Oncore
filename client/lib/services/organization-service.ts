@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '../database.types'
 
@@ -77,20 +78,13 @@ export class OrganizationService {
     return data
   }
 
-  async inviteMember(orgId: string, email: string, role: 'owner' | 'admin' | 'member') {
-    const { data, error } = await this.supabase
-      .from('org_invitations')
-      .insert([{
-        org_id: orgId,
-        email,
-        role,
-        invited_by: (await this.supabase.auth.getUser()).data.user?.id,
-      }])
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
+  /**
+   * @deprecated Invitation system has changed. Use invitation actions instead.
+   * The invitations table now requires person_id, token, and expires_at.
+   * Role enum changed from 'member' to 'editor'/'viewer'.
+   */
+  async inviteMember(_orgId: string, _email: string, _role: 'owner' | 'admin' | 'member') {
+    throw new Error('inviteMember is deprecated. Use invitation actions from lib/actions/invitations.ts')
   }
 
   async removeMember(orgId: string, userId: string) {
@@ -103,20 +97,14 @@ export class OrganizationService {
     if (error) throw error
   }
 
+  /**
+   * @deprecated Role enum changed from 'member' to 'editor'/'viewer'
+   */
   async updateMemberRole(
-    orgId: string,
-    userId: string,
-    role: 'owner' | 'admin' | 'member'
+    _orgId: string,
+    _userId: string,
+    _role: 'owner' | 'admin' | 'member'
   ) {
-    const { data, error } = await this.supabase
-      .from('org_members')
-      .update({ role })
-      .eq('org_id', orgId)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
+    throw new Error('updateMemberRole is deprecated. Update to use editor/viewer roles')
   }
 }

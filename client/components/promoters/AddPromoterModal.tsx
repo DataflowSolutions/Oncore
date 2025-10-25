@@ -44,6 +44,7 @@ export function AddPromoterModal({ orgId }: AddPromoterModalProps) {
     try {
       const result = await createPromoter({
         orgId,
+        status: 'active',
         ...formData,
       })
 

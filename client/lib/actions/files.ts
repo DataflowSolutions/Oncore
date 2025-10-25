@@ -99,7 +99,7 @@ export async function parseContract(params: z.infer<typeof parseContractSchema>)
   try {
     // Verify user has access to this org
     const { data: membership } = await supabase
-      .from('organization_members')
+      .from('org_members')
       .select('role')
       .eq('org_id', orgId)
       .eq('user_id', session.user.id)
