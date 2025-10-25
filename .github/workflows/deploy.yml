@@ -59,7 +59,11 @@ jobs:
           git add lib/database.types.ts
           git diff --quiet && git diff --staged --quiet || git commit -m "chore: update database types [skip ci]"
 
-      - name: 🚀 Push Changes
+      - name: � Pull Latest Changes
+        run: |
+          git pull --rebase origin ${{ github.ref_name }}
+
+      - name: �🚀 Push Changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
