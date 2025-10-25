@@ -29,7 +29,7 @@ export async function syncAdvancingToSchedule(showId: string) {
 
     // Verify user has access
     const { data: membership } = await supabase
-      .from('organization_members')
+      .from('org_members')
       .select('role')
       .eq('org_id', show.org_id)
       .eq('user_id', session.user.id)
@@ -135,10 +135,10 @@ export async function syncAdvancingToSchedule(showId: string) {
       }
 
       // Hotel check-in/check-out
-      const hotelCheckIn = fields.find(f => f.field_name === `hotel_${personId}_checkIn`)?.value
-      const hotelCheckOut = fields.find(f => f.field_name === `hotel_${personId}_checkOut`)?.value
-      const hotelName = fields.find(f => f.field_name === `hotel_${personId}_name`)?.value
-      const hotelAddress = fields.find(f => f.field_name === `hotel_${personId}_address`)?.value
+      const hotelCheckIn = fields.find(f => f.field_name === `hotel_${personId}_checkIn`)?.value as string | undefined
+      const hotelCheckOut = fields.find(f => f.field_name === `hotel_${personId}_checkOut`)?.value as string | undefined
+      const hotelName = fields.find(f => f.field_name === `hotel_${personId}_name`)?.value as string | undefined
+      const hotelAddress = fields.find(f => f.field_name === `hotel_${personId}_address`)?.value as string | undefined
 
       if (hotelCheckIn) {
         scheduleItemsToCreate.push({

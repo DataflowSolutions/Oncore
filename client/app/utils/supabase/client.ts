@@ -13,6 +13,18 @@ const supabaseAnonKey = isProduction
   ? process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY!
   : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY!
 
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    `Missing Supabase environment variables!\n` +
+    `Mode: ${isProduction ? 'production' : 'local'}\n` +
+    `URL present: ${!!supabaseUrl}\n` +
+    `Anon Key present: ${!!supabaseAnonKey}\n` +
+    `Check your .env.local file.`
+  )
+}
+
 export function createClient() {
   return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
 }
+

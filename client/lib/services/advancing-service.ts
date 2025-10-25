@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '../database.types'
 
@@ -6,6 +7,7 @@ type Tables = Database['public']['Tables']
 /**
  * AdvancingService - Platform-agnostic service for advancing operations
  * Works with both Next.js (web) and Flutter (mobile)
+ * NOTE: Many methods deprecated due to removed database features (access codes, technical/production tables)
  */
 export class AdvancingService {
   constructor(private supabase: SupabaseClient<Database>) {}
@@ -62,84 +64,55 @@ export class AdvancingService {
 
   /**
    * Verify access code and get session (for venue access)
+   * @deprecated Access code system has been replaced with invitation tokens
    */
-  async verifyAccessCode(accessCode: string) {
-    const { data, error } = await this.supabase
-      .rpc('verify_access_code', {
-        p_access_code: accessCode.toUpperCase(),
-      })
-
-    if (error) throw error
-    return data
+  async verifyAccessCode(_accessCode: string) {
+    // This function is deprecated - access codes have been replaced with invitation tokens
+    return { data: null, error: new Error('Access code system deprecated') }
   }
 
   /**
    * Submit hospitality information
+   * @deprecated This RPC function does not exist in the current database schema
    */
   async submitHospitality(
-    sessionId: string,
-    guestCount: number,
-    catering: any,
-    notes?: string
+    _sessionId: string,
+    _guestCount: number,
+    _catering: Record<string, unknown>,
+    _notes?: string
   ) {
-    const { data, error } = await this.supabase
-      .rpc('submit_hospitality', {
-        p_session_id: sessionId,
-        p_guest_count: guestCount,
-        p_catering: catering,
-        p_notes: notes,
-      })
-
-    if (error) throw error
-    return data
+    // This function references an RPC that doesn't exist
+    return { data: null, error: new Error('Function not implemented') }
   }
 
   /**
    * Update technical requirements
+   * @deprecated Technical table does not exist in current schema
    */
-  async updateTechnical(sessionId: string, updates: Tables['technical']['Update']) {
-    const { data, error } = await this.supabase
-      .from('technical')
-      .update(updates)
-      .eq('session_id', sessionId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
+  async updateTechnical(_sessionId: string, _updates: Record<string, unknown>) {
+    // This function references a table that doesn't exist
+    return { data: null, error: new Error('Technical table not implemented') }
   }
 
   /**
    * Update production details
+   * @deprecated Production table does not exist in current schema
    */
-  async updateProduction(sessionId: string, updates: Tables['production']['Update']) {
-    const { data, error } = await this.supabase
-      .from('production')
-      .update(updates)
-      .eq('session_id', sessionId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
+  async updateProduction(_sessionId: string, _updates: Record<string, unknown>) {
+    // This function references a table that doesn't exist
+    return { data: null, error: new Error('Production table not implemented') }
   }
 
   /**
    * Update session status
+   * @deprecated Status field does not exist in advancing_sessions table
    */
   async updateSessionStatus(
-    sessionId: string,
-    status: 'draft' | 'in_progress' | 'shared' | 'completed' | 'archived'
+    _sessionId: string,
+    _status: 'draft' | 'in_progress' | 'shared' | 'completed' | 'archived'
   ) {
-    const { data, error } = await this.supabase
-      .from('advancing_sessions')
-      .update({ status })
-      .eq('id', sessionId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
+    // Status field doesn't exist in the advancing_sessions table
+    return { data: null, error: new Error('Status field not implemented') }
   }
 
   /**
@@ -165,7 +138,7 @@ export class AdvancingService {
    * Subscribe to real-time updates on a session
    * Note: In Flutter, use supabase.channel() directly
    */
-  subscribeToSession(sessionId: string, callback: (payload: any) => void) {
+  subscribeToSession(sessionId: string, callback: (payload: Record<string, unknown>) => void) {
     const channel = this.supabase
       .channel(`session:${sessionId}`)
       .on(

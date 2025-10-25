@@ -7,11 +7,10 @@ import { useState } from 'react'
 import type { Database } from '@/lib/database.types'
 
 type Person = Database['public']['Tables']['people']['Row']
-type PersonWithDuty = Person & { duty?: string | null }
 
 interface ShowClientProps {
   showId: string
-  assignedTeam: PersonWithDuty[]
+  assignedTeam: Person[]
   availablePeople: Person[]
 }
 

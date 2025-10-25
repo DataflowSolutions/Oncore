@@ -19,6 +19,25 @@ export function createClient() {
     ? process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY!
     : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY!
 
+  // Log configuration in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Supabase Client Config:', {
+      isProduction,
+      url: supabaseUrl,
+      hasAnonKey: !!supabaseAnonKey,
+    })
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      `Missing Supabase environment variables!\n` +
+      `Mode: ${isProduction ? 'production' : 'local'}\n` +
+      `URL present: ${!!supabaseUrl}\n` +
+      `Anon Key present: ${!!supabaseAnonKey}\n` +
+      `Check your .env.local file.`
+    )
+  }
+
   client = createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey

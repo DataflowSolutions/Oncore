@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,6 +42,8 @@ interface TeamManagementModalProps {
   showId: string
   assignedTeam: Person[]
   availablePeople: Person[]
+  isOpen: boolean
+  onClose: () => void
 }
 
 const getRoleIcon = (memberType: string | null) => {
@@ -63,9 +64,10 @@ export function TeamManagementModal({
   showId,
   assignedTeam,
   availablePeople,
+  isOpen,
+  onClose,
 }: TeamManagementModalProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null)
   const [duty, setDuty] = useState('')
@@ -136,14 +138,8 @@ export function TeamManagementModal({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Users className="w-4 h-4 mr-2" />
-          Manage Team ({assignedTeam.length})
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Team Management</DialogTitle>
           <DialogDescription>

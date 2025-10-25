@@ -48,7 +48,7 @@ export function LinkPromoterToVenueModal({
       if (result.success && result.data) {
         // Filter out already linked promoters
         const availablePromoters = result.data.filter(
-          p => !linkedPromoterIds.includes(p.id)
+          (p: Promoter) => !linkedPromoterIds.includes(p.id)
         )
         setPromoters(availablePromoters)
       }
