@@ -100,8 +100,16 @@ supabase-link:
 
 # Deploy migrations to production
 deploy:
+	@echo "🚀 Deploying to production..."
 	npx supabase db push --linked
 	$(MAKE) generate-types
+	@echo "✅ Deployment complete!"
+
+# Verify production database status
+verify-prod:
+	@echo "🔍 Checking production database status..."
+	npx supabase db diff --linked --schema public
+	@echo "✅ Verification complete!"
 
 # Seed database (local only)
 seed:

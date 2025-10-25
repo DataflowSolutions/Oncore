@@ -4,6 +4,56 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 
+// Helper: send invitation email via Supabase Edge Function (send-email)
+async function sendInvitationEmail(payload: {
+  to: string
+  inviterName?: string
+  orgName?: string
+  inviteLink: string
+}) {
+  try {
+    const isProduction = process.env.PROD_DB === 'true'
+    const supabaseUrl = isProduction
+      ? process.env.PROD_SUPABASE_URL!
+      : process.env.LOCAL_SUPABASE_URL!
+
+    const supabaseKey = isProduction
+      ? process.env.PROD_SUPABASE_ANON_KEY!
+      : process.env.LOCAL_SUPABASE_ANON_KEY!
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // The send-email function expects an Authorization header (presence is checked).
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        to: payload.to,
+        subject: `${payload.inviterName || 'Someone'} invited you to join ${payload.orgName || 'Oncore'}`,
+        type: 'invitation',
+        data: {
+          inviterName: payload.inviterName,
+          orgName: payload.orgName,
+          inviteLink: payload.inviteLink,
+        },
+      }),
+    })
+
+    if (!res.ok) {
+      const txt = await res.text()
+      console.error('Failed to send invitation email:', txt)
+      return { success: false, error: txt }
+    }
+
+    const json = await res.json()
+    return { success: true, result: json }
+  } catch (err) {
+    console.error('Error sending invitation email:', err)
+    return { success: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 // Type definitions for RPC function returns
 export type SeatCheckResult = {
   can_invite: boolean;
@@ -135,23 +185,33 @@ export async function invitePerson(
     return { success: false, error: 'Failed to create invitation' }
   }
 
-  // TODO: Send invitation email
-  // await sendInvitationEmail({
-  //   to: person.email,
-  //   name: person.name,
-  //   token: token,
-  //   orgId: person.org_id,
-  //   roleTitle: person.role_title,
-  //   memberType: person.member_type
-  // })
-
-  // Revalidate people page
+  // Fetch org name/slug so we can include it in the email and revalidate paths
   const { data: org } = await supabase
     .from('organizations')
-    .select('slug')
+    .select('id, name, slug')
     .eq('id', person.org_id)
     .single()
 
+  // Send invitation email (best-effort: log errors but don't fail the flow)
+  try {
+  const inviterName = ((user.user_metadata as { full_name?: string } | undefined)?.full_name) || user.email || 'Someone'
+    const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${token}`
+
+    const emailResult = await sendInvitationEmail({
+      to: person.email,
+      inviterName,
+      orgName: org?.name,
+      inviteLink,
+    })
+
+    if (!emailResult.success) {
+      console.error('Invitation email failed to send:', emailResult.error)
+    }
+  } catch (err) {
+    console.error('Unexpected error sending invitation email:', err)
+  }
+
+  // Revalidate people page
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`)
   }
@@ -295,19 +355,40 @@ export async function resendInvitation(invitationId: string) {
     console.error('Error updating invitation:', updateError)
     return { success: false, error: 'Failed to resend invitation' }
   }
+  // Send invitation email (best-effort)
+  // Prepare person object (from the joined people relation)
+  const person = invitation.people
 
-  // TODO: Send invitation email
-  // await sendInvitationEmail({
-  //   to: invitation.people.email,
-  //   name: invitation.people.name,
-  //   token: newToken,
-  //   orgId: invitation.people.org_id,
-  //   roleTitle: invitation.people.role_title,
-  //   memberType: invitation.people.member_type
-  // })
+  try {
+  const inviterName = ((user.user_metadata as { full_name?: string } | undefined)?.full_name) || user.email || 'Someone'
+    const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${newToken}`
+
+    // Get org name for email content
+    const { data: orgInfo } = await supabase
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('id', invitation.people.org_id)
+      .single()
+
+    if (invitation.people.email) {
+      const emailResult = await sendInvitationEmail({
+        to: invitation.people.email,
+        inviterName,
+        orgName: orgInfo?.name,
+        inviteLink,
+      })
+
+      if (!emailResult.success) {
+        console.error('Resend invitation email failed:', emailResult.error)
+      }
+    } else {
+      console.warn('No email available on invitation.people; skipping resend email')
+    }
+  } catch (err) {
+    console.error('Unexpected error resending invitation email:', err)
+  }
 
   // Revalidate people page
-  const person = invitation.people
   const { data: org } = await supabase
     .from('organizations')
     .select('slug')
