@@ -22,8 +22,9 @@ jobs:
           cache-dependency-path: 'client/package-lock.json'
 
       - name: 🔧 Install Supabase CLI
-        run: |
-          npm install -g supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: 🔗 Link Supabase Project
         working-directory: ./client

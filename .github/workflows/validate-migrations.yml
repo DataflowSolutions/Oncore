@@ -28,7 +28,9 @@ jobs:
         run: npm install
 
       - name: 🔧 Install Supabase CLI
-        run: npm install -g supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: 🚀 Start Local Supabase
         working-directory: ./client
