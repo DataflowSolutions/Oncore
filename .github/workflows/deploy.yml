@@ -54,16 +54,32 @@ jobs:
       - name: 📝 Commit Generated Types
         working-directory: ./client
         run: |
+          # Discard changes in .temp directory
+          git restore supabase/.temp/ 2>/dev/null || true
+          git clean -fd supabase/.temp/ 2>/dev/null || true
+          
+          # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          # Add and commit only if there are changes
           git add lib/database.types.ts
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update database types [skip ci]"
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update database types [skip ci]"
+            echo "types_updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "types_updated=false" >> $GITHUB_OUTPUT
+            echo "No changes to database types"
+          fi
+        id: commit
 
-      - name: � Pull Latest Changes
+      - name: 🔄 Pull Latest Changes
+        if: steps.commit.outputs.types_updated == 'true'
         run: |
           git pull --rebase origin ${{ github.ref_name }}
 
-      - name: �🚀 Push Changes
+      - name: 🚀 Push Changes
+        if: steps.commit.outputs.types_updated == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
