@@ -56,12 +56,12 @@ export default async function TeamPage({ params, searchParams }: TeamPageProps) 
           <h1 className="text-3xl lg:text-4xl font-bold">People</h1>
           <p className="text-muted-foreground mt-1">Team, artists, and contacts</p>
         </div>
-        <Link href={`/${orgSlug}/people/new`}>
+        {/* <Link href={`/${orgSlug}/people/new`}>
           <Button size="lg">
             <UserPlus className="w-5 h-5" />
             Add Person
           </Button>
-        </Link>
+        </Link> */}
       </div>
 
       {/* Filter Tabs */}
