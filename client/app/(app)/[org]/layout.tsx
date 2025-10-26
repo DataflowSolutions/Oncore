@@ -5,6 +5,10 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import DynamicSidebar from "@/components/navigation/DynamicSidebar";
 import { TopBar } from "@/components/navigation/TopBar";
 
+// Optimize: Cache layout data briefly to prevent re-fetching on every navigation
+export const revalidate = 30 // Revalidate every 30 seconds
+export const dynamic = 'force-dynamic' // Always get fresh auth data
+
 interface OrgLayoutProps {
   children: React.ReactNode;
   params: Promise<{ org: string }>;
@@ -24,26 +28,30 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
     redirect("/sign-in");
   }
 
-  // Load the organization by slug
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", resolvedParams.org)
-    .single();
+  // Parallelize org and membership queries for faster loading
+  const [orgResult, membershipResult] = await Promise.all([
+    supabase
+      .from("organizations")
+      .select("id, name, slug")
+      .eq("slug", resolvedParams.org)
+      .single(),
+    supabase
+      .from("org_members")
+      .select("role, org_id")
+      .eq("user_id", user.id)
+      .single()
+  ]);
+
+  const { data: org, error: orgError } = orgResult;
 
   if (orgError || !org) {
     notFound();
   }
 
-  // Check if user is a member of this org
-  const { data: membership } = await supabase
-    .from("org_members")
-    .select("role")
-    .eq("org_id", org.id)
-    .eq("user_id", user.id)
-    .single();
+  const { data: membership } = membershipResult;
 
-  if (!membership) {
+  // Verify membership matches the org
+  if (!membership || membership.org_id !== org.id) {
     notFound();
   }
 

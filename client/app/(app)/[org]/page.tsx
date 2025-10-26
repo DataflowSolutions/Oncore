@@ -7,6 +7,9 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { VenueLink } from "./shows/components/VenueLink";
 
+// Optimize: Cache for 60 seconds, this is a dashboard page
+export const revalidate = 60;
+
 interface OrgHomePageProps {
   params: Promise<{ org: string }>;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import SidebarNavigation from "./SidebarNavigation";
 import MobileSidebarToggle from "./MobileSidebarToggle";
 
@@ -16,23 +15,12 @@ export default function DynamicSidebar({
   userRole,
 }: DynamicSidebarProps) {
   const pathname = usePathname();
-  const [showTitle, setShowTitle] = useState<string>("");
 
   // Detect if we're in a show detail context (not just /shows list)
   const showMatch = pathname.match(new RegExp(`/${orgSlug}/shows/([^/]+)`));
   const isInShowContext =
     showMatch && showMatch[1] !== undefined && showMatch[1] !== "";
   const currentShowId = isInShowContext ? showMatch[1] : null;
-
-  // Fetch show title when in show context
-  useEffect(() => {
-    if (currentShowId) {
-      fetch(`/api/shows/${currentShowId}/title`)
-        .then((res) => res.json())
-        .then((data) => setShowTitle(data.title || "Show"))
-        .catch(() => setShowTitle("Show"));
-    }
-  }, [currentShowId]);
 
   return (
     <MobileSidebarToggle>
@@ -43,7 +31,6 @@ export default function DynamicSidebar({
           userRole={userRole}
           currentPath={pathname}
           showId={currentShowId || undefined}
-          showTitle={showTitle || "Loading..."}
         />
       </div>
 
@@ -54,7 +41,6 @@ export default function DynamicSidebar({
           userRole={userRole}
           currentPath={pathname}
           showId={currentShowId || undefined}
-          showTitle={showTitle || "Loading..."}
         />
       </div>
     </MobileSidebarToggle>

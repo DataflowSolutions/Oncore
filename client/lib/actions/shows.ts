@@ -138,7 +138,9 @@ export async function updateShow(showId: string, updates: ShowUpdate) {
     throw new Error("Failed to update show");
   }
 
-  revalidatePath(`/shows`);
+  // Targeted revalidation: only revalidate the specific show page
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath(`/shows`); // Also revalidate list view
   return data;
 }
 

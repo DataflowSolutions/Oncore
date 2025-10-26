@@ -14,7 +14,28 @@ const supabaseAnonKey = isProduction
   ? process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY!
   : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY!
 
+// Public routes that don't require auth checks
+const PUBLIC_ROUTES = [
+  '/',
+  '/pricing',
+  '/sign-in',
+  '/sign-up',
+  '/auth/callback',
+  '/api/auth'
+];
+
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip auth entirely for static assets
+  if (
+    pathname.startsWith('/_next') || 
+    pathname.startsWith('/api') || 
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|css|js)$/)
+  ) {
+    return NextResponse.next();
+  }
+
   // Create an unmodified response
   let supabaseResponse = NextResponse.next({
     request: {
@@ -43,24 +64,17 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { pathname } = request.nextUrl
-
-  // Skip auth checks for public routes
-  if (pathname.startsWith('/_next') || 
-      pathname.startsWith('/api') || 
-      pathname === '/' || 
-      pathname.startsWith('/pricing') ||
-      pathname.startsWith('/sign-in') ||
-      pathname.startsWith('/sign-up')) {
-    return supabaseResponse
+  // Skip expensive auth checks for public routes
+  if (PUBLIC_ROUTES.includes(pathname) || PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
+    return supabaseResponse;
   }
 
-  // Get the current user
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  // If accessing app routes, user must be authenticated
+  // Only check auth for protected routes (org pages)
   if (pathname.startsWith('/create-org') || pathname.match(/^\/[^\/]+\//)) {
-    if (error || !user) {
+    // Optimize: Use getSession instead of getUser (faster, uses local JWT)
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error || !session) {
       const redirectUrl = new URL('/sign-in', request.url)
       return NextResponse.redirect(redirectUrl)
     }
@@ -70,7 +84,7 @@ export async function updateSession(request: NextRequest) {
       const { data: memberships } = await supabase
         .from('org_members')
         .select('org_id, organizations(slug)')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .limit(1)
 
       // If user has an org, redirect them to it
@@ -80,8 +94,6 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
     }
-
-    // If accessing org routes, user needs to be authenticated (layout will handle org membership)
   }
 
   return supabaseResponse

@@ -17,6 +17,9 @@ import {
   EditableNotes 
 } from '@/components/shows/EditableShowFields'
 
+// Optimize: Cache show details for 30 seconds
+export const revalidate = 30;
+
 interface ShowDetailPageProps {
   params: Promise<{ org: string, showId: string }>
 }
@@ -28,52 +31,58 @@ export default async function ShowDetailPage({
   
   const supabase = await getSupabaseServer()
   
-  // Get organization and show details
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // Parallelize all data fetching for faster page loads
+  const [orgResult, showResult, scheduleItems, assignedTeam] = await Promise.all([
+    supabase
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('slug', orgSlug)
+      .single(),
+    supabase
+      .from('shows')
+      .select(`
+        id, 
+        title, 
+        date, 
+        doors_at, 
+        set_time, 
+        status, 
+        notes,
+        org_id,
+        venues (
+          id,
+          name,
+          address,
+          city,
+          country,
+          capacity
+        ),
+        artists (
+          name
+        )
+      `)
+      .eq('id', showId)
+      .single(),
+    getScheduleItemsForShow(showId),
+    getShowTeam(showId)
+  ]);
+
+  const { data: org } = orgResult;
+  const { data: show } = showResult;
 
   if (!org) {
     return <div>Organization not found</div>
   }
 
-  const { data: show } = await supabase
-    .from('shows')
-    .select(`
-      id, 
-      title, 
-      date, 
-      doors_at, 
-      set_time, 
-      status, 
-      notes,
-      venues (
-        id,
-        name,
-        address,
-        city,
-        country,
-        capacity
-      ),
-      artists (
-        name
-      )
-    `)
-    .eq('id', showId)
-    .eq('org_id', org.id)
-    .single()
-
-  if (!show) {
+  if (!show || show.org_id !== org.id) {
     return <div>Show not found</div>
   }
 
-  // Get schedule items and team data for this show
-  const scheduleItems = await getScheduleItemsForShow(showId)
-  const assignedTeam = await getShowTeam(showId)
-  const availablePeople = await getAvailablePeople(org.id)
-  const venues = await getVenuesByOrg(org.id)
+  // Fetch venues and available people only after we confirm access
+  const [venues, availablePeople] = await Promise.all([
+    getVenuesByOrg(org.id),
+    getAvailablePeople(org.id)
+  ]);
 
   return (
     <div className="space-y-8">

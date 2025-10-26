@@ -15,7 +15,6 @@ interface SidebarNavigationProps {
   userRole: string;
   currentPath: string;
   showId?: string;
-  showTitle?: string;
 }
 
 const SidebarNavigation = ({

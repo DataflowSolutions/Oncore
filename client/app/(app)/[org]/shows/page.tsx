@@ -4,6 +4,9 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { getShowsByOrg } from "@/lib/actions/shows";
 import { notFound } from "next/navigation";
 
+// Optimize: Cache shows list for 30 seconds
+export const revalidate = 30;
+
 interface ShowsPageProps {
   params: Promise<{ org: string }>;
   searchParams: Promise<{ view?: string }>;
