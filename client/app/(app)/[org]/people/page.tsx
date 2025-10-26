@@ -3,7 +3,6 @@ import { getPeopleByOrg } from '@/lib/actions/team'
 import { checkAvailableSeats, getOrgInvitations } from '@/lib/actions/invitations'
 import PeoplePageClient from '@/components/team/PeoplePageClient'
 import { Button } from '@/components/ui/button'
-import { UserPlus } from 'lucide-react'
 import Link from 'next/link'
 
 interface TeamPageProps {

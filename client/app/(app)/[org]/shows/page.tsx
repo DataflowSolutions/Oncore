@@ -1,5 +1,6 @@
 import ShowsClient from "./components/ShowsClient";
 import CreateShowButton from "./components/CreateShowButton";
+import ImportDataButton from "./components/ImportDataButton";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getShowsByOrg } from "@/lib/actions/shows";
 import { notFound } from "next/navigation";
@@ -43,7 +44,10 @@ export default async function ShowsPage({
             Manage your tour schedule
           </p>
         </div>
-        <CreateShowButton orgId={org.id} />
+        <div className="flex gap-3">
+          <ImportDataButton orgId={org.id} />
+          <CreateShowButton orgId={org.id} />
+        </div>
       </div>
 
       <ShowsClient shows={shows} orgSlug={orgSlug} view={view} />

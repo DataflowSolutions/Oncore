@@ -5,6 +5,7 @@ import { Calendar, MapPin, Music, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getScheduleItemsForShow } from '@/lib/actions/schedule'
 import { CalendarDayView } from '@/components/shows/CalendarDayView'
+import { redirect } from 'next/navigation'
 
 interface ShowDayPageProps {
   params: Promise<{ org: string, showId: string }>
@@ -22,6 +23,9 @@ export default async function ShowDayPage({
   const selectedPeopleIds = selectedPeopleParam 
     ? selectedPeopleParam.split(',').filter(Boolean)
     : []
+
+  // Track if user manually selected a date
+  const hasManualDateSelection = !!dateParam
 
   // Parse date from query params (default to today)
   // Use UTC to avoid timezone issues with date-only strings
@@ -154,6 +158,81 @@ export default async function ShowDayPage({
 
       advancingData = { arrivalFlights, departureFlights }
     }
+  }
+
+  // Helper function to get date string in local timezone (YYYY-MM-DD)
+  const getLocalDateStr = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  // Calculate which dates have events (for auto-navigation)
+  const datesWithEvents: string[] = []
+  
+  // Add show date if it has show times
+  const showDateObj = new Date(show.date)
+  showDateObj.setHours(0, 0, 0, 0)
+  const showDateNormalized = getLocalDateStr(showDateObj)
+  
+  if (show.doors_at || show.set_time) {
+    datesWithEvents.push(showDateNormalized)
+  }
+
+  // Add dates from schedule items
+  scheduleItems.forEach(item => {
+    const itemDateStr = getLocalDateStr(new Date(item.starts_at))
+    if (!datesWithEvents.includes(itemDateStr)) {
+      datesWithEvents.push(itemDateStr)
+    }
+  })
+
+  // Add dates from advancing data
+  if (advancingData && selectedPeopleIds.length > 0) {
+    selectedPeopleIds.forEach(personId => {
+      const personArrival = advancingData.arrivalFlights.find(f => f.personId === personId)
+      if (personArrival?.time) {
+        const arrivalDateStr = getLocalDateStr(new Date(personArrival.time))
+        if (!datesWithEvents.includes(arrivalDateStr)) {
+          datesWithEvents.push(arrivalDateStr)
+        }
+      }
+
+      const personDeparture = advancingData.departureFlights.find(f => f.personId === personId)
+      if (personDeparture?.time) {
+        const departureDateStr = getLocalDateStr(new Date(personDeparture.time))
+        if (!datesWithEvents.includes(departureDateStr)) {
+          datesWithEvents.push(departureDateStr)
+        }
+      }
+    })
+  }
+
+  // Auto-navigate to closest date with events if no manual date selection
+  if (!hasManualDateSelection && datesWithEvents.length > 0) {
+    // Find the closest date to today
+    const todayStr = getLocalDateStr(new Date())
+    const todayTime = new Date(todayStr).getTime()
+    
+    let closestDate = datesWithEvents[0]
+    let closestDiff = Math.abs(new Date(datesWithEvents[0]).getTime() - todayTime)
+    
+    for (const dateStr of datesWithEvents) {
+      const diff = Math.abs(new Date(dateStr).getTime() - todayTime)
+      if (diff < closestDiff) {
+        closestDate = dateStr
+        closestDiff = diff
+      }
+    }
+    
+    // Redirect to the closest date
+    const searchParamsObj = new URLSearchParams()
+    searchParamsObj.set('date', closestDate)
+    if (selectedPeopleParam) {
+      searchParamsObj.set('people', selectedPeopleParam)
+    }
+    redirect(`/${orgSlug}/shows/${showId}/day?${searchParamsObj.toString()}`)
   }
 
   const showDate = new Date(show.date)

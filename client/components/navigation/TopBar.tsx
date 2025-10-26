@@ -1,13 +1,39 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
 import { Notifications } from "./Notifications";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function TopBar() {
   const [open, setOpen] = React.useState(false);
+  const [isSyncing, setIsSyncing] = React.useState(false);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/sync', { method: 'POST' });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Sync Complete', {
+          description: data.message || `Synced ${data.synced} items`,
+        });
+      } else {
+        toast.error('Sync Failed', {
+          description: data.error || 'Failed to sync data',
+        });
+      }
+    } catch (error) {
+      toast.error('Sync Failed', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <>
@@ -16,21 +42,33 @@ export function TopBar() {
           {/* make parent relative so we can absolutely center the search */}
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end relative">
             {/* center this wrapper using absolute positioning; control width responsively */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-full sm:w-3/4 md:w-80 lg:w-160">
+            <div className="absolute left-1/2 transform -translate-x-1/2 w-full sm:w-3/4 md:w-96 lg:w-[500px] max-w-2xl">
               <Button
                 variant="outline"
-                className="relative h-10 w-full justify-start text-sm text-muted-foreground sm:pr-12 cursor-text"
+                className="relative h-11 w-full justify-start text-sm text-muted-foreground sm:pr-12 cursor-text"
                 onClick={() => setOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />
                 <span className="hidden lg:inline-flex">Search pages...</span>
                 <span className="inline-flex lg:hidden">Search...</span>
-                <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                <kbd className="pointer-events-none absolute right-1.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </Button>
             </div>
-            <Notifications />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSync}
+                disabled={isSyncing}
+                title="Sync data"
+                className="relative"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Notifications />
+            </div>
           </div>
         </div>
       </header>

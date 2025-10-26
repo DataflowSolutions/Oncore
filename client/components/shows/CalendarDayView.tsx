@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ScheduleItemModal } from './ScheduleItemModal'
 import { Plane, PlaneLanding, MapPin, Music, Plus, X, Trash2 } from 'lucide-react'
 import { PersonScheduleSelector } from './PersonScheduleSelector'
 import { DateNavigator } from './DateNavigator'
 import { Database } from '@/lib/database.types'
-import { createScheduleItem, deleteScheduleItem } from '@/lib/actions/schedule'
+import { createScheduleItem, deleteScheduleItem, updateScheduleItem } from '@/lib/actions/schedule'
 
 type DBScheduleItem = Database['public']['Tables']['schedule_items']['Row']
 
@@ -66,21 +67,14 @@ export function CalendarDayView({
   showId
 }: CalendarDayViewProps) {
   const [isAdding, setIsAdding] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<ScheduleItem | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     starts_at: '',
     ends_at: '',
     location: '',
     notes: ''
-  })
-  // Debug logging
-  console.log('CalendarDayView Debug:', {
-    currentDate: currentDate.toISOString(),
-    currentDateStr: currentDate.toISOString().split('T')[0],
-    selectedPeopleIds,
-    advancingData,
-    assignedPeople: assignedPeople.map(p => ({ id: p.person_id, name: p.people?.name })),
-    dbScheduleItems: dbScheduleItems.length
   })
 
   // Build schedule items
@@ -138,22 +132,17 @@ export function CalendarDayView({
     }
   })
 
-  // Add person-specific items from advancing data - filter by current date
+  // Add person-specific flight items from advancing data - filter by current date
   if (advancingData && selectedPeopleIds.length > 0) {
-    console.log('Processing advancing data for', selectedPeopleIds.length, 'people')
-    
     selectedPeopleIds.forEach(personId => {
       const person = assignedPeople.find(p => p.person_id === personId)?.people
       const personName = person?.name || 'Unknown'
 
       const personArrival = advancingData.arrivalFlights.find(f => f.personId === personId)
-      console.log(`Person ${personName} (${personId}) arrival:`, personArrival)
       
       if (personArrival && personArrival.time) {
         const arrivalDate = new Date(personArrival.time)
         const arrivalDateStr = getLocalDateStr(arrivalDate)
-        
-        console.log(`  Arrival date: ${arrivalDateStr}, Current date: ${currentDateStr}, Match: ${arrivalDateStr === currentDateStr}`)
         
         if (arrivalDateStr === currentDateStr) {
           scheduleItems.push({
@@ -161,7 +150,7 @@ export function CalendarDayView({
             time: personArrival.time,
             title: `${personArrival.flightNumber || 'Flight'}`,
             location: `${personArrival.from || ''} → ${personArrival.to || ''}`,
-            type: 'arrival',
+            type: 'arrival' as const,
             personId,
             personName
           })
@@ -169,13 +158,10 @@ export function CalendarDayView({
       }
 
       const personDeparture = advancingData.departureFlights.find(f => f.personId === personId)
-      console.log(`Person ${personName} (${personId}) departure:`, personDeparture)
       
       if (personDeparture && personDeparture.time) {
         const departureDate = new Date(personDeparture.time)
         const departureDateStr = getLocalDateStr(departureDate)
-        
-        console.log(`  Departure date: ${departureDateStr}, Current date: ${currentDateStr}, Match: ${departureDateStr === currentDateStr}`)
         
         if (departureDateStr === currentDateStr) {
           scheduleItems.push({
@@ -183,7 +169,7 @@ export function CalendarDayView({
             time: personDeparture.time,
             title: `${personDeparture.flightNumber || 'Flight'}`,
             location: `${personDeparture.from || ''} → ${personDeparture.to || ''}`,
-            type: 'departure',
+            type: 'departure' as const,
             personId,
             personName
           })
@@ -191,8 +177,6 @@ export function CalendarDayView({
       }
     })
   }
-  
-  console.log('Final schedule items:', scheduleItems)
 
   // Group items by exact time (HH:MM)
   const timeSlotMap = new Map<string, ScheduleItem[]>()
@@ -212,20 +196,38 @@ export function CalendarDayView({
     .map(([timeLabel, items]) => ({ timeLabel, items }))
     .sort((a, b) => a.timeLabel.localeCompare(b.timeLabel))
 
+  // Generate 30-minute grid lines for the full day (00:00 to 23:30)
+  const generateFullDayGrid = (): TimeSlot[] => {
+    const gridSlots: TimeSlot[] = []
+    for (let hour = 0; hour < 24; hour++) {
+      for (const minute of [0, 30]) {
+        const timeLabel = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+        const existingSlot = timeSlots.find(slot => slot.timeLabel === timeLabel)
+        gridSlots.push({
+          timeLabel,
+          items: existingSlot ? existingSlot.items : []
+        })
+      }
+    }
+    return gridSlots
+  }
+
+  const fullDayGrid = generateFullDayGrid()
+
   const getItemColor = (type: string) => {
     switch (type) {
       case 'arrival':
-        return 'bg-emerald-500/20 border-emerald-500/40 text-emerald-100'
+        return 'bg-emerald-500/30 border-emerald-500/60 text-emerald-50'
       case 'departure':
-        return 'bg-blue-500/20 border-blue-500/40 text-blue-100'
+        return 'bg-blue-500/30 border-blue-500/60 text-blue-50'
       case 'show':
-        return 'bg-red-500/20 border-red-500/40 text-red-100'
+        return 'bg-red-500/30 border-red-500/60 text-red-50'
       case 'venue':
-        return 'bg-purple-500/20 border-purple-500/40 text-purple-100'
+        return 'bg-purple-500/30 border-purple-500/60 text-purple-50'
       case 'schedule':
-        return 'bg-orange-500/20 border-orange-500/40 text-orange-100'
+        return 'bg-orange-500/30 border-orange-500/60 text-orange-50'
       default:
-        return 'bg-neutral-500/20 border-neutral-500/40 text-neutral-100'
+        return 'bg-neutral-500/30 border-neutral-500/60 text-neutral-50'
     }
   }
 
@@ -316,58 +318,54 @@ export function CalendarDayView({
         </Card>
       )}
 
-      {/* Person Selector */}
-      <Card className="bg-neutral-900/50 border-neutral-800">
-        <CardContent className="pt-6">
-          <PersonScheduleSelector
-            availablePeople={assignedPeople
-              .filter(p => p.people)
-              .map(p => ({
-                id: p.person_id,
-                name: p.people!.name,
-                duty: p.duty
-              }))}
-            selectedPeopleIds={selectedPeopleIds}
-          />
-        </CardContent>
-      </Card>
-
       {/* Timeline View */}
       <Card className="bg-neutral-900/50 border-neutral-800">
         <CardContent className="pt-6">
-          {/* Date Navigation */}
-          <div className="mb-6">
-            <DateNavigator 
-              currentDate={currentDate} 
-              datesWithEvents={datesWithEvents}
-            />
-          </div>
+          {/* Header: Date Navigation, Person Selector, and Add Button */}
+          <div className="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            {/* Date Navigator */}
+            <div className="flex-shrink-0">
+              <DateNavigator 
+                currentDate={currentDate} 
+                datesWithEvents={datesWithEvents}
+              />
+            </div>
 
-          {/* Header with event count and Add button */}
-          <div className="mb-4 flex items-center justify-between">
-            {scheduleItems.length > 0 && (
-              <span className="text-xs text-neutral-400">
-                {scheduleItems.length} event{scheduleItems.length !== 1 ? 's' : ''}
-              </span>
-            )}
-            <Button
-              size="sm"
-              onClick={() => setIsAdding(!isAdding)}
-              className="ml-auto flex items-center gap-2"
-              variant={isAdding ? "outline" : "default"}
-            >
-              {isAdding ? (
-                <>
-                  <X className="w-4 h-4" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Add Item
-                </>
-              )}
-            </Button>
+            {/* Person Selector */}
+            <div className="flex-1 min-w-0">
+              <PersonScheduleSelector
+                availablePeople={assignedPeople
+                  .filter(p => p.people)
+                  .map(p => ({
+                    id: p.person_id,
+                    name: p.people!.name,
+                    duty: p.duty
+                  }))}
+                selectedPeopleIds={selectedPeopleIds}
+              />
+            </div>
+
+            {/* Add Item Button */}
+            <div className="flex-shrink-0">
+              <Button
+                size="sm"
+                onClick={() => setIsAdding(!isAdding)}
+                className="flex items-center gap-2"
+                variant={isAdding ? "outline" : "default"}
+              >
+                {isAdding ? (
+                  <>
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Add Item Form */}
@@ -468,25 +466,29 @@ export function CalendarDayView({
               </p>
             </div>
           ) : (
-            <div className="space-y-0 border border-neutral-800 rounded-lg overflow-hidden">
-              {timeSlots.map((slot, idx) => (
+            <div className="space-y-0 border border-neutral-800 rounded-lg overflow-hidden max-h-[600px] overflow-y-auto">
+              {fullDayGrid.map((slot, idx) => (
                 <div 
                   key={idx}
-                  className="grid grid-cols-[100px,1fr] border-b border-neutral-800 last:border-b-0 hover:bg-neutral-800/30 transition-colors"
+                  className={`grid grid-cols-[100px,1fr] border-b border-neutral-800/50 last:border-b-0 ${slot.items.length > 0 ? 'hover:bg-neutral-800/30' : 'hover:bg-neutral-800/10'} transition-colors min-h-[60px]`}
                 >
                   {/* Time column */}
-                  <div className="bg-neutral-900/50 px-4 py-3 flex items-start justify-end border-r border-neutral-800">
-                    <span className="text-base font-mono font-semibold text-neutral-200">
+                  <div className="bg-neutral-900/30 px-4 py-3 flex items-start justify-end border-r border-neutral-800/50">
+                    <span className={`text-sm font-mono ${slot.items.length > 0 ? 'font-semibold text-neutral-200' : 'font-normal text-neutral-500'}`}>
                       {slot.timeLabel}
                     </span>
                   </div>
 
                   {/* Events column - all items in same row */}
                   <div className="px-4 py-2 flex gap-2">
-                    {slot.items.map(item => (
+                    {slot.items.length > 0 ? slot.items.map(item => (
                       <div
                         key={item.id}
-                        className={`group/item relative flex items-center gap-2 px-3 py-2 rounded-md border ${getItemColor(item.type)} flex-1`}
+                        onClick={() => {
+                          setSelectedItem(item)
+                          setIsModalOpen(true)
+                        }}
+                        className={`group/item relative flex items-center gap-2 px-3 py-2 rounded-md border ${getItemColor(item.type)} flex-1 cursor-pointer hover:shadow-lg transition-all`}
                       >
                         {getItemIcon(item.type)}
                         <div className="flex-1 min-w-0">
@@ -525,7 +527,8 @@ export function CalendarDayView({
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation() // Prevent opening modal
                               if (confirm('Delete this schedule item?')) {
                                 await deleteScheduleItem(orgSlug, showId, item.id)
                               }
@@ -536,7 +539,7 @@ export function CalendarDayView({
                           </Button>
                         )}
                       </div>
-                    ))}
+                    )) : null}
                   </div>
                 </div>
               ))}
@@ -544,6 +547,20 @@ export function CalendarDayView({
           )}
         </CardContent>
       </Card>
+
+      {/* Schedule Item Modal */}
+      <ScheduleItemModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedItem(null)
+        }}
+        onUpdate={async (id, updates) => {
+          await updateScheduleItem(orgSlug, showId, id, updates)
+        }}
+        isEditable={selectedItem?.type === 'schedule'}
+      />
     </div>
   )
 }

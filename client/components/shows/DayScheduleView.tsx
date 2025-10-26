@@ -182,15 +182,15 @@ export function DayScheduleView({
     switch (type) {
       case 'show':
       case 'global':
-        return 'bg-red-500/20 border-red-500/40 text-red-100'
+        return 'bg-red-500/30 border-red-500/60 text-red-50'
       case 'role_specific':
-        return 'bg-blue-500/20 border-blue-500/40 text-blue-100'
+        return 'bg-blue-500/30 border-blue-500/60 text-blue-50'
       case 'person':
-        return 'bg-purple-500/20 border-purple-500/40 text-purple-100'
+        return 'bg-purple-500/30 border-purple-500/60 text-purple-50'
       case 'team':
-        return 'bg-green-500/20 border-green-500/40 text-green-100'
+        return 'bg-green-500/30 border-green-500/60 text-green-50'
       default:
-        return 'bg-muted border-muted-foreground text-muted-foreground'
+        return 'bg-muted border-muted-foreground text-foreground'
     }
   }
 
@@ -301,19 +301,19 @@ export function DayScheduleView({
           {/* Enhanced Legend */}
           <div className="flex flex-wrap gap-4 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/40"></div>
+              <div className="w-3 h-3 rounded bg-red-500/30 border-2 border-red-500/60"></div>
               <span>Global/Show Times</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/40"></div>
+              <div className="w-3 h-3 rounded bg-blue-500/30 border-2 border-blue-500/60"></div>
               <span>Role-Specific</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/40"></div>
+              <div className="w-3 h-3 rounded bg-green-500/30 border-2 border-green-500/60"></div>
               <span>Team Events</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-purple-500/20 border border-purple-500/40"></div>
+              <div className="w-3 h-3 rounded bg-purple-500/30 border-2 border-purple-500/60"></div>
               <span>Personal</span>
             </div>
           </div>
@@ -323,18 +323,23 @@ export function DayScheduleView({
             {/* Time markers */}
             <div className="flex justify-between text-xs text-muted-foreground mb-4">
               <span>6 AM</span>
+              <span>9 AM</span>
               <span>12 PM</span>
+              <span>3 PM</span>
               <span>6 PM</span>
+              <span>9 PM</span>
               <span>12 AM</span>
             </div>
             
-            {/* Timeline bar */}
+            {/* Timeline bar with 30-minute grid lines */}
             <div className="relative h-2 bg-muted rounded-full mb-6">
-              {/* Time markers on timeline */}
-              {[0, 25, 50, 75, 100].map((pos, idx) => (
+              {/* 30-minute grid lines */}
+              {Array.from({ length: 37 }, (_, i) => i * (100 / 36)).map((pos, idx) => (
                 <div
                   key={idx}
-                  className="absolute w-px h-4 bg-muted-foreground -top-1"
+                  className={`absolute w-px bg-muted-foreground ${
+                    idx % 2 === 0 ? 'h-6 -top-2 opacity-50' : 'h-3 -top-0.5 opacity-30'
+                  }`}
                   style={{ left: `${pos}%` }}
                 />
               ))}
@@ -343,12 +348,14 @@ export function DayScheduleView({
               {timelineItems.map((item) => (
                 <div
                   key={item.id}
-                  className={`absolute -top-1 h-4 w-1 rounded-full ${
+                  className={`absolute -top-1 h-4 w-1.5 rounded-full shadow-lg ${
                     item.type === 'global' || item.type === 'show' 
-                      ? 'bg-red-500' 
+                      ? 'bg-red-600' 
                       : item.type === 'role_specific' 
-                      ? 'bg-blue-500' 
-                      : 'bg-primary'
+                      ? 'bg-blue-600' 
+                      : item.type === 'team'
+                      ? 'bg-green-600'
+                      : 'bg-purple-600'
                   }`}
                   style={{ left: `${getPositionFromTime(item.time)}%` }}
                   title={`${item.time} - ${item.title}`}

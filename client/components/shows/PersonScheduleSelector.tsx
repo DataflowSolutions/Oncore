@@ -58,10 +58,6 @@ export function PersonScheduleSelector({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-neutral-400">Viewing:</span>
-        {selectedPeople.length === 0 ? (
-          <span className="text-sm text-neutral-500">No one selected</span>
-        ) : (
           <div className="flex items-center gap-2 flex-wrap">
             {selectedPeople.map(person => (
               <Badge 
@@ -86,7 +82,7 @@ export function PersonScheduleSelector({
               </Badge>
             ))}
           </div>
-        )}
+        
       </div>
 
       {/* Add person selector */}
