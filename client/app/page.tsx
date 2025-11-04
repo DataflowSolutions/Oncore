@@ -27,8 +27,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   
   const supabase = createClient();
-  
-  console.log('Home page rendering - loading:', loading, 'user:', user?.email, 'orgs:', organizations.length);
 
   const loadUserOrganizations = useCallback(async (userId: string) => {
     try {
