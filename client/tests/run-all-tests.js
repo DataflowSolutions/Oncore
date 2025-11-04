@@ -1,0 +1,179 @@
+#!/usr/bin/env node
+/**
+ * Test Runner - Runs all performance tests and generates report
+ */
+
+const { execSync } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+console.log('🚀 Oncore Performance Test Runner')
+console.log('=' .repeat(70))
+console.log()
+
+const results = {
+  timestamp: new Date().toISOString(),
+  tests: []
+}
+
+function runTest(name, command) {
+  console.log(`\n${'='.repeat(70)}`)
+  console.log(`📋 Running: ${name}`)
+  console.log('='.repeat(70))
+  
+  const startTime = Date.now()
+  
+  try {
+    execSync(command, { 
+      stdio: 'inherit',
+      cwd: __dirname 
+    })
+    
+    const duration = Date.now() - startTime
+    
+    results.tests.push({
+      name,
+      status: 'PASS',
+      duration,
+      timestamp: new Date().toISOString()
+    })
+    
+    console.log(`\n✅ ${name} completed in ${(duration / 1000).toFixed(2)}s`)
+    return true
+    
+  } catch (error) {
+    const duration = Date.now() - startTime
+    
+    results.tests.push({
+      name,
+      status: 'FAIL',
+      duration,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+    
+    console.log(`\n❌ ${name} failed after ${(duration / 1000).toFixed(2)}s`)
+    return false
+  }
+}
+
+// Run all tests
+const testSuite = [
+  { name: 'RLS Security Tests', command: 'npx tsx security/rls-vulnerability.test.ts' },
+  { name: 'Database Performance Tests', command: 'npx tsx performance/database-performance.test.ts' },
+  { name: 'Grid Save Performance Tests', command: 'npx tsx performance/grid-save-performance.test.ts' },
+  { name: 'Page Load Integration Tests', command: 'npx tsx integration/page-load-performance.test.ts' },
+  { name: 'Stress Tests', command: 'npx tsx performance/stress-test.ts' },
+]
+
+let allPassed = true
+
+for (const test of testSuite) {
+  const passed = runTest(test.name, test.command)
+  if (!passed) allPassed = false
+}
+
+// Generate summary
+console.log('\n')
+console.log('=' .repeat(70))
+console.log('📊 TEST SUMMARY')
+console.log('=' .repeat(70))
+console.log()
+
+const passed = results.tests.filter(t => t.status === 'PASS').length
+const failed = results.tests.filter(t => t.status === 'FAIL').length
+const totalDuration = results.tests.reduce((sum, t) => sum + t.duration, 0)
+
+console.log(`Total Tests: ${results.tests.length}`)
+console.log(`✅ Passed: ${passed}`)
+console.log(`❌ Failed: ${failed}`)
+console.log(`⏱️  Total Time: ${(totalDuration / 1000).toFixed(2)}s`)
+console.log()
+
+results.tests.forEach(test => {
+  const status = test.status === 'PASS' ? '✅' : '❌'
+  const duration = (test.duration / 1000).toFixed(2)
+  console.log(`${status} ${test.name} (${duration}s)`)
+})
+
+// Save results to file
+const reportPath = path.join(__dirname, 'test-results.json')
+fs.writeFileSync(reportPath, JSON.stringify(results, null, 2))
+console.log()
+console.log(`📄 Full results saved to: ${reportPath}`)
+
+// Generate markdown report
+const mdReport = generateMarkdownReport(results)
+const mdReportPath = path.join(__dirname, 'test-results.md')
+fs.writeFileSync(mdReportPath, mdReport)
+console.log(`📄 Markdown report saved to: ${mdReportPath}`)
+
+console.log()
+console.log('=' .repeat(70))
+
+if (allPassed) {
+  console.log('✅ All tests passed!')
+  process.exit(0)
+} else {
+  console.log('❌ Some tests failed. Check the logs above.')
+  process.exit(1)
+}
+
+function generateMarkdownReport(results) {
+  const passed = results.tests.filter(t => t.status === 'PASS').length
+  const failed = results.tests.filter(t => t.status === 'FAIL').length
+  const totalDuration = results.tests.reduce((sum, t) => sum + t.duration, 0)
+
+  return `# Performance Test Results
+
+**Generated:** ${new Date(results.timestamp).toLocaleString()}
+
+## Summary
+
+- **Total Tests:** ${results.tests.length}
+- **Passed:** ✅ ${passed}
+- **Failed:** ❌ ${failed}
+- **Total Duration:** ${(totalDuration / 1000).toFixed(2)}s
+- **Status:** ${failed === 0 ? '✅ ALL PASS' : '❌ SOME FAILURES'}
+
+## Test Results
+
+| Test | Status | Duration | Timestamp |
+|------|--------|----------|-----------|
+${results.tests.map(t => 
+  `| ${t.name} | ${t.status === 'PASS' ? '✅ PASS' : '❌ FAIL'} | ${(t.duration / 1000).toFixed(2)}s | ${new Date(t.timestamp).toLocaleTimeString()} |`
+).join('\n')}
+
+## Performance Metrics
+
+### Expected Improvements
+- ✅ Page loads: 50-70% faster
+- ✅ Write operations: 2-3x faster
+- ✅ Grid saves: 10-20x faster
+- ✅ Database queries: 40-60% less CPU
+
+### Targets
+- Simple queries: <100ms
+- RLS queries: <150ms
+- Complex queries: <200ms
+- Page loads: <300ms
+
+${failed > 0 ? `
+## Failed Tests
+
+${results.tests.filter(t => t.status === 'FAIL').map(t => 
+  `### ${t.name}\n\n**Error:** ${t.error || 'Unknown error'}\n`
+).join('\n')}
+
+## Recommendations
+
+- Review failed test logs for specific issues
+- Check database connection and performance
+- Verify migration was applied correctly
+- Monitor Supabase dashboard for slow queries
+` : ''}
+
+---
+*Generated by Oncore Performance Test Suite*
+`
+}

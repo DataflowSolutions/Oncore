@@ -1,0 +1,34 @@
+{
+  "name": "oncore-tests",
+  "version": "1.0.0",
+  "description": "Performance and security tests for Oncore",
+  "scripts": {
+    "test": "node run-all-tests.js",
+    "test:unit": "tsx unit/cache.test.ts && tsx unit/action-optimizations.test.ts",
+    "test:performance": "npm run test:perf:database && npm run test:perf:grid",
+    "test:perf:database": "tsx performance/database-performance.test.ts",
+    "test:perf:grid": "tsx performance/grid-save-performance.test.ts",
+    "test:perf:stress": "tsx performance/stress-test.ts",
+    "test:integration": "tsx integration/page-load-performance.test.ts",
+    "test:security": "tsx security/rls-vulnerability.test.ts",
+    "test:all": "node run-all-tests.js",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "benchmark": "npm run test:performance && npm run test:perf:stress",
+    "stress-test": "tsx performance/stress-test.ts",
+    "test:local": "cross-env TEST_DB_ENV=local node run-all-tests.js",
+    "test:prod": "cross-env TEST_DB_ENV=production node run-all-tests.js",
+    "security:local": "cross-env TEST_DB_ENV=local tsx security/rls-vulnerability.test.ts",
+    "security:prod": "cross-env TEST_DB_ENV=production tsx security/rls-vulnerability.test.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5"
+  }
+}
