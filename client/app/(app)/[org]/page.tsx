@@ -162,10 +162,10 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                 show.show_assignments
                   ?.map((assignment: ShowAssignment) => assignment.people)
                   .filter(
-                    (person): person is NonNullable<typeof person> =>
+                    (person: ShowAssignment['people']): person is NonNullable<typeof person> =>
                       person?.member_type === "Artist"
                   )
-                  .map((person) => person.name)
+                  .map((person: NonNullable<ShowAssignment['people']>) => person.name)
                   .filter(Boolean) || [];
 
               const artistNames =

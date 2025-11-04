@@ -20,9 +20,12 @@ interface CreateAdvancingSessionFormProps {
 export function CreateAdvancingSessionForm({ 
   orgSlug,
   showId,
-  shows, 
+  shows: rawShows, 
   preselectedShowId 
 }: CreateAdvancingSessionFormProps) {
+  // Type assertion to ensure show properties are accessible
+  const shows = rawShows as Array<ShowWithVenue & { id: string; title: string; date: string; set_time: string | null }>
+  
   const [title, setTitle] = useState('')
   const [selectedShowId, setSelectedShowId] = useState(preselectedShowId || 'none')
   const [loading, setLoading] = useState(false)
@@ -52,7 +55,7 @@ export function CreateAdvancingSessionForm({
     }
   }
 
-  const selectedShow = shows.find(show => show.id === selectedShowId)
+  const selectedShow = shows.find((show) => show.id === selectedShowId)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

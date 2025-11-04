@@ -29,7 +29,8 @@ export function SignInForm() {
     if (error) {
       setMessage(error.message);
     } else {
-      router.push("/create-org");
+      // go to /org page after sign in
+      router.push("/");
     }
     setLoading(false);
   };

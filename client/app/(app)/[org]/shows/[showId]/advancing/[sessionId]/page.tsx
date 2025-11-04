@@ -83,6 +83,16 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   const partyFields = fields.filter(f => f.party_type === party)
 
   // Group fields by section
+  type FieldsArray = Array<{
+    id: string
+    section: string
+    field_name: string
+    field_type: string
+    value: unknown
+    status: 'pending' | 'confirmed'
+    party_type: 'from_us' | 'from_you'
+  }>
+  
   const fieldsBySection = partyFields.reduce((acc, field) => {
     const section = field.section || 'General'
     if (!acc[section]) {
@@ -90,7 +100,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     }
     acc[section].push(field)
     return acc
-  }, {} as Record<string, typeof fields>)
+  }, {} as Record<string, FieldsArray>)
 
   // Add default sections for grid display if they don't exist
   const defaultSections = ['Team & Travel']
@@ -153,7 +163,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
                 <Section
                   key={`${sectionName}-${party}`}
                   title={sectionName}
-                  fields={sectionFields}
+                  fields={sectionFields as FieldsArray}
                   orgSlug={orgSlug}
                   sessionId={sessionId}
                   showId={sessionWithShow.shows.id}

@@ -31,7 +31,9 @@ export default async function NewAdvancingSessionPage({
   }
 
   // Get shows for the organization
-  const shows = await getShowsByOrg(organization.id);
+  const rawShows = await getShowsByOrg(organization.id);
+  // Type assertion to ensure show properties are accessible
+  const shows = rawShows as Array<typeof rawShows[0] & { id: string; title: string; date: string }>
 
   return (
     <div className="space-y-6">
