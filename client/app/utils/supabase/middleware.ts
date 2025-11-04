@@ -70,14 +70,20 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Only check auth for protected routes (org pages)
-  if (pathname.startsWith('/create-org') || pathname.match(/^\/[^\/]+\//)) {
+  // Match /create-org or any org route like /dataflow-solutions or /dataflow-solutions/shows
+  if (pathname.startsWith('/create-org') || pathname.match(/^\/[^\/]+($|\/)/)) {
+    console.log('🔒 [Middleware] Checking auth for:', pathname);
+    
     // Optimize: Use getSession instead of getUser (faster, uses local JWT)
     const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error || !session) {
+      console.log('❌ [Middleware] No session found, redirecting to sign-in');
       const redirectUrl = new URL('/sign-in', request.url)
       return NextResponse.redirect(redirectUrl)
     }
+    
+    console.log('✅ [Middleware] Session found for user:', session.user.id);
 
     // If user is authenticated but accessing create-org, check if they have orgs
     if (pathname === '/create-org') {

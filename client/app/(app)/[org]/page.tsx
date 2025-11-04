@@ -25,13 +25,24 @@ type ShowAssignment = {
 export default async function OrgHomePage({ params }: OrgHomePageProps) {
   const { org: orgSlug } = await params;
 
+  console.log('🏢 [OrgPage] Loading org with slug:', orgSlug);
+
   // OPTIMIZED: Use cached org lookup
   const { getCachedOrg } = await import('@/lib/cache');
   const { data: org, error } = await getCachedOrg(orgSlug);
 
+  console.log('🏢 [OrgPage] Org lookup result:', { 
+    found: !!org, 
+    orgId: org?.id,
+    error: error?.message 
+  });
+
   if (error || !org) {
+    console.log('❌ [OrgPage] Org not found, returning 404');
     notFound();
   }
+  
+  console.log('✅ [OrgPage] Org loaded successfully:', org.name);
 
   // OPTIMIZED: Get upcoming shows with only needed fields
   const supabase = await getSupabaseServer();

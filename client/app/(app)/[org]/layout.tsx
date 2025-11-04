@@ -28,32 +28,33 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
     redirect("/sign-in");
   }
 
-  // Parallelize org and membership queries for faster loading
-  const [orgResult, membershipResult] = await Promise.all([
-    supabase
-      .from("organizations")
-      .select("id, name, slug")
-      .eq("slug", resolvedParams.org)
-      .single(),
-    supabase
-      .from("org_members")
-      .select("role, org_id")
-      .eq("user_id", user.id)
-      .single()
-  ]);
-
-  const { data: org, error: orgError } = orgResult;
+  // First get the org
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("id, name, slug")
+    .eq("slug", resolvedParams.org)
+    .single();
 
   if (orgError || !org) {
+    console.log('❌ [Layout] Org not found:', resolvedParams.org, orgError?.message);
     notFound();
   }
 
-  const { data: membership } = membershipResult;
+  // Then get the membership for THIS specific org
+  const { data: membership } = await supabase
+    .from("org_members")
+    .select("role, org_id")
+    .eq("user_id", user.id)
+    .eq("org_id", org.id)
+    .single();
 
-  // Verify membership matches the org
-  if (!membership || membership.org_id !== org.id) {
+  // Verify membership exists
+  if (!membership) {
+    console.log('❌ [Layout] User is not a member of org:', org.slug);
     notFound();
   }
+  
+  console.log('✅ [Layout] User has access to org:', org.slug, 'with role:', membership.role);
 
   // Check billing status
   // const billingStatus = await checkOrgBilling(org.id);

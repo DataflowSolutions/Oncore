@@ -11,12 +11,37 @@ import { getSupabaseServer } from './supabase/server'
  * This prevents multiple components from fetching the same org
  */
 export const getCachedOrg = cache(async (slug: string) => {
+  console.log('📦 [Cache] getCachedOrg called for slug:', slug);
+  
   const supabase = await getSupabaseServer()
+  
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  console.log('📦 [Cache] User authenticated:', !!user, 'userId:', user?.id);
+  
   const { data, error } = await supabase
     .from('organizations')
     .select('id, name, slug')
     .eq('slug', slug)
     .single()
+  
+  console.log('📦 [Cache] Query result:', { 
+    found: !!data, 
+    error: error?.message,
+    errorCode: error?.code,
+    errorDetails: error?.details,
+    errorHint: error?.hint
+  });
+  
+  // If RLS is blocking, check if user is an org member
+  if (!data && user) {
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('org_id, role')
+      .eq('user_id', user.id)
+      .limit(5)
+    console.log('📦 [Cache] User memberships:', membership);
+  }
   
   return { data, error }
 })
