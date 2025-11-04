@@ -26,6 +26,8 @@
   "exclude": [
     "node_modules", 
     "supabase/functions/**/*",
-    "supabase/functions/**/*.ts"
+    "supabase/functions/**/*.ts",
+    "tests/**/*",
+    "tests/**/*.ts"
   ]
 }
