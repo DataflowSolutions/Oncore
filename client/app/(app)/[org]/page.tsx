@@ -25,18 +25,16 @@ type ShowAssignment = {
 export default async function OrgHomePage({ params }: OrgHomePageProps) {
   const { org: orgSlug } = await params;
 
-  const supabase = await getSupabaseServer();
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  // OPTIMIZED: Use cached org lookup
+  const { getCachedOrg } = await import('@/lib/cache');
+  const { data: org, error } = await getCachedOrg(orgSlug);
 
   if (error || !org) {
     notFound();
   }
 
-  // Get upcoming shows with artist assignments
+  // OPTIMIZED: Get upcoming shows with only needed fields
+  const supabase = await getSupabaseServer();
   const { data: upcomingShows } = await supabase
     .from("shows")
     .select(
@@ -44,10 +42,10 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
       id, 
       title, 
       date, 
-      set_time, 
-      venues(id, name, city),
+      set_time,
+      venues!inner(id, name, city),
       show_assignments(
-        people(
+        people!inner(
           id,
           name,
           member_type

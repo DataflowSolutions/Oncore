@@ -1,7 +1,6 @@
 import ShowsClient from "./components/ShowsClient";
 import CreateShowButton from "./components/CreateShowButton";
 import ImportDataButton from "./components/ImportDataButton";
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { getShowsByOrg } from "@/lib/actions/shows";
 import { notFound } from "next/navigation";
 
@@ -20,13 +19,9 @@ export default async function ShowsPage({
   const { org: orgSlug } = await params;
   const { view = "list" } = await searchParams;
 
-  // Get the actual organization ID from the slug
-  const supabase = await getSupabaseServer();
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  // OPTIMIZED: Use cached org lookup
+  const { getCachedOrg } = await import('@/lib/cache');
+  const { data: org, error } = await getCachedOrg(orgSlug);
 
   if (error || !org) {
     notFound();

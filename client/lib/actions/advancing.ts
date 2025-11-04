@@ -490,13 +490,39 @@ export async function saveAdvancingGridData(
       return { success: false, error: 'Session not found' }
     }
 
+    // OPTIMIZED: Fetch ALL existing fields for this grid type at once
+    const { data: existingFields } = await supabase
+      .from('advancing_fields')
+      .select('id, field_name')
+      .eq('session_id', sessionId)
+      .like('field_name', `${gridType}_%`)
+
+    // Create lookup map for O(1) access
+    const existingMap = new Map(
+      existingFields?.map(f => [f.field_name, f.id]) || []
+    )
+
+    // Prepare batch operations
+    const toInsert: Array<{
+      org_id: string
+      session_id: string
+      section: string
+      field_name: string
+      field_type: string
+      value: Json
+      party_type: 'from_us' | 'from_you'
+      sort_order: number
+      created_by: string
+    }> = []
+    
+    const toUpdate: Array<{ id: string; value: Json }> = []
+
     // Process each row of grid data
     for (const row of gridData) {
       for (const [columnKey, value] of Object.entries(row)) {
         if (columnKey === 'id' || !value) continue
         
-        // Extract person ID from row.id (remove gridType prefix if present)
-        // row.id format: "team_personId" or "arrival_flight_personId"
+        // Extract person ID from row.id
         const rowIdStr = String(row.id)
         const gridTypePrefix = `${gridType}_`
         const personId = rowIdStr.startsWith(gridTypePrefix) 
@@ -506,35 +532,60 @@ export async function saveAdvancingGridData(
         const fieldName = `${gridType}_${personId}_${columnKey}`
         const section = gridType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
         
-        // Check if field exists
-        const { data: existingField } = await supabase
-          .from('advancing_fields')
-          .select('id')
-          .eq('session_id', sessionId)
-          .eq('field_name', fieldName)
-          .single()
-          
-        if (existingField) {
-          // Update existing field
-          await supabase
-            .from('advancing_fields')
-            .update({ value: String(value) })
-            .eq('id', existingField.id)
+        const existingId = existingMap.get(fieldName)
+        
+        if (existingId) {
+          // Add to update batch
+          toUpdate.push({ id: existingId, value: String(value) })
         } else {
-          // Create new field
-          await supabase
+          // Add to insert batch
+          toInsert.push({
+            org_id: session.org_id,
+            session_id: sessionId,
+            section,
+            field_name: fieldName,
+            field_type: 'text',
+            value: String(value),
+            party_type: 'from_you',
+            sort_order: 1000,
+            created_by: user.id
+          })
+        }
+      }
+    }
+
+    // OPTIMIZED: Batch insert (single query instead of N)
+    if (toInsert.length > 0) {
+      const { error } = await supabase
+        .from('advancing_fields')
+        .insert(toInsert)
+      
+      if (error) {
+        console.error('Batch insert error:', error)
+        return { success: false, error: error.message }
+      }
+    }
+
+    // OPTIMIZED: Batch update - process in chunks of 100
+    if (toUpdate.length > 0) {
+      const chunkSize = 100
+      for (let i = 0; i < toUpdate.length; i += chunkSize) {
+        const chunk = toUpdate.slice(i, i + chunkSize)
+        
+        // Use individual updates but in parallel
+        const updatePromises = chunk.map(u => 
+          supabase
             .from('advancing_fields')
-            .insert({
-              org_id: session.org_id,
-              session_id: sessionId,
-              section,
-              field_name: fieldName,
-              field_type: 'text',
-              value: String(value),
-              party_type: 'from_you',
-              sort_order: 1000,
-              created_by: user.id
-            })
+            .update({ value: u.value })
+            .eq('id', u.id)
+        )
+        
+        const results = await Promise.all(updatePromises)
+        const errors = results.filter(r => r.error).map(r => r.error)
+        
+        if (errors.length > 0) {
+          console.error('Batch update errors:', errors)
+          return { success: false, error: `Failed to update ${errors.length} fields` }
         }
       }
     }

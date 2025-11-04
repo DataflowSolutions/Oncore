@@ -1,10 +1,8 @@
-import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Music, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
-import { getScheduleItemsForShow } from '@/lib/actions/schedule'
 import { ScheduleManager } from '@/components/shows/ScheduleManager'
 import { getShowTeam, getAvailablePeople } from '@/lib/actions/show-team'
 import { ShowClient } from './ShowClient'
@@ -29,46 +27,20 @@ export default async function ShowDetailPage({
 }: ShowDetailPageProps) {
   const { org: orgSlug, showId } = await params
   
-  const supabase = await getSupabaseServer()
+  // OPTIMIZED: Use cached helpers to prevent redundant queries
+  const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import('@/lib/cache')
   
   // Parallelize all data fetching for faster page loads
-  const [orgResult, showResult, scheduleItems, assignedTeam] = await Promise.all([
-    supabase
-      .from('organizations')
-      .select('id, name, slug')
-      .eq('slug', orgSlug)
-      .single(),
-    supabase
-      .from('shows')
-      .select(`
-        id, 
-        title, 
-        date, 
-        doors_at, 
-        set_time, 
-        status, 
-        notes,
-        org_id,
-        venues (
-          id,
-          name,
-          address,
-          city,
-          country,
-          capacity
-        ),
-        artists (
-          name
-        )
-      `)
-      .eq('id', showId)
-      .single(),
-    getScheduleItemsForShow(showId),
+  const [orgResult, showResult, scheduleResult, assignedTeam] = await Promise.all([
+    getCachedOrg(orgSlug),
+    getCachedShow(showId),
+    getCachedShowSchedule(showId),
     getShowTeam(showId)
   ]);
 
   const { data: org } = orgResult;
   const { data: show } = showResult;
+  const { data: scheduleItems } = scheduleResult;
 
   if (!org) {
     return <div>Organization not found</div>
@@ -224,7 +196,7 @@ export default async function ShowDetailPage({
         orgSlug={orgSlug}
         showId={showId}
         showDate={show.date}
-        scheduleItems={scheduleItems}
+        scheduleItems={scheduleItems || []}
       />
 
       {/* Notes - Less Priority */}
