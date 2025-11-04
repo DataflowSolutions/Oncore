@@ -45,6 +45,7 @@ export function AddPromoterModal({ orgId }: AddPromoterModalProps) {
       const result = await createPromoter({
         orgId,
         status: 'active',
+        type: 'promoter', // Explicitly set type for contacts table
         ...formData,
       })
 

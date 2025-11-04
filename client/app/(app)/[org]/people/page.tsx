@@ -51,10 +51,7 @@ export default async function TeamPage({ params, searchParams }: TeamPageProps) 
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl lg:text-4xl font-bold">People</h1>
-          <p className="text-muted-foreground mt-1">Team, artists, and contacts</p>
-        </div>
+        
         {/* <Link href={`/${orgSlug}/people/new`}>
           <Button size="lg">
             <UserPlus className="w-5 h-5" />

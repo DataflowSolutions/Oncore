@@ -47,13 +47,13 @@ INSERT INTO public.waitlist (id, email, name, role, company, phone, notes, statu
 ('660e8400-e29b-41d4-a716-446655440002', 'mike.manager@example.com', 'Mike Williams', 'manager', 'Williams Management', '555-0102', 'Managing 5 artists currently', 'pending', 'website', '2025-10-02 11:30:00+00'),
 ('660e8400-e29b-41d4-a716-446655440003', 'venue@grandtheatre.com', 'Emily Davis', 'venue', 'Grand Theatre', '555-0103', 'Looking for better booking tools', 'invited', 'website', '2025-10-02 14:20:00+00');
 
--- public.partners - Sample partners
-INSERT INTO public.partners (id, org_id, name, email, phone, role, company, commission_rate, notes, status, created_at) VALUES
-('770e8400-e29b-41d4-a716-446655440001', 'db78a629-d2c4-4031-affc-09987c9bc37e', 'Alex Turner', 'alex@bookingnexus.com', '555-0201', 'Booking Agent', 'Booking Nexus', 4.00, 'Specializes in Scandinavian venues', 'active', '2025-10-03 09:00:00+00'),
-('770e8400-e29b-41d4-a716-446655440002', 'db78a629-d2c4-4031-affc-09987c9bc37e', 'Lisa Chen', 'lisa@tourpro.com', '555-0202', 'Tour Manager', 'TourPro Services', 4.00, 'Handles logistics and advancing', 'active', '2025-10-03 10:30:00+00');
+-- public.contacts - Sample contacts (partners/promoters)
+INSERT INTO public.contacts (id, org_id, name, email, phone, role, company, commission_rate, notes, status, type, created_at) VALUES
+('770e8400-e29b-41d4-a716-446655440001', 'db78a629-d2c4-4031-affc-09987c9bc37e', 'Alex Turner', 'alex@bookingnexus.com', '555-0201', 'Booking Agent', 'Booking Nexus', 4.00, 'Specializes in Scandinavian venues', 'active', 'agent', '2025-10-03 09:00:00+00'),
+('770e8400-e29b-41d4-a716-446655440002', 'db78a629-d2c4-4031-affc-09987c9bc37e', 'Lisa Chen', 'lisa@tourpro.com', '555-0202', 'Tour Manager', 'TourPro Services', 4.00, 'Handles logistics and advancing', 'active', 'manager', '2025-10-03 10:30:00+00');
 
--- public.partner_commissions - Sample commissions
-INSERT INTO public.partner_commissions (id, partner_id, show_id, amount, description, status, created_at) VALUES
+-- public.contact_commissions - Sample commissions
+INSERT INTO public.contact_commissions (id, contact_id, show_id, amount, description, status, created_at) VALUES
 ('880e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440001', '380f36c2-b89b-4f01-9a35-3414fa36a637', 400.00, 'Commission for booking Alive venue show', 'pending', '2025-10-03 12:00:00+00');
 
 SET session_replication_role = 'origin';

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -22,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
           query?: string
+          operationName?: string
           variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -39,13 +34,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      _billing_actions_log_backup: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          id: string | null
+          new_state: Json | null
+          org_id: string | null
+          previous_state: Json | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          id?: string | null
+          new_state?: Json | null
+          org_id?: string | null
+          previous_state?: Json | null
+          triggered_by?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          id?: string | null
+          new_state?: Json | null
+          org_id?: string | null
+          previous_state?: Json | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      _org_seats_backup: {
+        Row: {
+          org_id: string | null
+          seat_type: string | null
+          updated_at: string | null
+          used: number | null
+        }
+        Insert: {
+          org_id?: string | null
+          seat_type?: string | null
+          updated_at?: string | null
+          used?: number | null
+        }
+        Update: {
+          org_id?: string | null
+          seat_type?: string | null
+          updated_at?: string | null
+          used?: number | null
+        }
+        Relationships: []
+      }
+      _show_collaborators_invite_backup: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          invite_token: string | null
+          invited_by: string | null
+          show_id: string | null
+          status: Database["public"]["Enums"]["show_invite_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          invite_token?: string | null
+          invited_by?: string | null
+          show_id?: string | null
+          status?: Database["public"]["Enums"]["show_invite_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          invite_token?: string | null
+          invited_by?: string | null
+          show_id?: string | null
+          status?: Database["public"]["Enums"]["show_invite_status"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       activity_log: {
         Row: {
           action: string
+          category: string | null
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown
+          ip_address: unknown | null
           org_id: string
           resource_id: string | null
           resource_type: string
@@ -54,10 +137,11 @@ export type Database = {
         }
         Insert: {
           action: string
+          category?: string | null
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id: string
           resource_id?: string | null
           resource_type: string
@@ -66,10 +150,11 @@ export type Database = {
         }
         Update: {
           action?: string
+          category?: string | null
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id?: string
           resource_id?: string | null
           resource_type?: string
@@ -377,51 +462,6 @@ export type Database = {
           },
         ]
       }
-      billing_actions_log: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          new_state: Json | null
-          org_id: string | null
-          previous_state: Json | null
-          triggered_by: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          new_state?: Json | null
-          org_id?: string | null
-          previous_state?: Json | null
-          triggered_by?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          new_state?: Json | null
-          org_id?: string | null
-          previous_state?: Json | null
-          triggered_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "billing_actions_log_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_seat_usage"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "billing_actions_log_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       billing_plans: {
         Row: {
           created_at: string
@@ -460,6 +500,136 @@ export type Database = {
           price_cents?: number
         }
         Relationships: []
+      }
+      contact_commissions: {
+        Row: {
+          amount: number
+          contact_id: string
+          created_at: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          show_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          contact_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          show_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contact_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          show_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_commissions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows_list_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          city: string | null
+          commission_rate: number | null
+          company: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          phone: string | null
+          role: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          commission_rate?: number | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          phone?: string | null
+          role?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          commission_rate?: number | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          phone?: string | null
+          role?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       files: {
         Row: {
@@ -678,42 +848,6 @@ export type Database = {
           },
         ]
       }
-      org_seats: {
-        Row: {
-          org_id: string
-          seat_type: string
-          updated_at: string
-          used: number
-        }
-        Insert: {
-          org_id: string
-          seat_type: string
-          updated_at?: string
-          used?: number
-        }
-        Update: {
-          org_id?: string
-          seat_type?: string
-          updated_at?: string
-          used?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_seats_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_seat_usage"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_seats_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       org_subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -908,124 +1042,6 @@ export type Database = {
           },
         ]
       }
-      partner_commissions: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string | null
-          id: string
-          paid_at: string | null
-          partner_id: string
-          show_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          paid_at?: string | null
-          partner_id: string
-          show_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          paid_at?: string | null
-          partner_id?: string
-          show_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "partner_commissions_partner_id_fkey"
-            columns: ["partner_id"]
-            isOneToOne: false
-            referencedRelation: "partners"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_commissions_show_id_fkey"
-            columns: ["show_id"]
-            isOneToOne: false
-            referencedRelation: "shows"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_commissions_show_id_fkey"
-            columns: ["show_id"]
-            isOneToOne: false
-            referencedRelation: "shows_list_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      partners: {
-        Row: {
-          commission_rate: number | null
-          company: string | null
-          created_at: string
-          email: string | null
-          id: string
-          name: string
-          notes: string | null
-          org_id: string
-          phone: string | null
-          role: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          commission_rate?: number | null
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name: string
-          notes?: string | null
-          org_id: string
-          phone?: string | null
-          role?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          commission_rate?: number | null
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string
-          notes?: string | null
-          org_id?: string
-          phone?: string | null
-          role?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "partners_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_seat_usage"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "partners_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       people: {
         Row: {
           created_at: string
@@ -1076,69 +1092,6 @@ export type Database = {
           },
           {
             foreignKeyName: "people_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      promoters: {
-        Row: {
-          city: string | null
-          company: string | null
-          country: string | null
-          created_at: string
-          created_by: string | null
-          email: string | null
-          id: string
-          name: string
-          notes: string | null
-          org_id: string
-          phone: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          city?: string | null
-          company?: string | null
-          country?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          id?: string
-          name: string
-          notes?: string | null
-          org_id: string
-          phone?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          city?: string | null
-          company?: string | null
-          country?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          id?: string
-          name?: string
-          notes?: string | null
-          org_id?: string
-          phone?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promoters_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_seat_usage"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "promoters_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1331,44 +1284,32 @@ export type Database = {
       }
       show_collaborators: {
         Row: {
-          accepted_at: string | null
           created_at: string
           email: string
           id: string
-          invite_token: string | null
-          invited_by: string | null
           org_id: string
           role: Database["public"]["Enums"]["show_collab_role"]
           show_id: string
-          status: Database["public"]["Enums"]["show_invite_status"]
           updated_at: string
           user_id: string | null
         }
         Insert: {
-          accepted_at?: string | null
           created_at?: string
           email: string
           id?: string
-          invite_token?: string | null
-          invited_by?: string | null
           org_id: string
           role?: Database["public"]["Enums"]["show_collab_role"]
           show_id: string
-          status?: Database["public"]["Enums"]["show_invite_status"]
           updated_at?: string
           user_id?: string | null
         }
         Update: {
-          accepted_at?: string | null
           created_at?: string
           email?: string
           id?: string
-          invite_token?: string | null
-          invited_by?: string | null
           org_id?: string
           role?: Database["public"]["Enums"]["show_collab_role"]
           show_id?: string
-          status?: Database["public"]["Enums"]["show_invite_status"]
           updated_at?: string
           user_id?: string | null
         }
@@ -1491,40 +1432,40 @@ export type Database = {
           },
         ]
       }
-      venue_promoters: {
+      venue_contacts: {
         Row: {
+          contact_id: string
           created_at: string
           created_by: string | null
           id: string
           is_primary: boolean | null
           notes: string | null
-          promoter_id: string
           venue_id: string
         }
         Insert: {
+          contact_id: string
           created_at?: string
           created_by?: string | null
           id?: string
           is_primary?: boolean | null
           notes?: string | null
-          promoter_id: string
           venue_id: string
         }
         Update: {
+          contact_id?: string
           created_at?: string
           created_by?: string | null
           id?: string
           is_primary?: boolean | null
           notes?: string | null
-          promoter_id?: string
           venue_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "venue_promoters_promoter_id_fkey"
-            columns: ["promoter_id"]
+            foreignKeyName: "venue_contacts_contact_id_fkey"
+            columns: ["contact_id"]
             isOneToOne: false
-            referencedRelation: "promoters"
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
@@ -1641,6 +1582,51 @@ export type Database = {
       }
     }
     Views: {
+      billing_actions_log: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          id: string | null
+          new_state: string | null
+          org_id: string | null
+          previous_state: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          id?: string | null
+          new_state?: never
+          org_id?: string | null
+          previous_state?: never
+          triggered_by?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          id?: string | null
+          new_state?: never
+          org_id?: string | null
+          previous_state?: never
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "activity_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_entitlements_cache: {
         Row: {
           base_entitlements: Json | null
@@ -1726,30 +1712,58 @@ export type Database = {
     }
     Functions: {
       accept_invitation: {
-        Args: { p_token: string; p_user_id: string }
+        Args: {
+          p_user_id: string
+          p_token: string
+        }
         Returns: Json
       }
       admin_set_feature_override: {
-        Args: { p_key: string; p_org_id: string; p_value: Json }
+        Args: {
+          p_key: string
+          p_value: Json
+          p_org_id: string
+        }
         Returns: undefined
       }
       admin_update_subscription: {
         Args: {
-          p_extend_days?: number
           p_org_id: string
+          p_extend_days?: number
           p_plan_id?: string
           p_status?: string
         }
         Returns: undefined
       }
-      app_accept_show_invite:
-        | { Args: { invite_token: string }; Returns: Json }
-        | { Args: { p_email: string; p_show_id: string }; Returns: boolean }
+      app_accept_show_invite: {
+        Args: {
+          p_show_id: string
+          p_email: string
+        }
+        Returns: boolean
+      }
+      app_add_show_collaborator: {
+        Args: {
+          p_show_id: string
+          p_user_id: string
+          p_role?: Database["public"]["Enums"]["show_collab_role"]
+        }
+        Returns: string
+      }
       app_assign_plan_debug: {
-        Args: { p_org_id: string; p_plan_id: string; p_trial_days?: number }
+        Args: {
+          p_plan_id: string
+          p_trial_days?: number
+          p_org_id: string
+        }
         Returns: undefined
       }
-      app_can_access_show: { Args: { p_show_id: string }; Returns: boolean }
+      app_can_access_show: {
+        Args: {
+          p_show_id: string
+        }
+        Returns: boolean
+      }
       app_create_advancing_session: {
         Args: {
           p_expires_at?: string
@@ -1759,74 +1773,80 @@ export type Database = {
         Returns: string
       }
       app_create_organization_with_owner: {
-        Args: { org_name: string; org_slug: string }
-        Returns: string
-      }
-      app_get_show_role: { Args: { p_show_id: string }; Returns: string }
-      app_invite_collaborator: {
         Args: {
-          p_email: string
-          p_role?: Database["public"]["Enums"]["show_collab_role"]
-          p_show_id: string
+          org_slug: string
+          org_name: string
         }
         Returns: string
       }
-      app_invite_collaborator_enhanced: {
+      app_get_show_role: {
         Args: {
-          p_email: string
-          p_role?: Database["public"]["Enums"]["show_collab_role"]
           p_show_id: string
         }
-        Returns: Json
+        Returns: string
       }
       app_log_activity: {
         Args: {
-          p_action: string
           p_details?: Json
-          p_org_id: string
-          p_resource_id?: string
           p_resource_type: string
+          p_action: string
+          p_resource_id?: string
+          p_org_id: string
         }
         Returns: undefined
       }
-      app_send_show_invite: {
-        Args: { p_email: string; p_role?: string; p_show_id: string }
-        Returns: string
-      }
       app_upload_file: {
         Args: {
-          bucket_name: string
           file_path: string
-          p_content_type?: string
-          p_document_id?: string
-          p_field_id?: string
-          p_org_id: string
-          p_original_name?: string
+          bucket_name: string
+          p_size_bytes?: number
+          p_show_id?: string
           p_party_type?: string
           p_session_id?: string
-          p_show_id?: string
-          p_size_bytes?: number
+          p_document_id?: string
+          p_field_id?: string
+          p_original_name?: string
+          p_content_type?: string
+          p_org_id: string
         }
         Returns: Json
       }
       archive_old_activity_logs: {
-        Args: { days_to_keep?: number }
+        Args: {
+          days_to_keep?: number
+        }
         Returns: number
       }
       auto_downgrade_expired_orgs: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
-          action: string
           org_id: string
           previous_plan: string
+          action: string
         }[]
       }
-      bulk_update_show_dates: { Args: { p_updates: Json }; Returns: Json }
-      check_available_seats: { Args: { p_org_id: string }; Returns: Json }
+      bulk_update_show_dates: {
+        Args: {
+          p_updates: Json
+        }
+        Returns: Json
+      }
+      can_person_get_user_access: {
+        Args: {
+          p_person_id: string
+        }
+        Returns: Json
+      }
+      check_available_seats: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
       check_org_limits: {
         Args: {
-          p_additional_count?: number
           p_check_type: string
+          p_additional_count?: number
           p_org_id: string
         }
         Returns: boolean
@@ -1834,54 +1854,132 @@ export type Database = {
       check_org_limits_detailed: {
         Args: {
           p_additional_count?: number
-          p_check_type: string
           p_org_id: string
+          p_check_type: string
         }
         Returns: Json
       }
       cleanup_unverified_files: {
-        Args: { hours_old?: number }
+        Args: {
+          hours_old?: number
+        }
         Returns: {
+          storage_path: string
           cleaned_file_id: string
           reason: string
-          storage_path: string
         }[]
       }
       create_advancing_session: {
-        Args: { p_org_id: string; p_show_id: string; p_title?: string }
+        Args: {
+          p_title?: string
+          p_show_id: string
+          p_org_id: string
+        }
         Returns: Json
       }
       get_advancing_session_details: {
-        Args: { p_session_id: string }
+        Args: {
+          p_session_id: string
+        }
         Returns: Json
       }
-      get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
-      get_show_stats: { Args: { p_org_id: string }; Returns: Json }
+      get_invitation_by_token: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
+      get_show_stats: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
       has_show_access: {
-        Args: { min_role: string; p_show: string }
+        Args: {
+          p_show: string
+          min_role: string
+        }
         Returns: boolean
       }
-      is_org_editor: { Args: { p_org: string }; Returns: boolean }
-      is_org_editor_and_active: { Args: { p_org: string }; Returns: boolean }
-      is_org_member: { Args: { p_org: string }; Returns: boolean }
-      is_org_member_and_active: { Args: { p_org: string }; Returns: boolean }
-      is_supabase_admin: { Args: never; Returns: boolean }
-      org_billing_dashboard: { Args: { p_org_id: string }; Returns: Json }
-      org_entitlements: { Args: { p_org: string }; Returns: Json }
-      org_is_active: { Args: { p_org: string }; Returns: boolean }
+      is_org_editor: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_editor_and_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_member_and_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_supabase_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_billing_action: {
+        Args: {
+          p_org_id: string
+          p_action: string
+          p_details?: Json
+          p_user_id?: string
+        }
+        Returns: string
+      }
+      org_billing_dashboard: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      org_entitlements: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
+      }
+      org_is_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
       org_is_active_with_grace: {
-        Args: { p_grace_days?: number; p_org: string }
+        Args: {
+          p_org: string
+          p_grace_days?: number
+        }
         Returns: boolean
       }
-      org_subscription_status: { Args: { p_org: string }; Returns: Json }
+      org_subscription_status: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
+      }
       verify_storage_metadata: {
-        Args: { hours_back?: number }
+        Args: {
+          hours_back?: number
+        }
         Returns: {
-          expected_metadata: Json
-          file_id: string
           requires_edge_function: boolean
-          storage_path: string
           verification_status: string
+          expected_metadata: Json
+          storage_path: string
+          file_id: string
         }[]
       }
     }
@@ -1965,6 +2063,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      iceberg_namespaces: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_namespaces_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iceberg_tables: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          namespace_id: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          id?: string
+          location: string
+          name: string
+          namespace_id: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          namespace_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_tables_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "iceberg_tables_namespace_id_fkey"
+            columns: ["namespace_id"]
+            isOneToOne: false
+            referencedRelation: "iceberg_namespaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       migrations: {
         Row: {
@@ -2179,149 +2354,199 @@ export type Database = {
     }
     Functions: {
       add_prefixes: {
-        Args: { _bucket_id: string; _name: string }
+        Args: {
+          _name: string
+          _bucket_id: string
+        }
         Returns: undefined
       }
       can_insert_object: {
-        Args: { bucketid: string; metadata: Json; name: string; owner: string }
+        Args: {
+          bucketid: string
+          name: string
+          metadata: Json
+          owner: string
+        }
         Returns: undefined
       }
       delete_leaf_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
+        Args: {
+          names: string[]
+          bucket_ids: string[]
+        }
         Returns: undefined
       }
       delete_prefix: {
-        Args: { _bucket_id: string; _name: string }
+        Args: {
+          _name: string
+          _bucket_id: string
+        }
         Returns: boolean
       }
-      extension: { Args: { name: string }; Returns: string }
-      filename: { Args: { name: string }; Returns: string }
-      foldername: { Args: { name: string }; Returns: string[] }
-      get_level: { Args: { name: string }; Returns: number }
-      get_prefix: { Args: { name: string }; Returns: string }
-      get_prefixes: { Args: { name: string }; Returns: string[] }
+      extension: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      filename: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      foldername: {
+        Args: {
+          name: string
+        }
+        Returns: string[]
+      }
+      get_level: {
+        Args: {
+          name: string
+        }
+        Returns: number
+      }
+      get_prefix: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      get_prefixes: {
+        Args: {
+          name: string
+        }
+        Returns: string[]
+      }
       get_size_by_bucket: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
-          bucket_id: string
           size: number
+          bucket_id: string
         }[]
       }
       list_multipart_uploads_with_delimiter: {
         Args: {
-          bucket_id: string
-          delimiter_param: string
           max_keys?: number
+          delimiter_param: string
+          prefix_param: string
+          bucket_id: string
           next_key_token?: string
           next_upload_token?: string
-          prefix_param: string
         }
         Returns: {
-          created_at: string
-          id: string
           key: string
+          id: string
+          created_at: string
         }[]
       }
       list_objects_with_delimiter: {
         Args: {
           bucket_id: string
+          prefix_param: string
           delimiter_param: string
           max_keys?: number
-          next_token?: string
-          prefix_param: string
           start_after?: string
+          next_token?: string
         }
         Returns: {
-          id: string
           metadata: Json
-          name: string
           updated_at: string
+          name: string
+          id: string
         }[]
       }
       lock_top_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
+        Args: {
+          bucket_ids: string[]
+          names: string[]
+        }
         Returns: undefined
       }
-      operation: { Args: never; Returns: string }
+      operation: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       search: {
         Args: {
-          bucketname: string
-          levels?: number
           limits?: number
-          offsets?: number
           prefix: string
-          search?: string
-          sortcolumn?: string
           sortorder?: string
+          sortcolumn?: string
+          search?: string
+          offsets?: number
+          levels?: number
+          bucketname: string
         }
         Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
           name: string
+          id: string
           updated_at: string
+          metadata: Json
+          last_accessed_at: string
+          created_at: string
         }[]
       }
       search_legacy_v1: {
         Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
           prefix: string
+          bucketname: string
+          limits?: number
+          levels?: number
+          offsets?: number
           search?: string
           sortcolumn?: string
           sortorder?: string
         }
         Returns: {
-          created_at: string
+          name: string
           id: string
+          updated_at: string
+          created_at: string
           last_accessed_at: string
           metadata: Json
-          name: string
-          updated_at: string
         }[]
       }
       search_v1_optimised: {
         Args: {
-          bucketname: string
+          search?: string
+          offsets?: number
           levels?: number
           limits?: number
-          offsets?: number
+          bucketname: string
           prefix: string
-          search?: string
           sortcolumn?: string
           sortorder?: string
         }
         Returns: {
-          created_at: string
           id: string
+          updated_at: string
+          created_at: string
           last_accessed_at: string
           metadata: Json
           name: string
-          updated_at: string
         }[]
       }
       search_v2: {
         Args: {
-          bucket_name: string
-          levels?: number
-          limits?: number
-          prefix: string
-          sort_column?: string
           sort_column_after?: string
-          sort_order?: string
+          prefix: string
+          bucket_name: string
+          limits?: number
+          levels?: number
           start_after?: string
+          sort_order?: string
+          sort_column?: string
         }
         Returns: {
-          created_at: string
-          id: string
           key: string
+          name: string
+          id: string
+          updated_at: string
+          created_at: string
           last_accessed_at: string
           metadata: Json
-          name: string
-          updated_at: string
         }[]
       }
     }
@@ -2334,33 +2559,27 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -2368,24 +2587,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -2393,24 +2608,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -2418,57 +2629,30 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {
-      field_status: ["pending", "confirmed"],
-      member_type: ["Artist", "Crew", "Agent", "Manager"],
-      org_role: ["owner", "admin", "editor", "viewer"],
-      party: ["from_us", "from_you"],
-      show_collab_role: ["promoter_editor", "promoter_viewer"],
-      show_invite_status: ["invited", "accepted", "revoked"],
-      show_status: ["draft", "confirmed", "cancelled"],
-    },
-  },
-  storage: {
-    Enums: {
-      buckettype: ["STANDARD", "ANALYTICS"],
-    },
-  },
-} as const

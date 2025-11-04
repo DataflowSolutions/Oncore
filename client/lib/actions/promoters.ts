@@ -25,6 +25,7 @@ export interface Promoter {
   country: string | null
   notes: string | null
   status: 'active' | 'inactive'
+  type: 'promoter' | 'agent' | 'manager' | 'vendor' | 'other'
   created_at: string
   updated_at: string
   created_by: string | null
@@ -42,7 +43,7 @@ export interface PromoterWithVenues extends Promoter {
 export interface VenuePromoterLink {
   id: string
   venue_id: string
-  promoter_id: string
+  contact_id: string // Updated from promoter_id to match new schema
   is_primary: boolean
   notes: string | null
   created_at: string
@@ -62,6 +63,7 @@ const createPromoterSchema = z.object({
   country: z.string().optional(),
   notes: z.string().optional(),
   status: z.enum(['active', 'inactive']).default('active'),
+  type: z.enum(['promoter', 'agent', 'manager', 'vendor', 'other']).default('promoter'),
 })
 
 const updatePromoterSchema = z.object({
@@ -97,10 +99,10 @@ export async function getPromotersByOrg(
 
   try {
     const { data: promoters, error } = await supabase
-      .from('promoters')
+      .from('contacts')
       .select(`
         *,
-        venue_promoters (
+        venue_contacts (
           venue_id,
           is_primary,
           venues (
@@ -111,6 +113,7 @@ export async function getPromotersByOrg(
         )
       `)
       .eq('org_id', orgId)
+      .eq('type', 'promoter')
       .eq('status', 'active')
       .order('name')
 
@@ -125,13 +128,13 @@ export async function getPromotersByOrg(
     // Transform the data to include venues array
     const transformedPromoters = (promoters || []).map((promoter) => ({
       ...promoter,
-      venues: promoter.venue_promoters?.map((vp) => ({
+      venues: promoter.venue_contacts?.map((vp) => ({
         id: vp.venues.id,
         name: vp.venues.name,
         city: vp.venues.city,
         is_primary: vp.is_primary,
       })) || [],
-      venue_promoters: undefined, // Remove the nested structure
+      venue_contacts: undefined, // Remove the nested structure
     })) as PromoterWithVenues[]
 
     return {
@@ -157,13 +160,14 @@ export async function getPromotersByVenue(
 
   try {
     const { data, error } = await supabase
-      .from('venue_promoters')
+      .from('venue_contacts')
       .select(`
         is_primary,
         notes,
-        promoters (*)
+        contacts!inner (*)
       `)
       .eq('venue_id', venueId)
+      .eq('contacts.type', 'promoter')
       .order('is_primary', { ascending: false })
 
     if (error) {
@@ -175,7 +179,7 @@ export async function getPromotersByVenue(
     }
 
     const promoters = (data || []).map((item) => ({
-      ...item.promoters,
+      ...item.contacts,
       is_primary: item.is_primary,
     })) as (Promoter & { is_primary?: boolean })[]
 
@@ -199,10 +203,10 @@ export async function getPromoterById(promoterId: string): Promise<PromoterWithV
   const supabase = await createClient()
 
   const { data: promoter, error } = await supabase
-    .from('promoters')
+    .from('contacts')
     .select(`
       *,
-      venue_promoters (
+      venue_contacts (
         venue_id,
         is_primary,
         venues (
@@ -214,6 +218,7 @@ export async function getPromoterById(promoterId: string): Promise<PromoterWithV
       )
     `)
     .eq('id', promoterId)
+    .eq('type', 'promoter')
     .single()
 
   if (error) {
@@ -223,7 +228,7 @@ export async function getPromoterById(promoterId: string): Promise<PromoterWithV
 
   return {
     ...promoter,
-    venues: promoter.venue_promoters?.map((vp) => ({
+    venues: promoter.venue_contacts?.map((vp) => ({
       id: vp.venues.id,
       name: vp.venues.name,
       city: vp.venues.city,
@@ -273,10 +278,11 @@ export async function createPromoter(data: z.infer<typeof createPromoterSchema>)
 
   try {
     const { data: promoter, error } = await supabase
-      .from('promoters')
+      .from('contacts')
       .insert({
         org_id: orgId,
         ...promoterData,
+        type: 'promoter', // Ensure type is set correctly
         created_by: session.user.id,
       })
       .select()
@@ -349,16 +355,16 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
     // If setting as primary, unset other primary contacts for this venue
     if (isPrimary) {
       await supabase
-        .from('venue_promoters')
+        .from('venue_contacts')
         .update({ is_primary: false })
         .eq('venue_id', venueId)
     }
 
     const { data: link, error } = await supabase
-      .from('venue_promoters')
+      .from('venue_contacts')
       .insert({
         venue_id: venueId,
-        promoter_id: promoterId,
+        contact_id: promoterId,
         is_primary: isPrimary,
         notes,
         created_by: session.user.id,
@@ -422,9 +428,10 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
 
   // Get promoter to verify org access
   const { data: promoter } = await supabase
-    .from('promoters')
+    .from('contacts')
     .select('org_id')
     .eq('id', promoterId)
+    .eq('type', 'promoter')
     .single()
 
   if (!promoter) {
@@ -444,7 +451,7 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
 
   try {
     const { data: updated, error } = await supabase
-      .from('promoters')
+      .from('contacts')
       .update(updates)
       .eq('id', promoterId)
       .select()
@@ -486,9 +493,10 @@ export async function deletePromoter(promoterId: string) {
 
   // Get promoter to verify org access
   const { data: promoter } = await supabase
-    .from('promoters')
+    .from('contacts')
     .select('org_id')
     .eq('id', promoterId)
+    .eq('type', 'promoter')
     .single()
 
   if (!promoter) {
@@ -509,7 +517,7 @@ export async function deletePromoter(promoterId: string) {
   try {
     // Soft delete by setting status to inactive
     const { error } = await supabase
-      .from('promoters')
+      .from('contacts')
       .update({ status: 'inactive' })
       .eq('id', promoterId)
 
@@ -564,10 +572,10 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
 
   try {
     const { error } = await supabase
-      .from('venue_promoters')
+      .from('venue_contacts')
       .delete()
       .eq('venue_id', venueId)
-      .eq('promoter_id', promoterId)
+      .eq('contact_id', promoterId)
 
     if (error) throw error
 
@@ -596,9 +604,10 @@ export async function searchPromoters(
 
   try {
     let dbQuery = supabase
-      .from('promoters')
+      .from('contacts')
       .select('*')
       .eq('org_id', orgId)
+      .eq('type', 'promoter')
       .eq('status', 'active')
       .order('name')
 
