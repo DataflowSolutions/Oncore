@@ -215,3 +215,156 @@ export const getCachedShowSchedule = cache(async (showId: string) => {
   
   return { data, error }
 })
+
+/**
+ * Cache all shows for an org with full details
+ * Used in home page and shows list page
+ */
+export const getCachedOrgShows = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  const { data, error } = await supabase
+    .from('shows')
+    .select(`
+      *,
+      venue:venues(*),
+      show_assignments(
+        people(*)
+      )
+    `)
+    .eq('org_id', orgId)
+    .order('date', { ascending: true })
+  
+  return { data, error }
+})
+
+/**
+ * Cache venues with show counts
+ * Used in venues page
+ */
+export const getCachedOrgVenuesWithCounts = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  const { data, error } = await supabase
+    .from('venues')
+    .select(`
+      *,
+      shows:shows(count)
+    `)
+    .eq('org_id', orgId)
+    .order('name')
+  
+  return { data, error }
+})
+
+/**
+ * Cache all people for an org with full details
+ * Used in people page
+ */
+export const getCachedOrgPeopleFull = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  const { data, error } = await supabase
+    .from('people')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('name')
+  
+  return { data, error }
+})
+
+/**
+ * Cache promoters for an org
+ * Used in venues page
+ */
+export const getCachedPromoters = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  const { data, error } = await supabase
+    .from('contacts')
+    .select(`
+      *,
+      venue_contacts (
+        venue_id,
+        is_primary,
+        venues (
+          id,
+          name,
+          city
+        )
+      )
+    `)
+    .eq('org_id', orgId)
+    .eq('type', 'promoter')
+    .eq('status', 'active')
+    .order('name')
+  
+  // Transform the data to include venues array (same as getPromotersByOrg)
+  const transformedData = (data || []).map((promoter) => ({
+    ...promoter,
+    status: promoter.status as 'active' | 'inactive',
+    type: promoter.type as 'promoter' | 'agent' | 'manager' | 'vendor' | 'other',
+    venues: promoter.venue_contacts?.map((vp: { venue_id: string; is_primary: boolean | null; venues: { id: string; name: string; city: string | null } }) => ({
+      id: vp.venues.id,
+      name: vp.venues.name,
+      city: vp.venues.city,
+      is_primary: vp.is_primary ?? false,
+    })) || [],
+    venue_contacts: undefined, // Remove the nested structure
+  }))
+  
+  return { data: transformedData, error }
+})
+
+/**
+ * Cache org invitations
+ * Used in people page
+ */
+export const getCachedOrgInvitations = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  const { data, error } = await supabase
+    .from('invitations')
+    .select(`
+      *,
+      people (
+        id,
+        name,
+        email,
+        role_title,
+        member_type
+      )
+    `)
+    .eq('org_id', orgId)
+    .is('accepted_at', null)
+    .order('created_at', { ascending: false })
+  
+  return { data: data || [], error }
+})
+
+/**
+ * Cache available seats check
+ * Used in people page
+ */
+export const getCachedAvailableSeats = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+  try {
+    const { data, error } = await supabase
+      .rpc('check_available_seats', { p_org_id: orgId })
+    
+    if (error) {
+      console.error('Error checking seats:', error)
+      return null
+    }
+    
+    // Cast to proper type - RPC returns Json but we know the structure
+    return data as unknown as {
+      can_invite: boolean;
+      seats_used: number;
+      seats_available: number;
+      plan_name: string | null;
+      max_seats: number;
+      used_seats: number;
+      plan_id: string;
+      org_id: string;
+    } | null
+  } catch (err) {
+    console.error('Error checking seats:', err)
+    return null
+  }
+})

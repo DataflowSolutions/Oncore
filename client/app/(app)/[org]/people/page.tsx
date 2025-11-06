@@ -1,9 +1,9 @@
-import { getSupabaseServer } from '@/lib/supabase/server'
-import { getPeopleByOrg } from '@/lib/actions/team'
-import { checkAvailableSeats, getOrgInvitations } from '@/lib/actions/invitations'
 import PeoplePageClient from '@/components/team/PeoplePageClient'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+
+// Force dynamic to show loading state
+export const dynamic = 'force-dynamic'
 
 interface TeamPageProps {
   params: Promise<{ org: string }>
@@ -14,38 +14,42 @@ export default async function TeamPage({ params, searchParams }: TeamPageProps) 
   const { org: orgSlug } = await params
   const { filter } = await searchParams
   
-  const supabase = await getSupabaseServer()
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // OPTIMIZED: Use cached helpers and parallelize all queries
+  const { getCachedOrg, getCachedOrgPeopleFull, getCachedAvailableSeats, getCachedOrgInvitations } = await import('@/lib/cache');
+  
+  // First get org, then parallelize all other queries with org.id
+  const orgResult = await getCachedOrg(orgSlug)
+  const { data: org } = orgResult
 
   if (!org) {
     return <div>Organization not found</div>
   }
 
-  // Get all people, seat info, and invitations in parallel
-  const [allPeople, seatInfo, invitations] = await Promise.all([
-    getPeopleByOrg(org.id),
-    checkAvailableSeats(org.id),
-    getOrgInvitations(org.id)
+  // Parallelize all data fetching using org.id
+  const [peopleResult, seatInfo, invitationsResult] = await Promise.all([
+    getCachedOrgPeopleFull(org.id),
+    getCachedAvailableSeats(org.id),
+    getCachedOrgInvitations(org.id)
   ])
 
+  const { data: allPeople } = peopleResult
+  const { data: invitations } = invitationsResult
+
   // Filter people based on URL parameter
+  const peopleList = allPeople || []
   const filteredPeople = filter && filter !== 'all'
-    ? allPeople.filter(person => 
+    ? peopleList.filter(person => 
         person.member_type?.toLowerCase() === filter.toLowerCase()
       )
-    : allPeople
+    : peopleList
 
   // Count by type for filters
   const counts = {
-    all: allPeople.length,
-    artist: allPeople.filter(p => p.member_type === 'Artist').length,
-    crew: allPeople.filter(p => p.member_type === 'Crew').length,
-    agent: allPeople.filter(p => p.member_type === 'Agent').length,
-    manager: allPeople.filter(p => p.member_type === 'Manager').length,
+    all: peopleList.length,
+    artist: peopleList.filter(p => p.member_type === 'Artist').length,
+    crew: peopleList.filter(p => p.member_type === 'Crew').length,
+    agent: peopleList.filter(p => p.member_type === 'Agent').length,
+    manager: peopleList.filter(p => p.member_type === 'Manager').length,
   }
 
   return (

@@ -1,7 +1,7 @@
-import { getSupabaseServer } from "@/lib/supabase/server";
-import { getVenuesWithShowCounts } from "@/lib/actions/venues";
-import { getPromotersByOrg } from "@/lib/actions/promoters";
 import VenuesClient from "./components/VenuesClient";
+
+// Force dynamic to show loading state
+export const dynamic = 'force-dynamic'
 
 interface VenuesPageProps {
   params: Promise<{ org: string }>;
@@ -15,30 +15,31 @@ export default async function VenuesPage({
   const { org: orgSlug } = await params;
   const { view = "venues" } = await searchParams;
 
-  const supabase = await getSupabaseServer();
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  // OPTIMIZED: Use cached helpers and parallelize all queries
+  const { getCachedOrg, getCachedOrgVenuesWithCounts, getCachedPromoters } = await import('@/lib/cache');
+  
+  // First get org, then parallelize all other queries with org.id
+  const orgResult = await getCachedOrg(orgSlug)
+  const { data: org } = orgResult
 
   if (!org) {
     return <div>Organization not found</div>;
   }
 
-  // Get venues with show counts and promoters in parallel
-  const [allVenues, promotersResult] = await Promise.all([
-    getVenuesWithShowCounts(org.id),
-    getPromotersByOrg(org.id),
-  ]);
+  // Parallelize all data fetching using org.id
+  const [venuesResult, promotersResult] = await Promise.all([
+    getCachedOrgVenuesWithCounts(org.id),
+    getCachedPromoters(org.id)
+  ])
 
-  const allPromoters = promotersResult.success ? promotersResult.data || [] : [];
+  const { data: allVenues } = venuesResult
+  const { data: allPromoters } = promotersResult
 
   return (
     <div className="mb-16 mt-4">
       <VenuesClient 
-        venues={allVenues} 
-        promoters={allPromoters}
+        venues={allVenues || []} 
+        promoters={allPromoters || []}
         orgId={org.id}
         orgSlug={orgSlug} 
         view={view} 

@@ -1,7 +1,6 @@
 import { getAdvancingSession, getAdvancingFields, loadAdvancingGridData } from '@/lib/actions/advancing'
 import { getAvailablePeople, getShowTeam } from '@/lib/actions/show-team'
-import { Section } from '@/components/advancing/Section'
-import { PartyToggle } from '@/components/advancing/PartyToggle'
+import { AdvancingPageClient } from '@/components/advancing/AdvancingPageClient'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { unstable_noStore as noStore } from 'next/cache'
 
@@ -46,7 +45,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     }
   }
 
-  // Get fields
+  // Get fields once (not filtered by party)
   const fields = await getAdvancingFields(sessionId)
 
   // Get organization ID for fetching people
@@ -57,127 +56,59 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     .eq('slug', orgSlug)
     .single()
 
-  // Get available people from the organization and current show team, filtered by party
-  const availablePeople = org ? await getAvailablePeople(org.id, party) : []
-  const showTeam = await getShowTeam(sessionWithShow.shows.id, party)
-
-  // Load existing grid data for team and flight information
-  const teamMemberIds = showTeam.map(member => member.id)
-  const teamData = await loadAdvancingGridData(
-    sessionId,
-    'team',
-    teamMemberIds
-  )
-  const arrivalFlightData = await loadAdvancingGridData(
-    sessionId,
-    'arrival_flight',
-    teamMemberIds
-  )
-  const departureFlightData = await loadAdvancingGridData(
-    sessionId,
-    'departure_flight',
-    teamMemberIds
-  )
-
-  // Filter by party type
-  const partyFields = fields.filter(f => f.party_type === party)
-
-  // Group fields by section
-  type FieldsArray = Array<{
-    id: string
-    section: string
-    field_name: string
-    field_type: string
-    value: unknown
-    status: 'pending' | 'confirmed'
-    party_type: 'from_us' | 'from_you'
-  }>
-  
-  const fieldsBySection = partyFields.reduce((acc, field) => {
-    const section = field.section || 'General'
-    if (!acc[section]) {
-      acc[section] = []
-    }
-    acc[section].push(field)
-    return acc
-  }, {} as Record<string, FieldsArray>)
-
-  // Add default sections for grid display if they don't exist
-  const defaultSections = ['Team & Travel']
-  defaultSections.forEach(section => {
-    if (!fieldsBySection[section]) {
-      fieldsBySection[section] = []
-    }
-  })
+  // Pre-fetch BOTH parties' data in parallel
+  const [artistDataResult, promoterDataResult] = await Promise.all([
+    // Artist team data
+    Promise.all([
+      org ? getAvailablePeople(org.id, 'from_us') : Promise.resolve([]),
+      getShowTeam(sessionWithShow.shows.id, 'from_us'),
+    ]).then(async ([availablePeople, showTeam]) => {
+      const teamMemberIds = showTeam.map(member => member.id)
+      const [teamData, arrivalFlightData, departureFlightData] = await Promise.all([
+        loadAdvancingGridData(sessionId, 'team', teamMemberIds),
+        loadAdvancingGridData(sessionId, 'arrival_flight', teamMemberIds),
+        loadAdvancingGridData(sessionId, 'departure_flight', teamMemberIds),
+      ])
+      return {
+        team: showTeam,
+        availablePeople,
+        fields: fields.filter(f => f.party_type === 'from_us'),
+        teamData,
+        arrivalFlightData,
+        departureFlightData,
+      }
+    }),
+    // Promoter team data
+    Promise.all([
+      org ? getAvailablePeople(org.id, 'from_you') : Promise.resolve([]),
+      getShowTeam(sessionWithShow.shows.id, 'from_you'),
+    ]).then(async ([availablePeople, showTeam]) => {
+      const teamMemberIds = showTeam.map(member => member.id)
+      const [teamData, arrivalFlightData, departureFlightData] = await Promise.all([
+        loadAdvancingGridData(sessionId, 'team', teamMemberIds),
+        loadAdvancingGridData(sessionId, 'arrival_flight', teamMemberIds),
+        loadAdvancingGridData(sessionId, 'departure_flight', teamMemberIds),
+      ])
+      return {
+        team: showTeam,
+        availablePeople,
+        fields: fields.filter(f => f.party_type === 'from_you'),
+        teamData,
+        arrivalFlightData,
+        departureFlightData,
+      }
+    }),
+  ])
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      {/* Header */}
-      <div className="border-b border-neutral-800 bg-neutral-900/50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-neutral-100">{sessionWithShow.shows.title}</h1>
-              <p className="text-sm text-neutral-400">
-                {sessionWithShow.shows.venues.name} • {new Date(sessionWithShow.shows.date).toLocaleDateString()}
-              </p>
-            </div>
-            <PartyToggle current={party} basePath={`/${orgSlug}/shows/${showId}/advancing/${sessionId}`} />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-6">
-        <div className="space-y-4">
-          {/* Documents Section */}
-          <div className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-900/30">
-            <div className="p-4 border-b border-neutral-800 bg-neutral-900/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-sm font-medium text-neutral-100">Documents</h3>
-                  <span className="text-xs text-neutral-500">
-                    0 comments
-                  </span>
-                  <span className="text-xs bg-neutral-700 text-neutral-300 px-2 py-0.5 rounded">
-                    Pending
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="text-center py-12 text-neutral-500">
-                <p className="text-sm">No documents uploaded</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Other Sections */}
-          {Object.keys(fieldsBySection).length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-neutral-400">No fields configured for this session yet.</p>
-            </div>
-          ) : (
-            <>
-              {Object.entries(fieldsBySection).map(([sectionName, sectionFields]) => (
-                <Section
-                  key={`${sectionName}-${party}`}
-                  title={sectionName}
-                  fields={sectionFields as FieldsArray}
-                  orgSlug={orgSlug}
-                  sessionId={sessionId}
-                  showId={sessionWithShow.shows.id}
-                  availablePeople={availablePeople}
-                  currentTeam={showTeam}
-                  teamData={teamData}
-                  arrivalFlightData={arrivalFlightData}
-                  departureFlightData={departureFlightData}
-                />
-              ))}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    <AdvancingPageClient
+      initialParty={party}
+      show={sessionWithShow.shows}
+      orgSlug={orgSlug}
+      sessionId={sessionId}
+      artistData={artistDataResult}
+      promoterData={promoterDataResult}
+      basePath={`/${orgSlug}/shows/${showId}/advancing/${sessionId}`}
+    />
   )
 }

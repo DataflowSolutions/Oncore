@@ -3,12 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, MapPin, Music } from "lucide-react";
 import Link from "next/link";
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { VenueLink } from "./shows/components/VenueLink";
 
 // Optimize: Cache for 60 seconds, this is a dashboard page
 export const revalidate = 60;
+// Force dynamic to show loading state
+export const dynamic = 'force-dynamic'
 
 interface OrgHomePageProps {
   params: Promise<{ org: string }>;
@@ -27,9 +28,11 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
 
   console.log('🏢 [OrgPage] Loading org with slug:', orgSlug);
 
-  // OPTIMIZED: Use cached org lookup
-  const { getCachedOrg } = await import('@/lib/cache');
-  const { data: org, error } = await getCachedOrg(orgSlug);
+  // OPTIMIZED: Use cached helpers and parallelize all queries
+  const { getCachedOrg, getCachedOrgShows } = await import('@/lib/cache');
+  
+  // First get org, then fetch shows with org.id
+  const { data: org, error } = await getCachedOrg(orgSlug)
 
   console.log('🏢 [OrgPage] Org lookup result:', { 
     found: !!org, 
@@ -41,39 +44,18 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
     console.log('❌ [OrgPage] Org not found, returning 404');
     notFound();
   }
+
+  // Fetch shows using org.id
+  const { data: allShows } = await getCachedOrgShows(org.id)
   
   console.log('✅ [OrgPage] Org loaded successfully:', org.name);
 
-  // OPTIMIZED: Get upcoming shows with only needed fields
-  const supabase = await getSupabaseServer();
-  const { data: upcomingShows } = await supabase
-    .from("shows")
-    .select(
-      `
-      id, 
-      title, 
-      date, 
-      set_time,
-      venues!inner(id, name, city),
-      show_assignments(
-        people!inner(
-          id,
-          name,
-          member_type
-        )
-      )
-    `
-    )
-    .eq("org_id", org.id)
-    .gte("date", new Date().toISOString().split("T")[0])
-    .order("date", { ascending: true })
-    .limit(5);
+  // Filter to upcoming shows only (client-side filtering of cached data)
+  const todayStr = new Date().toISOString().split("T")[0]
+  const upcomingShows = allShows?.filter(show => show.date >= todayStr).slice(0, 5) || [];
 
-  const today = new Date().toISOString().split("T")[0];
-  const todaysShows =
-    upcomingShows?.filter((show) => show.date === today) || [];
-  const nextWeekShows =
-    upcomingShows?.filter((show) => show.date !== today) || [];
+  const todaysShows = upcomingShows?.filter((show) => show.date === todayStr) || [];
+  const nextWeekShows = upcomingShows?.filter((show) => show.date !== todayStr) || [];
 
   return (
     <div className="space-y-8">
@@ -112,16 +94,16 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                     <div>
                       <h3 className="font-bold text-lg">{show.title}</h3>
                       <p className="text-muted-foreground">
-                        {show.venues?.id ? (
+                        {show.venue?.id ? (
                           <VenueLink
-                            href={`/${orgSlug}/venues/${show.venues.id}`}
-                            venueName={show.venues.name}
+                            href={`/${orgSlug}/venues/${show.venue.id}`}
+                            venueName={show.venue.name}
                             className="hover:text-primary hover:underline"
                           />
                         ) : (
-                          show.venues?.name || "No venue"
+                          show.venue?.name || "No venue"
                         )}
-                        {show.venues?.city && ` • ${show.venues.city}`}
+                        {show.venue?.city && ` • ${show.venue.city}`}
                       </p>
                     </div>
                     <Badge className="text-base px-3 py-1">
@@ -140,7 +122,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Upcoming Shows</h2>
           <div className="flex gap-3">
-            <Link href={`/${orgSlug}/shows`}>
+            <Link href={`/${orgSlug}/shows`} prefetch={true}>
               <Button size="lg" className="cursor-pointer">
                 <Calendar className="w-5 h-5" />
                 View All Shows
@@ -219,20 +201,20 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
                         {/* Venue */}
                         <div className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                          {show.venues ? (
+                          {show.venue ? (
                             <div className="flex flex-wrap items-center gap-1">
                               <VenueLink
-                                href={`/${orgSlug}/venues/${show.venues.id}`}
-                                venueName={show.venues.name}
+                                href={`/${orgSlug}/venues/${show.venue.id}`}
+                                venueName={show.venue.name}
                                 className="text-foreground/70 font-medium hover:text-primary hover:underline"
                               />
-                              {show.venues.city && (
+                              {show.venue.city && (
                                 <>
                                   <span className="text-muted-foreground">
                                     •
                                   </span>
                                   <span className="text-muted-foreground">
-                                    {show.venues.city}
+                                    {show.venue.city}
                                   </span>
                                 </>
                               )}
@@ -265,7 +247,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
       <div>
         <h2 className="text-2xl font-bold mb-4">Quick Access</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href={`/${orgSlug}/people`}>
+          <Link href={`/${orgSlug}/people`} prefetch={true}>
             <Card className="hover:shadow-xl hover:scale-105 transition-all cursor-pointer h-full bg-gradient-to-br from-blue-500/10 to-transparent border-2 hover:border-blue-500/50">
               <CardContent className="py-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-3 text-blue-500" />
@@ -277,7 +259,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
             </Card>
           </Link>
 
-          <Link href={`/${orgSlug}/venues`}>
+          <Link href={`/${orgSlug}/venues`} prefetch={true}>
             <Card className="hover:shadow-xl hover:scale-105 transition-all cursor-pointer h-full bg-gradient-to-br from-green-500/10 to-transparent border-2 hover:border-green-500/50">
               <CardContent className="py-8 text-center">
                 <MapPin className="h-12 w-12 mx-auto mb-3 text-green-500" />
@@ -289,7 +271,7 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
             </Card>
           </Link>
 
-          <Link href={`/${orgSlug}/profile`}>
+          <Link href={`/${orgSlug}/profile`} prefetch={true}>
             <Card className="hover:shadow-xl hover:scale-105 transition-all cursor-pointer h-full bg-gradient-to-br from-purple-500/10 to-transparent border-2 hover:border-purple-500/50">
               <CardContent className="py-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-3 text-purple-500" />

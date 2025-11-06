@@ -3,9 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Music, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { getScheduleItemsForShow } from "@/lib/actions/schedule";
 import { CalendarDayView } from "@/components/shows/CalendarDayView";
-import { redirect } from "next/navigation";
+
+// Force dynamic rendering to show loading state
+export const dynamic = 'force-dynamic'
 
 interface ShowDayPageProps {
   params: Promise<{ org: string; showId: string }>;
@@ -40,76 +41,55 @@ export default async function ShowDayPage({
     currentDate.setHours(0, 0, 0, 0);
   }
 
+  // OPTIMIZED: Use cached helpers and parallelize all data fetching
+  const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import('@/lib/cache')
   const supabase = await getSupabaseServer();
 
-  // Get organization and show details
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  // Parallelize ALL data fetching at once
+  const [
+    orgResult, 
+    showResult, 
+    scheduleResult,
+    assignedPeopleResult,
+    advancingSessionResult
+  ] = await Promise.all([
+    getCachedOrg(orgSlug),
+    getCachedShow(showId),
+    getCachedShowSchedule(showId),
+    supabase
+      .from("show_assignments")
+      .select(
+        `
+        person_id,
+        duty,
+        people (
+          id,
+          name,
+          member_type
+        )
+      `
+      )
+      .eq("show_id", showId),
+    supabase
+      .from("advancing_sessions")
+      .select("id")
+      .eq("show_id", showId)
+      .single()
+  ])
+
+  const { data: org } = orgResult
+  const { data: show } = showResult
+  const { data: scheduleItems } = scheduleResult
+  const { data: assignedPeople } = assignedPeopleResult
+  const { data: advancingSession } = advancingSessionResult
 
   if (!org) {
     return <div>Organization not found</div>;
   }
 
-  const { data: show } = await supabase
-    .from("shows")
-    .select(
-      `
-      id, 
-      title, 
-      date, 
-      doors_at, 
-      set_time, 
-      status, 
-      notes,
-      venues (
-        id,
-        name,
-        address,
-        city,
-        country,
-        capacity
-      ),
-      artists (
-        name
-      )
-    `
-    )
-    .eq("id", showId)
-    .eq("org_id", org.id)
-    .single();
-
   if (!show) {
     return <div>Show not found</div>;
   }
-
-  // Get schedule items for this show with person assignments
-  const scheduleItems = await getScheduleItemsForShow(showId);
-
-  // Get people assigned to this show for person-specific scheduling
-  const { data: assignedPeople } = await supabase
-    .from("show_assignments")
-    .select(
-      `
-      person_id,
-      duty,
-      people (
-        id,
-        name,
-        member_type
-      )
-    `
-    )
-    .eq("show_id", showId);
-
-  // Get advancing session for this show to fetch flight data
-  const { data: advancingSession } = await supabase
-    .from("advancing_sessions")
-    .select("id")
-    .eq("show_id", showId)
-    .single();
 
   // Fetch advancing data (flight times) for the calendar
   let advancingData = undefined;
@@ -228,12 +208,14 @@ export default async function ShowDayPage({
   }
 
   // Add dates from schedule items
-  scheduleItems.forEach((item) => {
-    const itemDateStr = getLocalDateStr(new Date(item.starts_at));
-    if (!datesWithEvents.includes(itemDateStr)) {
-      datesWithEvents.push(itemDateStr);
-    }
-  });
+  if (scheduleItems) {
+    scheduleItems.forEach((item) => {
+      const itemDateStr = getLocalDateStr(new Date(item.starts_at));
+      if (!datesWithEvents.includes(itemDateStr)) {
+        datesWithEvents.push(itemDateStr);
+      }
+    });
+  }
 
   // Add dates from advancing data
   if (advancingData && selectedPeopleIds.length > 0) {
@@ -262,7 +244,7 @@ export default async function ShowDayPage({
     });
   }
 
-  // Auto-navigate to closest date with events if no manual date selection
+  // Auto-select closest date with events if no manual date selection
   if (!hasManualDateSelection && datesWithEvents.length > 0) {
     // Find the closest date to today
     const todayStr = getLocalDateStr(new Date());
@@ -281,13 +263,10 @@ export default async function ShowDayPage({
       }
     }
 
-    // Redirect to the closest date
-    const searchParamsObj = new URLSearchParams();
-    searchParamsObj.set("date", closestDate);
-    if (selectedPeopleParam) {
-      searchParamsObj.set("people", selectedPeopleParam);
-    }
-    redirect(`/${orgSlug}/shows/${showId}/day?${searchParamsObj.toString()}`);
+    // Update currentDate to the closest date (no redirect, just render with it)
+    const [year, month, day] = closestDate.split("-").map(Number);
+    currentDate = new Date(year, month - 1, day);
+    currentDate.setHours(0, 0, 0, 0);
   }
 
   const showDate = new Date(show.date);
@@ -299,7 +278,7 @@ export default async function ShowDayPage({
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Button asChild variant="outline" size="sm" className="w-fit">
-          <Link href={`/${orgSlug}/shows/${showId}`} className="gap-2">
+          <Link href={`/${orgSlug}/shows/${showId}`} prefetch={true} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Show
           </Link>
@@ -351,7 +330,7 @@ export default async function ShowDayPage({
         assignedPeople={assignedPeople || []}
         selectedPeopleIds={selectedPeopleIds}
         advancingData={advancingData}
-        scheduleItems={scheduleItems}
+        scheduleItems={scheduleItems || []}
         orgSlug={orgSlug}
         showId={showId}
       />

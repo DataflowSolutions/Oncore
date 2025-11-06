@@ -1,20 +1,17 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useAdvancingStore } from '@/lib/stores/advancing-store'
 
 interface PartyToggleProps {
   current: 'from_us' | 'from_you'
-  basePath: string
+  basePath?: string
 }
 
-export function PartyToggle({ current, basePath }: PartyToggleProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export function PartyToggle({ current }: PartyToggleProps) {
+  const setParty = useAdvancingStore((state) => state.setParty)
 
   const handleToggle = (party: 'from_us' | 'from_you') => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('party', party)
-    router.replace(`${basePath}?${params.toString()}`)
+    setParty(party)
   }
 
   return (

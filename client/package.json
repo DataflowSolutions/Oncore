@@ -20,6 +20,8 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.48.1",
+    "@tanstack/react-query": "^5.90.7",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -34,7 +36,8 @@
     "resend": "^6.2.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
-    "zod": "^4.1.9"
+    "zod": "^4.1.9",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

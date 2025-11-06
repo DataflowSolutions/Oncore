@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 // import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
-import DynamicSidebar from "@/components/navigation/DynamicSidebar";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { TopBar } from "@/components/navigation/TopBar";
 
 // Optimize: Cache layout data briefly to prevent re-fetching on every navigation
@@ -28,25 +28,19 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
     redirect("/sign-in");
   }
 
-  // First get the org
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", resolvedParams.org)
-    .single();
+  // OPTIMIZED: Use cached helpers and parallelize queries
+  const { getCachedOrg, getCachedOrgMembership } = await import('@/lib/cache')
+  
+  // First get org, then get membership with org.id
+  const { data: org } = await getCachedOrg(resolvedParams.org)
 
-  if (orgError || !org) {
-    console.log('❌ [Layout] Org not found:', resolvedParams.org, orgError?.message);
+  if (!org) {
+    console.log('❌ [Layout] Org not found:', resolvedParams.org);
     notFound();
   }
 
-  // Then get the membership for THIS specific org
-  const { data: membership } = await supabase
-    .from("org_members")
-    .select("role, org_id")
-    .eq("user_id", user.id)
-    .eq("org_id", org.id)
-    .single();
+  // Get membership using org.id
+  const { data: membership } = await getCachedOrgMembership(org.id, user.id)
 
   // Verify membership exists
   if (!membership) {
@@ -73,10 +67,9 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
       {/* Show subscription banner for trials or issues */}
       {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
-      {/* Dynamic Sidebar with Context-Aware Navigation */}
-      <DynamicSidebar
+      {/* Simple Sidebar with prefetching */}
+      <Sidebar
         orgSlug={resolvedParams.org}
-        orgId={org.id}
         userRole={membership.role}
       />
 

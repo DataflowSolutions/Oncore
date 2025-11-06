@@ -17,6 +17,8 @@ import {
 
 // Optimize: Cache show details for 30 seconds
 export const revalidate = 30;
+// Force dynamic to show loading state properly
+export const dynamic = 'force-dynamic'
 
 interface ShowDetailPageProps {
   params: Promise<{ org: string, showId: string }>
@@ -60,7 +62,7 @@ export default async function ShowDetailPage({
     <div className="space-y-8">
       {/* Header with Back Button */}
       <div className="space-y-4">
-        <Link href={`/${orgSlug}/shows`}>
+        <Link href={`/${orgSlug}/shows`} prefetch={true}>
           <Button variant="outline" size="sm" className="gap-2 hover:bg-accent">
             <ArrowLeft className="w-4 h-4" />
             Back to Shows
@@ -93,7 +95,7 @@ export default async function ShowDetailPage({
           
           {/* Primary Actions */}
           <div className="flex gap-2 flex-wrap">
-            <Link href={`/${orgSlug}/shows/${showId}/day`}>
+            <Link href={`/${orgSlug}/shows/${showId}/day`} prefetch={true}>
               <Button size="lg" className="gap-2">
                 <Calendar className="w-5 h-5" />
                 Day Schedule
@@ -104,7 +106,7 @@ export default async function ShowDetailPage({
               assignedTeam={assignedTeam}
               availablePeople={availablePeople}
             />
-            <Link href={`/${orgSlug}/shows/${showId}/advancing`}>
+            <Link href={`/${orgSlug}/shows/${showId}/advancing`} prefetch={true}>
               <Button size="lg" variant="outline" className="gap-2">
                 <FileText className="w-5 h-5" />
                 Advancing

@@ -1,4 +1,3 @@
-import { getSupabaseServer } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 
 interface ShowLayoutProps {
@@ -9,31 +8,25 @@ interface ShowLayoutProps {
 export default async function ShowLayout({ children, params }: ShowLayoutProps) {
   const { org: orgSlug, showId } = await params
   
-  const supabase = await getSupabaseServer()
+  // OPTIMIZED: Use cached helpers to prevent redundant queries
+  const { getCachedOrg, getCachedShow } = await import('@/lib/cache')
   
-  // Verify the show exists and belongs to the organization
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // Parallelize verification queries
+  const [orgResult, showResult] = await Promise.all([
+    getCachedOrg(orgSlug),
+    getCachedShow(showId)
+  ])
+
+  const { data: org } = orgResult
+  const { data: show } = showResult
 
   if (!org) {
     notFound()
   }
 
-  const { data: show } = await supabase
-    .from('shows')
-    .select('id, title, date')
-    .eq('id', showId)
-    .eq('org_id', org.id)
-    .single()
-
-  if (!show) {
+  if (!show || show.org_id !== org.id) {
     notFound()
   }
-
-
 
   return (
     <div>
