@@ -4,10 +4,10 @@ import { getCachedOrg, getCachedOrgVenues, getCachedOrgVenuesWithCounts } from '
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orgSlug: string }> }
+  { params }: { params: Promise<{ org: string }> }
 ) {
   try {
-    const { orgSlug } = await params
+    const { org: orgSlug } = await params
     const { searchParams } = new URL(request.url)
     const includeCounts = searchParams.get('includeCounts') === 'true'
     

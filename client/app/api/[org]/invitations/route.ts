@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getCachedOrg, getCachedOrgShows } from '@/lib/cache'
+import { getCachedOrg, getCachedOrgInvitations } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orgSlug: string }> }
+  { params }: { params: Promise<{ org: string }> }
 ) {
   try {
-    const { orgSlug } = await params
+    const { org: orgSlug } = await params
     
     // Verify authentication
     const supabase = await getSupabaseServer()
@@ -24,16 +24,16 @@ export async function GET(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Fetch shows
-    const { data: shows, error } = await getCachedOrgShows(org.id)
+    // Fetch invitations
+    const { data: invitations, error } = await getCachedOrgInvitations(org.id)
     
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(shows || [])
+    return NextResponse.json(invitations || [])
   } catch (error) {
-    console.error('Error fetching shows:', error)
+    console.error('Error fetching invitations:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

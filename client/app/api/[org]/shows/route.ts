@@ -4,10 +4,10 @@ import { getCachedOrg, getCachedOrgShows } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orgSlug: string }> }
+  { params }: { params: Promise<{ org: string }> }
 ) {
   try {
-    const { orgSlug } = await params
+    const { org: orgSlug } = await params
     
     // Verify authentication
     const supabase = await getSupabaseServer()

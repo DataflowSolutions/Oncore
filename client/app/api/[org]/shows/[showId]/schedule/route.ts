@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getCachedOrg, getCachedOrgShows } from '@/lib/cache'
+import { getCachedShowSchedule } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orgSlug: string }> }
+  { params }: { params: Promise<{ org: string; showId: string }> }
 ) {
   try {
-    const { orgSlug } = await params
+    const { showId } = await params
     
     // Verify authentication
     const supabase = await getSupabaseServer()
@@ -17,23 +17,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get org and verify access
-    const { data: org, error: orgError } = await getCachedOrg(orgSlug)
-    
-    if (orgError || !org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
-
-    // Fetch shows
-    const { data: shows, error } = await getCachedOrgShows(org.id)
+    // Fetch schedule
+    const { data: schedule, error } = await getCachedShowSchedule(showId)
     
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(shows || [])
+    return NextResponse.json(schedule || [])
   } catch (error) {
-    console.error('Error fetching shows:', error)
+    console.error('Error fetching schedule:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

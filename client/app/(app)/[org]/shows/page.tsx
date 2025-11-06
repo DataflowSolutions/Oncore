@@ -1,54 +1,44 @@
-import ShowsClient from "./components/ShowsClient";
-import CreateShowButton from "./components/CreateShowButton";
-import ImportDataButton from "./components/ImportDataButton";
-import { notFound } from "next/navigation";
-
-// Optimize: Cache shows list for 30 seconds
-export const revalidate = 30;
-// Force dynamic to show loading state
-export const dynamic = 'force-dynamic'
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { ShowsPageClient } from './shows-page-client'
+import { getCachedOrg, getCachedOrgShows } from '@/lib/cache'
+import { notFound } from 'next/navigation'
 
 interface ShowsPageProps {
   params: Promise<{ org: string }>;
   searchParams: Promise<{ view?: string }>;
 }
 
+// Server Component - prefetches data for instant load
 export default async function ShowsPage({
   params,
   searchParams,
 }: ShowsPageProps) {
-  const { org: orgSlug } = await params;
-  const { view = "list" } = await searchParams;
-
-  // OPTIMIZED: Use cached helpers and parallelize
-  const { getCachedOrg, getCachedOrgShows } = await import('@/lib/cache');
+  const { org: orgSlug } = await params
+  const { view = 'list' } = await searchParams
   
-  // First get org, then parallelize all other queries with org.id
+  // Create a server-side QueryClient for prefetching
+  const queryClient = new QueryClient()
+  
+  // Get org first for access control
   const { data: org, error } = await getCachedOrg(orgSlug)
-
+  
   if (error || !org) {
-    notFound();
+    notFound()
   }
-
-  // Fetch shows using org.id
-  const { data: shows } = await getCachedOrgShows(org.id)
-
+  
+  // Prefetch shows data on the server
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.shows(orgSlug),
+    queryFn: async () => {
+      const { data: shows } = await getCachedOrgShows(org.id)
+      return shows || []
+    },
+  })
+  
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl lg:text-4xl font-bold">Shows</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your tour schedule
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <ImportDataButton orgId={org.id} />
-          <CreateShowButton orgId={org.id} />
-        </div>
-      </div>
-
-      <ShowsClient shows={shows || []} orgSlug={orgSlug} view={view} />
-    </div>
-  );
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ShowsPageClient orgSlug={orgSlug} orgId={org.id} view={view} />
+    </HydrationBoundary>
+  )
 }

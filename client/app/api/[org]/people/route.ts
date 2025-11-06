@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getCachedOrg, getCachedOrgShows } from '@/lib/cache'
+import { getCachedOrg, getCachedOrgPeopleFull } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orgSlug: string }> }
+  { params }: { params: Promise<{ org: string }> }
 ) {
   try {
-    const { orgSlug } = await params
+    const { org: orgSlug } = await params
+    const { searchParams } = new URL(request.url)
+    const filter = searchParams.get('filter')
     
     // Verify authentication
     const supabase = await getSupabaseServer()
@@ -24,16 +26,24 @@ export async function GET(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Fetch shows
-    const { data: shows, error } = await getCachedOrgShows(org.id)
+    // Fetch people
+    const { data: people, error } = await getCachedOrgPeopleFull(org.id)
     
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(shows || [])
+    // Apply filter if provided
+    let filteredPeople = people || []
+    if (filter && filter !== 'all') {
+      filteredPeople = filteredPeople.filter(person => 
+        person.member_type?.toLowerCase() === filter.toLowerCase()
+      )
+    }
+
+    return NextResponse.json(filteredPeople)
   } catch (error) {
-    console.error('Error fetching shows:', error)
+    console.error('Error fetching people:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
