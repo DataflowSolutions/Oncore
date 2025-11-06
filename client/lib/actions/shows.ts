@@ -60,6 +60,56 @@ export async function createShow(formData: FormData) {
     throw new Error("Missing required fields");
   }
 
+  // Verify user has access to this org
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  // Check if user is member of this org (required for RLS)
+  const { data: membership, error: memberError } = await supabase
+    .from("org_members")
+    .select("role")
+    .eq("org_id", orgId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (memberError || !membership) {
+    console.error("Membership check failed:", memberError);
+    throw new Error("User is not a member of this organization");
+  }
+
+  // Check subscription status (required by RLS policy)
+  const { data: subscription, error: subError } = await supabase
+    .from("org_subscriptions")
+    .select("status, current_period_end")
+    .eq("org_id", orgId)
+    .single();
+
+  if (subError || !subscription) {
+    console.error("Subscription check failed:", subError);
+    throw new Error("Organization subscription not found");
+  }
+
+  if (!["trialing", "active", "past_due"].includes(subscription.status)) {
+    throw new Error(`Cannot create venue: subscription status is ${subscription.status}`);
+  }
+
+  // Check if subscription has expired
+  if (subscription.current_period_end) {
+    const periodEnd = new Date(subscription.current_period_end);
+    const now = new Date();
+    if (periodEnd < now) {
+      console.error("Subscription expired:", {
+        current_period_end: subscription.current_period_end,
+        now: now.toISOString(),
+      });
+      throw new Error(
+        `Cannot create venue: subscription trial expired on ${periodEnd.toLocaleDateString()}. Please update your subscription or contact support.`
+      );
+    }
+  }
+
   let finalVenueId = null;
 
   // Use existing venue if selected
@@ -81,7 +131,11 @@ export async function createShow(formData: FormData) {
 
     if (venueError) {
       console.error("Error creating venue:", venueError);
-      throw new Error(`Failed to create venue: ${venueError.message}`);
+      console.error("User ID:", user.id);
+      console.error("Org ID:", orgId);
+      console.error("Membership:", membership);
+      console.error("Subscription:", subscription);
+      throw new Error(`Failed to create venue: ${venueError.message}. Check subscription status.`);
     } else {
       finalVenueId = venue.id;
 

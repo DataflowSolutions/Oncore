@@ -9,10 +9,15 @@ import {
   MapPin, 
   Settings,
   Menu,
-  X
+  X,
+  Eye,
+  ClipboardList,
+  UserCircle,
+  FileText
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useSelectedShow } from '@/lib/hooks/use-selected-show'
 
 interface SidebarProps {
   orgSlug: string
@@ -22,6 +27,7 @@ interface SidebarProps {
 export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { selectedShow } = useSelectedShow(orgSlug)
 
   const navigation = [
     { name: 'Home', href: `/${orgSlug}`, icon: Home },
@@ -31,7 +37,18 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
     { name: 'Settings', href: `/${orgSlug}/profile`, icon: Settings },
   ]
 
-  const isActive = (href: string) => {
+  // Show sub-navigation only if a show is selected
+  const showSubNav = selectedShow ? [
+    { name: 'Overview', href: `/${orgSlug}/shows/${selectedShow.id}`, icon: Eye, exact: true },
+    { name: 'Day Schedule', href: `/${orgSlug}/shows/${selectedShow.id}/day`, icon: ClipboardList },
+    { name: 'Team', href: `/${orgSlug}/shows/${selectedShow.id}/team`, icon: UserCircle },
+    { name: 'Advancing', href: `/${orgSlug}/shows/${selectedShow.id}/advancing`, icon: FileText },
+  ] : []
+
+  const isActive = (href: string, exact = false) => {
+    if (exact) {
+      return pathname === href
+    }
     if (href === `/${orgSlug}`) {
       return pathname === href
     }
@@ -82,7 +99,8 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+            {/* Main Navigation */}
             {navigation.map((item) => {
               const active = isActive(item.href)
               const Icon = item.icon
@@ -108,6 +126,47 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
                 </Link>
               )
             })}
+
+            {/* Show Sub-Navigation */}
+            {showSubNav.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-border">
+                <div className="px-3 mb-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Current Show
+                  </h3>
+                  {selectedShow?.title && (
+                    <p className="text-xs text-muted-foreground/60 mt-1 truncate">
+                      {selectedShow.title}
+                    </p>
+                  )}
+                </div>
+                {showSubNav.map((item) => {
+                  const active = isActive(item.href, item.exact)
+                  const Icon = item.icon
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      prefetch={true}
+                      onClick={() => setIsMobileOpen(false)}
+                      className={`
+                        flex items-center gap-3 rounded-lg px-3 py-2
+                        text-sm font-medium transition-colors
+                        ${
+                          active
+                            ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        }
+                      `}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </nav>
 
           {/* Footer */}

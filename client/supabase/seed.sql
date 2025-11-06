@@ -21,7 +21,7 @@ INSERT INTO public.shows (id, org_id, artist_id, venue_id, date, doors_at, set_t
 INSERT INTO public.org_members (org_id, user_id, role, created_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'a43f0f1c-1b37-4119-89d8-cbad45122958', 'owner', '2025-10-01 16:47:09.771331+00');
 
 -- public.org_subscriptions
-INSERT INTO public.org_subscriptions (org_id, plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'solo_artist', 'trialing', NULL, NULL, '2025-10-01 16:47:09.771331+00', '2025-10-08 16:47:09.771331+00', false, '2025-10-01 16:47:09.771331+00', '2025-10-01 16:47:09.771331+00');
+INSERT INTO public.org_subscriptions (org_id, plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'solo_artist', 'trialing', NULL, NULL, now(), now() + INTERVAL '30 days', false, now(), now());
 
 -- public.people
 INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, updated_at, member_type) VALUES ('014440bf-ba15-440d-85ad-d7beb6b89011', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'John Doe', 'johndoe@gmail.com', '728494839', 'Lead Artist', 'Great singer!', '2025-10-01 16:47:51.022895+00', '2025-10-01 16:47:51.022895+00', 'Artist');
