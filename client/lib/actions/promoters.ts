@@ -54,6 +54,19 @@ export interface VenuePromoterLink {
 // VALIDATION SCHEMAS
 // =====================================
 
+/**
+ * Helper: Get org slug from org ID for revalidation
+ */
+async function getOrgSlug(supabase: Awaited<ReturnType<typeof createClient>>, orgId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('organizations')
+    .select('slug')
+    .eq('id', orgId)
+    .single()
+  
+  return data?.slug || null
+}
+
 const createPromoterSchema = z.object({
   orgId: z.string().uuid(),
   name: z.string().min(1, 'Name is required'),
@@ -291,7 +304,12 @@ export async function createPromoter(data: z.infer<typeof createPromoterSchema>)
 
     if (error) throw error
 
-    revalidatePath(`/[org]/venues`, 'page')
+    // Get org slug for revalidation
+    const orgSlug = await getOrgSlug(supabase, orgId)
+    if (orgSlug) {
+      revalidatePath(`/${orgSlug}/venues`, 'page')
+      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    }
     
     return {
       success: true,
@@ -375,8 +393,13 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
 
     if (error) throw error
 
-    revalidatePath(`/[org]/venues/${venueId}`, 'page')
-    revalidatePath(`/[org]/venues`, 'page')
+    // Get org slug for revalidation
+    const orgSlug = await getOrgSlug(supabase, venue.org_id)
+    if (orgSlug) {
+      revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
+      revalidatePath(`/${orgSlug}/venues`, 'page')
+      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    }
     
     return {
       success: true,
@@ -460,7 +483,12 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
 
     if (error) throw error
 
-    revalidatePath(`/[org]/venues`, 'page')
+    // Get org slug for revalidation
+    const orgSlug = await getOrgSlug(supabase, promoter.org_id)
+    if (orgSlug) {
+      revalidatePath(`/${orgSlug}/venues`, 'page')
+      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    }
     
     return {
       success: true,
@@ -524,7 +552,12 @@ export async function deletePromoter(promoterId: string) {
 
     if (error) throw error
 
-    revalidatePath(`/[org]/venues`, 'page')
+    // Get org slug for revalidation
+    const orgSlug = await getOrgSlug(supabase, promoter.org_id)
+    if (orgSlug) {
+      revalidatePath(`/${orgSlug}/venues`, 'page')
+      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    }
     
     return { success: true }
   } catch (error: unknown) {
@@ -580,8 +613,13 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
 
     if (error) throw error
 
-    revalidatePath(`/[org]/venues/${venueId}`, 'page')
-    revalidatePath(`/[org]/venues`, 'page')
+    // Get org slug for revalidation
+    const orgSlug = await getOrgSlug(supabase, venue.org_id)
+    if (orgSlug) {
+      revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
+      revalidatePath(`/${orgSlug}/venues`, 'page')
+      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    }
     
     return { success: true }
   } catch (error: unknown) {

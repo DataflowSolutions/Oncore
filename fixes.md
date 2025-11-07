@@ -7,11 +7,6 @@
 
 # ⚠️ P1 — High (security/correctness/perf)
 
-* [ ] **Revalidate paths don’t match real routes**
-
-  * **Where:** Calls like `revalidatePath('/[org]/venues')` or using org **UUID** instead of **slug**.
-  * **Fix:** Revalidate actual slugged routes (e.g. `revalidatePath(\`/${orgSlug}/venues`)`) and any API paths your hooks hit.
-
 * [ ] **Cache strategy conflict**
 
   * **Where:** `export const dynamic = 'force-dynamic'` + `export const revalidate = 30`.

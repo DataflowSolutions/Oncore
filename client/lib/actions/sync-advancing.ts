@@ -176,7 +176,17 @@ export async function syncAdvancingToSchedule(showId: string) {
       }
     }
 
-    revalidatePath(`/[org]/shows/${showId}/day`, 'page')
+    // Get org slug for revalidation
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', show.org_id)
+      .single()
+
+    if (org?.slug) {
+      revalidatePath(`/${org.slug}/shows/${showId}/day`, 'page')
+      revalidatePath(`/${org.slug}/shows/${showId}/advancing`, 'page')
+    }
 
     return {
       success: true,

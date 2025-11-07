@@ -127,8 +127,18 @@ export async function createVenue(formData: FormData) {
       throw new Error(`Failed to create venue: ${error.message}`)
     }
 
-    revalidatePath('/[org]/venues')
-    revalidatePath('/[org]/shows')
+    // Get org slug for revalidation
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', rawData.org_id)
+      .single()
+    
+    if (org?.slug) {
+      revalidatePath(`/${org.slug}/venues`)
+      revalidatePath(`/${org.slug}/shows`)
+      revalidatePath(`/${org.slug}/people/venues`)
+    }
     
     return { success: true, venue: data }
   } catch (error) {
@@ -167,8 +177,19 @@ export async function updateVenue(venueId: string, formData: FormData) {
       throw new Error(`Failed to update venue: ${error.message}`)
     }
 
-    revalidatePath('/[org]/venues')
-    revalidatePath('/[org]/shows')
+    // Get org slug for revalidation
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', data.org_id)
+      .single()
+    
+    if (org?.slug) {
+      revalidatePath(`/${org.slug}/venues`)
+      revalidatePath(`/${org.slug}/shows`)
+      revalidatePath(`/${org.slug}/venues/${venueId}`)
+      revalidatePath(`/${org.slug}/people/venues`)
+    }
     
     return { success: true, venue: data }
   } catch (error) {
@@ -184,6 +205,17 @@ export async function updateVenue(venueId: string, formData: FormData) {
 export async function deleteVenue(venueId: string) {
   try {
     const supabase = await getSupabaseServer()
+    
+    // Get venue to fetch org_id for revalidation
+    const { data: venue } = await supabase
+      .from('venues')
+      .select('org_id')
+      .eq('id', venueId)
+      .single()
+    
+    if (!venue) {
+      return { success: false, error: 'Venue not found' }
+    }
     
     // Check if venue has shows
     const { data: shows } = await supabase
@@ -209,7 +241,17 @@ export async function deleteVenue(venueId: string) {
       throw new Error(`Failed to delete venue: ${error.message}`)
     }
 
-    revalidatePath('/[org]/venues')
+    // Get org slug for revalidation
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', venue.org_id)
+      .single()
+    
+    if (org?.slug) {
+      revalidatePath(`/${org.slug}/venues`)
+      revalidatePath(`/${org.slug}/people/venues`)
+    }
     
     return { success: true }
   } catch (error) {

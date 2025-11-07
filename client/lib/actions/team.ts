@@ -188,7 +188,19 @@ export async function createPerson(formData: FormData) {
     throw new Error(`Failed to create person: ${error.message}`)
   }
 
-  revalidatePath('/[org]/team', 'page')
+  // Get org slug for revalidation
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('slug')
+    .eq('id', validatedData.orgId)
+    .single()
+  
+  if (org?.slug) {
+    revalidatePath(`/${org.slug}/people`, 'page')
+    revalidatePath(`/${org.slug}/people/crew`, 'page')
+    revalidatePath(`/${org.slug}/people/artist`, 'page')
+  }
+  
   return data
 }
 
@@ -237,7 +249,19 @@ export async function updatePerson(personId: string, updates: PersonUpdate) {
     throw new Error(`Failed to update person: ${error.message}`)
   }
 
-  revalidatePath('/[org]/team', 'page')
+  // Get org slug for revalidation
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('slug')
+    .eq('id', person.org_id)
+    .single()
+  
+  if (org?.slug) {
+    revalidatePath(`/${org.slug}/people`, 'page')
+    revalidatePath(`/${org.slug}/people/crew`, 'page')
+    revalidatePath(`/${org.slug}/people/artist`, 'page')
+  }
+  
   return data
 }
 
@@ -274,7 +298,18 @@ export async function deletePerson(personId: string, orgId: string) {
     throw new Error(`Failed to delete person: ${error.message}`)
   }
 
-  revalidatePath('/[org]/team', 'page')
+  // Get org slug for revalidation
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('slug')
+    .eq('id', orgId)
+    .single()
+  
+  if (org?.slug) {
+    revalidatePath(`/${org.slug}/people`, 'page')
+    revalidatePath(`/${org.slug}/people/crew`, 'page')
+    revalidatePath(`/${org.slug}/people/artist`, 'page')
+  }
 }
 
 // Invite a user to become an org member (this would integrate with auth flow)
@@ -325,6 +360,16 @@ export async function inviteOrgMember(formData: FormData) {
   // 2. Sending an email with a signup link
   // 3. The signup flow would then add them to org_members
   
-  revalidatePath('/[org]/team', 'page')
+  // Get org slug for revalidation
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('slug')
+    .eq('id', validatedData.orgId)
+    .single()
+  
+  if (org?.slug) {
+    revalidatePath(`/${org.slug}/people`, 'page')
+  }
+  
   return { success: true, message: 'Invitation functionality coming soon!' }
 }

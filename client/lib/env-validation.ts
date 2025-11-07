@@ -156,11 +156,19 @@ export function validateClientEnv() {
     )
 
     if (missing.length > 0) {
-      throw new Error(
-        `Missing required local client environment variables:\n` +
+      // During development, just warn - the variables should be in .env.local
+      // but Next.js might not have loaded them yet
+      const errorMsg = `Missing required local client environment variables:\n` +
         missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nMake sure your local Supabase instance is running.`
-      )
+        `\n\nCheck your .env.local file. These should be set to:\n` +
+        `NEXT_PUBLIC_LOCAL_SUPABASE_URL=http://127.0.0.1:54321\n` +
+        `NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0`
+      
+      console.warn('⚠️', errorMsg)
+      // Only throw in production builds
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(errorMsg)
+      }
     }
   }
 

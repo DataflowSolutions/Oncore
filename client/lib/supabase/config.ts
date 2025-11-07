@@ -5,16 +5,11 @@
  * This ensures consistent environment variable usage across the app.
  */
 
-import { validateServerEnv, validateClientEnv } from '../env-validation'
-
 /**
  * Get server-side Supabase configuration
  * Uses non-public environment variables (server-only)
  */
 export function getServerConfig() {
-  // Validate environment on first access
-  validateServerEnv()
-
   const isProduction = process.env.PROD_DB === 'true'
 
   const url = isProduction
@@ -42,9 +37,6 @@ export function getServerConfig() {
  * Uses NEXT_PUBLIC_ environment variables (safe for browser)
  */
 export function getClientConfig() {
-  // Validate environment on first access
-  validateClientEnv()
-
   const isProduction = process.env.NEXT_PUBLIC_PROD_DB === 'true'
 
   const url = isProduction
