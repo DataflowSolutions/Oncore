@@ -31,7 +31,14 @@ Follow this checklist to set up automated deployments:
 - [ ] **6. Verify Deployment**
   - [ ] Check GitHub Actions succeeded
   - [ ] Check database in Supabase dashboard
+  - [ ] Verify ANALYZE ran post-deployment (check maintenance log)
   - [ ] Test application with production database
+
+- [ ] **7. Set Up Scheduled Maintenance (Optional but Recommended)**
+  - [ ] Enable pg_cron extension in Supabase
+  - [ ] Schedule daily ANALYZE (see DATABASE_MAINTENANCE.md)
+  - [ ] Schedule weekly VACUUM (see DATABASE_MAINTENANCE.md)
+  - [ ] Or set up Edge Function for maintenance
 
 ## 🔍 GitHub Secrets Setup
 

@@ -13,18 +13,7 @@
 
 # 🛠 P2 — Medium (data integrity & DX)
 
-* [ ] **Activity log retention**
-
-  * **Where:** `archive_old_activity_logs` deletes outright.
-  * **Fix:** Consider partitioned tables + retention policy, or copy to cold storage before delete.
-
-* [ ] **Post-deploy stats**
-
-  * **Fix:** Keep ANALYZE/vacuum jobs running post-deploy (as scripted) to maintain planner stats.
-
-* [ ] **RLS policy churn**
-
-  * **Fix:** Document final intended policies per role; add automated tests asserting can/can't read/write for each critical table.
+- All P2 issues resolved!
 
 ---
 

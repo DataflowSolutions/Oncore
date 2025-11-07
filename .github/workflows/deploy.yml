@@ -44,6 +44,16 @@ jobs:
         run: |
           supabase db push --linked
 
+      # - name: 📊 Update Database Statistics
+      #   working-directory: ./client
+      #   env:
+      #     SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      #     SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      #   run: |
+      #     # Run ANALYZE to update query planner statistics after migration
+      #     echo "Updating database statistics..."
+      #     supabase db execute "SELECT run_analyze_with_logging('github-actions');" --linked || echo "Warning: Could not update statistics"
+
       - name: 🎨 Generate TypeScript Types
         working-directory: ./client
         env:
