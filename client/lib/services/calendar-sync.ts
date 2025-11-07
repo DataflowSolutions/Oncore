@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger'
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from '@/app/utils/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 

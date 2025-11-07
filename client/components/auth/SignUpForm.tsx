@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger'
 "use client";
 
 import { useState } from "react";
@@ -32,7 +31,7 @@ export function SignUpForm() {
         setMessage("Check your email for confirmation link!");
       }
     } catch (err) {
-      logger.error('SignUp error', err);
+      console.error('SignUp error:', err);
       setMessage("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);

@@ -1,9 +1,9 @@
-import { logger } from '@/lib/logger'
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { getVenuesByOrg } from "@/lib/actions/venues-search";
+import { logger } from '@/lib/logger'
 import { getVenueCache, setVenueCache } from "@/lib/venue-cache";
 
 interface Venue {

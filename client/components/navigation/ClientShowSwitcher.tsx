@@ -1,9 +1,9 @@
-import { logger } from '@/lib/logger'
 "use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Calendar, ChevronDown, ArrowLeft } from "lucide-react";
+import { logger } from '@/lib/logger'
 
 interface Show {
   id: string;
@@ -33,10 +33,10 @@ export default function ClientShowSwitcher({ orgSlug, currentShowId, orgId }: Cl
           const data = await response.json();
           setShows(data);
         } else {
-          logger.error("`Failed to fetch shows", response.status, response.statusText);
+          logger.error(`Failed to fetch shows: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
-        logger.error("`Error fetching shows", error);
+        logger.error("Error fetching shows", error);
       } finally {
         setLoading(false);
       }

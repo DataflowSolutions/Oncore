@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "npm run validate:env && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "validate:env": "node scripts/validate-env.mjs",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts"
   },
   "dependencies": {

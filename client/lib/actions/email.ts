@@ -1,9 +1,9 @@
 'use server'
-import { logger } from '@/lib/logger'
 
-import { createClient } from '@/app/utils/supabase/server'
-import { parseForwardedEmail } from '@/lib/services/email-parser'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
+import { parseForwardedEmail } from '@/lib/services/email-parser'
 
 const parseEmailSchema = z.object({
   subject: z.string(),

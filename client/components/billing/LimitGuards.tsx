@@ -1,9 +1,9 @@
-import { logger } from '@/lib/logger'
 "use client";
 
 import { useState, useEffect } from "react";
 import { LimitCheck } from "@/lib/billing";
 import { checkOrgLimitsClient } from "@/lib/billing-client";
+import { logger } from '@/lib/logger'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserPlus, UserCheck, Crown } from "lucide-react";

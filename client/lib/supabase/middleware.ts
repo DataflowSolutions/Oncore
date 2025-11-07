@@ -1,12 +1,12 @@
-import { logger } from '@/lib/logger'
-
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
-import { Database } from '@/lib/database.types'
+import type { Database } from '../database.types'
+import { getClientConfig, validateConfig } from './config'
+import { logger } from '../logger'
 
 const IS_DEV = process.env.NODE_ENV === 'development'
 
-// Lightweight logger for middleware (uses same pattern as main logger)
+// Lightweight logger for middleware
 const mwLogger = {
   debug: (message: string) => {
     if (IS_DEV) logger.debug(`[MW] ${message}`)
@@ -16,17 +16,6 @@ const mwLogger = {
   }
 }
 
-// Environment-based configuration (middleware uses NEXT_PUBLIC vars)
-const isProduction = process.env.NEXT_PUBLIC_PROD_DB === 'true'
-
-const supabaseUrl = isProduction
-  ? process.env.NEXT_PUBLIC_PROD_SUPABASE_URL!
-  : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_URL!
-
-const supabaseAnonKey = isProduction
-  ? process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY!
-  : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY!
-
 // Helper function to check if a path is public (doesn't require auth)
 function isPublicPath(pathname: string): boolean {
   // Exact match public routes
@@ -35,10 +24,10 @@ function isPublicPath(pathname: string): boolean {
     '/sign-up',
     '/pricing',
     '/auth/callback',
-  ];
+  ]
   
   if (exactPublicRoutes.includes(pathname)) {
-    return true;
+    return true
   }
   
   // Pattern-based public routes using regex for precise matching
@@ -48,9 +37,9 @@ function isPublicPath(pathname: string): boolean {
     /^\/signup$/,                     // Signup page
     /^\/auth\/.+$/,                   // Auth callback routes
     /^\/api\/auth\/.+$/,              // Auth API routes only
-  ];
+  ]
   
-  return publicPatterns.some(pattern => pattern.test(pathname));
+  return publicPatterns.some(pattern => pattern.test(pathname))
 }
 
 // Helper function to check if a path is a static/system resource
@@ -59,15 +48,24 @@ function isStaticResource(pathname: string): boolean {
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon') ||
     pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf)$/) !== null
-  );
+  )
 }
 
+/**
+ * Update session in middleware with auth protection
+ * 
+ * This helper:
+ * - Refreshes the user's session
+ * - Protects routes that require authentication
+ * - Redirects unauthenticated users to sign-in
+ * - Handles org-specific redirects
+ */
 export async function updateSession(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl
 
   // Skip auth entirely for static assets and Next.js internals
   if (isStaticResource(pathname)) {
-    return NextResponse.next();
+    return NextResponse.next()
   }
 
   // Create an unmodified response
@@ -77,9 +75,12 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
+  const config = getClientConfig()
+  validateConfig(config, 'client')
+
   const supabase = createServerClient<Database>(
-    supabaseUrl,
-    supabaseAnonKey,
+    config.url,
+    config.anonKey,
     {
       cookies: {
         getAll() {
@@ -100,42 +101,41 @@ export async function updateSession(request: NextRequest) {
 
   // Allow public routes without auth check
   if (isPublicPath(pathname)) {
-    return supabaseResponse;
+    return supabaseResponse
   }
 
   // Protected API routes require auth (defense in depth)
-  // Auth API routes are handled above in isPublicPath
   if (pathname.startsWith('/api/')) {
-    mwLogger.debug('Checking auth for API');
+    mwLogger.debug('Checking auth for API')
     
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession()
     
     if (error || !session) {
-      mwLogger.security('API route access', 'denied');
+      mwLogger.security('API route access', 'denied')
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
-      );
+      )
     }
     
-    mwLogger.security('API route access', 'allowed');
-    return supabaseResponse;
+    mwLogger.security('API route access', 'allowed')
+    return supabaseResponse
   }
 
   // Check auth for all other routes (protected by default)
-  mwLogger.debug('Checking auth for protected route');
+  mwLogger.debug('Checking auth for protected route')
   
   // Optimize: Use getSession instead of getUser (faster, uses local JWT)
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabase.auth.getSession()
 
   if (error || !session) {
-    mwLogger.security('Protected route access', 'denied');
-    const redirectUrl = new URL('/sign-in', request.url);
-    redirectUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(redirectUrl);
+    mwLogger.security('Protected route access', 'denied')
+    const redirectUrl = new URL('/sign-in', request.url)
+    redirectUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(redirectUrl)
   }
   
-  mwLogger.security('Protected route access', 'allowed');
+  mwLogger.security('Protected route access', 'allowed')
 
   // If user is authenticated but accessing create-org, check if they have orgs
   if (pathname === '/create-org') {
@@ -155,3 +155,4 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse
 }
+

@@ -1,43 +1,37 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '../database.types'
+import { getServerConfig, validateConfig } from './config'
 
-export async function getSupabaseServer() {
+/**
+ * Create a Supabase client for server-side use
+ * 
+ * This client uses cookies for session management and can be used in:
+ * - Server Components
+ * - Server Actions
+ * - Route Handlers
+ * - Middleware (via separate helper)
+ */
+export async function createClient() {
   const cookieStore = await cookies()
-  
-  // Environment-based configuration (server uses regular env vars, not NEXT_PUBLIC)
-  const isProduction = process.env.PROD_DB === 'true'
-
-  const supabaseUrl = isProduction
-    ? process.env.PROD_SUPABASE_URL!
-    : process.env.LOCAL_SUPABASE_URL!
-
-  const supabaseAnonKey = isProduction
-    ? process.env.PROD_SUPABASE_ANON_KEY!
-    : process.env.LOCAL_SUPABASE_ANON_KEY!
+  const config = getServerConfig()
+  validateConfig(config, 'server')
   
   return createServerClient<Database>(
-    supabaseUrl,
-    supabaseAnonKey,
+    config.url,
+    config.anonKey,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: Record<string, unknown>) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
           } catch {
-            // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-        remove(name: string, options: Record<string, unknown>) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch {
-            // The `delete` method was called from a Server Component.
+            // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
           }
@@ -46,3 +40,6 @@ export async function getSupabaseServer() {
     }
   )
 }
+
+// Backward compatibility alias
+export const getSupabaseServer = createClient

@@ -1,20 +1,7 @@
 
 # 🔥 P0 — Blockers (ship-stoppers)
 
-* [ ] **Dev tooling shipped to prod**
-
-  * **Where:** React Query Devtools always rendered.
-  * **Fix:** Only mount when `process.env.NODE_ENV==='development'`.
-
-* [ ] **Duplicate Supabase helper stacks = drift risk**
-
-  * **Where:** `app/utils/supabase/server.ts` vs `lib/supabase/server.ts` (+ two browser helpers).
-  * **Fix:** Single server factory + single browser factory; shared env loader; memoize; admin client only in server-only file.
-
-* [ ] **Env model is inconsistent / unsafe**
-
-  * **Where:** `.env.example` exposes server secrets as `NEXT_PUBLIC_*`; next config exposes `PROD_DB` to client; proxies only in dev.
-  * **Fix:** Split public vs server vars; add **runtime env validation** (Zod/Valibot) at boot; document required keys for local/prod; stop exposing DB config to client. **Rotate credentials** after cleanup.
+- Done
 
 ---
 

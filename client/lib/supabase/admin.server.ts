@@ -11,6 +11,7 @@
 import 'server-only'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../database.types'
+import { getServerConfig, validateConfig } from './config'
 
 // Ensure this code only runs on the server
 if (typeof window !== 'undefined') {
@@ -20,29 +21,8 @@ if (typeof window !== 'undefined') {
   )
 }
 
-// Environment-based configuration (server-only env vars)
-const isProduction = process.env.PROD_DB === 'true'
-
-const supabaseUrl = isProduction
-  ? process.env.PROD_SUPABASE_URL!
-  : process.env.LOCAL_SUPABASE_URL!
-
-const supabaseServiceRoleKey = isProduction
-  ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY!
-  : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error(
-    'Missing required Supabase admin configuration! ' +
-    `Mode: ${isProduction ? 'production' : 'local'}\n` +
-    `URL present: ${!!supabaseUrl}\n` +
-    `Service Role Key present: ${!!supabaseServiceRoleKey}\n` +
-    `Check your server-side environment variables.`
-  )
-}
-
 /**
- * Admin client with service role privileges
+ * Admin client with service role privileges (memoized singleton)
  * 
  * WARNING: This client bypasses all Row Level Security policies.
  * Only use for:
@@ -64,9 +44,12 @@ export function getSupabaseAdmin() {
   }
 
   if (!adminClient) {
+    const config = getServerConfig()
+    validateConfig(config, 'admin')
+
     adminClient = createClient<Database>(
-      supabaseUrl,
-      supabaseServiceRoleKey,
+      config.url,
+      config.serviceRoleKey,
       {
         auth: {
           autoRefreshToken: false,
@@ -78,12 +61,3 @@ export function getSupabaseAdmin() {
 
   return adminClient
 }
-
-// Export configuration info (for debugging)
-export const adminConfig = {
-  isProduction,
-  supabaseUrl,
-  hasServiceRoleKey: !!supabaseServiceRoleKey,
-} as const
-
-// Note: Removed debug logging to prevent exposing configuration in production
