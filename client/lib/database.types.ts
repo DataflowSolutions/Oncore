@@ -183,6 +183,78 @@ export type Database = {
           },
         ]
       }
+      activity_log_archive: {
+        Row: {
+          action: string
+          archived_at: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          org_id: string
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          archived_at?: string
+          created_at: string
+          details?: Json | null
+          id: string
+          ip_address?: unknown
+          org_id: string
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          archived_at?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          org_id?: string
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      activity_log_retention_config: {
+        Row: {
+          archive_batch_size: number
+          auto_archive_enabled: boolean
+          days_to_keep: number
+          id: number
+          last_archive_run: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archive_batch_size?: number
+          auto_archive_enabled?: boolean
+          days_to_keep?: number
+          id?: number
+          last_archive_run?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archive_batch_size?: number
+          auto_archive_enabled?: boolean
+          days_to_keep?: number
+          id?: number
+          last_archive_run?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       advancing_comments: {
         Row: {
           author_id: string | null
@@ -638,6 +710,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      database_maintenance_log: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duration_seconds: number | null
+          error_message: string | null
+          id: string
+          operation: string
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          id?: string
+          operation: string
+          started_at?: string
+          status: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          id?: string
+          operation?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
       }
       files: {
         Row: {
@@ -1131,6 +1239,42 @@ export type Database = {
           org_id?: string | null
           query_name?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      rls_expected_access: {
+        Row: {
+          can_delete: boolean
+          can_insert: boolean
+          can_select: boolean
+          can_update: boolean
+          created_at: string
+          id: string
+          notes: string | null
+          role: string
+          table_name: string
+        }
+        Insert: {
+          can_delete?: boolean
+          can_insert?: boolean
+          can_select?: boolean
+          can_update?: boolean
+          created_at?: string
+          id?: string
+          notes?: string | null
+          role: string
+          table_name: string
+        }
+        Update: {
+          can_delete?: boolean
+          can_insert?: boolean
+          can_select?: boolean
+          can_update?: boolean
+          created_at?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          table_name?: string
         }
         Relationships: []
       }
@@ -1763,8 +1907,8 @@ export type Database = {
         Returns: Json
       }
       archive_old_activity_logs: {
-        Args: { days_to_keep?: number }
-        Returns: number
+        Args: { batch_size?: number; days_to_keep?: number }
+        Returns: Json
       }
       auto_downgrade_expired_orgs: {
         Args: never
@@ -1780,6 +1924,7 @@ export type Database = {
         Returns: Json
       }
       check_available_seats: { Args: { p_org_id: string }; Returns: Json }
+      check_maintenance_needed: { Args: never; Returns: Json }
       check_org_limits: {
         Args: {
           p_additional_count?: number
@@ -1796,6 +1941,8 @@ export type Database = {
         }
         Returns: Json
       }
+      check_rls_enabled: { Args: { table_name: string }; Returns: boolean }
+      cleanup_orphaned_user_references: { Args: never; Returns: Json }
       cleanup_unverified_files: {
         Args: { hours_old?: number }
         Returns: {
@@ -1808,12 +1955,58 @@ export type Database = {
         Args: { p_org_id: string; p_show_id: string; p_title?: string }
         Returns: Json
       }
+      generate_rls_coverage_report: { Args: never; Returns: Json }
+      generate_secure_token: { Args: never; Returns: string }
+      get_activity_log_stats: { Args: never; Returns: Json }
+      get_activity_logs: {
+        Args: {
+          p_include_archived?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_org_id: string
+        }
+        Returns: {
+          action: string
+          created_at: string
+          details: Json
+          id: string
+          ip_address: unknown
+          is_archived: boolean
+          org_id: string
+          resource_id: string
+          resource_type: string
+          user_agent: string
+          user_id: string
+        }[]
+      }
       get_advancing_session_details: {
         Args: { p_session_id: string }
         Returns: Json
       }
+      get_expected_access: {
+        Args: { p_role: string; p_table_name?: string }
+        Returns: {
+          can_delete: boolean
+          can_insert: boolean
+          can_select: boolean
+          can_update: boolean
+          notes: string
+          role: string
+          table_name: string
+        }[]
+      }
       get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
+      get_maintenance_stats: { Args: { days_back?: number }; Returns: Json }
       get_show_stats: { Args: { p_org_id: string }; Returns: Json }
+      get_table_policies: {
+        Args: { table_name: string }
+        Returns: {
+          command: string
+          permissive: string
+          policy_name: string
+          using_expression: string
+        }[]
+      }
       has_show_access: {
         Args: { min_role: string; p_show: string }
         Returns: boolean
@@ -1840,7 +2033,21 @@ export type Database = {
         Returns: boolean
       }
       org_subscription_status: { Args: { p_org: string }; Returns: Json }
+      run_analyze_all_tables: { Args: never; Returns: Json }
+      run_analyze_with_logging: {
+        Args: { triggered_by?: string }
+        Returns: Json
+      }
+      run_rls_tests: { Args: never; Returns: Json }
+      run_scheduled_log_archival: { Args: never; Returns: Json }
+      run_vacuum_all_tables: { Args: never; Returns: Json }
+      run_vacuum_with_logging: {
+        Args: { triggered_by?: string }
+        Returns: Json
+      }
+      setup_rls_test_data: { Args: never; Returns: Json }
       verify_access_code: { Args: { p_access_code: string }; Returns: Json }
+      verify_rls_enabled_on_all_tables: { Args: never; Returns: Json }
       verify_storage_metadata: {
         Args: { hours_back?: number }
         Returns: {
