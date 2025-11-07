@@ -133,11 +133,11 @@ export default function PeoplePageClient({
     setInviteDialogOpen(false);
 
     startTransition(async () => {
-      const result = await invitePerson(selectedInvitePerson.id, selectedRole);
+      const result = await invitePerson(selectedInvitePerson.id);
 
       if (result.success) {
         toast.success("Invitation sent!", {
-          description: `${selectedInvitePerson.name} will receive an email to join the team as ${selectedRole}`,
+          description: `${selectedInvitePerson.name} will receive an email to join the team`,
         });
         router.refresh();
       } else {

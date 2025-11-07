@@ -7,27 +7,11 @@
 
 # ⚠️ P1 — High (security/correctness/perf)
 
-* [ ] **Onboarding/subscription coupling**
-
-  * **Issue:** `app_create_organization_with_owner` doesn’t seed `org_subscriptions`; RLS may block later.
-  * **Fix:** Create default subscription row in same transaction or via trigger.
-
-* [ ] **Invitation constraints**
-
-  * **Fix:** Enforce `invite_token IS NOT NULL` when `status='invited'`; keep unique index; add server-side generator checks.
-
-* [ ] **Param typing oddities**
-
-  * **Where:** Route handlers/layouts type `params` as `Promise`.
-  * **Fix:** Use standard `{ params: { ... } }` types; remove unnecessary `await`.
+- All issues resolved!
 
 ---
 
 # 🛠 P2 — Medium (data integrity & DX)
-
-* [ ] **Add referential integrity to auth**
-
-  * **Fix:** Add deferred FKs or cleanup triggers from `org_members.user_id` (and similar `created_by`) → `auth.users(id)`, or a job to purge orphans.
 
 * [ ] **Activity log retention**
 
@@ -38,18 +22,9 @@
 
   * **Fix:** Keep ANALYZE/vacuum jobs running post-deploy (as scripted) to maintain planner stats.
 
-* [ ] **Seed data hygiene**
-
-  * **Fix:** Guard seeds from shared/staging; swap realistic emails/phones for obvious fakes; separate prod seed from dev fixtures.
-
-* [ ] **Server action duplication**
-
-  * **Where:** org creation under `app/(auth)/create-org/actions.ts` **and** `lib/actions/organizations.ts`.
-  * **Fix:** Consolidate into one canonical action; reuse everywhere.
-
 * [ ] **RLS policy churn**
 
-  * **Fix:** Document final intended policies per role; add automated tests asserting can/can’t read/write for each critical table.
+  * **Fix:** Document final intended policies per role; add automated tests asserting can/can't read/write for each critical table.
 
 ---
 

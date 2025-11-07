@@ -95,11 +95,9 @@ export type InvitationData = {
 /**
  * Invite a person (ghost account) to join the organization
  * Creates an invitation with a secure token and sends an email
+ * Note: The person's role should already be set in the people table
  */
-export async function invitePerson(
-  personId: string, 
-  role: 'owner' | 'admin' | 'editor' | 'viewer' = 'viewer'
-) {
+export async function invitePerson(personId: string) {
   const supabase = await getSupabaseServer()
   
   // Get authenticated user
@@ -171,14 +169,13 @@ export async function invitePerson(
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 7)
 
-  // Create invitation
+  // Create invitation (note: role is not stored in invitations table)
   const { data: invitation, error: inviteError } = await supabase
     .from('invitations')
     .insert({
       org_id: person.org_id,
       person_id: personId,
       email: person.email,
-      role,
       token,
       expires_at: expiresAt.toISOString(),
       created_by: user.id
