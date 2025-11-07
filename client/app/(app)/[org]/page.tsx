@@ -7,9 +7,8 @@ import { notFound } from "next/navigation";
 import { VenueLink } from "./shows/components/VenueLink";
 import { logger } from "@/lib/logger";
 
-// Optimize: Cache for 60 seconds, this is a dashboard page
-export const revalidate = 60;
-// Force dynamic to show loading state
+// Always render dynamically for authenticated pages
+// React cache() handles request-level deduplication
 export const dynamic = 'force-dynamic'
 
 interface OrgHomePageProps {

@@ -15,19 +15,69 @@ import {
   UserCircle,
   FileText
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { useSelectedShow } from '@/lib/hooks/use-selected-show'
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
 
 interface SidebarProps {
   orgSlug: string
   userRole: string
 }
 
+const STORAGE_KEY = 'oncore_last_show'
+
 export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const { selectedShow } = useSelectedShow(orgSlug)
+  const [lastShowId, setLastShowId] = useState<string | null>(null)
+  
+  // Extract showId from current URL
+  const currentShowId = useMemo(() => {
+    const showMatch = pathname?.match(new RegExp(`/${orgSlug}/shows/([^/]+)`))
+    return showMatch ? showMatch[1] : null
+  }, [pathname, orgSlug])
+
+  // Load last show from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        if (parsed.orgSlug === orgSlug && parsed.showId) {
+          setLastShowId(parsed.showId)
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }, [orgSlug])
+
+  // Update localStorage when navigating to a show page
+  useEffect(() => {
+    if (currentShowId) {
+      setLastShowId(currentShowId)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+        orgSlug, 
+        showId: currentShowId 
+      }))
+    }
+  }, [currentShowId, orgSlug])
+
+  // Use lastShowId for sub-nav (persists across navigation)
+  const showId = lastShowId
+
+  // Fetch show data - will use prefetched/cached data when available
+  const { data: show } = useQuery({
+    queryKey: queryKeys.show(showId!),
+    queryFn: async () => {
+      const response = await fetch(`/api/${orgSlug}/shows/${showId}`)
+      if (!response.ok) return null
+      return response.json()
+    },
+    enabled: !!showId, // Only run if we have a showId
+    staleTime: 5 * 60 * 1000, // 5 minutes - show metadata rarely changes
+  })
 
   const navigation = [
     { name: 'Home', href: `/${orgSlug}`, icon: Home },
@@ -37,12 +87,12 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
     { name: 'Settings', href: `/${orgSlug}/profile`, icon: Settings },
   ]
 
-  // Show sub-navigation only if a show is selected
-  const showSubNav = selectedShow ? [
-    { name: 'Overview', href: `/${orgSlug}/shows/${selectedShow.id}`, icon: Eye, exact: true },
-    { name: 'Day Schedule', href: `/${orgSlug}/shows/${selectedShow.id}/day`, icon: ClipboardList },
-    { name: 'Team', href: `/${orgSlug}/shows/${selectedShow.id}/team`, icon: UserCircle },
-    { name: 'Advancing', href: `/${orgSlug}/shows/${selectedShow.id}/advancing`, icon: FileText },
+  // Show sub-navigation if we have a last visited show
+  const showSubNav = showId ? [
+    { name: 'Overview', href: `/${orgSlug}/shows/${showId}`, icon: Eye, exact: true },
+    { name: 'Day Schedule', href: `/${orgSlug}/shows/${showId}/day`, icon: ClipboardList },
+    { name: 'Team', href: `/${orgSlug}/shows/${showId}/team`, icon: UserCircle },
+    { name: 'Advancing', href: `/${orgSlug}/shows/${showId}/advancing`, icon: FileText },
   ] : []
 
   const isActive = (href: string, exact = false) => {
@@ -134,9 +184,9 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Current Show
                   </h3>
-                  {selectedShow?.title && (
+                  {show?.title && (
                     <p className="text-xs text-muted-foreground/60 mt-1 truncate">
-                      {selectedShow.title}
+                      {show.title}
                     </p>
                   )}
                 </div>

@@ -137,21 +137,8 @@ export async function updateSession(request: NextRequest) {
   
   mwLogger.security('Protected route access', 'allowed')
 
-  // If user is authenticated but accessing create-org, check if they have orgs
-  if (pathname === '/create-org') {
-    const { data: memberships } = await supabase
-      .from('org_members')
-      .select('org_id, organizations(slug)')
-      .eq('user_id', session.user.id)
-      .limit(1)
-
-    // If user has an org, redirect them to it
-    if (memberships && memberships.length > 0) {
-      const firstOrg = memberships[0].organizations as { slug: string }
-      const redirectUrl = new URL(`/${firstOrg.slug}`, request.url)
-      return NextResponse.redirect(redirectUrl)
-    }
-  }
+  // Allow users to create multiple organizations
+  // No redirect from /create-org page
 
   return supabaseResponse
 }

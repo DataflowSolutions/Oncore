@@ -1,13 +1,8 @@
-"use client";
-
-import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import { WelcomeHero } from "@/components/home/WelcomeHero";
-import { UserHeader } from "@/components/home/UserHeader";
-import { OrganizationsList } from "@/components/home/OrganizationsList";
-import { logger } from '@/lib/logger'
+import { HomePageClient } from "@/components/home/HomePageClient";
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
 
 interface Organization {
   id: string;
@@ -22,15 +17,25 @@ interface UserOrganization {
   organizations: Organization;
 }
 
-export default function Home() {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
-  const [loading, setLoading] = useState(true);
+// Server component - prefetches data on the server for instant load
+export default async function Home() {
+  const supabase = await getSupabaseServer();
   
-  const supabase = createClient();
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const loadUserOrganizations = useCallback(async (userId: string) => {
-    try {
+  // Not logged in - show welcome hero (public page)
+  if (!user) {
+    return <WelcomeHero />;
+  }
+
+  // User is logged in - prefetch their organizations
+  const queryClient = new QueryClient()
+  
+  // Prefetch user organizations on the server
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.userOrganizations(user.id),
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('org_members')
         .select(`
@@ -43,68 +48,17 @@ export default function Home() {
             created_at
           )
         `)
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (error) throw error;
-      setOrganizations(data as UserOrganization[]);
-    } catch (error) {
-      logger.error('Error loading organizations', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+      return (data || []) as UserOrganization[];
+    },
+  })
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserOrganizations(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadUserOrganizations(session.user.id);
-        } else {
-          setOrganizations([]);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [loadUserOrganizations, supabase.auth]);
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in - show welcome hero
-  if (!user) {
-    return <WelcomeHero />;
-  }
-
-  // Logged in - show user dashboard
+  // Hydrate the client component with prefetched data
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <UserHeader email={user.email ?? ''} />
-        <OrganizationsList organizations={organizations} />
-      </div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <HomePageClient userEmail={user.email ?? ''} userId={user.id} />
+    </HydrationBoundary>
   );
 }

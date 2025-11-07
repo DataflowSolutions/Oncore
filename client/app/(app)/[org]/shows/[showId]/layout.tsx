@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { HydrationBoundary, QueryClient, dehydrate } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
 
 interface ShowLayoutProps {
   children: React.ReactNode
@@ -28,10 +30,16 @@ export default async function ShowLayout({ children, params }: ShowLayoutProps) 
     notFound()
   }
 
+  // Prefetch show data for TanStack Query (used by Sidebar)
+  const queryClient = new QueryClient()
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.show(showId),
+    queryFn: async () => show, // Use already-fetched data
+  })
+
   return (
-    <div>
-      {/* Page content - navigation is now handled by the sidebar */}
+    <HydrationBoundary state={dehydrate(queryClient)}>
       {children}
-    </div>
+    </HydrationBoundary>
   )
 }

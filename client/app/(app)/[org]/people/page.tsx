@@ -2,7 +2,8 @@ import PeoplePageClient from '@/components/team/PeoplePageClient'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-// Force dynamic to show loading state
+// Always render dynamically for authenticated pages
+// React cache() handles request-level deduplication
 export const dynamic = 'force-dynamic'
 
 interface TeamPageProps {

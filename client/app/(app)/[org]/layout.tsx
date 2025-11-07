@@ -6,9 +6,9 @@ import { logger } from "@/lib/logger";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { TopBar } from "@/components/navigation/TopBar";
 
-// Optimize: Cache layout data briefly to prevent re-fetching on every navigation
-export const revalidate = 30 // Revalidate every 30 seconds
-export const dynamic = 'force-dynamic' // Always get fresh auth data
+// Always render dynamically to ensure fresh auth data
+// React cache() handles request-level deduplication
+export const dynamic = 'force-dynamic'
 
 interface OrgLayoutProps {
   children: React.ReactNode;

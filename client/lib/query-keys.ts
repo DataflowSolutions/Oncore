@@ -4,6 +4,9 @@
  */
 
 export const queryKeys = {
+  // User
+  userOrganizations: (userId: string) => ['user', userId, 'organizations'] as const,
+  
   // Organizations
   org: (orgSlug: string) => ['org', orgSlug] as const,
   orgMembership: (orgSlug: string, userId: string) => ['org', orgSlug, 'membership', userId] as const,

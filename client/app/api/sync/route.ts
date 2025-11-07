@@ -17,10 +17,17 @@ export async function POST() {
     // Sync logic - for now, we'll just refresh cache and return stats
     // In a real implementation, this would sync with external calendars, email, etc.
     
-    // Get user's organizations
+    // OPTIMIZATION: Get user's organizations with aggregated data in a single query
     const { data: orgs, error: orgsError } = await supabase
       .from('org_members')
-      .select('org_id, organizations(id, name)')
+      .select(`
+        org_id,
+        organizations!inner(
+          id,
+          name,
+          shows:shows(count)
+        )
+      `)
       .eq('user_id', user.id);
 
     if (orgsError) {
@@ -36,24 +43,15 @@ export async function POST() {
       });
     }
 
-    let totalSynced = 0;
-    const syncResults = [];
+    // OPTIMIZATION: Calculate totals from already-fetched data (no additional queries)
+    const syncResults = orgs
+      .filter(org => org.organizations)
+      .map(org => ({
+        orgName: org.organizations!.name,
+        showCount: org.organizations!.shows?.[0]?.count || 0,
+      }));
 
-    for (const org of orgs) {
-      if (!org.organizations) continue;
-      
-      // Count shows in organization
-      const { count } = await supabase
-        .from('shows')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', org.organizations.id);
-
-      totalSynced += count || 0;
-      syncResults.push({
-        orgName: org.organizations.name,
-        showCount: count || 0,
-      });
-    }
+    const totalSynced = syncResults.reduce((sum, result) => sum + result.showCount, 0);
 
     logger.info('Sync completed', { 
       totalOrgs: orgs.length, 

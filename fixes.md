@@ -7,31 +7,6 @@
 
 # ⚠️ P1 — High (security/correctness/perf)
 
-* [ ] **Cache strategy conflict**
-
-  * **Where:** `export const dynamic = 'force-dynamic'` + `export const revalidate = 30`.
-  * **Fix:** Pick one: either dynamic rendering (no ISR) or ISR with reasonable `revalidate`. Document why.
-
-* [ ] **Client-only fetching on landing/dashboard**
-
-  * **Fix:** Move initial org/membership fetch to server component/route loader; hydrate React Query with `initialData` to avoid double fetch & spinner.
-
-* [ ] **Selected show hook re-fetches needlessly**
-
-  * **Fix:** Pass title/metadata via props/context from the page payload, set as `initialData` in the query; avoid extra API call on every nav.
-
-* [ ] **CSV import = N× round trips**
-
-  * **Fix:** Batch lookups (prefetch maps), use `upsert` and transactions; keep network calls O(1–2) per file, not per row.
-
-* [ ] **`/api/sync` iterates orgs sequentially**
-
-  * **Fix:** Single aggregated SQL or `Promise.all` with concurrency limit; remove noisy raw logs.
-
-* [ ] **Org creation slug race**
-
-  * **Fix:** Rely on DB unique constraint; catch duplicate-key and show friendly “slug taken” message (and add reserved slugs).
-
 * [ ] **Onboarding/subscription coupling**
 
   * **Issue:** `app_create_organization_with_owner` doesn’t seed `org_subscriptions`; RLS may block later.

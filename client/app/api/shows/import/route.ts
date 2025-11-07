@@ -60,8 +60,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (!hasRequiredFields) {
-      // TODO: Future feature - Use AI to parse unstructured data
-      // For now, return helpful error message
       return NextResponse.json({ 
         error: `Unable to parse file format. Expected columns containing: ${requiredFields.join(', ')}`,
         hint: 'AI-powered parsing coming soon! For now, please use standard CSV format.',
@@ -69,10 +67,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const importedShows = [];
-    const errors = [];
-
-    // Process each row
+    // OPTIMIZATION: Parse all rows first
+    interface ParsedRow {
+      rowNum: number
+      showName: string
+      date: string
+      venueName: string
+      city: string | null
+      artistName: string
+      performanceTime: string
+      notes: string | null
+    }
+    
+    const parsedRows: ParsedRow[] = [];
+    const parseErrors: string[] = [];
+    
     for (let i = 1; i < lines.length; i++) {
       try {
         const values = lines[i].split(separator).map(v => v.trim().replace(/['"]/g, ''));
@@ -82,7 +91,6 @@ export async function POST(request: NextRequest) {
           row[header] = values[idx] || '';
         });
 
-        // Extract data with flexible field matching
         const showName = row['show name'] || row['show'] || row['showname'] || row['title'] || row['name'];
         const date = row['date'] || row['performance date'] || row['performancedate'] || row['show date'];
         const venueName = row['venue'] || row['venue name'] || row['venuename'] || row['location'];
@@ -92,114 +100,157 @@ export async function POST(request: NextRequest) {
         const notes = row['notes'] || row['crew requirements'] || row['description'] || '';
 
         if (!showName || !date || !venueName || !artistName) {
-          errors.push(`Row ${i + 1}: Missing required fields (show: ${!!showName}, date: ${!!date}, venue: ${!!venueName}, artist: ${!!artistName})`);
+          parseErrors.push(`Row ${i + 1}: Missing required fields`);
           continue;
         }
 
-        // Find or create venue
-        const { data: existingVenue } = await supabase
-          .from('venues')
-          .select('id')
-          .eq('name', venueName)
-          .eq('org_id', orgId)
-          .single();
-
-        let venueId = existingVenue?.id;
-
-        if (!venueId) {
-          const { data: newVenue, error: venueError } = await supabase
-            .from('venues')
-            .insert({
-              name: venueName,
-              city: city || null,
-              org_id: orgId,
-            })
-            .select('id')
-            .single();
-
-          if (venueError) {
-            errors.push(`Row ${i + 1}: Failed to create venue - ${venueError.message}`);
-            continue;
-          }
-          venueId = newVenue.id;
-        }
-
-        // Find or create artist
-        const { data: existingArtist } = await supabase
-          .from('people')
-          .select('id')
-          .eq('name', artistName)
-          .eq('org_id', orgId)
-          .eq('member_type', 'Artist')
-          .single();
-
-        let artistId = existingArtist?.id;
-
-        if (!artistId) {
-          const { data: newArtist, error: artistError } = await supabase
-            .from('people')
-            .insert({
-              name: artistName,
-              org_id: orgId,
-              member_type: 'Artist',
-            })
-            .select('id')
-            .single();
-
-          if (artistError) {
-            errors.push(`Row ${i + 1}: Failed to create artist - ${artistError.message}`);
-            continue;
-          }
-          artistId = newArtist.id;
-        }
-
-        // Parse date
         const showDate = new Date(date);
         if (isNaN(showDate.getTime())) {
-          errors.push(`Row ${i + 1}: Invalid date format`);
+          parseErrors.push(`Row ${i + 1}: Invalid date format`);
           continue;
         }
 
-        // Create show
-        const { data: newShow, error: showError } = await supabase
-          .from('shows')
-          .insert({
-            title: showName,
-            date: showDate.toISOString().split('T')[0],
-            venue_id: venueId,
-            org_id: orgId,
-            set_time: `${showDate.toISOString().split('T')[0]}T${performanceTime}:00`,
-            status: 'confirmed',
-            notes: notes || null,
-          })
-          .select('id')
-          .single();
-
-        if (showError) {
-          errors.push(`Row ${i + 1}: Failed to create show - ${showError.message}`);
-          continue;
-        }
-
-        // Assign artist to show
-        await supabase
-          .from('show_assignments')
-          .insert({
-            show_id: newShow.id,
-            person_id: artistId,
-            duty: 'Performer',
-          });
-
-        importedShows.push(newShow.id);
+        parsedRows.push({
+          rowNum: i + 1,
+          showName,
+          date: showDate.toISOString().split('T')[0],
+          venueName,
+          city: city || null,
+          artistName,
+          performanceTime,
+          notes: notes || null,
+        });
       } catch (error) {
-        errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        parseErrors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Parse error'}`);
       }
+    }
+
+    if (parsedRows.length === 0) {
+      return NextResponse.json({ 
+        error: 'No valid rows to import',
+        errors: parseErrors 
+      }, { status: 400 });
+    }
+
+    // OPTIMIZATION: Batch fetch existing venues (1 query instead of N)
+    const uniqueVenueNames = [...new Set(parsedRows.map(r => r.venueName))];
+    const { data: existingVenues } = await supabase
+      .from('venues')
+      .select('id, name')
+      .eq('org_id', orgId)
+      .in('name', uniqueVenueNames);
+
+    const venueMap = new Map(existingVenues?.map(v => [v.name, v.id]) || []);
+
+    // OPTIMIZATION: Batch create missing venues (1 upsert instead of N inserts)
+    const venuesToCreate = parsedRows
+      .filter(r => !venueMap.has(r.venueName))
+      .map(r => ({ name: r.venueName, city: r.city, org_id: orgId }));
+    
+    // Remove duplicates
+    const uniqueVenues = Array.from(
+      new Map(venuesToCreate.map(v => [v.name, v])).values()
+    );
+
+    if (uniqueVenues.length > 0) {
+      const { data: newVenues, error: venueError } = await supabase
+        .from('venues')
+        .upsert(uniqueVenues, { onConflict: 'org_id,name', ignoreDuplicates: false })
+        .select('id, name');
+
+      if (venueError) {
+        logger.error('Error creating venues', venueError);
+        return NextResponse.json({ 
+          error: `Failed to create venues: ${venueError.message}` 
+        }, { status: 500 });
+      }
+
+      // Update venue map with new venues
+      newVenues?.forEach(v => venueMap.set(v.name, v.id));
+    }
+
+    // OPTIMIZATION: Batch fetch existing artists (1 query instead of N)
+    const uniqueArtistNames = [...new Set(parsedRows.map(r => r.artistName))];
+    const { data: existingArtists } = await supabase
+      .from('people')
+      .select('id, name')
+      .eq('org_id', orgId)
+      .eq('member_type', 'Artist')
+      .in('name', uniqueArtistNames);
+
+    const artistMap = new Map(existingArtists?.map(a => [a.name, a.id]) || []);
+
+    // OPTIMIZATION: Batch create missing artists (1 upsert instead of N inserts)
+    const artistsToCreate = parsedRows
+      .filter(r => !artistMap.has(r.artistName))
+      .map(r => ({ name: r.artistName, org_id: orgId, member_type: 'Artist' as const }));
+    
+    // Remove duplicates
+    const uniqueArtists = Array.from(
+      new Map(artistsToCreate.map(a => [a.name, a])).values()
+    );
+
+    if (uniqueArtists.length > 0) {
+      const { data: newArtists, error: artistError } = await supabase
+        .from('people')
+        .upsert(uniqueArtists, { onConflict: 'org_id,name,member_type', ignoreDuplicates: false })
+        .select('id, name');
+
+      if (artistError) {
+        logger.error('Error creating artists', artistError);
+        return NextResponse.json({ 
+          error: `Failed to create artists: ${artistError.message}` 
+        }, { status: 500 });
+      }
+
+      // Update artist map with new artists
+      newArtists?.forEach(a => artistMap.set(a.name, a.id));
+    }
+
+    // OPTIMIZATION: Batch create shows (1 insert instead of N)
+    const showsToCreate = parsedRows.map(r => ({
+      title: r.showName,
+      date: r.date,
+      venue_id: venueMap.get(r.venueName)!,
+      org_id: orgId,
+      set_time: `${r.date}T${r.performanceTime}:00`,
+      status: 'confirmed' as const,
+      notes: r.notes,
+    }));
+
+    const { data: createdShows, error: showsError } = await supabase
+      .from('shows')
+      .insert(showsToCreate)
+      .select('id');
+
+    if (showsError) {
+      logger.error('Error creating shows', showsError);
+      return NextResponse.json({ 
+        error: `Failed to create shows: ${showsError.message}` 
+      }, { status: 500 });
+    }
+
+    // OPTIMIZATION: Batch create assignments (1 insert instead of N)
+    const assignments = createdShows?.map((show, idx) => ({
+      show_id: show.id,
+      person_id: artistMap.get(parsedRows[idx].artistName)!,
+      duty: 'Performer',
+    })) || [];
+
+    const { error: assignmentsError } = await supabase
+      .from('show_assignments')
+      .insert(assignments);
+
+    if (assignmentsError) {
+      logger.warn('Error creating assignments', assignmentsError);
+      // Don't fail the import if assignments fail
     }
 
     return NextResponse.json({
       success: true,
-      imported: importedShows.length,
-      errors: errors.length > 0 ? errors : null,
-      message: `Successfully imported ${importedShows.length} show(s)${errors.length > 0 ? ` with ${errors.length} error(s)` : ''}`,
+      imported: createdShows?.length || 0,
+      errors: parseErrors.length > 0 ? parseErrors : null,
+      message: `Successfully imported ${createdShows?.length || 0} show(s)${parseErrors.length > 0 ? ` (${parseErrors.length} rows skipped)` : ''}`,
     });
 
   } catch (error) {

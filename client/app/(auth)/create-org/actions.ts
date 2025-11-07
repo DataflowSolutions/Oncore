@@ -4,10 +4,16 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { RESERVED_SLUGS } from '@/lib/constants/reserved-slugs'
 
 const createOrgSchema = z.object({
   name: z.string().min(1, 'Organization name is required'),
-  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only')
+  slug: z.string()
+    .min(1, 'Slug is required')
+    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only')
+    .refine((slug) => !RESERVED_SLUGS.includes(slug as never), {
+      message: 'This slug is reserved and cannot be used',
+    }),
 })
 
 export async function createOrganization(formData: FormData) {
@@ -34,20 +40,7 @@ export async function createOrganization(formData: FormData) {
   try {
     const supabase = await getSupabaseServer()
     
-    // Check if slug is already taken
-    const { data: existingOrg } = await supabase
-      .from('organizations')
-      .select('slug')
-      .eq('slug', validatedData.slug)
-      .single()
-
-    if (existingOrg) {
-      return {
-        error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
-      }
-    }
-    
-    // Call the RPC function we created in the database
+    // Call the RPC function - let the DB unique constraint handle race conditions
     const { error } = await supabase
       .rpc('app_create_organization_with_owner', {
         org_name: validatedData.name,
@@ -56,12 +49,14 @@ export async function createOrganization(formData: FormData) {
 
     if (error) {
       logger.error('Failed to create organization', error)
-      // Check if it's a duplicate key error
-      if (error.message.includes('duplicate key') || error.message.includes('unique')) {
+      
+      // PostgreSQL unique violation error code
+      if (error.code === '23505' || error.message.includes('duplicate key') || error.message.includes('unique')) {
         return {
           error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
         }
       }
+      
       return {
         error: 'Failed to create organization. Please try again.'
       }
@@ -69,6 +64,15 @@ export async function createOrganization(formData: FormData) {
     
   } catch (error) {
     logger.error('Error creating organization', error)
+    
+    // Catch any PostgreSQL errors that might bubble up
+    const pgError = error as { code?: string; message?: string }
+    if (pgError.code === '23505' || pgError.message?.includes('duplicate key') || pgError.message?.includes('unique')) {
+      return {
+        error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
+      }
+    }
+    
     return {
       error: 'An unexpected error occurred. Please try again.'
     }

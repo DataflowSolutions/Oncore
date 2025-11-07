@@ -1,6 +1,7 @@
 import VenuesClient from "./components/VenuesClient";
 
-// Force dynamic to show loading state
+// Always render dynamically for authenticated pages
+// React cache() handles request-level deduplication
 export const dynamic = 'force-dynamic'
 
 interface VenuesPageProps {

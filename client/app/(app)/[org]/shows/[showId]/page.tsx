@@ -15,9 +15,8 @@ import {
   EditableNotes 
 } from '@/components/shows/EditableShowFields'
 
-// Optimize: Cache show details for 30 seconds
-export const revalidate = 30;
-// Force dynamic to show loading state properly
+// Always render dynamically for authenticated pages
+// React cache() handles request-level deduplication
 export const dynamic = 'force-dynamic'
 
 interface ShowDetailPageProps {
