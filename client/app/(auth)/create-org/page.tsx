@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createOrganization } from "./actions";
+import { logger } from '@/lib/logger'
 
 export default function CreateOrgPage() {
   const [name, setName] = useState("");
@@ -44,7 +45,7 @@ export default function CreateOrgPage() {
       }
       // If no error, the server action will redirect
     } catch (err) {
-      console.error("Form submission error:", err);
+      logger.error("Form submission error", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

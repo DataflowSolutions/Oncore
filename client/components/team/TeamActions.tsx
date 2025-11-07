@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { AddMemberButton, InviteCollaboratorButton } from '@/components/billing/LimitGuards'
 import AddPersonButton from '@/app/(app)/[org]/people/components/AddPersonButton'
@@ -9,12 +10,12 @@ interface TeamActionsProps {
 
 export function TeamActions({ orgId }: TeamActionsProps) {
   const handleAddMember = () => {
-    console.log('Add member clicked - would open invite form')
+    logger.debug('Add member clicked - would open invite form')
     // TODO: Implement actual add member functionality
   }
 
   const handleInviteCollaborator = () => {
-    console.log('Invite collaborator clicked - would open invite form')
+    logger.debug('Invite collaborator clicked - would open invite form')
     // TODO: Implement actual invite collaborator functionality
   }
 

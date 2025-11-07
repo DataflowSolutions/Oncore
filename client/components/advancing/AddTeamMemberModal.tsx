@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState } from 'react'
 import { Users, X, Plus } from 'lucide-react'
@@ -34,10 +35,10 @@ export function AddTeamMemberModal({
   // Filter out people who are already assigned to this show  
   const people = availablePeople.filter(p => !existingMemberIds.includes(p.id))
   
-  console.log('Modal opened:', isOpen)
-  console.log('Available people:', availablePeople.length)
-  console.log('Existing member IDs:', existingMemberIds)
-  console.log('Filtered people:', people.length)
+  logger.debug('Modal opened', isOpen)
+  logger.debug('Available people', availablePeople.length)
+  logger.debug('Existing member IDs', existingMemberIds)
+  logger.debug('Filtered people', people.length)
 
   const filteredPeople = people.filter(person =>
     person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -57,7 +58,7 @@ export function AddTeamMemberModal({
 
   const handleAddMembers = () => {
     const selectedPersons = people.filter(p => selectedPeople.has(p.id))
-    console.log('Adding members:', selectedPersons)
+    logger.debug('Adding members', selectedPersons)
     onAddMembers(selectedPersons)
     setSelectedPeople(new Set())
     onClose()

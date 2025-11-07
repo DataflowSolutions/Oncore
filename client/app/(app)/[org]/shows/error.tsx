@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useEffect } from 'react'
+import { logger } from '@/lib/logger'
+
 
 export default function ShowsError({
   error,
@@ -13,7 +15,7 @@ export default function ShowsError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Shows page error:', error)
+    logger.error('Shows page error', error)
   }, [error])
 
   return (

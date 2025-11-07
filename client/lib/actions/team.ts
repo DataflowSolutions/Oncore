@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 type Person = Database['public']['Tables']['people']['Row']
 type PersonInsert = Database['public']['Tables']['people']['Insert']
@@ -21,7 +22,7 @@ export async function getPeopleByOrg(orgId: string): Promise<Person[]> {
     .order('name')
 
   if (error) {
-    console.error('Error fetching people:', error)
+    logger.error('Error fetching people', error)
     throw new Error(`Failed to fetch people: ${error.message}`)
   }
 
@@ -40,7 +41,7 @@ export async function getPersonDetails(personId: string) {
     .single()
 
   if (personError) {
-    console.error('Error fetching person:', personError)
+    logger.error('Error fetching person', personError)
     throw new Error(`Failed to fetch person: ${personError.message}`)
   }
 
@@ -64,7 +65,7 @@ export async function getPersonDetails(personId: string) {
     .order('shows(date)', { ascending: false })
 
   if (assignmentsError) {
-    console.error('Error fetching show assignments:', assignmentsError)
+    logger.error('Error fetching show assignments', assignmentsError)
     // Don't throw error, just return empty assignments
   }
 
@@ -85,7 +86,7 @@ export async function getOrgMembers(orgId: string): Promise<OrgMember[]> {
     .order('created_at')
 
   if (error) {
-    console.error('Error fetching org members:', error)
+    logger.error('Error fetching org members', error)
     throw new Error(`Failed to fetch org members: ${error.message}`)
   }
 
@@ -183,7 +184,7 @@ export async function createPerson(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating person:', error)
+    logger.error('Error creating person', error)
     throw new Error(`Failed to create person: ${error.message}`)
   }
 
@@ -232,7 +233,7 @@ export async function updatePerson(personId: string, updates: PersonUpdate) {
     .single()
 
   if (error) {
-    console.error('Error updating person:', error)
+    logger.error('Error updating person', error)
     throw new Error(`Failed to update person: ${error.message}`)
   }
 
@@ -269,7 +270,7 @@ export async function deletePerson(personId: string, orgId: string) {
     .eq('org_id', orgId) // Extra safety check
 
   if (error) {
-    console.error('Error deleting person:', error)
+    logger.error('Error deleting person', error)
     throw new Error(`Failed to delete person: ${error.message}`)
   }
 
@@ -316,7 +317,7 @@ export async function inviteOrgMember(formData: FormData) {
   // In a real app, this would send an email invitation
   // and the user would complete signup to be added to org_members
   
-  console.log(`Would send invitation to ${validatedData.email} for org ${validatedData.orgId} with role ${validatedData.role}`)
+  logger.debug('Would send invitation', { email: validatedData.email, role: validatedData.role })
   
   // TODO: Implement actual email invitation system
   // This might involve:

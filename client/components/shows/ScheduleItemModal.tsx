@@ -1,4 +1,5 @@
 "use client"
+import { logger } from '@/lib/logger'
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -92,7 +93,7 @@ export function ScheduleItemModal({
     try {
       await onUpdate(item.id, { [field]: value })
     } catch (error) {
-      console.error('Failed to update:', error)
+      logger.error('Failed to update', error)
     } finally {
       setIsUpdating(false)
     }

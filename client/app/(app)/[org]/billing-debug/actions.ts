@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
+
 
 export async function assignPlanDebug(orgId: string, planId: string, trialDays: number = 7) {
   try {
@@ -16,7 +18,7 @@ export async function assignPlanDebug(orgId: string, planId: string, trialDays: 
       })
 
     if (error) {
-      console.error('Failed to assign plan:', error)
+      logger.error('Failed to assign plan', error)
       throw new Error(`Failed to assign plan: ${error.message}`)
     }
 
@@ -26,7 +28,7 @@ export async function assignPlanDebug(orgId: string, planId: string, trialDays: 
     return { success: true }
     
   } catch (error) {
-    console.error('Error assigning plan:', error)
+    logger.error('Error assigning plan', error)
     throw error
   }
 }

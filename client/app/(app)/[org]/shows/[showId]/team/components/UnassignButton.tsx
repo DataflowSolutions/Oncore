@@ -5,6 +5,8 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { removePersonFromShow } from '@/lib/actions/show-team'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
+
 
 interface UnassignButtonProps {
   showId: string
@@ -26,7 +28,7 @@ export default function UnassignButton({ showId, personId, personName }: Unassig
       await removePersonFromShow(showId, personId)
       router.refresh()
     } catch (error) {
-      console.error('Error unassigning person:', error)
+      logger.error('Error unassigning person', error)
       alert('Failed to unassign person. Please try again.')
     } finally {
       setIsLoading(false)

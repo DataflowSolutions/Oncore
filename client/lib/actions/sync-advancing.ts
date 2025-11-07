@@ -2,6 +2,7 @@
 
 import { createClient } from '@/app/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 /**
  * Sync advancing data (flights, hotel times, etc.) to schedule_items
@@ -187,7 +188,7 @@ export async function syncAdvancingToSchedule(showId: string) {
 
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error syncing advancing to schedule:', err)
+    logger.error('Error syncing advancing to schedule', err)
     return {
       success: false,
       error: err.message || 'Failed to sync advancing data'

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -32,10 +33,10 @@ export default function ClientShowSwitcher({ orgSlug, currentShowId, orgId }: Cl
           const data = await response.json();
           setShows(data);
         } else {
-          console.error("Failed to fetch shows:", response.status, response.statusText);
+          logger.error("`Failed to fetch shows", response.status, response.statusText);
         }
       } catch (error) {
-        console.error("Error fetching shows:", error);
+        logger.error("`Error fetching shows", error);
       } finally {
         setLoading(false);
       }

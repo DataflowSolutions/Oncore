@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
@@ -41,7 +42,7 @@ export default function VenueFormFields({ orgId, onVenueSelect }: VenueFormField
         setVenueCache(orgId, venues)
         setAllVenues(venues)
       } catch (error) {
-        console.error('Error loading venues:', error)
+        logger.error('Error loading venues', error)
       }
     }
 

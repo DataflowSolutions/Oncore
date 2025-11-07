@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Users, Plane, PlaneLanding } from 'lucide-react'
@@ -60,7 +61,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
 
     
     if (!showId) {
-      console.error('No showId provided for assignment')
+      logger.error('No showId provided for assignment')
       return
     }
 
@@ -75,7 +76,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
         await assignPersonToShow(formData)
 
       } catch (error) {
-        console.error('Error assigning person to show:', error)
+        logger.error('Error assigning person to show', error)
       }
     }
     
@@ -86,7 +87,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUnassignTeamMember = async (personId: string, _personName: string) => {
     if (!showId) {
-      console.error('No showId provided for unassignment')
+      logger.error('No showId provided for unassignment')
       return
     }
 
@@ -94,9 +95,9 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
       await removePersonFromShow(showId, personId)
       
       // The server action will handle revalidation
-      console.log('Person removed from show successfully')
+      logger.debug('Person removed from show successfully')
     } catch (error) {
-      console.error('Error unassigning person from show:', error)
+      logger.error('Error unassigning person from show', error)
     }
   }
 
@@ -134,7 +135,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
               <div className="flex justify-end mb-4">
                 <button 
                   onClick={() => {
-                    console.log('Add Team Member clicked')
+                    logger.debug('Add Team Member clicked')
                     setShowAddMemberModal(true)
                   }}
                   className="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white border border-transparent rounded-md hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-neutral-900"
@@ -165,7 +166,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   credentials: ''
                 }))}
                 onDataChange={(newData) => {
-                  console.log('Team data changed:', newData)
+                  logger.debug('Team data changed', newData)
                 }}
                 hideAddButton={true}
                 orgSlug={orgSlug}
@@ -190,7 +191,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   toCity: ''
                 }))}
                 onDataChange={(newData) => {
-                  console.log('Arrival Flight data changed:', newData)
+                  logger.debug('Arrival Flight data changed', newData)
                 }}
                 hideAddButton={true}
                 orgSlug={orgSlug}
@@ -215,7 +216,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                   toCity: ''
                 }))}
                 onDataChange={(newData) => {
-                  console.log('Departure Flight data changed:', newData)
+                  logger.debug('Departure Flight data changed', newData)
                 }}
                 hideAddButton={true}
                 orgSlug={orgSlug}
@@ -278,7 +279,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
               comments={[]} // TODO: Load comments for each field
               onFieldUpdate={() => {
                 // Let the server action handle revalidation
-                console.log('Field updated successfully')
+                logger.debug('Field updated successfully')
               }}
             />
           ))}

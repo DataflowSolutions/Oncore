@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { getSupabaseWithAuth } from '../_shared/supabase.ts'
 import { createErrorResponse, corsHeaders } from '../_shared/responses.ts'
+import { logger } from '../_shared/logger.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -61,7 +62,7 @@ serve(async (req) => {
       },
     })
   } catch (err) {
-    console.error('PDF generation error:', err)
+    logger.error('PDF generation error', err)
     return createErrorResponse(
       'Failed to generate PDF',
       err instanceof Error ? err.message : 'Unknown error'

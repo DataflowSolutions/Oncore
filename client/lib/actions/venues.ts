@@ -1,5 +1,6 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 // Get all venues for an organization
 export async function getVenuesByOrg(orgId: string) {
@@ -12,7 +13,7 @@ export async function getVenuesByOrg(orgId: string) {
     .order('name')
 
   if (error) {
-    console.error('Error fetching venues:', error)
+    logger.error('Error fetching venues', error)
     throw new Error(`Failed to fetch venues: ${error.message}`)
   }
 
@@ -32,7 +33,7 @@ export async function searchVenues(orgId: string, searchTerm: string) {
     .limit(10)
 
   if (error) {
-    console.error('Error searching venues:', error)
+    logger.error('Error searching venues', error)
     throw new Error(`Failed to search venues: ${error.message}`)
   }
 
@@ -51,7 +52,7 @@ export async function getVenueDetails(venueId: string) {
     .single()
 
   if (venueError) {
-    console.error('Error fetching venue:', venueError)
+    logger.error('Error fetching venue', venueError)
     throw new Error(`Failed to fetch venue: ${venueError.message}`)
   }
 
@@ -69,7 +70,7 @@ export async function getVenueDetails(venueId: string) {
     .order('date', { ascending: false })
 
   if (showsError) {
-    console.error('Error fetching venue shows:', showsError)
+    logger.error('Error fetching venue shows', showsError)
     // Don't throw error, just return empty shows
   }
 
@@ -93,7 +94,7 @@ export async function getVenuesWithShowCounts(orgId: string) {
     .order('name')
 
   if (error) {
-    console.error('Error fetching venues with show counts:', error)
+    logger.error('Error fetching venues with show counts', error)
     throw new Error(`Failed to fetch venues: ${error.message}`)
   }
 
@@ -122,7 +123,7 @@ export async function createVenue(formData: FormData) {
       .single()
 
     if (error) {
-      console.error('Error creating venue:', error)
+      logger.error('Error creating venue', error)
       throw new Error(`Failed to create venue: ${error.message}`)
     }
 
@@ -131,7 +132,7 @@ export async function createVenue(formData: FormData) {
     
     return { success: true, venue: data }
   } catch (error) {
-    console.error('Error in createVenue:', error)
+    logger.error('Error in createVenue', error)
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to create venue' 
@@ -162,7 +163,7 @@ export async function updateVenue(venueId: string, formData: FormData) {
       .single()
 
     if (error) {
-      console.error('Error updating venue:', error)
+      logger.error('Error updating venue', error)
       throw new Error(`Failed to update venue: ${error.message}`)
     }
 
@@ -171,7 +172,7 @@ export async function updateVenue(venueId: string, formData: FormData) {
     
     return { success: true, venue: data }
   } catch (error) {
-    console.error('Error in updateVenue:', error)
+    logger.error('Error in updateVenue', error)
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to update venue' 
@@ -204,7 +205,7 @@ export async function deleteVenue(venueId: string) {
       .eq('id', venueId)
 
     if (error) {
-      console.error('Error deleting venue:', error)
+      logger.error('Error deleting venue', error)
       throw new Error(`Failed to delete venue: ${error.message}`)
     }
 
@@ -212,7 +213,7 @@ export async function deleteVenue(venueId: string) {
     
     return { success: true }
   } catch (error) {
-    console.error('Error in deleteVenue:', error)
+    logger.error('Error in deleteVenue', error)
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to delete venue' 

@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database } from '@/lib/database.types'
@@ -24,7 +25,7 @@ export async function getShowTeam(showId: string, partyType?: 'from_us' | 'from_
     .eq('show_id', showId)
 
   if (error) {
-    console.error('Error fetching show team:', error)
+    logger.error('Error fetching show team', error)
     throw new Error(`Failed to fetch show team: ${error.message}`)
   }
 
@@ -77,7 +78,7 @@ export async function getAvailablePeople(orgId: string, partyType?: 'from_us' | 
   const { data, error } = await query.order('name')
 
   if (error) {
-    console.error('Error fetching available people:', error)
+    logger.error('Error fetching available people', error)
     throw new Error(`Failed to fetch available people: ${error.message}`)
   }
 
@@ -146,7 +147,7 @@ export async function assignPersonToShow(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error assigning person to show:', error)
+    logger.error('Error assigning person to show', error)
     throw new Error(`Failed to assign person to show: ${error.message}`)
   }
 
@@ -194,7 +195,7 @@ export async function removePersonFromShow(showId: string, personId: string) {
     .eq('person_id', personId)
 
   if (error) {
-    console.error('Error removing person from show:', error)
+    logger.error('Error removing person from show', error)
     throw new Error(`Failed to remove person from show: ${error.message}`)
   }
 

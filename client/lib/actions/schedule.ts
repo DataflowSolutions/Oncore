@@ -3,6 +3,7 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 type ScheduleItem = Database['public']['Tables']['schedule_items']['Row']
 type ScheduleItemInsert = Database['public']['Tables']['schedule_items']['Insert']
@@ -25,7 +26,7 @@ export async function getScheduleItemsForShow(showId: string): Promise<ScheduleI
     .order('starts_at', { ascending: true })
     
   if (error) {
-    console.error('Error fetching schedule items:', error)
+    logger.error('Error fetching schedule items', error)
     return []
   }
   
@@ -60,7 +61,7 @@ export async function getScheduleItemsForRole(
     .order('starts_at', { ascending: true })
     
   if (error) {
-    console.error('Error fetching filtered schedule items:', error)
+    logger.error('Error fetching filtered schedule items', error)
     return []
   }
   
@@ -81,7 +82,7 @@ export async function getGlobalScheduleItems(showId: string): Promise<ScheduleIt
     .order('starts_at', { ascending: true })
     
   if (error) {
-    console.error('Error fetching global schedule items:', error)
+    logger.error('Error fetching global schedule items', error)
     return []
   }
   
@@ -117,7 +118,7 @@ export async function createScheduleItem(
     .single()
     
   if (error) {
-    console.error('Error creating schedule item:', error)
+    logger.error('Error creating schedule item', error)
     return { success: false, error: error.message }
   }
   
@@ -141,7 +142,7 @@ export async function updateScheduleItem(
     .single()
     
   if (error) {
-    console.error('Error updating schedule item:', error)
+    logger.error('Error updating schedule item', error)
     return { success: false, error: error.message }
   }
   
@@ -162,7 +163,7 @@ export async function deleteScheduleItem(
     .eq('id', itemId)
     
   if (error) {
-    console.error('Error deleting schedule item:', error)
+    logger.error('Error deleting schedule item', error)
     return { success: false, error: error.message }
   }
   
@@ -252,7 +253,7 @@ export async function generateScheduleFromAdvancing(
     .insert(scheduleItems)
     
   if (insertError) {
-    console.error('Error inserting auto-generated schedule items:', insertError)
+    logger.error('Error inserting auto-generated schedule items', insertError)
     return { success: false, error: insertError.message }
   }
   
@@ -312,7 +313,7 @@ export async function getScheduleItemsForOrg(orgSlug: string): Promise<ScheduleI
     .order('starts_at', { ascending: true })
     
   if (error) {
-    console.error('Error fetching org schedule items:', error)
+    logger.error('Error fetching org schedule items', error)
     return []
   }
   

@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Stripe from 'https://esm.sh/stripe@14.10.0?target=deno'
 import { getSupabaseClient } from '../_shared/supabase.ts'
 import { createErrorResponse, createSuccessResponse, corsHeaders } from '../_shared/responses.ts'
+import { logger } from '../_shared/logger.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2023-10-16',
@@ -27,7 +28,7 @@ serve(async (req) => {
 
     const supabase = getSupabaseClient()
 
-    console.log(`Processing Stripe event: ${event.type}`)
+    logger.info('Processing Stripe event', { type: event.type })
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -45,7 +46,7 @@ serve(async (req) => {
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         })
 
-        console.log(`Created subscription for user ${session.metadata?.user_id}`)
+        logger.info('Created subscription', { plan: session.metadata?.plan })
         break
       }
 
@@ -61,7 +62,7 @@ serve(async (req) => {
           })
           .eq('stripe_subscription_id', subscription.id)
 
-        console.log(`Updated subscription ${subscription.id}`)
+        logger.info('Updated subscription', { status: subscription.status })
         break
       }
 
@@ -73,7 +74,7 @@ serve(async (req) => {
           .update({ status: 'cancelled' })
           .eq('stripe_subscription_id', subscription.id)
 
-        console.log(`Cancelled subscription ${subscription.id}`)
+        logger.info('Cancelled subscription')
         break
       }
 
@@ -90,7 +91,7 @@ serve(async (req) => {
           paid_at: new Date(invoice.status_transitions.paid_at! * 1000).toISOString(),
         })
 
-        console.log(`Logged payment for invoice ${invoice.id}`)
+        logger.info('Logged payment', { amount: invoice.amount_paid, currency: invoice.currency })
         break
       }
 
@@ -106,17 +107,17 @@ serve(async (req) => {
         })
 
         // TODO: Send notification email to user about failed payment
-        console.log(`Payment failed for invoice ${invoice.id}`)
+        logger.warn('Payment failed', { amount: invoice.amount_due })
         break
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.debug('Unhandled event type', { type: event.type })
     }
 
     return createSuccessResponse({ received: true })
   } catch (err) {
-    console.error('Webhook error:', err)
+    logger.error('Webhook error', err)
     return createErrorResponse(
       'Webhook handler failed',
       err instanceof Error ? err.message : 'Unknown error'

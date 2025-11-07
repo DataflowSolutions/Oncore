@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getCachedShow } from '@/lib/cache'
+import { getCachedShow, getCachedOrg } from '@/lib/cache'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ org: string; showId: string }> }
 ) {
   try {
-    const { showId } = await params
+    const { org: orgSlug, showId } = await params
     
     // Verify authentication
     const supabase = await getSupabaseServer()
@@ -15,6 +16,13 @@ export async function GET(
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get org to validate tenant boundary
+    const { data: org, error: orgError } = await getCachedOrg(orgSlug)
+    
+    if (orgError || !org) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
     // Fetch show
@@ -28,9 +36,14 @@ export async function GET(
       return NextResponse.json({ error: 'Show not found' }, { status: 404 })
     }
 
+    // CRITICAL: Validate tenant boundary - show must belong to the org in the URL
+    if (show.org_id !== org.id) {
+      return NextResponse.json({ error: 'Show not found' }, { status: 404 })
+    }
+
     return NextResponse.json(show)
   } catch (error) {
-    console.error('Error fetching show:', error)
+    logger.error('Error fetching show', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

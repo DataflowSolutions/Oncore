@@ -7,6 +7,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { WelcomeHero } from "@/components/home/WelcomeHero";
 import { UserHeader } from "@/components/home/UserHeader";
 import { OrganizationsList } from "@/components/home/OrganizationsList";
+import { logger } from '@/lib/logger'
 
 interface Organization {
   id: string;
@@ -47,7 +48,7 @@ export default function Home() {
       if (error) throw error;
       setOrganizations(data as UserOrganization[]);
     } catch (error) {
-      console.error('Error loading organizations:', error);
+      logger.error('Error loading organizations', error);
     } finally {
       setLoading(false);
     }

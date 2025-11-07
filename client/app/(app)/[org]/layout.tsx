@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 // import { checkOrgBilling, shouldShowBillingGate } from "@/lib/billing";
 // import {BillingGate, SubscriptionBanner,} from "@/components/billing/BillingGate";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -35,7 +36,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
   const { data: org } = await getCachedOrg(resolvedParams.org)
 
   if (!org) {
-    console.log('❌ [Layout] Org not found:', resolvedParams.org);
+    logger.debug('Layout: Org not found');
     notFound();
   }
 
@@ -44,11 +45,11 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
 
   // Verify membership exists
   if (!membership) {
-    console.log('❌ [Layout] User is not a member of org:', org.slug);
+    logger.debug('Layout: User is not a member of org');
     notFound();
   }
   
-  console.log('✅ [Layout] User has access to org:', org.slug, 'with role:', membership.role);
+  logger.debug('Layout: User has access to org with role', { role: membership.role });
 
   // Check billing status
   // const billingStatus = await checkOrgBilling(org.id);

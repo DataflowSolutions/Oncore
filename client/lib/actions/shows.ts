@@ -3,6 +3,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { Database } from "@/lib/database.types";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 type Show = Database["public"]["Tables"]["shows"]["Row"];
 type ShowInsert = Database["public"]["Tables"]["shows"]["Insert"];
@@ -33,7 +34,7 @@ export async function getShowsByOrg(orgId: string): Promise<ShowWithVenue[]> {
     .order("date", { ascending: true });
 
   if (error) {
-    console.error("Error fetching shows:", error);
+    logger.error("Error fetching shows", error);
     return [];
   }
 
@@ -75,7 +76,7 @@ export async function createShow(formData: FormData) {
     .single();
 
   if (memberError || !membership) {
-    console.error("Membership check failed:", memberError);
+    logger.error("Membership check failed", memberError);
     throw new Error("User is not a member of this organization");
   }
 
@@ -87,7 +88,7 @@ export async function createShow(formData: FormData) {
     .single();
 
   if (subError || !subscription) {
-    console.error("Subscription check failed:", subError);
+    logger.error("Subscription check failed", subError);
     throw new Error("Organization subscription not found");
   }
 
@@ -100,9 +101,8 @@ export async function createShow(formData: FormData) {
     const periodEnd = new Date(subscription.current_period_end);
     const now = new Date();
     if (periodEnd < now) {
-      console.error("Subscription expired:", {
-        current_period_end: subscription.current_period_end,
-        now: now.toISOString(),
+      logger.error("Subscription expired", {
+        periodEnd: subscription.current_period_end,
       });
       throw new Error(
         `Cannot create venue: subscription trial expired on ${periodEnd.toLocaleDateString()}. Please update your subscription or contact support.`
@@ -130,11 +130,7 @@ export async function createShow(formData: FormData) {
       .single();
 
     if (venueError) {
-      console.error("Error creating venue:", venueError);
-      console.error("User ID:", user.id);
-      console.error("Org ID:", orgId);
-      console.error("Membership:", membership);
-      console.error("Subscription:", subscription);
+      logger.error("Error creating venue", venueError);
       throw new Error(`Failed to create venue: ${venueError.message}. Check subscription status.`);
     } else {
       finalVenueId = venue.id;
@@ -169,7 +165,7 @@ export async function createShow(formData: FormData) {
     .single();
 
   if (error) {
-    console.error("Error creating show:", error);
+    logger.error("Error creating show", error);
     throw new Error("Failed to create show");
   }
 
@@ -188,7 +184,7 @@ export async function updateShow(showId: string, updates: ShowUpdate) {
     .single();
 
   if (error) {
-    console.error("Error updating show:", error);
+    logger.error("Error updating show", error);
     throw new Error("Failed to update show");
   }
 
@@ -204,7 +200,7 @@ export async function deleteShow(showId: string, orgId: string) {
   const { error } = await supabase.from("shows").delete().eq("id", showId);
 
   if (error) {
-    console.error("Error deleting show:", error);
+    logger.error("Error deleting show", error);
     throw new Error("Failed to delete show");
   }
 
@@ -221,7 +217,7 @@ export async function getVenuesByOrg(orgId: string): Promise<Venue[]> {
     .order("name", { ascending: true });
 
   if (error) {
-    console.error("Error fetching venues:", error);
+    logger.error("Error fetching venues", error);
     return [];
   }
 

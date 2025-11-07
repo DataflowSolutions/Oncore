@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger'
 
 import * as React from "react";
 import { useTheme } from "next-themes";
@@ -26,7 +27,7 @@ export function ThemeToggle() {
 
   const handleToggle = () => {
     const newTheme = isDark ? "light" : "dark";
-    console.log("Theme toggle clicked:", {
+    logger.debug("`Theme toggle clicked", {
       currentTheme: theme,
       resolvedTheme,
       newTheme,

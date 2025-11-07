@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -40,7 +41,7 @@ export function EditableTitle({ showId, currentValue, className }: EditableTitle
       router.refresh()
       setIsOpen(false)
     } catch (error) {
-      console.error('Failed to update title:', error)
+      logger.error('Failed to update title', error)
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +134,7 @@ export function EditableDate({ showId, currentValue, className }: EditableDatePr
       router.refresh()
       setIsOpen(false)
     } catch (error) {
-      console.error('Failed to update date:', error)
+      logger.error('Failed to update date', error)
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +228,7 @@ export function EditableTime({ showId, currentValue, fieldName, label, className
       router.refresh()
       setIsOpen(false)
     } catch (error) {
-      console.error(`Failed to update ${fieldName}:`, error)
+      logger.error(`Failed to update ${fieldName}`, error)
     } finally {
       setIsLoading(false)
     }
@@ -323,7 +324,7 @@ export function EditableVenue({ showId, currentVenueId, venues, className }: Edi
       router.refresh()
       setIsOpen(false)
     } catch (error) {
-      console.error('Failed to update venue:', error)
+      logger.error('Failed to update venue', error)
     } finally {
       setIsLoading(false)
     }
@@ -425,7 +426,7 @@ export function EditableNotes({ showId, currentValue, className }: EditableNotes
       router.refresh()
       setIsOpen(false)
     } catch (error) {
-      console.error('Failed to update notes:', error)
+      logger.error('Failed to update notes', error)
     } finally {
       setIsLoading(false)
     }

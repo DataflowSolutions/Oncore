@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // Schema for parsed show details
@@ -54,7 +55,7 @@ export async function extractShowDetails(text: string): Promise<ParsedShowDetail
   const geminiKey = process.env.GEMINI_API_KEY
 
   if (!geminiKey) {
-    console.warn('Gemini API key not configured, returning empty result')
+    logger.warn('Gemini API key not configured, returning empty result')
     return { confidence: 0 }
   }
 
@@ -116,7 +117,7 @@ ${text}`
     return ParsedShowDetailsSchema.parse(parsed)
 
   } catch (error) {
-    console.error('Error extracting show details:', error)
+    logger.error('Error extracting show details', error)
     return { confidence: 0 }
   }
 }
@@ -128,7 +129,7 @@ export async function extractVenueDetails(text: string): Promise<ParsedVenueDeta
   const geminiKey = process.env.GEMINI_API_KEY
 
   if (!geminiKey) {
-    console.warn('Gemini API key not configured, returning empty result')
+    logger.warn('Gemini API key not configured, returning empty result')
     return { confidence: 0 }
   }
 
@@ -185,7 +186,7 @@ ${text}`
     return ParsedVenueDetailsSchema.parse(parsed)
 
   } catch (error) {
-    console.error('Error extracting venue details:', error)
+    logger.error('Error extracting venue details', error)
     return { confidence: 0 }
   }
 }
@@ -197,7 +198,7 @@ export async function extractContactDetails(text: string): Promise<ParsedContact
   const geminiKey = process.env.GEMINI_API_KEY
 
   if (!geminiKey) {
-    console.warn('Gemini API key not configured, returning empty result')
+    logger.warn('Gemini API key not configured, returning empty result')
     return []
   }
 
@@ -252,7 +253,7 @@ ${text}`
     return contacts.map((c: unknown) => ParsedContactSchema.parse(c))
 
   } catch (error) {
-    console.error('Error extracting contact details:', error)
+    logger.error('Error extracting contact details', error)
     return []
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -26,13 +27,13 @@ export async function GET(request: NextRequest) {
       .limit(10);
 
     if (error) {
-      console.error("Error fetching shows:", error);
+      logger.error("Error fetching shows", error);
       return NextResponse.json({ error: "Failed to fetch shows" }, { status: 500 });
     }
 
     return NextResponse.json(shows || []);
   } catch (error) {
-    console.error("Error in shows API:", error);
+    logger.error("Error in shows API", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

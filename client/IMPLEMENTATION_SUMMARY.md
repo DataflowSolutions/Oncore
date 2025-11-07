@@ -1,41 +1,13 @@
-# Oncore - October 31st Launch Implementation Summary
+# Oncore - Implementation Summary
 
 ## Overview
-Based on your meeting on October 5, 2025, we've implemented the key features prioritized for your October 31st launch deadline. This document outlines everything that's been built for the **client directory**.
+This document outlines the key features implemented in the **client directory**.
 
 ---
 
 ## ✅ Completed Features
 
-### 1. Waitlist Functionality (Oct 31st Launch Ready) 
-**Status: ✅ Complete**
-
-**What's Built:**
-- **Waitlist Page**: `/waitlist` - Full-featured signup form
-  - Role selection (Artist, Manager, Agent, Venue, Promoter, Other)
-  - Company/band name field
-  - Phone number collection
-  - Notes/requirements field
-  - Success confirmation with option to add more signups
-  
-- **Database Schema**: `waitlist` table with:
-  - Email validation (unique constraint)
-  - Status tracking (pending, invited, converted, declined)
-  - Source tracking
-  - RLS policies (public can write, only admins can read)
-
-- **Server Actions**: `lib/actions/waitlist.ts`
-  - `addToWaitlist()` - Add new waitlist entry
-  - `getWaitlistStats()` - Get signup statistics
-
-**Files:**
-- `app/(marketing)/waitlist/page.tsx`
-- `lib/actions/waitlist.ts`
-- `supabase/migrations/20251005000000_add_new_features.sql`
-
----
-
-### 2. Email Parsing Service
+### 1. Email Parsing Service
 **Status: ✅ Complete**
 
 **What's Built:**

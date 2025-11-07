@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 export const ParsedContractSchema = z.object({
@@ -60,7 +61,7 @@ async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
   // or call a service that can extract text from PDFs
   
   // For now, return empty string with a note
-  console.warn('PDF text extraction not implemented. Install pdf-parse or use a service.')
+  logger.warn('PDF text extraction not implemented. Install pdf-parse or use a service.')
   return ''
 }
 
@@ -71,7 +72,7 @@ export async function parseContractText(text: string): Promise<ParsedContract> {
   const geminiKey = process.env.GEMINI_API_KEY
 
   if (!geminiKey) {
-    console.warn('Gemini API key not configured, returning empty result')
+    logger.warn('Gemini API key not configured, returning empty result')
     return { confidence: 0 }
   }
 
@@ -164,7 +165,7 @@ ${text}`
     return ParsedContractSchema.parse(parsed)
 
   } catch (error) {
-    console.error('Error parsing contract:', error)
+    logger.error('Error parsing contract', error)
     return { confidence: 0 }
   }
 }
@@ -196,7 +197,7 @@ export async function parseContractDocument(file: File): Promise<ParsedContract>
     return await parseContractText(text)
 
   } catch (error) {
-    console.error('Error parsing contract document:', error)
+    logger.error('Error parsing contract document', error)
     return { 
       confidence: 0,
       contractType: 'parsing_error'
@@ -215,7 +216,7 @@ export async function parseContractFromURL(url: string): Promise<ParsedContract>
     
     return await parseContractDocument(file)
   } catch (error) {
-    console.error('Error parsing contract from URL:', error)
+    logger.error('Error parsing contract from URL', error)
     return { 
       confidence: 0,
       contractType: 'parsing_error'

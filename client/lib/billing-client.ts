@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { LimitCheck } from '@/lib/billing'
+import { logger } from '@/lib/logger'
 
 // RPC response type for client-side
 interface LimitCheckRPC {
@@ -30,7 +31,7 @@ export async function checkOrgLimitsClient(
     })
   
   if (error || !data) {
-    console.error('Failed to check org limits:', error)
+    logger.error('Failed to check org limits', error)
     return null
   }
 

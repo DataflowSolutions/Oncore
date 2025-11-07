@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 // Search venues by name and city for an organization (client-safe)
 export async function searchVenues(orgId: string, searchTerm: string) {
@@ -15,7 +16,7 @@ export async function searchVenues(orgId: string, searchTerm: string) {
     .limit(10)
 
   if (error) {
-    console.error('Error searching venues:', error)
+    logger.error('Error searching venues', error)
     throw new Error(`Failed to search venues: ${error.message}`)
   }
 
@@ -33,7 +34,7 @@ export async function getVenuesByOrg(orgId: string) {
     .order('name')
 
   if (error) {
-    console.error('Error fetching venues:', error)
+    logger.error('Error fetching venues', error)
     throw new Error(`Failed to fetch venues: ${error.message}`)
   }
 

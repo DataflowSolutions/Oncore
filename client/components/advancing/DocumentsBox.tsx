@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState } from 'react'
 import { Upload, File, Download, Plus } from 'lucide-react'
@@ -49,7 +50,7 @@ export function DocumentsBox({
       setNewDocumentLabel('')
       setIsAddingDocument(false)
     } catch (error) {
-      console.error('Error creating document:', error)
+      logger.error('Error creating document', error)
     } finally {
       setIsUploading(false)
     }

@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -105,7 +106,7 @@ export function TeamManagementModal({
       setSearchQuery('')
       router.refresh()
     } catch (error) {
-      console.error('Error adding person:', error)
+      logger.error('Error adding person', error)
       toast.error(error instanceof Error ? error.message : 'Failed to add person')
     } finally {
       setIsAdding(false)
@@ -123,7 +124,7 @@ export function TeamManagementModal({
       toast.success(`Removed ${personName} from show`)
       router.refresh()
     } catch (error) {
-      console.error('Error removing person:', error)
+      logger.error('Error removing person', error)
       toast.error('Failed to remove person')
     } finally {
       setRemovingId(null)

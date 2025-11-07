@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { logger } from '@/lib/logger'
 
 interface QueryResult {
   data: unknown;
@@ -36,7 +37,7 @@ export default function DebugPage() {
           .select('*')
           .eq('user_id', user.id);
         
-        console.log('org_members query:', { membersData, membersError });
+        logger.info('org_members query result', { membersData, membersError });
         setOrgMembers({ data: membersData, error: membersError });
 
         // Check organizations
@@ -44,7 +45,7 @@ export default function DebugPage() {
           .from('organizations')
           .select('*');
         
-        console.log('organizations query:', { orgsData, orgsError });
+        logger.info('organizations query result', { orgsData, orgsError });
         setOrganizations({ data: orgsData, error: orgsError });
 
         // Try the join query
@@ -62,12 +63,12 @@ export default function DebugPage() {
           `)
           .eq('user_id', user.id);
         
-        console.log('join query:', { joinData, joinError });
+        logger.info('join query result', { joinData, joinError });
 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        console.error('Debug error:', err);
+        logger.error('Debug error', err);
       }
     }
 

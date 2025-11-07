@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getCachedOrg, getCachedOrgInvitations } from '@/lib/cache'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +34,7 @@ export async function GET(
 
     return NextResponse.json(invitations || [])
   } catch (error) {
-    console.error('Error fetching invitations:', error)
+    logger.error('Error fetching invitations', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

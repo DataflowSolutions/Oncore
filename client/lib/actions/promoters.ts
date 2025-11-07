@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { createClient } from '@/app/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -118,7 +119,7 @@ export async function getPromotersByOrg(
       .order('name')
 
     if (error) {
-      console.error('Error fetching promoters:', error)
+      logger.error('Error fetching promoters', error)
       return {
         success: false,
         error: `Failed to fetch promoters: ${error.message}`,
@@ -142,7 +143,7 @@ export async function getPromotersByOrg(
       data: transformedPromoters,
     }
   } catch (error) {
-    console.error('Error in getPromotersByOrg:', error)
+    logger.error('Error in getPromotersByOrg', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -171,7 +172,7 @@ export async function getPromotersByVenue(
       .order('is_primary', { ascending: false })
 
     if (error) {
-      console.error('Error fetching venue promoters:', error)
+      logger.error('Error fetching venue promoters', error)
       return {
         success: false,
         error: `Failed to fetch venue promoters: ${error.message}`,
@@ -188,7 +189,7 @@ export async function getPromotersByVenue(
       data: promoters,
     }
   } catch (error) {
-    console.error('Error in getPromotersByVenue:', error)
+    logger.error('Error in getPromotersByVenue', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -222,7 +223,7 @@ export async function getPromoterById(promoterId: string): Promise<PromoterWithV
     .single()
 
   if (error) {
-    console.error('Error fetching promoter:', error)
+    logger.error('Error fetching promoter', error)
     return null
   }
 
@@ -298,7 +299,7 @@ export async function createPromoter(data: z.infer<typeof createPromoterSchema>)
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error creating promoter:', err)
+    logger.error('Error creating promoter', err)
     return {
       success: false,
       error: err.message || 'Failed to create promoter',
@@ -383,7 +384,7 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
     }
   } catch (error: unknown) {
     const err = error as { message?: string; code?: string }
-    console.error('Error linking promoter to venue:', err)
+    logger.error('Error linking promoter to venue', err)
     
     if (err.code === '23505') {
       return {
@@ -467,7 +468,7 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error updating promoter:', err)
+    logger.error('Error updating promoter', err)
     return {
       success: false,
       error: err.message || 'Failed to update promoter',
@@ -528,7 +529,7 @@ export async function deletePromoter(promoterId: string) {
     return { success: true }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error deleting promoter:', err)
+    logger.error('Error deleting promoter', err)
     return {
       success: false,
       error: err.message || 'Failed to delete promoter',
@@ -585,7 +586,7 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
     return { success: true }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error unlinking promoter from venue:', err)
+    logger.error('Error unlinking promoter from venue', err)
     return {
       success: false,
       error: err.message || 'Failed to unlink promoter from venue',
@@ -620,7 +621,7 @@ export async function searchPromoters(
     const { data: promoters, error } = await dbQuery
 
     if (error) {
-      console.error('Error searching promoters:', error)
+      logger.error('Error searching promoters', error)
       return {
         success: false,
         error: `Failed to search promoters: ${error.message}`,
@@ -632,7 +633,7 @@ export async function searchPromoters(
       data: promoters as Promoter[],
     }
   } catch (error) {
-    console.error('Error in searchPromoters:', error)
+    logger.error('Error in searchPromoters', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred',

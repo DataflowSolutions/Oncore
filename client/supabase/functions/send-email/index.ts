@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { getSupabaseWithAuth } from '../_shared/supabase.ts'
+import { getSupabaseClient, verifyAuth } from '../_shared/supabase.ts'
 import { createErrorResponse, createSuccessResponse, corsHeaders } from '../_shared/responses.ts'
+import { logger } from '../_shared/logger.ts'
 
 // Using Resend (recommended for Deno Edge Functions)
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
@@ -20,17 +21,24 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return createErrorResponse('Missing authorization header')
+      return createErrorResponse('Missing authorization header', 401)
+    }
+
+    // Verify the request is from an authenticated user
+    const user = await verifyAuth(authHeader)
+    if (!user) {
+      return createErrorResponse('Unauthorized - invalid or expired token', 401)
     }
 
     const emailRequest: EmailRequest = await req.json()
     const { to, subject, type, data } = emailRequest
 
     if (!to || !subject || !type) {
-      return createErrorResponse('Missing required fields: to, subject, type')
+      return createErrorResponse('Missing required fields: to, subject, type', 400)
     }
 
-    const supabase = getSupabaseWithAuth(authHeader)
+    // Use service role client for database operations (we've verified the user is authenticated)
+    const supabase = getSupabaseClient()
 
     // Generate email HTML based on type
     const html = generateEmailHTML(type, data)
@@ -52,27 +60,29 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error('Resend error:', error)
+      logger.error('Resend error', { error })
       return createErrorResponse('Failed to send email', error)
     }
 
     const result = await response.json()
 
-    // Log email sent
+    // Log email sent (using service role client, but tracking which user triggered it)
     await supabase.from('email_logs').insert({
       recipient: Array.isArray(to) ? to.join(',') : to,
       subject,
       type,
       status: 'sent',
       provider_id: result.id,
+      sent_by: user.id, // Track which user requested the email
     })
 
     return createSuccessResponse({ sent: true, id: result.id })
   } catch (err) {
-    console.error('Email sending error:', err)
+    logger.error('Email sending error', err)
     return createErrorResponse(
       'Failed to send email',
-      err instanceof Error ? err.message : 'Unknown error'
+      err instanceof Error ? err.message : 'Unknown error',
+      500
     )
   }
 })

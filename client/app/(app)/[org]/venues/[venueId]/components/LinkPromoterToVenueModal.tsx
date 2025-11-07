@@ -19,6 +19,7 @@ import { Plus, Search, Loader2, Mail, Phone, Building, MapPin, Users } from 'luc
 import { searchPromoters, linkPromoterToVenue } from '@/lib/actions/promoters'
 import { toast } from 'sonner'
 import type { Promoter } from '@/lib/actions/promoters'
+import { logger } from '@/lib/logger'
 
 interface LinkPromoterToVenueModalProps {
   venueId: string
@@ -53,7 +54,7 @@ export function LinkPromoterToVenueModal({
         setPromoters(availablePromoters)
       }
     } catch (error) {
-      console.error('Error loading promoters:', error)
+      logger.error('Error loading promoters', error)
     } finally {
       setLoading(false)
     }
@@ -119,7 +120,7 @@ export function LinkPromoterToVenueModal({
         toast.error(`Failed to link ${failCount} promoter${failCount > 1 ? 's' : ''}`)
       }
     } catch (error) {
-      console.error('Error linking promoters:', error)
+      logger.error('Error linking promoters', error)
       toast.error('Failed to link promoters')
     } finally {
       setLinking(false)

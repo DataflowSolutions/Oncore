@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const createOrgSchema = z.object({
   name: z.string().min(1, 'Organization name is required'),
@@ -54,7 +55,7 @@ export async function createOrganization(formData: FormData) {
       })
 
     if (error) {
-      console.error('Failed to create organization:', error)
+      logger.error('Failed to create organization', error)
       // Check if it's a duplicate key error
       if (error.message.includes('duplicate key') || error.message.includes('unique')) {
         return {
@@ -67,7 +68,7 @@ export async function createOrganization(formData: FormData) {
     }
     
   } catch (error) {
-    console.error('Error creating organization:', error)
+    logger.error('Error creating organization', error)
     return {
       error: 'An unexpected error occurred. Please try again.'
     }

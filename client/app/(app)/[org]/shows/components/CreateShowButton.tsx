@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { createShow } from "@/lib/actions/shows";
 import VenueFormFields from "@/components/advancing/VenueFormFields";
+import { logger } from '@/lib/logger'
 
 interface CreateShowButtonProps {
   orgId: string;
@@ -39,7 +40,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
         setSuccess(false);
       }, 1500);
     } catch (error) {
-      console.error("Error creating show:", error);
+      logger.error("Error creating show", error);
       setError(
         error instanceof Error ? error.message : "Failed to create show"
       );

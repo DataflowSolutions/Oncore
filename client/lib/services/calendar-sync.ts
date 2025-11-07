@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/app/utils/supabase/server'
 import type { Database } from '@/lib/database.types'
@@ -63,7 +64,7 @@ export class CalendarService {
       return { success: true, data, count: data?.length || 0 }
     } catch (error: unknown) {
       const err = error as { message?: string }
-      console.error('Error syncing calendar events:', err)
+      logger.error('Error syncing calendar events', err)
       return {
         success: false,
         error: err.message || 'Failed to sync calendar events',
@@ -102,7 +103,7 @@ export class CalendarService {
       return { success: true, data: ical }
     } catch (error: unknown) {
       const err = error as { message?: string }
-      console.error('Error exporting to iCalendar:', err)
+      logger.error('Error exporting to iCalendar', err)
       return {
         success: false,
         error: err.message || 'Failed to export calendar',
@@ -194,7 +195,7 @@ export class CalendarService {
       return await this.syncCalendarEvents(orgId, events)
     } catch (error: unknown) {
       const err = error as { message?: string }
-      console.error('Error importing iCalendar:', err)
+      logger.error('Error importing iCalendar', err)
       return {
         success: false,
         error: err.message || 'Failed to import calendar',

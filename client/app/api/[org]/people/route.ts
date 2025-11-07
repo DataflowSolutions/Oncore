@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getCachedOrg, getCachedOrgPeopleFull } from '@/lib/cache'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
@@ -43,7 +44,7 @@ export async function GET(
 
     return NextResponse.json(filteredPeople)
   } catch (error) {
-    console.error('Error fetching people:', error)
+    logger.error('Error fetching people', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

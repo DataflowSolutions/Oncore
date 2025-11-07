@@ -21,6 +21,8 @@ import {
   Filter
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { logger } from '@/lib/logger'
+
 
 interface ActivityLog {
   id: string;
@@ -83,7 +85,7 @@ export default function SettingsPage() {
           setChangelogEntries(data.logs);
         }
       } catch (error) {
-        console.error('Error fetching activity logs:', error);
+        logger.error('Error fetching activity logs', error);
       } finally {
         setLoading(false);
       }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 "use client";
 
 import { useState, useEffect } from "react";
@@ -37,7 +38,7 @@ export function LimitGuard({
         );
         setLimitCheck(result);
       } catch (error) {
-        console.error("Failed to check limits:", error);
+        logger.error("`Failed to check limits", error);
         setLimitCheck(null);
       } finally {
         setIsLoading(false);

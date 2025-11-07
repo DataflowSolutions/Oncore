@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -17,16 +18,21 @@ async function sendInvitationEmail(payload: {
       ? process.env.PROD_SUPABASE_URL!
       : process.env.LOCAL_SUPABASE_URL!
 
-    const supabaseKey = isProduction
-      ? process.env.PROD_SUPABASE_ANON_KEY!
-      : process.env.LOCAL_SUPABASE_ANON_KEY!
+    // Get the current user's session to send authenticated request
+    const supabase = await getSupabaseServer()
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      logger.error('No session found when trying to send invitation email')
+      return { success: false, error: 'Not authenticated' }
+    }
 
     const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // The send-email function expects an Authorization header (presence is checked).
-        'Authorization': `Bearer ${supabaseKey}`,
+        // Send the user's auth token, not the anon key
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         to: payload.to,
@@ -42,14 +48,14 @@ async function sendInvitationEmail(payload: {
 
     if (!res.ok) {
       const txt = await res.text()
-      console.error('Failed to send invitation email:', txt)
+      logger.error('Failed to send invitation email', txt)
       return { success: false, error: txt }
     }
 
     const json = await res.json()
     return { success: true, result: json }
   } catch (err) {
-    console.error('Error sending invitation email:', err)
+    logger.error('Error sending invitation email', err)
     return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
@@ -181,7 +187,7 @@ export async function invitePerson(
     .single()
 
   if (inviteError || !invitation) {
-    console.error('Error creating invitation:', inviteError)
+    logger.error('Error creating invitation', inviteError)
     return { success: false, error: 'Failed to create invitation' }
   }
 
@@ -205,10 +211,10 @@ export async function invitePerson(
     })
 
     if (!emailResult.success) {
-      console.error('Invitation email failed to send:', emailResult.error)
+      logger.error('Invitation email failed to send', emailResult.error)
     }
   } catch (err) {
-    console.error('Unexpected error sending invitation email:', err)
+    logger.error('Unexpected error sending invitation email', err)
   }
 
   // Revalidate people page
@@ -235,7 +241,7 @@ export async function getInvitation(token: string) {
       .rpc('get_invitation_by_token', { p_token: token })
 
     if (error) {
-      console.error('Error getting invitation:', error)
+      logger.error('Error getting invitation', error)
       return { success: false, error: error.message }
     }
 
@@ -247,7 +253,7 @@ export async function getInvitation(token: string) {
 
     return { success: true, invitation }
   } catch (err) {
-    console.error('Error getting invitation:', err)
+    logger.error('Error getting invitation', err)
     return { success: false, error: 'Failed to get invitation' }
   }
 }
@@ -274,7 +280,7 @@ export async function acceptInvitation(token: string) {
       })
 
     if (error) {
-      console.error('Error accepting invitation:', error)
+      logger.error('Error accepting invitation', error)
       return { success: false, error: error.message }
     }
 
@@ -303,7 +309,7 @@ export async function acceptInvitation(token: string) {
       orgSlug: org?.slug
     }
   } catch (err) {
-    console.error('Error accepting invitation:', err)
+    logger.error('Error accepting invitation', err)
     return { success: false, error: 'Failed to accept invitation' }
   }
 }
@@ -352,7 +358,7 @@ export async function resendInvitation(invitationId: string) {
     .single()
 
   if (updateError || !updated) {
-    console.error('Error updating invitation:', updateError)
+    logger.error('Error updating invitation', updateError)
     return { success: false, error: 'Failed to resend invitation' }
   }
   // Send invitation email (best-effort)
@@ -379,13 +385,13 @@ export async function resendInvitation(invitationId: string) {
       })
 
       if (!emailResult.success) {
-        console.error('Resend invitation email failed:', emailResult.error)
+        logger.error('Resend invitation email failed', emailResult.error)
       }
     } else {
-      console.warn('No email available on invitation.people; skipping resend email')
+      logger.warn('No email available on invitation.people; skipping resend email')
     }
   } catch (err) {
-    console.error('Unexpected error resending invitation email:', err)
+    logger.error('Unexpected error resending invitation email', err)
   }
 
   // Revalidate people page
@@ -432,7 +438,7 @@ export async function cancelInvitation(invitationId: string) {
     .eq('id', invitationId)
 
   if (deleteError) {
-    console.error('Error deleting invitation:', deleteError)
+    logger.error('Error deleting invitation', deleteError)
     return { success: false, error: 'Failed to cancel invitation' }
   }
 
@@ -475,7 +481,7 @@ export async function getOrgInvitations(orgId: string) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching invitations:', error)
+    logger.error('Error fetching invitations', error)
     return []
   }
 
@@ -530,13 +536,13 @@ export async function checkAvailableSeats(orgId: string): Promise<SeatCheckResul
       .rpc('check_available_seats', { p_org_id: orgId })
 
     if (error) {
-      console.error('Error checking seats:', error)
+      logger.error('Error checking seats', error)
       return null
     }
 
     return data as SeatCheckResult
   } catch (err) {
-    console.error('Error checking seats:', err)
+    logger.error('Error checking seats', err)
     return null
   }
 }

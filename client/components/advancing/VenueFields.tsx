@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -46,7 +47,7 @@ export default function VenueFields({
         setVenueCache(orgId, venues);
         setAllVenues(venues);
       } catch (error) {
-        console.error("Error loading venues:", error);
+        logger.error("`Error loading venues", error);
       }
     };
 

@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import VenueClient from "./components/VenueClient";
+import { logger } from '@/lib/logger'
+
 
 interface VenueDetailPageProps {
   params: Promise<{ org: string; venueId: string }>;
@@ -65,7 +67,7 @@ export default async function VenueDetailPage({
       </div>
     );
   } catch (error) {
-    console.error("Error loading venue details:", error);
+    logger.error("Error loading venue details", error);
     notFound();
   }
 }

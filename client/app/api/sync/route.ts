@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function POST() {
   try {
@@ -9,6 +10,7 @@ export async function POST() {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
+      logger.security('Sync endpoint access attempt', { action: 'sync', result: 'denied' });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,7 +24,7 @@ export async function POST() {
       .eq('user_id', user.id);
 
     if (orgsError) {
-      console.error('Error fetching orgs:', orgsError);
+      logger.error('Sync: Error fetching orgs', orgsError);
       return NextResponse.json({ error: 'Failed to fetch organizations' }, { status: 500 });
     }
 
@@ -48,24 +50,25 @@ export async function POST() {
 
       totalSynced += count || 0;
       syncResults.push({
-        org: org.organizations.name,
-        shows: count || 0,
+        orgName: org.organizations.name,
+        showCount: count || 0,
       });
     }
 
-    // Log sync activity
-    console.log('Sync completed:', syncResults);
+    logger.info('Sync completed', { 
+      totalOrgs: orgs.length, 
+      totalItems: totalSynced 
+    });
 
     return NextResponse.json({
       success: true,
       message: `Synced ${totalSynced} items across ${orgs.length} organization(s)`,
       synced: totalSynced,
-      details: syncResults,
       timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
-    console.error('Sync error:', error);
+    logger.error('Sync error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to sync data' },
       { status: 500 }

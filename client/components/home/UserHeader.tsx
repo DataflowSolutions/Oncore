@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 "use client";
 
 import { useState } from "react";
@@ -18,7 +19,7 @@ export function UserHeader({ email }: UserHeaderProps) {
     try {
       await supabase.auth.signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out', error);
     } finally {
       setSigningOut(false);
     }

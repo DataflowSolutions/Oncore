@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, MapPin, Plus } from 'lucide-react'
@@ -42,7 +43,7 @@ export default function VenueSearch({ orgId, onVenueSelect, onNewVenue }: VenueS
           setVenues(results)
           setIsDropdownOpen(true)
         } catch (error) {
-          console.error('Error searching venues:', error)
+          logger.error('Error searching venues', error)
         } finally {
           setIsSearching(false)
         }

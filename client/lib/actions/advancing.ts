@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database, Json } from '@/lib/database.types'
@@ -45,7 +46,7 @@ export async function getAdvancingSessions(orgSlug: string) {
     .order('created_at', { ascending: false })
     
   if (error) {
-    console.error('Error fetching advancing sessions:', error)
+    logger.error('Error fetching advancing sessions', error)
     return []
   }
   
@@ -77,7 +78,7 @@ export async function getAdvancingSession(sessionId: string): Promise<AdvancingS
     .single()
     
   if (error) {
-    console.error('Error fetching advancing session:', error)
+    logger.error('Error fetching advancing session', error)
     return null
   }
   
@@ -115,7 +116,7 @@ export async function createAdvancingSession(
     })
     
   if (error) {
-    console.error('Error creating advancing session:', error)
+    logger.error('Error creating advancing session', error)
     return { success: false, error: error.message }
   }
   
@@ -130,7 +131,7 @@ export async function createAdvancingSession(
     .single()
   
   if (fetchError || !session) {
-    console.error('Error fetching created session:', fetchError)
+    logger.error('Error fetching created session', fetchError)
     return { success: false, error: 'Session created but could not be fetched' }
   }
   
@@ -153,7 +154,7 @@ export async function getAdvancingFields(sessionId: string): Promise<AdvancingFi
     .order('sort_order', { ascending: true })
     
   if (error) {
-    console.error('Error fetching advancing fields:', error)
+    logger.error('Error fetching advancing fields', error)
     return []
   }
   
@@ -208,7 +209,7 @@ export async function createAdvancingField(
     .single()
     
   if (error) {
-    console.error('Error creating advancing field:', error)
+    logger.error('Error creating advancing field', error)
     return { success: false, error: error.message }
   }
   
@@ -242,7 +243,7 @@ export async function updateAdvancingField(
     .single()
     
   if (error) {
-    console.error('Error updating advancing field:', error)
+    logger.error('Error updating advancing field', error)
     return { success: false, error: error.message }
   }
   
@@ -271,7 +272,7 @@ export async function getAdvancingComments(fieldId: string): Promise<AdvancingCo
     .order('created_at', { ascending: true })
     
   if (error) {
-    console.error('Error fetching advancing comments:', error)
+    logger.error('Error fetching advancing comments', error)
     return []
   }
   
@@ -314,7 +315,7 @@ export async function createAdvancingComment(
     .single()
     
   if (error) {
-    console.error('Error creating advancing comment:', error)
+    logger.error('Error creating advancing comment', error)
     return { success: false, error: error.message }
   }
   
@@ -357,7 +358,7 @@ export async function getAdvancingDocuments(sessionId: string): Promise<Advancin
     .order('created_at', { ascending: false })
     
   if (error) {
-    console.error('Error fetching advancing documents:', error)
+    logger.error('Error fetching advancing documents', error)
     return []
   }
   
@@ -402,7 +403,7 @@ export async function createAdvancingDocument(
     .single()
     
   if (error) {
-    console.error('Error creating advancing document:', error)
+    logger.error('Error creating advancing document', error)
     return { success: false, error: error.message }
   }
   
@@ -430,7 +431,7 @@ export async function loadAdvancingGridData(
       .like('field_name', `${gridType}_%`)
       
     if (error) {
-      console.error('Error loading grid data:', error)
+      logger.error('Error loading grid data', error)
       return teamMemberIds.map(id => ({ id: `${gridType}_${id}` }))
     }
     
@@ -458,7 +459,7 @@ export async function loadAdvancingGridData(
     return Object.values(gridData)
     
   } catch (error) {
-    console.error('Error loading grid data:', error)
+    logger.error('Error loading grid data', error)
     return teamMemberIds.map(id => ({ id: `${gridType}_${id}` }))
   }
 }
@@ -561,7 +562,7 @@ export async function saveAdvancingGridData(
         .insert(toInsert)
       
       if (error) {
-        console.error('Batch insert error:', error)
+        logger.error('Batch insert error', error)
         return { success: false, error: error.message }
       }
     }
@@ -584,7 +585,7 @@ export async function saveAdvancingGridData(
         const errors = results.filter(r => r.error).map(r => r.error)
         
         if (errors.length > 0) {
-          console.error('Batch update errors:', errors)
+          logger.error('Batch update errors', errors)
           return { success: false, error: `Failed to update ${errors.length} fields` }
         }
       }
@@ -595,7 +596,7 @@ export async function saveAdvancingGridData(
       try {
         await generateScheduleFromAdvancing(orgSlug, showId, sessionId)
       } catch (error) {
-        console.error('Failed to generate schedule from grid data:', error)
+        logger.error('Failed to generate schedule from grid data', error)
         // Don't fail the save if schedule generation fails
       }
     }
@@ -604,7 +605,7 @@ export async function saveAdvancingGridData(
     return { success: true }
     
   } catch (error) {
-    console.error('Error saving grid data:', error)
+    logger.error('Error saving grid data', error)
     return { success: false, error: 'Failed to save grid data' }
   }
 }

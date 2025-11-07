@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger'
 import { getSupabaseServer } from './supabase/server'
 
 // RPC response types
@@ -50,7 +51,7 @@ export async function checkOrgBilling(orgId: string): Promise<BillingStatus | nu
     .rpc('org_subscription_status', { p_org: orgId })
   
   if (error) {
-    console.error('Failed to check org billing status:', error)
+    logger.error('Failed to check org billing status', error)
     return null
   }
 
@@ -88,7 +89,7 @@ export async function getOrgBillingDashboard(orgId: string) {
     .rpc('org_billing_dashboard', { p_org_id: orgId })
   
   if (error) {
-    console.error('Failed to get billing dashboard:', error)
+    logger.error('Failed to get billing dashboard', error)
     return null
   }
 
@@ -113,7 +114,7 @@ export async function checkOrgLimits(
     })
   
   if (error || !data) {
-    console.error('Failed to check org limits:', error)
+    logger.error('Failed to check org limits', error)
     return null
   }
 

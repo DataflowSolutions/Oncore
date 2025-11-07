@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { createClient } from '@/app/utils/supabase/server'
 import { parseForwardedEmail } from '@/lib/services/email-parser'
@@ -73,7 +74,7 @@ export async function parseEmail(data: z.infer<typeof parseEmailSchema>) {
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Email parsing error:', err)
+    logger.error('Email parsing error', err)
     return {
       success: false,
       error: err.message || 'Failed to parse email',
@@ -87,7 +88,13 @@ const confirmParsedEmailSchema = z.object({
     title: z.string(),
     date: z.string(),
     venueId: z.string().uuid().optional(),
-    fee: z.string().optional(),
+    fee: z.union([z.string(), z.number()]).optional().transform(val => {
+      // Convert string to number if needed
+      if (val === undefined || val === null || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num;
+    }),
+    feeCurrency: z.string().default('USD').optional(),
     notes: z.string().optional(),
   }),
   createVenue: z.boolean().default(false),
@@ -177,6 +184,7 @@ export async function confirmParsedEmail(
         date: showData.date,
         venue_id: venueId,
         fee: showData.fee,
+        fee_currency: showData.feeCurrency || 'USD',
         notes: showData.notes,
         status: 'confirmed',
       })
@@ -202,7 +210,7 @@ export async function confirmParsedEmail(
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error confirming parsed email:', err)
+    logger.error('Error confirming parsed email', err)
     return {
       success: false,
       error: err.message || 'Failed to create show from email',

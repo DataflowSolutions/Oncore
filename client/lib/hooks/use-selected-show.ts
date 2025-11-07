@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
@@ -26,7 +27,7 @@ export function useSelectedShow(orgSlug: string) {
           setSelectedShow(parsed)
         }
       } catch (error) {
-        console.error('Error parsing stored show:', error)
+        logger.error('Error parsing stored show', error)
       }
     }
   }, [orgSlug])
@@ -66,7 +67,7 @@ export function useSelectedShow(orgSlug: string) {
         }
       }
     } catch (error) {
-      console.error('Error fetching show title:', error)
+      logger.error('Error fetching show title', error)
     }
   }
 

@@ -36,22 +36,6 @@ export async function createClient() {
   });
 }
 
-// Service role client for admin operations (server-side only)
-const supabaseServiceRoleKey = isProduction
-  ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY!
-  : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY!;
-
-export function createAdminClient() {
-  return createServerClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-    cookies: {
-      getAll() {
-        return [];
-      },
-      setAll() {},
-    },
-  });
-}
+// REMOVED: createAdminClient has been moved to @/lib/supabase/admin.server
+// This ensures the admin client with service role key cannot leak to the browser
+// Import from @/lib/supabase/admin.server instead

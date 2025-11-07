@@ -41,12 +41,6 @@ INSERT INTO public.schedule_items (id, org_id, show_id, starts_at, ends_at, titl
 ('550e8400-e29b-41d4-a716-446655440002', 'db78a629-d2c4-4031-affc-09987c9bc37e', '380f36c2-b89b-4f01-9a35-3414fa36a637', '2025-10-29 16:30:00+00', '2025-10-29 17:30:00+00', 'Soundcheck', 'Main Stage', 'Full band soundcheck with FOH engineer', '2025-10-01 16:50:41.996643+00'),
 ('550e8400-e29b-41d4-a716-446655440003', 'db78a629-d2c4-4031-affc-09987c9bc37e', '380f36c2-b89b-4f01-9a35-3414fa36a637', '2025-10-29 18:00:00+00', '2025-10-29 18:45:00+00', 'Dinner Break', 'Green Room', 'Catering provided by venue', '2025-10-01 16:50:41.996643+00');
 
--- public.waitlist - Sample waitlist entries
-INSERT INTO public.waitlist (id, email, name, role, company, phone, notes, status, source, created_at) VALUES
-('660e8400-e29b-41d4-a716-446655440001', 'sarah.artist@example.com', 'Sarah Johnson', 'artist', 'The Sarah Johnson Band', '555-0101', 'Interested in touring management features', 'pending', 'website', '2025-10-02 10:00:00+00'),
-('660e8400-e29b-41d4-a716-446655440002', 'mike.manager@example.com', 'Mike Williams', 'manager', 'Williams Management', '555-0102', 'Managing 5 artists currently', 'pending', 'website', '2025-10-02 11:30:00+00'),
-('660e8400-e29b-41d4-a716-446655440003', 'venue@grandtheatre.com', 'Emily Davis', 'venue', 'Grand Theatre', '555-0103', 'Looking for better booking tools', 'invited', 'website', '2025-10-02 14:20:00+00');
-
 -- public.contacts - Sample contacts (partners/promoters)
 INSERT INTO public.contacts (id, org_id, name, email, phone, role, company, commission_rate, notes, status, type, created_at) VALUES
 ('770e8400-e29b-41d4-a716-446655440001', 'db78a629-d2c4-4031-affc-09987c9bc37e', 'Alex Turner', 'alex@bookingnexus.com', '555-0201', 'Booking Agent', 'Booking Nexus', 4.00, 'Specializes in Scandinavian venues', 'active', 'agent', '2025-10-03 09:00:00+00'),

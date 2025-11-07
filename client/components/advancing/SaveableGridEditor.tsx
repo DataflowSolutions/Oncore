@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState, useEffect } from 'react'
 import { Plus, Save, Loader2, Copy, Clipboard } from 'lucide-react'
@@ -80,7 +81,7 @@ export function SaveableGridEditor({
 
   const handleSave = async () => {
     if (!showId) {
-      console.error('Cannot save without showId')
+      logger.error('Cannot save without showId')
       return
     }
     
@@ -106,10 +107,10 @@ export function SaveableGridEditor({
           // Could add a success toast here
         }, 1000)
       } else {
-        console.error('Failed to save grid data:', result.error)
+        logger.error('Failed to save grid data', result.error)
       }
     } catch (error) {
-      console.error('Error saving grid data:', error)
+      logger.error('Error saving grid data', error)
     } finally {
       setIsSaving(false)
     }

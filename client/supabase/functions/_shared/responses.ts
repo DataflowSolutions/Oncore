@@ -10,11 +10,11 @@ export interface SuccessResponse<T = unknown> {
 
 export type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse
 
-export const createErrorResponse = (error: string, details?: string): Response => {
+export const createErrorResponse = (error: string, details?: string, status = 400): Response => {
   return new Response(
     JSON.stringify({ error, details } as ErrorResponse),
     {
-      status: 400,
+      status,
       headers: { 'Content-Type': 'application/json' },
     }
   )

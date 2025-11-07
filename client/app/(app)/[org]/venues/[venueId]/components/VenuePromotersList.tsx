@@ -10,6 +10,7 @@ import { LinkPromoterToVenueModal } from './LinkPromoterToVenueModal'
 import { unlinkPromoterFromVenue } from '@/lib/actions/promoters'
 import { toast } from 'sonner'
 import type { Promoter } from '@/lib/actions/promoters'
+import { logger } from '@/lib/logger'
 
 interface VenuePromotersListProps {
   venueId: string
@@ -43,7 +44,7 @@ export function VenuePromotersList({
         toast.error(result.error || 'Failed to remove promoter')
       }
     } catch (error) {
-      console.error('Error unlinking promoter:', error)
+      logger.error('Error unlinking promoter', error)
       toast.error('Failed to remove promoter')
     } finally {
       setUnlinkingId(null)

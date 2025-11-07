@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { createClient } from '@/app/utils/supabase/server'
 import { parseContractFromURL } from '@/lib/services/contract-parser'
@@ -139,7 +140,7 @@ export async function parseContract(params: z.infer<typeof parseContractSchema>)
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Contract parsing error:', err)
+    logger.error('Contract parsing error', err)
     return { error: err.message || 'Failed to parse contract' }
   }
 }

@@ -1,4 +1,5 @@
 "use client"
+import { logger } from '@/lib/logger'
 
 import * as React from "react"
 import { Input } from "@/components/ui/input"
@@ -40,7 +41,7 @@ export function EditableText({
       try {
         await onSave(editValue.trim())
       } catch (error) {
-        console.error("Failed to save:", error)
+        logger.error("`Failed to save", error)
         setEditValue(value)
       } finally {
         setIsSaving(false)

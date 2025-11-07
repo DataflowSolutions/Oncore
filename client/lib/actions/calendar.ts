@@ -1,4 +1,5 @@
 'use server'
+import { logger } from '@/lib/logger'
 
 import { createCalendarService } from '@/lib/services/calendar-sync'
 import { z } from 'zod'
@@ -24,7 +25,7 @@ export async function exportToCalendar(data: z.infer<typeof exportCalendarSchema
     return await calendarService.exportShowsToICalendar(orgId, showIds)
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error exporting calendar:', err)
+    logger.error('Error exporting calendar', err)
     return {
       success: false,
       error: err.message || 'Failed to export calendar',
@@ -53,7 +54,7 @@ export async function importFromCalendar(data: z.infer<typeof importCalendarSche
     return await calendarService.importICalendar(orgId, icalContent)
   } catch (error: unknown) {
     const err = error as { message?: string }
-    console.error('Error importing calendar:', err)
+    logger.error('Error importing calendar', err)
     return {
       success: false,
       error: err.message || 'Failed to import calendar',

@@ -4,12 +4,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
   
-  // Environment variable configuration
-  env: {
-    // Make environment switching available to client-side
-    PROD_DB: process.env.PROD_DB,
-    SUPABASE_PROJECT_REF: process.env.SUPABASE_PROJECT_REF,
-  },
+  // REMOVED: Environment variables are no longer exposed via env object
+  // Server-side code can access process.env directly
+  // Client-side code should only use NEXT_PUBLIC_* prefixed variables
 
   // Experimental features
   experimental: {

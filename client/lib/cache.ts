@@ -5,19 +5,20 @@
 
 import { cache } from 'react'
 import { getSupabaseServer } from './supabase/server'
+import { logger } from './logger'
 
 /**
  * Cache organization lookup for the duration of the request
  * This prevents multiple components from fetching the same org
  */
 export const getCachedOrg = cache(async (slug: string) => {
-  console.log('📦 [Cache] getCachedOrg called for slug:', slug);
+  logger.debug('Cache: getCachedOrg called', { slug });
   
   const supabase = await getSupabaseServer()
   
   // Check if user is authenticated
   const { data: { user } } = await supabase.auth.getUser()
-  console.log('📦 [Cache] User authenticated:', !!user, 'userId:', user?.id);
+  logger.debug('Cache: User authenticated', { authenticated: !!user });
   
   const { data, error } = await supabase
     .from('organizations')
@@ -25,13 +26,13 @@ export const getCachedOrg = cache(async (slug: string) => {
     .eq('slug', slug)
     .single()
   
-  console.log('📦 [Cache] Query result:', { 
-    found: !!data, 
-    error: error?.message,
-    errorCode: error?.code,
-    errorDetails: error?.details,
-    errorHint: error?.hint
-  });
+  if (error) {
+    logger.warn('Cache: Org lookup failed', { 
+      found: !!data, 
+      errorMessage: error?.message,
+      errorCode: error?.code
+    });
+  }
   
   // If RLS is blocking, check if user is an org member
   if (!data && user) {
@@ -40,7 +41,7 @@ export const getCachedOrg = cache(async (slug: string) => {
       .select('org_id, role')
       .eq('user_id', user.id)
       .limit(5)
-    console.log('📦 [Cache] User memberships:', membership);
+    logger.debug('Cache: User memberships fetched', { count: membership?.length ?? 0 });
   }
   
   return { data, error }
@@ -348,7 +349,7 @@ export const getCachedAvailableSeats = cache(async (orgId: string) => {
       .rpc('check_available_seats', { p_org_id: orgId })
     
     if (error) {
-      console.error('Error checking seats:', error)
+      logger.error('Error checking seats', error)
       return null
     }
     
@@ -364,7 +365,7 @@ export const getCachedAvailableSeats = cache(async (orgId: string) => {
       org_id: string;
     } | null
   } catch (err) {
-    console.error('Error checking seats:', err)
+    logger.error('Error checking seats', err)
     return null
   }
 })

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
+import { logger } from '@/lib/logger'
 import {
   Dialog,
   DialogContent,
@@ -66,7 +67,7 @@ export function AddPromoterModal({ orgId }: AddPromoterModalProps) {
         toast.error(result.error || 'Failed to add promoter')
       }
     } catch (error) {
-      console.error('Error adding promoter:', error)
+      logger.error('Error adding promoter', error)
       toast.error('Failed to add promoter')
     } finally {
       setLoading(false)

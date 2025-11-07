@@ -5,6 +5,7 @@ import { Calendar, Users, MapPin, Music } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VenueLink } from "./shows/components/VenueLink";
+import { logger } from "@/lib/logger";
 
 // Optimize: Cache for 60 seconds, this is a dashboard page
 export const revalidate = 60;
@@ -26,7 +27,7 @@ type ShowAssignment = {
 export default async function OrgHomePage({ params }: OrgHomePageProps) {
   const { org: orgSlug } = await params;
 
-  console.log('🏢 [OrgPage] Loading org with slug:', orgSlug);
+  logger.debug('OrgPage: Loading org');
 
   // OPTIMIZED: Use cached helpers and parallelize all queries
   const { getCachedOrg, getCachedOrgShows } = await import('@/lib/cache');
@@ -34,21 +35,19 @@ export default async function OrgHomePage({ params }: OrgHomePageProps) {
   // First get org, then fetch shows with org.id
   const { data: org, error } = await getCachedOrg(orgSlug)
 
-  console.log('🏢 [OrgPage] Org lookup result:', { 
-    found: !!org, 
-    orgId: org?.id,
-    error: error?.message 
-  });
+  if (error) {
+    logger.warn('OrgPage: Org lookup failed', { errorMessage: error.message });
+  }
 
   if (error || !org) {
-    console.log('❌ [OrgPage] Org not found, returning 404');
+    logger.debug('OrgPage: Org not found, returning 404');
     notFound();
   }
 
   // Fetch shows using org.id
   const { data: allShows } = await getCachedOrgShows(org.id)
   
-  console.log('✅ [OrgPage] Org loaded successfully:', org.name);
+  logger.debug('OrgPage: Org loaded successfully');
 
   // Filter to upcoming shows only (client-side filtering of cached data)
   const todayStr = new Date().toISOString().split("T")[0]

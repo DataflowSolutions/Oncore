@@ -1,4 +1,16 @@
+/**
+ * DEPRECATED: This file is being phased out.
+ * 
+ * Use instead:
+ * - Client-side: import { createClient } from '@/lib/supabase/client'
+ * - Server-side: import { getSupabaseServer } from '@/lib/supabase/server'
+ * - Admin operations: import { getSupabaseAdmin } from '@/lib/supabase/admin.server'
+ * 
+ * This file remains for backward compatibility but should not be used in new code.
+ */
+
 import { createClient } from '@supabase/supabase-js'
+import { logger } from './logger'
 
 // Environment-based configuration
 const isProduction = process.env.PROD_DB === 'true'
@@ -11,7 +23,7 @@ const supabaseAnonKey = isProduction
   ? process.env.PROD_SUPABASE_ANON_KEY!
   : process.env.LOCAL_SUPABASE_ANON_KEY!
 
-// Create Supabase client
+// Create Supabase client (deprecated - use createClient from @/lib/supabase/client instead)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -20,19 +32,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Service role client (server-side only)
-const supabaseServiceRoleKey = isProduction
-  ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY!
-  : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY!
+// REMOVED: supabaseAdmin export - use getSupabaseAdmin() from @/lib/supabase/admin.server instead
+// Admin client has been moved to a server-only module for security
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
-
-// Database URL for direct connections
+// Database URL for direct connections (server-side only)
 export const databaseUrl = isProduction
   ? process.env.PROD_DATABASE_URL!
   : process.env.LOCAL_DATABASE_URL!
@@ -46,10 +49,8 @@ export const config = {
 } as const
 
 // Log current environment (for debugging)
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Supabase Config:', {
-    environment: isProduction ? 'production' : 'local',
-    url: supabaseUrl,
-    projectRef: config.projectRef
-  })
-}
+logger.debug('Supabase Config initialized', {
+  environment: isProduction ? 'production' : 'local',
+  hasUrl: !!supabaseUrl,
+  hasProjectRef: !!config.projectRef
+})

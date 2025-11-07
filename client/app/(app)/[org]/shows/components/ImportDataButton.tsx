@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, FileSpreadsheet, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from '@/lib/logger'
+
 
 interface ImportDataButtonProps {
   orgId: string;
@@ -79,7 +81,7 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
         window.location.reload();
       }, 1500);
     } catch (err) {
-      console.error("Error importing data:", err);
+      logger.error("Error importing data", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to import data";
       setError(errorMessage);
       toast.error('Import Failed', {

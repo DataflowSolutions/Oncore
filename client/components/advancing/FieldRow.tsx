@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger'
 
 import { useState, useEffect } from 'react'
 import { Check, X, MessageCircle, Edit, Save, ArrowRight } from 'lucide-react'
@@ -103,12 +104,12 @@ export function FieldRow({
               setTimeout(() => setScheduleGenerated(false), 3000)
             }
           } catch (error) {
-            console.error('Failed to generate schedule items:', error)
+            logger.error('Failed to generate schedule items', error)
           }
         }
       }
     } catch (error) {
-      console.error('Failed to save field:', error)
+      logger.error('Failed to save field', error)
     } finally {
       setIsUpdating(false)
     }
@@ -129,7 +130,7 @@ export function FieldRow({
       setNewComment('')
       onFieldUpdate?.()
     } catch (error) {
-      console.error('Failed to add comment:', error)
+      logger.error('Failed to add comment', error)
     } finally {
       setIsAddingComment(false)
     }
