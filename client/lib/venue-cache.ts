@@ -1,3 +1,15 @@
+/**
+ * Client-side venue cache
+ * Simple in-memory cache for client components
+ * 
+ * IMPORTANT: Always use static imports
+ * ✅ DO:   import { getVenueCache } from '@/lib/venue-cache'
+ * ❌ DON'T: const cache = await import('@/lib/venue-cache')
+ * 
+ * For cache patterns and best practices, see:
+ * @see docs/CACHE_PATTERNS.md
+ */
+
 interface Venue {
   id: string
   name: string

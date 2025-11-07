@@ -45,28 +45,127 @@ A Next.js application with full Supabase integration for local development and p
 
 ## 🔧 Environment Configuration
 
-The application uses a simple flag system to switch between environments:
+The application supports both local (Docker) and production (Supabase Cloud) environments with proper separation of client and server-side variables.
+
+### Environment Switcher
+
+Use these flags to switch between environments:
 
 ```bash
 # .env.local
-PROD_DB=false  # Use local Supabase
-PROD_DB=true   # Use production Supabase
+NEXT_PUBLIC_PROD_DB=false  # Client-side: false = local, true = production
+PROD_DB=false              # Server-side: false = local, true = production
 ```
 
-### Production Environment
-```bash
-PROD_SUPABASE_URL=https://tabcxfaqqkfbchbxgogl.supabase.co
-PROD_SUPABASE_ANON_KEY=your_anon_key
-PROD_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-PROD_DATABASE_URL=postgresql://postgres:password@db.project.supabase.co:5432/postgres
-```
+**Important:** Both flags should always match! They control client and server-side environment selection respectively.
 
-### Local Environment
+### Full Environment Variable Matrix
+
+#### 🌐 Client-Side Variables (Browser-Safe)
+
+These use the `NEXT_PUBLIC_` prefix and are safe to expose in the browser:
+
+| Variable | Local Dev | Production | Required |
+|----------|-----------|------------|----------|
+| `NEXT_PUBLIC_PROD_DB` | `false` | `true` | ✅ Always |
+| `NEXT_PUBLIC_LOCAL_SUPABASE_URL` | `http://127.0.0.1:54321` | - | ✅ Local only |
+| `NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY` | (See .env.example) | - | ✅ Local only |
+| `NEXT_PUBLIC_PROD_SUPABASE_URL` | - | Your cloud URL | ✅ Prod only |
+| `NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY` | - | Your anon key | ✅ Prod only |
+
+#### 🔒 Server-Side Variables (Secrets)
+
+These do **NOT** have `NEXT_PUBLIC_` prefix and are never exposed to the browser:
+
+| Variable | Local Dev | Production | Required |
+|----------|-----------|------------|----------|
+| `PROD_DB` | `false` | `true` | ✅ Always |
+| `LOCAL_SUPABASE_URL` | `http://127.0.0.1:54321` | - | ✅ Local only |
+| `LOCAL_SUPABASE_ANON_KEY` | (See .env.example) | - | ✅ Local only |
+| `LOCAL_SUPABASE_SERVICE_ROLE_KEY` | (See .env.example) | - | ✅ Local only |
+| `LOCAL_DATABASE_URL` | `postgresql://...` | - | ✅ Local only |
+| `PROD_SUPABASE_URL` | - | Your cloud URL | ✅ Prod only |
+| `PROD_SUPABASE_ANON_KEY` | - | Your anon key | ✅ Prod only |
+| `PROD_SUPABASE_SERVICE_ROLE_KEY` | - | Your service key | ✅ Prod only |
+| `PROD_DATABASE_URL` | - | `postgresql://...` | ✅ Prod only |
+
+#### 🛠️ Development & CI/CD
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `SUPABASE_PROJECT_REF` | Supabase project ID | ✅ Always |
+| `SUPABASE_ACCESS_TOKEN` | CLI authentication | For CI/CD |
+| `GEMINI_API_KEY` | Google Gemini API | Optional |
+| `NEXT_TELEMETRY_DISABLED` | Disable Next.js telemetry | Optional |
+
+### 🔐 Security Best Practices
+
+**✅ DO:**
+- Use `NEXT_PUBLIC_` prefix ONLY for non-sensitive data (URLs, anon keys)
+- Keep service role keys server-side only (no `NEXT_PUBLIC_` prefix)
+- Store production secrets in Vercel/hosting environment variables
+- Use `.env.local` for local development (git-ignored)
+
+**❌ DON'T:**
+- Never add `NEXT_PUBLIC_` to service role keys
+- Never commit `.env.local` to git
+- Never expose database URLs to the client
+- Never use admin keys in browser code
+
+### 🔄 Supabase Proxy Usage
+
+**Local Development (Docker):**
+- Supabase runs in Docker containers
+- Direct connection via `http://127.0.0.1:54321`
+- No proxy needed - services communicate directly
+
+**Production:**
+- Direct connection to Supabase Cloud
+- URLs like `https://[project-ref].supabase.co`
+- No proxy - standard HTTPS connections
+
+**Note:** This app does NOT use Next.js middleware proxying for Supabase. All connections are direct to avoid latency and complexity.
+
+### 📝 Example Configurations
+
+#### Local Development (.env.local)
 ```bash
+# Environment switcher
+NEXT_PUBLIC_PROD_DB=false
+PROD_DB=false
+
+# Local Docker Supabase (client-side)
+NEXT_PUBLIC_LOCAL_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Local Docker Supabase (server-side)
 LOCAL_SUPABASE_URL=http://127.0.0.1:54321
-LOCAL_SUPABASE_ANON_KEY=local_anon_key
-LOCAL_SUPABASE_SERVICE_ROLE_KEY=local_service_role_key
+LOCAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+LOCAL_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 LOCAL_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Project settings
+SUPABASE_PROJECT_REF=your_project_ref
+```
+
+#### Production (.env.production or hosting env vars)
+```bash
+# Environment switcher
+NEXT_PUBLIC_PROD_DB=true
+PROD_DB=true
+
+# Production Supabase (client-side)
+NEXT_PUBLIC_PROD_SUPABASE_URL=https://tabcxfaqqkfbchbxgogl.supabase.co
+NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Production Supabase (server-side secrets)
+PROD_SUPABASE_URL=https://tabcxfaqqkfbchbxgogl.supabase.co
+PROD_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+PROD_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+PROD_DATABASE_URL=postgresql://postgres:[password]@db.tabcxfaqqkfbchbxgogl.supabase.co:5432/postgres
+
+# Project settings
+SUPABASE_PROJECT_REF=tabcxfaqqkfbchbxgogl
 ```
 
 ## 🛠️ Available Commands

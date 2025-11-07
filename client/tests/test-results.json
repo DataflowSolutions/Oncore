@@ -1,36 +1,36 @@
 {
-  "timestamp": "2025-11-04T15:33:28.476Z",
+  "timestamp": "2025-11-07T23:51:07.273Z",
   "tests": [
     {
       "name": "RLS Security Tests",
       "status": "FAIL",
-      "duration": 5930,
+      "duration": 4146,
       "error": "Command failed: npx tsx security/rls-vulnerability.test.ts",
-      "timestamp": "2025-11-04T15:33:34.407Z"
+      "timestamp": "2025-11-07T23:51:11.421Z"
     },
     {
       "name": "Database Performance Tests",
       "status": "PASS",
-      "duration": 1630,
-      "timestamp": "2025-11-04T15:33:36.040Z"
+      "duration": 1857,
+      "timestamp": "2025-11-07T23:51:13.278Z"
     },
     {
       "name": "Grid Save Performance Tests",
       "status": "PASS",
-      "duration": 32308,
-      "timestamp": "2025-11-04T15:34:08.349Z"
+      "duration": 32230,
+      "timestamp": "2025-11-07T23:51:45.508Z"
     },
     {
       "name": "Page Load Integration Tests",
       "status": "PASS",
-      "duration": 2000,
-      "timestamp": "2025-11-04T15:34:10.350Z"
+      "duration": 1976,
+      "timestamp": "2025-11-07T23:51:47.484Z"
     },
     {
       "name": "Stress Tests",
       "status": "PASS",
-      "duration": 6301,
-      "timestamp": "2025-11-04T15:34:16.657Z"
+      "duration": 6131,
+      "timestamp": "2025-11-07T23:51:53.615Z"
     }
   ]
 }

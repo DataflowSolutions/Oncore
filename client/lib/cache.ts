@@ -1,6 +1,13 @@
 /**
  * Performance optimized cache helpers
  * Uses React's cache() to deduplicate requests within a single render
+ * 
+ * IMPORTANT: Always use static imports for these utilities
+ * ✅ DO:   import { getCachedOrg } from '@/lib/cache'
+ * ❌ DON'T: const cache = await import('@/lib/cache')
+ * 
+ * For cache invalidation patterns and best practices, see:
+ * @see docs/CACHE_PATTERNS.md
  */
 
 import { cache } from 'react'
