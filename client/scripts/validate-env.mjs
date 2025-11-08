@@ -48,8 +48,25 @@ function validateNoSecretsInPublicVars() {
     'DATABASE_URL',
   ]
 
+  // Exclude Vercel's built-in environment variables
+  const vercelBuiltInVars = [
+    'NEXT_PUBLIC_VERCEL_ENV',
+    'NEXT_PUBLIC_VERCEL_URL',
+    'NEXT_PUBLIC_VERCEL_GIT_PROVIDER',
+    'NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG',
+    'NEXT_PUBLIC_VERCEL_GIT_REPO_OWNER',
+    'NEXT_PUBLIC_VERCEL_GIT_REPO_ID',
+    'NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF',
+    'NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA',
+    'NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE',
+    'NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_LOGIN',
+    'NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_NAME',
+    'NEXT_PUBLIC_VERCEL_BRANCH_URL',
+  ]
+
   const publicVars = Object.entries(process.env)
     .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
+    .filter(([key]) => !vercelBuiltInVars.includes(key)) // Exclude Vercel vars
 
   const violations = publicVars.filter(([, value]) =>
     dangerousPatterns.some(pattern => value?.includes(pattern))
