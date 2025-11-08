@@ -1859,10 +1859,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      app_accept_show_invite: {
-        Args: { p_email: string; p_show_id: string }
-        Returns: boolean
-      }
       app_add_show_collaborator: {
         Args: {
           p_role?: Database["public"]["Enums"]["show_collab_role"]
@@ -1956,8 +1952,8 @@ export type Database = {
         Args: { hours_old?: number }
         Returns: {
           cleaned_file_id: string
+          cleaned_storage_path: string
           reason: string
-          storage_path: string
         }[]
       }
       create_advancing_session: {
@@ -2011,7 +2007,7 @@ export type Database = {
         Args: { table_name: string }
         Returns: {
           command: string
-          permissive: string
+          is_permissive: string
           policy_name: string
           using_expression: string
         }[]
@@ -2054,7 +2050,7 @@ export type Database = {
         Args: { triggered_by?: string }
         Returns: Json
       }
-      setup_rls_test_data: { Args: never; Returns: Json }
+      setup_rls_test_data: { Args: never; Returns: undefined }
       verify_access_code: { Args: { p_access_code: string }; Returns: Json }
       verify_rls_enabled_on_all_tables: { Args: never; Returns: Json }
       verify_storage_metadata: {
