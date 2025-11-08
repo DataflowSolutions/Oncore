@@ -64,17 +64,15 @@ export async function GET(request: NextRequest) {
       
       logger.info(`[${requestId}] Admin client obtained, querying database...`)
       
-      console.log(`[${requestId}] Step 5: Querying organizations table...`)
-      console.log(`[${requestId}] Query: SELECT id FROM organizations WHERE slug = '${slug}'`)
+      console.log(`[${requestId}] Step 5: Calling check_slug_available function...`)
+      console.log(`[${requestId}] Function call: check_slug_available('${slug}')`)
       
       const { data, error } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
-        .maybeSingle()
+        .rpc('check_slug_available', { slug_to_check: slug })
 
-      console.log(`[${requestId}] Step 6: Query completed`)
+      console.log(`[${requestId}] Step 6: Function call completed`)
       console.log(`[${requestId}] Result - Has data:`, !!data)
+      console.log(`[${requestId}] Result - Data value:`, data)
       console.log(`[${requestId}] Result - Has error:`, !!error)
       
       if (error) {
@@ -112,7 +110,10 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      if (data) {
+      // data is a boolean: true = available, false = taken
+      const isAvailable = data === true
+
+      if (!isAvailable) {
         console.log(`[${requestId}] Slug already taken, returning unavailable`)
         logger.info(`[${requestId}] Slug already taken`, { slug })
         return NextResponse.json({
