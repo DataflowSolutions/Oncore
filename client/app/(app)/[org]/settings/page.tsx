@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { logger } from '@/lib/logger'
+import { RolesPermissionsTab } from "@/components/settings/RolesPermissionsTab";
+import { getOrgMembers, getCurrentUserRole } from "@/lib/actions/org-members";
+import type { OrgRole } from "@/lib/utils/role-permissions";
 
 
 interface ActivityLog {
@@ -36,10 +39,23 @@ interface ActivityLog {
   details: string | object | null;
 }
 
+interface OrgMemberWithUser {
+  created_at: string
+  org_id: string
+  role: OrgRole
+  user_id: string
+  user_email: string
+  user_name: string | null
+}
+
 export default function SettingsPage() {
   const params = useParams();
   const orgSlug = params.org as string;
   const [orgId, setOrgId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<OrgRole | null>(null);
+  const [members, setMembers] = useState<OrgMemberWithUser[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
   const [changelogFilter, setChangelogFilter] = useState({
     date: "all",
     resourceType: "all",
@@ -48,21 +64,50 @@ export default function SettingsPage() {
   const [changelogEntries, setChangelogEntries] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch org ID
+  // Fetch org ID and current user
   useEffect(() => {
-    async function fetchOrgId() {
-      const { data } = await supabase
+    async function fetchOrgAndUser() {
+      const { data: orgData } = await supabase
         .from('organizations')
         .select('id')
         .eq('slug', orgSlug)
         .single();
       
-      if (data) {
-        setOrgId(data.id);
+      if (orgData) {
+        setOrgId(orgData.id);
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
       }
     }
-    fetchOrgId();
+    fetchOrgAndUser();
   }, [orgSlug]);
+
+  // Fetch org members and current user role
+  useEffect(() => {
+    if (!orgId) return;
+
+    async function fetchMembersAndRole() {
+      setLoadingMembers(true);
+      try {
+        const [membersData, roleData] = await Promise.all([
+          getOrgMembers(orgId!),
+          getCurrentUserRole(orgId!)
+        ]);
+        
+        setMembers(membersData);
+        setCurrentUserRole(roleData);
+      } catch (error) {
+        logger.error('Error fetching members or role', error);
+      } finally {
+        setLoadingMembers(false);
+      }
+    }
+
+    fetchMembersAndRole();
+  }, [orgId]);
 
   // Fetch activity logs
   useEffect(() => {
@@ -104,8 +149,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="account" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
           <TabsTrigger value="support">Support</TabsTrigger>
@@ -172,6 +218,34 @@ export default function SettingsPage() {
               <Button variant="outline">Enable Two-Factor Authentication</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Roles & Permissions Tab */}
+        <TabsContent value="roles" className="space-y-4">
+          {loadingMembers ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  Loading team members...
+                </div>
+              </CardContent>
+            </Card>
+          ) : orgId && currentUserId && currentUserRole ? (
+            <RolesPermissionsTab
+              members={members}
+              currentUserRole={currentUserRole}
+              currentUserId={currentUserId}
+              orgId={orgId}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  Unable to load roles and permissions
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Notifications Tab */}
