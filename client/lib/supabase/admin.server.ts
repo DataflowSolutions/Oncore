@@ -12,6 +12,7 @@ import 'server-only'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../database.types'
 import { getServerConfig, validateConfig } from './config'
+import { logger } from '../logger'
 
 // Ensure this code only runs on the server
 if (typeof window !== 'undefined') {
@@ -45,6 +46,16 @@ export function getSupabaseAdmin() {
 
   if (!adminClient) {
     const config = getServerConfig()
+    
+    // Debug logging for production issues
+    logger.info('Admin Client Environment Check', {
+      isProduction: config.isProduction,
+      hasUrl: !!config.url,
+      hasServiceRoleKey: !!config.serviceRoleKey,
+      urlPrefix: config.url?.substring(0, 30),
+      keyPrefix: config.serviceRoleKey?.substring(0, 20)
+    })
+    
     validateConfig(config, 'admin')
 
     adminClient = createClient<Database>(
@@ -57,6 +68,8 @@ export function getSupabaseAdmin() {
         },
       }
     )
+    
+    logger.info('Admin client created successfully')
   }
 
   return adminClient

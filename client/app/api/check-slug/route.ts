@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isReservedSlug } from '@/lib/constants/reserved-slugs'
 import { getSupabaseAdmin } from '@/lib/supabase/admin.server'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,37 +34,46 @@ export async function GET(request: NextRequest) {
 
     // Check if slug is already taken in the database
     // Use admin client to bypass RLS since user isn't a member yet
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle()
+    try {
+      const supabase = getSupabaseAdmin()
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle()
 
-    if (error) {
-      console.error('Error checking slug availability:', error)
+      if (error) {
+        logger.error('Error checking slug availability', error)
+        return NextResponse.json(
+          { available: false, reason: 'Error checking availability' },
+          { status: 500 }
+        )
+      }
+
+      if (data) {
+        return NextResponse.json({
+          available: false,
+          reason: 'This slug is already taken'
+        })
+      }
+
+      return NextResponse.json({
+        available: true,
+        reason: 'Slug is available'
+      })
+    } catch (adminError) {
+      logger.error('Admin client error', adminError)
       return NextResponse.json(
-        { available: false, reason: 'Error checking availability' },
+        { available: false, reason: 'Database connection error' },
         { status: 500 }
       )
     }
-
-    if (data) {
-      return NextResponse.json({
-        available: false,
-        reason: 'This slug is already taken'
-      })
-    }
-
-    return NextResponse.json({
-      available: true,
-      reason: 'Slug is available'
-    })
   } catch (error) {
-    console.error('Unexpected error in check-slug:', error)
+    logger.error('Unexpected error in check-slug', error)
     return NextResponse.json(
       { available: false, reason: 'Unexpected error occurred' },
       { status: 500 }
     )
   }
 }
+
