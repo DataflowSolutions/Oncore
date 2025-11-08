@@ -5,12 +5,24 @@
  * This ensures consistent environment variable usage across the app.
  */
 
+import { logger } from '../logger'
+
 /**
  * Get server-side Supabase configuration
  * Uses non-public environment variables (server-only)
  */
 export function getServerConfig() {
   const isProduction = process.env.PROD_DB === 'true'
+
+  // Debug: Log what we're checking
+  logger.info('getServerConfig called', {
+    PROD_DB: process.env.PROD_DB,
+    isProduction,
+    hasProdUrl: !!process.env.PROD_SUPABASE_URL,
+    hasLocalUrl: !!process.env.LOCAL_SUPABASE_URL,
+    hasProdServiceKey: !!process.env.PROD_SUPABASE_SERVICE_ROLE_KEY,
+    hasLocalServiceKey: !!process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY
+  })
 
   const url = isProduction
     ? process.env.PROD_SUPABASE_URL!

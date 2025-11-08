@@ -52,12 +52,19 @@ export function getSupabaseAdmin() {
       isProduction: config.isProduction,
       hasUrl: !!config.url,
       hasServiceRoleKey: !!config.serviceRoleKey,
+      urlLength: config.url?.length,
+      keyLength: config.serviceRoleKey?.length,
       urlPrefix: config.url?.substring(0, 30),
-      keyPrefix: config.serviceRoleKey?.substring(0, 20)
+      keyPrefix: config.serviceRoleKey?.substring(0, 30),
+      // Check if it's the anon key by mistake (anon keys have 'anon' role)
+      keyContainsService: config.serviceRoleKey?.includes('service_role'),
+      keyContainsAnon: config.serviceRoleKey?.includes('anon')
     })
     
     validateConfig(config, 'admin')
 
+    logger.info('Creating admin client with service role key')
+    
     adminClient = createClient<Database>(
       config.url,
       config.serviceRoleKey,
