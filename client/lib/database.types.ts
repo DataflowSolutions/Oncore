@@ -42,6 +42,7 @@ export type Database = {
       _billing_actions_log_backup: {
         Row: {
           action: string | null
+          backup_id: number
           created_at: string | null
           id: string | null
           new_state: Json | null
@@ -51,6 +52,7 @@ export type Database = {
         }
         Insert: {
           action?: string | null
+          backup_id?: number
           created_at?: string | null
           id?: string | null
           new_state?: Json | null
@@ -60,6 +62,7 @@ export type Database = {
         }
         Update: {
           action?: string | null
+          backup_id?: number
           created_at?: string | null
           id?: string | null
           new_state?: Json | null
@@ -71,18 +74,21 @@ export type Database = {
       }
       _org_seats_backup: {
         Row: {
+          backup_id: number
           org_id: string | null
           seat_type: string | null
           updated_at: string | null
           used: number | null
         }
         Insert: {
+          backup_id?: number
           org_id?: string | null
           seat_type?: string | null
           updated_at?: string | null
           used?: number | null
         }
         Update: {
+          backup_id?: number
           org_id?: string | null
           seat_type?: string | null
           updated_at?: string | null
@@ -93,6 +99,7 @@ export type Database = {
       _show_collaborators_invite_backup: {
         Row: {
           accepted_at: string | null
+          backup_id: number
           created_at: string | null
           email: string | null
           id: string | null
@@ -104,6 +111,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          backup_id?: number
           created_at?: string | null
           email?: string | null
           id?: string | null
@@ -115,6 +123,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          backup_id?: number
           created_at?: string | null
           email?: string | null
           id?: string | null
