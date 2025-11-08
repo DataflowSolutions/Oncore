@@ -1,0 +1,1694 @@
+[
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.activity_log_retention_config\\` has a foreign key \\`activity_log_retention_config_updated_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "activity_log_retention_config",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "activity_log_retention_config_updated_by_fkey",
+      "fkey_columns": [
+        7
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_activity_log_retention_config_activity_log_retention_config_updated_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_comments\\` has a foreign key \\`advancing_comments_author_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_comments",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_comments_author_id_fkey",
+      "fkey_columns": [
+        4
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_comments_advancing_comments_author_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_comments\\` has a foreign key \\`advancing_comments_org_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_comments",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_comments_org_id_fkey",
+      "fkey_columns": [
+        2
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_comments_advancing_comments_org_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_documents\\` has a foreign key \\`advancing_documents_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_documents",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_documents_created_by_fkey",
+      "fkey_columns": [
+        6
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_documents_advancing_documents_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_documents\\` has a foreign key \\`advancing_documents_org_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_documents",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_documents_org_id_fkey",
+      "fkey_columns": [
+        2
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_documents_advancing_documents_org_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_fields\\` has a foreign key \\`advancing_fields_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_fields",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_fields_created_by_fkey",
+      "fkey_columns": [
+        11
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_fields_advancing_fields_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_fields\\` has a foreign key \\`advancing_fields_org_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_fields",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_fields_org_id_fkey",
+      "fkey_columns": [
+        2
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_fields_advancing_fields_org_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_sessions\\` has a foreign key \\`advancing_sessions_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_sessions",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_sessions_created_by_fkey",
+      "fkey_columns": [
+        7
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_sessions_advancing_sessions_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.advancing_sessions\\` has a foreign key \\`advancing_sessions_show_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "advancing_sessions",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "advancing_sessions_show_id_fkey",
+      "fkey_columns": [
+        3
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_advancing_sessions_advancing_sessions_show_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.contacts\\` has a foreign key \\`contacts_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "contacts_created_by_fkey",
+      "fkey_columns": [
+        16
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_contacts_contacts_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.files\\` has a foreign key \\`files_uploaded_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "files_uploaded_by_fkey",
+      "fkey_columns": [
+        10
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_files_files_uploaded_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.invitations\\` has a foreign key \\`invitations_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "invitations_created_by_fkey",
+      "fkey_columns": [
+        8
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_invitations_invitations_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.org_subscriptions\\` has a foreign key \\`org_subscriptions_plan_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "org_subscriptions",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "org_subscriptions_plan_id_fkey",
+      "fkey_columns": [
+        2
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_org_subscriptions_org_subscriptions_plan_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.organizations\\` has a foreign key \\`organizations_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "organizations",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "organizations_created_by_fkey",
+      "fkey_columns": [
+        5
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_organizations_organizations_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.people\\` has a foreign key \\`people_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "people",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "people_user_id_fkey",
+      "fkey_columns": [
+        3
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_people_people_user_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.schedule_items\\` has a foreign key \\`schedule_items_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "schedule_items_created_by_fkey",
+      "fkey_columns": [
+        9
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_schedule_items_schedule_items_created_by_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.schedule_items\\` has a foreign key \\`schedule_items_source_field_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "schedule_items_source_field_id_fkey",
+      "fkey_columns": [
+        18
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_schedule_items_schedule_items_source_field_id_fkey"
+  },
+  {
+    "name": "unindexed_foreign_keys",
+    "title": "Unindexed foreign keys",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+    "detail": "Table \\`public.venue_contacts\\` has a foreign key \\`venue_promoters_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "metadata": {
+      "name": "venue_contacts",
+      "type": "table",
+      "schema": "public",
+      "fkey_name": "venue_promoters_created_by_fkey",
+      "fkey_columns": [
+        7
+      ]
+    },
+    "cache_key": "unindexed_foreign_keys_public_venue_contacts_venue_promoters_created_by_fkey"
+  },
+  {
+    "name": "no_primary_key",
+    "title": "No Primary Key",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if a table does not have a primary key. Tables without a primary key can be inefficient to interact with at scale.",
+    "detail": "Table \\`public._show_collaborators_invite_backup\\` does not have a primary key",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0004_no_primary_key",
+    "metadata": {
+      "name": "_show_collaborators_invite_backup",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "no_primary_key_public__show_collaborators_invite_backup"
+  },
+  {
+    "name": "no_primary_key",
+    "title": "No Primary Key",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if a table does not have a primary key. Tables without a primary key can be inefficient to interact with at scale.",
+    "detail": "Table \\`public._org_seats_backup\\` does not have a primary key",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0004_no_primary_key",
+    "metadata": {
+      "name": "_org_seats_backup",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "no_primary_key_public__org_seats_backup"
+  },
+  {
+    "name": "no_primary_key",
+    "title": "No Primary Key",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if a table does not have a primary key. Tables without a primary key can be inefficient to interact with at scale.",
+    "detail": "Table \\`public._billing_actions_log_backup\\` does not have a primary key",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0004_no_primary_key",
+    "metadata": {
+      "name": "_billing_actions_log_backup",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "no_primary_key_public__billing_actions_log_backup"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_invitations_email\\` on table \\`public.invitations\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_invitations_idx_invitations_email"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_person_id_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_person_id_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contacts_org_idx\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_contacts_org_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contacts_type_idx\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_contacts_type_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contacts_city_idx\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_contacts_city_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contacts_email_idx\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_contacts_email_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contacts_tsv_idx\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_contacts_tsv_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`venues_tsv_idx\\` on table \\`public.venues\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "venues",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_venues_venues_tsv_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_contacts_org_name\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_idx_contacts_org_name"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_contacts_org_company\\` on table \\`public.contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contacts_idx_contacts_org_company"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_venues_org_city\\` on table \\`public.venues\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "venues",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_venues_idx_venues_org_city"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_people_org_name\\` on table \\`public.people\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "people",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_people_idx_people_org_name"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_action_time\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_action_time"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_schedule_items_visibility_date\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_idx_schedule_items_visibility_date"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`shows_fee_idx\\` on table \\`public.shows\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "shows",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_shows_shows_fee_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_collaborators_email\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_idx_show_collaborators_email"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_adv_docs_session\\` on table \\`public.advancing_documents\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "advancing_documents",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_advancing_documents_idx_adv_docs_session"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`show_collaborators_show_id_email_idx\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_show_collaborators_show_id_email_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_adv_comments_field\\` on table \\`public.advancing_comments\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "advancing_comments",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_advancing_comments_idx_adv_comments_field"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_files_document\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_idx_files_document"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`files_session_id_idx\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_files_session_id_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_collaborators_show_user\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_idx_show_collaborators_show_user"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_files_field\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_idx_files_field"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_collab_user\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_idx_show_collab_user"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_invitations_pending\\` on table \\`public.invitations\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_invitations_idx_invitations_pending"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_archive_org_time\\` on table \\`public.activity_log_archive\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log_archive",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_archive_idx_activity_log_archive_org_time"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_archive_created\\` on table \\`public.activity_log_archive\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log_archive",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_archive_idx_activity_log_archive_created"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_files_session_created\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_idx_files_session_created"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_action_resource\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_action_resource"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_files_verification_status\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_idx_files_verification_status"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_maintenance_log_operation\\` on table \\`public.database_maintenance_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "database_maintenance_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_database_maintenance_log_idx_maintenance_log_operation"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`show_collaborators_org_email_idx\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_show_collaborators_org_email_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_org_time\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_org_time"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_maintenance_log_started\\` on table \\`public.database_maintenance_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "database_maintenance_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_database_maintenance_log_idx_maintenance_log_started"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_user_time\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_user_time"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_resource\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_resource"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_activity_log_action\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_idx_activity_log_action"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_files_org_created\\` on table \\`public.files\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "files",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_files_idx_files_org_created"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_visibility_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_visibility_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_session_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_session_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_type_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_type_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_priority_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_priority_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_comprehensive_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_comprehensive_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_invitations_person_id\\` on table \\`public.invitations\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_invitations_idx_invitations_person_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_invitations_org_id\\` on table \\`public.invitations\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_invitations_idx_invitations_org_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_emails_org_idx\\` on table \\`public.parsed_emails\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_emails",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_emails_parsed_emails_org_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_emails_status_idx\\` on table \\`public.parsed_emails\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_emails",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_emails_parsed_emails_status_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_emails_from_idx\\` on table \\`public.parsed_emails\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_emails",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_emails_parsed_emails_from_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`schedule_items_external_calendar_idx\\` on table \\`public.schedule_items\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "schedule_items",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_schedule_items_schedule_items_external_calendar_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_contracts_org_idx\\` on table \\`public.parsed_contracts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_contracts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_contracts_parsed_contracts_org_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_contracts_status_idx\\` on table \\`public.parsed_contracts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_contracts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_contracts_parsed_contracts_status_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`parsed_contracts_confidence_idx\\` on table \\`public.parsed_contracts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "parsed_contracts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_parsed_contracts_parsed_contracts_confidence_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_invitations_role\\` on table \\`public.invitations\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "invitations",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_invitations_idx_invitations_role"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_org_members_user_id\\` on table \\`public.org_members\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "org_members",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_org_members_idx_org_members_user_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_org_members_org_user\\` on table \\`public.org_members\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "org_members",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_org_members_idx_org_members_org_user"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_org_subscriptions_org_status\\` on table \\`public.org_subscriptions\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "org_subscriptions",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_org_subscriptions_idx_org_subscriptions_org_status"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_shows_artist_id\\` on table \\`public.shows\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "shows",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_shows_idx_shows_artist_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_shows_venue_id\\` on table \\`public.shows\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "shows",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_shows_idx_shows_venue_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_collaborators_user_show\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_idx_show_collaborators_user_show"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_advancing_fields_session_section\\` on table \\`public.advancing_fields\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "advancing_fields",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_advancing_fields_idx_advancing_fields_session_section"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_assignments_person\\` on table \\`public.show_assignments\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_assignments",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_assignments_idx_show_assignments_person"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_query_perf_created\\` on table \\`public.query_performance_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "query_performance_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_query_performance_log_idx_query_perf_created"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_query_perf_query\\` on table \\`public.query_performance_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "query_performance_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_query_performance_log_idx_query_perf_query"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contact_commissions_contact_idx\\` on table \\`public.contact_commissions\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contact_commissions",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contact_commissions_contact_commissions_contact_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contact_commissions_show_idx\\` on table \\`public.contact_commissions\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contact_commissions",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contact_commissions_contact_commissions_show_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`contact_commissions_status_idx\\` on table \\`public.contact_commissions\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "contact_commissions",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_contact_commissions_contact_commissions_status_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`venue_contacts_primary_idx\\` on table \\`public.venue_contacts\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "venue_contacts",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_venue_contacts_venue_contacts_primary_idx"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`idx_show_collaborators_show_id_user_id\\` on table \\`public.show_collaborators\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "show_collaborators",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_show_collaborators_idx_show_collaborators_show_id_user_id"
+  },
+  {
+    "name": "unused_index",
+    "title": "Unused Index",
+    "level": "INFO",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if an index has never been used and may be a candidate for removal.",
+    "detail": "Index \\`activity_log_org_category_time_idx\\` on table \\`public.activity_log\\` has not been used",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "metadata": {
+      "name": "activity_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "unused_index_public_activity_log_activity_log_org_category_time_idx"
+  }
+]
