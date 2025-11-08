@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseServer } from '@/lib/supabase/server'
 import { isReservedSlug } from '@/lib/constants/reserved-slugs'
+import { getSupabaseAdmin } from '@/lib/supabase/admin.server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if slug is already taken in the database
-    const supabase = await getSupabaseServer()
+    // Use admin client to bypass RLS since user isn't a member yet
+    const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
       .from('organizations')
       .select('id')
