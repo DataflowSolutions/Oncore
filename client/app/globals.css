@@ -85,5 +85,12 @@
     @apply bg-background text-foreground;
     font-family: Arial, Helvetica, sans-serif;
     transition: background-color 0.2s ease, color 0.2s ease;
+    overflow-y: scroll !important;
+  }
+  
+  /* Prevent Radix Dialog from adding padding when locking scroll */
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
   }
 }

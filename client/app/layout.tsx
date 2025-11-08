@@ -16,13 +16,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="px-1 md:px-8 lg:px-16 xl:px-20 mx-auto">
-        <ThemeProvider>
-          <Providers>
-            {children}
-            <Toaster richColors position="top-right" />
-          </Providers>
-        </ThemeProvider>
+      <body>
+        <div className="px-1 md:px-8 lg:px-16 xl:px-20 mx-auto">
+          <ThemeProvider>
+            <Providers>
+              {children}
+              <Toaster richColors position="top-right" />
+            </Providers>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );

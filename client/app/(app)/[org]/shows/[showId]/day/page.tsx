@@ -1,3 +1,4 @@
+import { getAdvancingDocuments } from "@/lib/actions/advancing";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,11 +48,11 @@ export default async function ShowDayPage({
 
   // Parallelize ALL data fetching at once
   const [
-    orgResult, 
-    showResult, 
+    orgResult,
+    showResult,
     scheduleResult,
     assignedPeopleResult,
-    advancingSessionResult
+    advancingSessionResult,
   ] = await Promise.all([
     getCachedOrg(orgSlug),
     getCachedShow(showId),
@@ -74,14 +75,19 @@ export default async function ShowDayPage({
       .from("advancing_sessions")
       .select("id")
       .eq("show_id", showId)
-      .single()
-  ])
+      .single(),
+  ]);
 
   const { data: org } = orgResult
   const { data: show } = showResult
   const { data: scheduleItems } = scheduleResult
   const { data: assignedPeople } = assignedPeopleResult
   const { data: advancingSession } = advancingSessionResult
+
+  let advancingDocuments = [] as Awaited<ReturnType<typeof getAdvancingDocuments>>
+  if (advancingSession?.id) {
+    advancingDocuments = await getAdvancingDocuments(advancingSession.id)
+  }
 
   if (!org) {
     return <div>Organization not found</div>;
@@ -91,18 +97,18 @@ export default async function ShowDayPage({
     return <div>Show not found</div>;
   }
 
-  // Fetch advancing data (flight times) for the calendar
+  // Fetch advancing data (flight times, hotel, etc) for the calendar
   let advancingData = undefined;
+  let advancingFields: Array<{ field_name: string; value: unknown }> = [];
+  
   if (advancingSession && assignedPeople) {
-    const { data: advancingFields } = await supabase
+    const { data: fields } = await supabase
       .from("advancing_fields")
       .select("field_name, value")
-      .eq("session_id", advancingSession.id)
-      .or(
-        "field_name.like.arrival_flight_%,field_name.like.departure_flight_%"
-      );
+      .eq("session_id", advancingSession.id);
 
-    if (advancingFields) {
+    if (fields) {
+      advancingFields = fields;
       const arrivalFlights: Array<{
         personId: string;
         time: string;
@@ -333,6 +339,9 @@ export default async function ShowDayPage({
         scheduleItems={scheduleItems || []}
         orgSlug={orgSlug}
         showId={showId}
+        documents={advancingDocuments || []}
+        advancingSessionId={advancingSession?.id}
+        advancingFields={advancingFields}
       />
     </div>
   );

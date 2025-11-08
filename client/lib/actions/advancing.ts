@@ -185,7 +185,7 @@ export async function createAdvancingField(
   // Get org_id from session
   const { data: session, error: sessionError } = await supabase
     .from('advancing_sessions')
-    .select('org_id')
+    .select('org_id, show_id')
     .eq('id', sessionId)
     .single()
     
@@ -193,6 +193,42 @@ export async function createAdvancingField(
     return { success: false, error: 'Session not found' }
   }
 
+  // First, check if the field already exists
+  const { data: existingField } = await supabase
+    .from('advancing_fields')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('section', fieldData.section)
+    .eq('field_name', fieldData.fieldName)
+    .eq('party_type', fieldData.partyType)
+    .single()
+
+  if (existingField) {
+    // Field exists, update it instead
+    const { data: updatedData, error: updateError } = await supabase
+      .from('advancing_fields')
+      .update({
+        value: fieldData.value || null,
+        field_type: fieldData.fieldType,
+        sort_order: fieldData.sortOrder || 1000
+      })
+      .eq('id', existingField.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      logger.error('Error updating existing advancing field', updateError)
+      return { success: false, error: updateError.message }
+    }
+
+    if (session.show_id) {
+      revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+    }
+
+    return { success: true, data: updatedData }
+  }
+
+  // Field doesn't exist, create it
   const { data, error } = await supabase
     .from('advancing_fields')
     .insert({
@@ -214,15 +250,8 @@ export async function createAdvancingField(
     return { success: false, error: error.message }
   }
   
-  // Fetch the session to get showId for revalidation
-  const { data: sessionData } = await supabase
-    .from('advancing_sessions')
-    .select('show_id')
-    .eq('id', sessionId)
-    .single()
-  
-  if (sessionData?.show_id) {
-    revalidatePath(`/${orgSlug}/shows/${sessionData.show_id}/advancing/${sessionId}`)
+  if (session.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
   }
   
   return { success: true, data }
@@ -413,6 +442,83 @@ export async function createAdvancingDocument(
   }
   
   return { success: true, data }
+}
+
+export async function updateAdvancingDocument(
+  orgSlug: string,
+  sessionId: string,
+  documentId: string,
+  label: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await getSupabaseServer()
+  
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  // Get show_id from session for revalidation
+  const { data: session } = await supabase
+    .from('advancing_sessions')
+    .select('show_id')
+    .eq('id', sessionId)
+    .single()
+
+  // Update the document label
+  const { error } = await supabase
+    .from('advancing_documents')
+    .update({ label })
+    .eq('id', documentId)
+    
+  if (error) {
+    logger.error('Error updating advancing document', error)
+    return { success: false, error: error.message }
+  }
+  
+  if (session?.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+  }
+  
+  return { success: true }
+}
+
+export async function deleteAdvancingDocument(
+  orgSlug: string,
+  sessionId: string,
+  documentId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await getSupabaseServer()
+  
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  // Get show_id from session for revalidation
+  const { data: session } = await supabase
+    .from('advancing_sessions')
+    .select('show_id')
+    .eq('id', sessionId)
+    .single()
+
+  // Delete the document (files will be cascade deleted via database constraint)
+  const { error } = await supabase
+    .from('advancing_documents')
+    .delete()
+    .eq('id', documentId)
+    
+  if (error) {
+    logger.error('Error deleting advancing document', error)
+    return { success: false, error: error.message }
+  }
+  
+  if (session?.show_id) {
+    revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+  }
+  
+  return { success: true }
 }
 
 // Grid Data Management - OPTIMIZED with cache

@@ -1,7 +1,7 @@
 'use client'
 import { logger } from '@/lib/logger'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Users, Plane, PlaneLanding } from 'lucide-react'
 import { FieldRow } from './FieldRow'
 import { GRID_CONFIGS } from './constants/grid-config'
@@ -9,6 +9,7 @@ import { SaveableGridEditor } from './SaveableGridEditor'
 import { AddTeamMemberModal } from './AddTeamMemberModal'
 import { TeamMembersGrid } from './TeamMembersGrid'
 import { assignPersonToShow, removePersonFromShow } from '@/lib/actions/show-team'
+import { getAdvancingComments } from '@/lib/actions/advancing'
 
 interface SectionProps {
   title: string
@@ -45,9 +46,53 @@ interface SectionProps {
   departureFlightData?: Array<{ id: string; [key: string]: string | number | boolean }>
 }
 
+type AdvancingComment = {
+  id: string
+  body: string
+  author_name: string | null
+  created_at: string
+  field_id: string
+}
+
 export function Section({ title, fields, orgSlug, sessionId, showId, availablePeople = [], currentTeam = [], defaultExpanded = true, teamData = [], arrivalFlightData = [], departureFlightData = [] }: SectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
+  const [fieldComments, setFieldComments] = useState<Record<string, AdvancingComment[]>>({})
+  const [loadingComments, setLoadingComments] = useState(false)
+  
+  // Load comments for all fields when section is expanded
+  useEffect(() => {
+    if (isExpanded && fields.length > 0 && !loadingComments) {
+      loadComments()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded, fields.length])
+
+  const loadComments = async () => {
+    setLoadingComments(true)
+    try {
+      const commentsMap: Record<string, AdvancingComment[]> = {}
+      
+      // Load comments for each field in parallel
+      await Promise.all(
+        fields.map(async (field) => {
+          const comments = await getAdvancingComments(field.id)
+          commentsMap[field.id] = comments
+        })
+      )
+      
+      setFieldComments(commentsMap)
+    } catch (error) {
+      logger.error('Error loading comments', error)
+    } finally {
+      setLoadingComments(false)
+    }
+  }
+
+  const handleFieldUpdate = async () => {
+    // Reload comments when a field is updated
+    await loadComments()
+  }
   
 
 
@@ -276,11 +321,8 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
               orgSlug={orgSlug}
               sessionId={sessionId}
               showId={showId}
-              comments={[]} // TODO: Load comments for each field
-              onFieldUpdate={() => {
-                // Let the server action handle revalidation
-                logger.debug('Field updated successfully')
-              }}
+              comments={fieldComments[field.id] || []}
+              onFieldUpdate={handleFieldUpdate}
             />
           ))}
         </div>

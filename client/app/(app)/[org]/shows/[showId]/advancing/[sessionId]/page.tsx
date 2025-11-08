@@ -1,4 +1,4 @@
-import { getAdvancingSession, getAdvancingFields, loadAdvancingGridData } from '@/lib/actions/advancing'
+import { getAdvancingSession, getAdvancingFields, loadAdvancingGridData, getAdvancingDocuments } from '@/lib/actions/advancing'
 import { getAvailablePeople, getShowTeam } from '@/lib/actions/show-team'
 import { AdvancingPageClient } from '@/components/advancing/AdvancingPageClient'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -26,10 +26,11 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     .eq('slug', orgSlug)
     .single()
 
-  // OPTIMIZED: Fetch session and fields in parallel
-  const [session, fields] = await Promise.all([
+  // OPTIMIZED: Fetch session, fields, and documents in parallel
+  const [session, fields, documents] = await Promise.all([
     getAdvancingSession(sessionId),
-    getAdvancingFields(sessionId)
+    getAdvancingFields(sessionId),
+    getAdvancingDocuments(sessionId)
   ])
   
   if (!session) {
@@ -107,6 +108,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
       sessionId={sessionId}
       artistData={artistDataResult}
       promoterData={promoterDataResult}
+      documents={documents}
       basePath={`/${orgSlug}/shows/${showId}/advancing/${sessionId}`}
     />
   )

@@ -3,6 +3,8 @@
 import { useEffect } from 'react'
 import { Section } from './Section'
 import { PartyToggle } from './PartyToggle'
+import { DocumentsBox } from './DocumentsBox'
+import { PromoterAdvancingView } from './PromoterAdvancingView'
 import { useAdvancingStore } from '@/lib/stores/advancing-store'
 
 interface TeamMember {
@@ -27,6 +29,21 @@ interface AdvancingField {
   value: unknown
   status: 'pending' | 'confirmed'
   party_type: 'from_us' | 'from_you'
+}
+
+interface AdvancingDocument {
+  id: string
+  label: string | null
+  party_type: 'from_us' | 'from_you'
+  created_at: string
+  files: Array<{
+    id: string
+    original_name: string | null
+    content_type: string | null
+    size_bytes: number | null
+    storage_path: string
+    created_at: string
+  }>
 }
 
 interface PartyData {
@@ -59,6 +76,7 @@ interface AdvancingPageClientProps {
   sessionId: string
   artistData: PartyData
   promoterData: PartyData
+  documents: AdvancingDocument[]
   basePath: string
 }
 
@@ -69,6 +87,7 @@ export function AdvancingPageClient({
   sessionId,
   artistData,
   promoterData,
+  documents,
   basePath,
 }: AdvancingPageClientProps) {
   const { party, setParty, setArtistData, setPromoterData, getCurrentData } = useAdvancingStore()
@@ -106,6 +125,9 @@ export function AdvancingPageClient({
     }
   })
 
+  // Filter documents by current party
+  const currentPartyDocuments = documents.filter(doc => doc.party_type === party)
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       {/* Header */}
@@ -125,54 +147,56 @@ export function AdvancingPageClient({
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-6">
-        <div className="space-y-4">
-          {/* Documents Section */}
-          <div className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-900/30">
-            <div className="p-4 border-b border-neutral-800 bg-neutral-900/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-sm font-medium text-neutral-100">Documents</h3>
-                  <span className="text-xs text-neutral-500">
-                    0 comments
-                  </span>
-                  <span className="text-xs bg-neutral-700 text-neutral-300 px-2 py-0.5 rounded">
-                    Pending
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="text-center py-12 text-neutral-500">
-                <p className="text-sm">No documents uploaded</p>
-              </div>
-            </div>
-          </div>
+        {party === 'from_you' ? (
+          /* Promoter View - Structured Sections */
+          <PromoterAdvancingView
+            orgSlug={orgSlug}
+            sessionId={sessionId}
+            documents={currentPartyDocuments}
+            existingFields={currentData.fields.map(f => ({
+              id: f.id,
+              field_name: f.field_name,
+              value: f.value as string | null
+            }))}
+          />
+        ) : (
+          /* Artist View - Field-Based Sections */
+          <div className="space-y-4">
+            {/* Documents Section */}
+            <DocumentsBox
+              sessionId={sessionId}
+              orgSlug={orgSlug}
+              partyType={party}
+              documents={currentPartyDocuments}
+              title="Documents"
+            />
 
-          {/* Other Sections */}
-          {Object.keys(fieldsBySection).length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-neutral-400">No fields configured for this session yet.</p>
-            </div>
-          ) : (
-            <>
-              {Object.entries(fieldsBySection).map(([sectionName, sectionFields]) => (
-                <Section
-                  key={`${sectionName}-${party}`}
-                  title={sectionName}
-                  fields={sectionFields as FieldsArray}
-                  orgSlug={orgSlug}
-                  sessionId={sessionId}
-                  showId={show.id}
-                  availablePeople={currentData.availablePeople}
-                  currentTeam={currentData.team}
-                  teamData={currentData.teamData}
-                  arrivalFlightData={currentData.arrivalFlightData}
-                  departureFlightData={currentData.departureFlightData}
-                />
-              ))}
-            </>
-          )}
-        </div>
+            {/* Other Sections */}
+            {Object.keys(fieldsBySection).length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-neutral-400">No fields configured for this session yet.</p>
+              </div>
+            ) : (
+              <>
+                {Object.entries(fieldsBySection).map(([sectionName, sectionFields]) => (
+                  <Section
+                    key={`${sectionName}-${party}`}
+                    title={sectionName}
+                    fields={sectionFields as FieldsArray}
+                    orgSlug={orgSlug}
+                    sessionId={sessionId}
+                    showId={show.id}
+                    availablePeople={currentData.availablePeople}
+                    currentTeam={currentData.team}
+                    teamData={currentData.teamData}
+                    arrivalFlightData={currentData.arrivalFlightData}
+                    departureFlightData={currentData.departureFlightData}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

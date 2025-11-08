@@ -20,6 +20,21 @@ import { TransportationPanel } from "./day-view/TransportationPanel";
 
 type DBScheduleItem = Database["public"]["Tables"]["schedule_items"]["Row"];
 
+type AdvancingDocumentWithFiles = {
+  id: string;
+  label: string | null;
+  party_type: "from_us" | "from_you";
+  created_at: string;
+  files: Array<{
+    id: string;
+    original_name: string | null;
+    content_type: string | null;
+    size_bytes: number | null;
+    storage_path: string;
+    created_at: string;
+  }>;
+};
+
 interface ScheduleItem {
   id: string;
   time: string; // ISO datetime string
@@ -66,6 +81,9 @@ interface CalendarDayViewProps {
   scheduleItems?: DBScheduleItem[];
   orgSlug: string;
   showId: string;
+  documents?: AdvancingDocumentWithFiles[];
+  advancingSessionId?: string;
+  advancingFields?: Array<{ field_name: string; value: unknown }>;
 }
 
 export function CalendarDayView({
@@ -79,6 +97,9 @@ export function CalendarDayView({
   scheduleItems: dbScheduleItems = [],
   orgSlug,
   showId,
+  documents = [],
+  advancingSessionId,
+  advancingFields = [],
 }: CalendarDayViewProps) {
   const [selectedItem, setSelectedItem] = useState<ScheduleItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -286,9 +307,17 @@ export function CalendarDayView({
 
         {/* RIGHT COLUMNS: Info Panels */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <HotelPanel />
-          <DocumentsPanel />
-          <CateringPanel />
+          <HotelPanel 
+            advancingFields={advancingFields}
+            assignedPeople={assignedPeople}
+          />
+          <DocumentsPanel
+            documents={documents}
+            assignedPeople={assignedPeople}
+            orgSlug={orgSlug}
+            sessionId={advancingSessionId || ""}
+          />
+          <CateringPanel advancingFields={advancingFields} />
           <ContactsPanel />
           <FlightsPanel
             selectedPeopleIds={selectedPeopleIds}
@@ -296,7 +325,10 @@ export function CalendarDayView({
             currentDateStr={currentDateStr}
             getLocalDateStr={getLocalDateStr}
           />
-          <TransportationPanel />
+          <TransportationPanel 
+            advancingFields={advancingFields}
+            assignedPeople={assignedPeople}
+          />
         </div>
       </div>
 
