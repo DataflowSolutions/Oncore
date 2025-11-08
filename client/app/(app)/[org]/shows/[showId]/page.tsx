@@ -31,17 +31,26 @@ export default async function ShowDetailPage({
   // OPTIMIZED: Use cached helpers to prevent redundant queries
   const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import('@/lib/cache')
   
-  // Parallelize all data fetching for faster page loads
-  const [orgResult, showResult, scheduleResult, assignedTeam] = await Promise.all([
+  // Parallelize ALL data fetching for maximum performance - single waterfall
+  const [orgResult, showResult, scheduleResult, assignedTeam, venuesResult, availablePeopleResult] = await Promise.all([
     getCachedOrg(orgSlug),
     getCachedShow(showId),
     getCachedShowSchedule(showId),
-    getShowTeam(showId)
+    getShowTeam(showId),
+    // Fetch org first, then use the ID - but still in parallel with Promise.all
+    getCachedOrg(orgSlug).then(result => 
+      result.data ? getVenuesByOrg(result.data.id) : []
+    ),
+    getCachedOrg(orgSlug).then(result => 
+      result.data ? getAvailablePeople(result.data.id) : []
+    )
   ]);
 
   const { data: org } = orgResult;
   const { data: show } = showResult;
   const { data: scheduleItems } = scheduleResult;
+  const venues = venuesResult;
+  const availablePeople = availablePeopleResult;
 
   if (!org) {
     return <div>Organization not found</div>
@@ -50,12 +59,6 @@ export default async function ShowDetailPage({
   if (!show || show.org_id !== org.id) {
     return <div>Show not found</div>
   }
-
-  // Fetch venues and available people only after we confirm access
-  const [venues, availablePeople] = await Promise.all([
-    getVenuesByOrg(org.id),
-    getAvailablePeople(org.id)
-  ]);
 
   return (
     <div className="space-y-8">

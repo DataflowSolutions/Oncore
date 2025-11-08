@@ -4,16 +4,14 @@ import { logger } from '@/lib/logger'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
-import { unstable_noStore as noStore } from 'next/cache'
+import { cache } from 'react'
 import { z } from 'zod'
 
 type Person = Database['public']['Tables']['people']['Row']
 type ShowAssignmentInsert = Database['public']['Tables']['show_assignments']['Insert']
 
 // Get all people assigned to a specific show, optionally filtered by party type
-export async function getShowTeam(showId: string, partyType?: 'from_us' | 'from_you'): Promise<(Person & { duty?: string })[]> {
-  noStore() // Prevent caching to ensure fresh data
-  
+export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 'from_you'): Promise<(Person & { duty?: string })[]> => {
   const supabase = await getSupabaseServer()
   
   const { data, error } = await supabase
@@ -52,12 +50,10 @@ export async function getShowTeam(showId: string, partyType?: 'from_us' | 'from_
   }
 
   return teamMembers
-}
+})
 
 // Get all available people from the organization (people pool), optionally filtered by party type
-export async function getAvailablePeople(orgId: string, partyType?: 'from_us' | 'from_you'): Promise<Person[]> {
-  noStore() // Prevent caching to ensure fresh data
-  
+export const getAvailablePeople = cache(async (orgId: string, partyType?: 'from_us' | 'from_you'): Promise<Person[]> => {
   const supabase = await getSupabaseServer()
   
   let query = supabase
@@ -83,7 +79,7 @@ export async function getAvailablePeople(orgId: string, partyType?: 'from_us' | 
   }
 
   return data || []
-}
+})
 
 // Assign a person to a show
 const assignPersonSchema = z.object({

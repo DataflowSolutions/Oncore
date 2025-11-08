@@ -4,6 +4,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { Database } from "@/lib/database.types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
+import { cache } from "react";
 
 type Show = Database["public"]["Tables"]["shows"]["Row"];
 type ShowInsert = Database["public"]["Tables"]["shows"]["Insert"];
@@ -194,7 +195,7 @@ export async function updateShow(showId: string, updates: ShowUpdate) {
   return data;
 }
 
-export async function deleteShow(showId: string, orgId: string) {
+export async function deleteShow(showId: string) {
   const supabase = await getSupabaseServer();
 
   const { error } = await supabase.from("shows").delete().eq("id", showId);
@@ -204,10 +205,12 @@ export async function deleteShow(showId: string, orgId: string) {
     throw new Error("Failed to delete show");
   }
 
-  revalidatePath(`/${orgId}/shows`);
+  // Revalidate the entire layout to update all shows
+  revalidatePath("/", "layout");
 }
 
-export async function getVenuesByOrg(orgId: string): Promise<Venue[]> {
+// Cache venues by org to prevent redundant queries
+export const getVenuesByOrg = cache(async (orgId: string): Promise<Venue[]> => {
   const supabase = await getSupabaseServer();
 
   const { data: venues, error } = await supabase
@@ -222,4 +225,4 @@ export async function getVenuesByOrg(orgId: string): Promise<Venue[]> {
   }
 
   return venues || [];
-}
+})

@@ -1,14 +1,15 @@
-import VenuesClient from "./components/VenuesClient";
-
-// Always render dynamically for authenticated pages
-// React cache() handles request-level deduplication
-export const dynamic = 'force-dynamic'
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { getCachedOrg, getCachedOrgVenuesWithCounts, getCachedPromoters } from '@/lib/cache'
+import { notFound } from 'next/navigation'
+import { VenuesPageClient } from './venues-page-client'
 
 interface VenuesPageProps {
   params: Promise<{ org: string }>;
   searchParams: Promise<{ view?: string }>;
 }
 
+// Server Component - prefetches data for instant load
 export default async function VenuesPage({
   params,
   searchParams,
@@ -16,35 +17,37 @@ export default async function VenuesPage({
   const { org: orgSlug } = await params;
   const { view = "venues" } = await searchParams;
 
-  // OPTIMIZED: Use cached helpers and parallelize all queries
-  const { getCachedOrg, getCachedOrgVenuesWithCounts, getCachedPromoters } = await import('@/lib/cache');
+  // Create a server-side QueryClient for prefetching
+  const queryClient = new QueryClient()
   
-  // First get org, then parallelize all other queries with org.id
-  const orgResult = await getCachedOrg(orgSlug)
-  const { data: org } = orgResult
-
-  if (!org) {
-    return <div>Organization not found</div>;
+  // Get org first for access control
+  const { data: org, error } = await getCachedOrg(orgSlug)
+  
+  if (error || !org) {
+    notFound()
   }
 
-  // Parallelize all data fetching using org.id
-  const [venuesResult, promotersResult] = await Promise.all([
-    getCachedOrgVenuesWithCounts(org.id),
-    getCachedPromoters(org.id)
+  // Prefetch venues and promoters data on the server
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.venuesWithCounts(orgSlug),
+      queryFn: async () => {
+        const { data: venues } = await getCachedOrgVenuesWithCounts(org.id)
+        return venues || []
+      },
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['promoters', orgSlug],
+      queryFn: async () => {
+        const { data: promoters } = await getCachedPromoters(org.id)
+        return promoters || []
+      },
+    }),
   ])
 
-  const { data: allVenues } = venuesResult
-  const { data: allPromoters } = promotersResult
-
   return (
-    <div className="mb-16 mt-4">
-      <VenuesClient 
-        venues={allVenues || []} 
-        promoters={allPromoters || []}
-        orgId={org.id}
-        orgSlug={orgSlug} 
-        view={view} 
-      />
-    </div>
-  );
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <VenuesPageClient orgSlug={orgSlug} orgId={org.id} view={view} />
+    </HydrationBoundary>
+  )
 }

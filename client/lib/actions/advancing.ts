@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Database, Json } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
+import { cache } from 'react'
 import crypto from 'crypto'
 import { generateScheduleFromAdvancing } from './schedule'
 
@@ -14,7 +15,7 @@ type AdvancingComment = Database['public']['Tables']['advancing_comments']['Row'
 type AdvancingDocument = Database['public']['Tables']['advancing_documents']['Row']
 
 // Session Management
-export async function getAdvancingSessions(orgSlug: string) {
+export const getAdvancingSessions = cache(async (orgSlug: string) => {
   const supabase = await getSupabaseServer()
   
   // Get org_id from org slug
@@ -51,9 +52,9 @@ export async function getAdvancingSessions(orgSlug: string) {
   }
   
   return data || []
-}
+})
 
-export async function getAdvancingSession(sessionId: string): Promise<AdvancingSession | null> {
+export const getAdvancingSession = cache(async (sessionId: string): Promise<AdvancingSession | null> => {
   const supabase = await getSupabaseServer()
   
   const { data, error } = await supabase
@@ -83,7 +84,7 @@ export async function getAdvancingSession(sessionId: string): Promise<AdvancingS
   }
   
   return data
-}
+})
 
 export async function createAdvancingSession(
   orgSlug: string,
@@ -143,8 +144,8 @@ export async function createAdvancingSession(
   }
 }
 
-// Field Management
-export async function getAdvancingFields(sessionId: string): Promise<AdvancingField[]> {
+// Fields Management
+export const getAdvancingFields = cache(async (sessionId: string): Promise<AdvancingField[]> => {
   const supabase = await getSupabaseServer()
   
   const { data, error } = await supabase
@@ -159,7 +160,7 @@ export async function getAdvancingFields(sessionId: string): Promise<AdvancingFi
   }
   
   return data || []
-}
+})
 
 export async function createAdvancingField(
   orgSlug: string,
@@ -414,12 +415,12 @@ export async function createAdvancingDocument(
   return { success: true, data }
 }
 
-// Grid Data Management
-export async function loadAdvancingGridData(
+// Grid Data Management - OPTIMIZED with cache
+export const loadAdvancingGridData = cache(async (
   sessionId: string,
   gridType: 'team' | 'arrival_flight' | 'departure_flight',
   teamMemberIds: string[]
-): Promise<Array<{ id: string; [key: string]: string | number | boolean }>> {
+): Promise<Array<{ id: string; [key: string]: string | number | boolean }>> => {
   const supabase = await getSupabaseServer()
   
   try {
@@ -462,7 +463,7 @@ export async function loadAdvancingGridData(
     logger.error('Error loading grid data', error)
     return teamMemberIds.map(id => ({ id: `${gridType}_${id}` }))
   }
-}
+})
 
 export async function saveAdvancingGridData(
   orgSlug: string,

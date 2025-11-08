@@ -141,8 +141,8 @@ export function useDeleteShow(orgSlug: string) {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ showId, orgId }: { showId: string; orgId: string }) => {
-      return await deleteShow(showId, orgId)
+    mutationFn: async ({ showId }: { showId: string }) => {
+      return await deleteShow(showId)
     },
     
     // Optimistic delete
