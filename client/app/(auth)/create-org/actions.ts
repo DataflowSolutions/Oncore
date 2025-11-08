@@ -40,12 +40,24 @@ export async function createOrganization(formData: FormData) {
   try {
     const supabase = await getSupabaseServer()
     
+    logger.info('Creating organization', {
+      name: validatedData.name,
+      slug: validatedData.slug
+    })
+    
     // Call the RPC function - let the DB unique constraint handle race conditions
-    const { error } = await supabase
+    const { data: orgId, error } = await supabase
       .rpc('app_create_organization_with_owner', {
         org_name: validatedData.name,
         org_slug: validatedData.slug
       })
+
+    logger.info('RPC call completed', {
+      hasData: !!orgId,
+      data: orgId,
+      hasError: !!error,
+      error: error
+    })
 
     if (error) {
       logger.error('Failed to create organization', error)
