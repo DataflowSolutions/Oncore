@@ -102,6 +102,14 @@ export function getSupabaseAdmin() {
     logger.info('Admin client created successfully')
   } else {
     console.log('[ADMIN CLIENT] Returning cached client')
+    // ALWAYS log the config even when cached so we can see it
+    const config = getServerConfig()
+    console.log('[ADMIN CLIENT] Cached client config check:')
+    console.log('  - isProduction:', config.isProduction)
+    console.log('  - urlPrefix:', config.url?.substring(0, 40))
+    console.log('  - keyPrefix:', config.serviceRoleKey?.substring(0, 40))
+    console.log('  - keyContainsService:', config.serviceRoleKey?.includes('service_role'))
+    console.log('  - keyContainsAnon:', config.serviceRoleKey?.includes('anon'))
   }
 
   return adminClient
