@@ -5,7 +5,7 @@ import { Plus, Clock, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { createScheduleItem, updateScheduleItem, deleteScheduleItem } from '@/lib/actions/schedule'
+import { useCreateScheduleItem, useUpdateScheduleItem, useDeleteScheduleItem } from '@/lib/hooks/use-schedule'
 import { Database } from '@/lib/database.types'
 
 type ScheduleItem = Database['public']['Tables']['schedule_items']['Row']
@@ -47,6 +47,10 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems, assi
     person_id: '' // Empty means team-wide
   })
 
+  const { mutate: createItem } = useCreateScheduleItem(orgSlug, showId)
+  const { mutate: updateItem } = useUpdateScheduleItem(orgSlug, showId)
+  const { mutate: deleteItem } = useDeleteScheduleItem(orgSlug, showId)
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -60,7 +64,7 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems, assi
     setEditingId(null)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
     // Convert date strings to proper datetime strings
@@ -76,12 +80,16 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems, assi
     }
 
     if (editingId) {
-      await updateScheduleItem(orgSlug, showId, editingId, scheduleData)
+      updateItem(
+        { itemId: editingId, updates: scheduleData },
+        { onSuccess: () => resetForm() }
+      )
     } else {
-      await createScheduleItem(orgSlug, showId, scheduleData)
+      createItem(
+        scheduleData,
+        { onSuccess: () => resetForm() }
+      )
     }
-
-    resetForm()
   }
 
   const handleEdit = (item: ScheduleItem) => {
@@ -108,9 +116,9 @@ export function ScheduleManager({ orgSlug, showId, showDate, scheduleItems, assi
     setIsAdding(true)
   }
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = (itemId: string) => {
     if (confirm('Are you sure you want to delete this schedule item?')) {
-      await deleteScheduleItem(orgSlug, showId, itemId)
+      deleteItem(itemId)
     }
   }
 

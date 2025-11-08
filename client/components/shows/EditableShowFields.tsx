@@ -9,8 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { updateShow } from '@/lib/actions/shows'
-import { useRouter } from 'next/navigation'
+import { useUpdateShow } from '@/lib/hooks/use-shows'
 import { CalendarIcon, Check, X } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Database } from '@/lib/database.types'
@@ -19,32 +18,33 @@ type Venue = Database['public']['Tables']['venues']['Row']
 
 interface EditableTitleProps {
   showId: string
+  orgSlug: string
   currentValue: string
   className?: string
 }
 
-export function EditableTitle({ showId, currentValue, className }: EditableTitleProps) {
+export function EditableTitle({ showId, orgSlug, currentValue, className }: EditableTitleProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [value, setValue] = useState(currentValue)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { mutate: updateShow, isPending: isLoading } = useUpdateShow(orgSlug)
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (value === currentValue) {
       setIsOpen(false)
       return
     }
 
-    setIsLoading(true)
-    try {
-      await updateShow(showId, { title: value })
-      router.refresh()
-      setIsOpen(false)
-    } catch (error) {
-      logger.error('Failed to update title', error)
-    } finally {
-      setIsLoading(false)
-    }
+    updateShow(
+      { showId, updates: { title: value } },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+        },
+        onError: (error) => {
+          logger.error('Failed to update title', error)
+        }
+      }
+    )
   }
 
   const handleCancel = () => {
@@ -106,17 +106,17 @@ export function EditableTitle({ showId, currentValue, className }: EditableTitle
 
 interface EditableDateProps {
   showId: string
+  orgSlug: string
   currentValue: string | null
   className?: string
 }
 
-export function EditableDate({ showId, currentValue, className }: EditableDateProps) {
+export function EditableDate({ showId, orgSlug, currentValue, className }: EditableDateProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(currentValue ? new Date(currentValue) : undefined)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { mutate: updateShow, isPending: isLoading } = useUpdateShow(orgSlug)
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!date) {
       setIsOpen(false)
       return
@@ -128,16 +128,17 @@ export function EditableDate({ showId, currentValue, className }: EditableDatePr
       return
     }
 
-    setIsLoading(true)
-    try {
-      await updateShow(showId, { date: newDateString })
-      router.refresh()
-      setIsOpen(false)
-    } catch (error) {
-      logger.error('Failed to update date', error)
-    } finally {
-      setIsLoading(false)
-    }
+    updateShow(
+      { showId, updates: { date: newDateString } },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+        },
+        onError: (error) => {
+          logger.error('Failed to update date', error)
+        }
+      }
+    )
   }
 
   const handleCancel = () => {
@@ -197,41 +198,42 @@ export function EditableDate({ showId, currentValue, className }: EditableDatePr
 
 interface EditableTimeProps {
   showId: string
+  orgSlug: string
   currentValue: string | null
   fieldName: 'doors_at' | 'set_time'
   label: string
   className?: string
 }
 
-export function EditableTime({ showId, currentValue, fieldName, label, className }: EditableTimeProps) {
+export function EditableTime({ showId, orgSlug, currentValue, fieldName, label, className }: EditableTimeProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [time, setTime] = useState(
     currentValue ? format(new Date(currentValue), 'HH:mm') : ''
   )
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { mutate: updateShow, isPending: isLoading } = useUpdateShow(orgSlug)
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!time) {
       setIsOpen(false)
       return
     }
 
-    setIsLoading(true)
-    try {
-      // Combine with show date to create proper timestamp
-      const [hours, minutes] = time.split(':')
-      const date = new Date()
-      date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-      
-      await updateShow(showId, { [fieldName]: date.toISOString() })
-      router.refresh()
-      setIsOpen(false)
-    } catch (error) {
-      logger.error(`Failed to update ${fieldName}`, error)
-    } finally {
-      setIsLoading(false)
-    }
+    // Combine with show date to create proper timestamp
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+    
+    updateShow(
+      { showId, updates: { [fieldName]: date.toISOString() } },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+        },
+        onError: (error) => {
+          logger.error(`Failed to update ${fieldName}`, error)
+        }
+      }
+    )
   }
 
   const handleCancel = () => {
@@ -301,33 +303,34 @@ export function EditableTime({ showId, currentValue, fieldName, label, className
 
 interface EditableVenueProps {
   showId: string
+  orgSlug: string
   currentVenueId: string | null
   venues: Venue[]
   className?: string
 }
 
-export function EditableVenue({ showId, currentVenueId, venues, className }: EditableVenueProps) {
+export function EditableVenue({ showId, orgSlug, currentVenueId, venues, className }: EditableVenueProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [venueId, setVenueId] = useState(currentVenueId || '')
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { mutate: updateShow, isPending: isLoading } = useUpdateShow(orgSlug)
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (venueId === currentVenueId) {
       setIsOpen(false)
       return
     }
 
-    setIsLoading(true)
-    try {
-      await updateShow(showId, { venue_id: venueId || null })
-      router.refresh()
-      setIsOpen(false)
-    } catch (error) {
-      logger.error('Failed to update venue', error)
-    } finally {
-      setIsLoading(false)
-    }
+    updateShow(
+      { showId, updates: { venue_id: venueId || null } },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+        },
+        onError: (error) => {
+          logger.error('Failed to update venue', error)
+        }
+      }
+    )
   }
 
   const handleCancel = () => {
@@ -404,32 +407,33 @@ export function EditableVenue({ showId, currentVenueId, venues, className }: Edi
 
 interface EditableNotesProps {
   showId: string
+  orgSlug: string
   currentValue: string | null
   className?: string
 }
 
-export function EditableNotes({ showId, currentValue, className }: EditableNotesProps) {
+export function EditableNotes({ showId, orgSlug, currentValue, className }: EditableNotesProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [value, setValue] = useState(currentValue || '')
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { mutate: updateShow, isPending: isLoading } = useUpdateShow(orgSlug)
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (value === currentValue) {
       setIsOpen(false)
       return
     }
 
-    setIsLoading(true)
-    try {
-      await updateShow(showId, { notes: value || null })
-      router.refresh()
-      setIsOpen(false)
-    } catch (error) {
-      logger.error('Failed to update notes', error)
-    } finally {
-      setIsLoading(false)
-    }
+    updateShow(
+      { showId, updates: { notes: value || null } },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+        },
+        onError: (error) => {
+          logger.error('Failed to update notes', error)
+        }
+      }
+    )
   }
 
   const handleCancel = () => {

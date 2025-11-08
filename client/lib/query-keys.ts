@@ -14,8 +14,10 @@ export const queryKeys = {
   // Shows
   shows: (orgSlug: string) => ['shows', orgSlug] as const,
   show: (showId: string) => ['show', showId] as const,
+  showWithVenue: (showId: string) => ['show', showId, 'full'] as const,
   showSchedule: (showId: string) => ['show', showId, 'schedule'] as const,
   showTeam: (showId: string) => ['show', showId, 'team'] as const,
+  showAvailablePeople: (orgId: string) => ['show', 'available-people', orgId] as const,
   
   // People
   people: (orgSlug: string) => ['people', orgSlug] as const,
@@ -41,9 +43,24 @@ export const invalidationKeys = {
   // When a show is mutated, invalidate:
   show: (showId: string, orgSlug: string) => [
     queryKeys.show(showId),
+    queryKeys.showWithVenue(showId),
     queryKeys.shows(orgSlug),
     queryKeys.showSchedule(showId),
     queryKeys.showTeam(showId),
+  ],
+  
+  // When schedule items are mutated, invalidate:
+  schedule: (showId: string) => [
+    queryKeys.showSchedule(showId),
+    queryKeys.show(showId),
+    queryKeys.showWithVenue(showId),
+  ],
+  
+  // When show team is mutated, invalidate:
+  showTeam: (showId: string, orgSlug: string, orgId: string) => [
+    queryKeys.showTeam(showId),
+    queryKeys.showAvailablePeople(orgId),
+    queryKeys.people(orgSlug),
   ],
   
   // When a person is mutated, invalidate:

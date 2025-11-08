@@ -29,13 +29,13 @@ export function useShows(orgSlug: string) {
 }
 
 /**
- * Fetch single show details
+ * Fetch single show details with full venue information
  * Uses: Show detail page
  * Caching: 30 seconds stale time (more dynamic data)
  */
-export function useShow(showId: string, orgSlug: string) {
+export function useShowWithVenue(showId: string, orgSlug: string) {
   return useQuery({
-    queryKey: queryKeys.show(showId),
+    queryKey: queryKeys.showWithVenue(showId),
     queryFn: async () => {
       const response = await fetch(`/api/${orgSlug}/shows/${showId}`)
       if (!response.ok) {
@@ -130,6 +130,22 @@ export function useUpdateShow(orgSlug: string) {
         queryClient.invalidateQueries({ queryKey: key })
       })
     },
+  })
+}
+
+/**
+ * Fetch available people for show team assignment
+ * Uses: Show detail page, team modal
+ */
+export function useAvailablePeople(orgId: string) {
+  return useQuery({
+    queryKey: queryKeys.showAvailablePeople(orgId),
+    queryFn: async () => {
+      // This would need a server action or API route
+      // For now, we'll return empty array as a placeholder
+      return []
+    },
+    staleTime: 60 * 1000, // 1 minute
   })
 }
 
