@@ -77,6 +77,7 @@ export async function uploadFile(
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const parseContractSchema = z.object({
   orgId: z.string().uuid(),
   fileUrl: z.string().url(),
