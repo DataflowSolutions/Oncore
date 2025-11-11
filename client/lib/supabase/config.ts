@@ -5,39 +5,13 @@
  * This ensures consistent environment variable usage across the app.
  */
 
-import { logger } from '../logger'
-
 /**
  * Get server-side Supabase configuration
  * Uses non-public environment variables (server-only)
  */
 export function getServerConfig() {
-  console.log('[CONFIG] getServerConfig() called')
-  console.log('[CONFIG] process.env.PROD_DB =', JSON.stringify(process.env.PROD_DB))
-  console.log('[CONFIG] typeof process.env.PROD_DB =', typeof process.env.PROD_DB)
-  
   const isProduction = process.env.PROD_DB === 'true'
   
-  console.log('[CONFIG] isProduction =', isProduction)
-  console.log('[CONFIG] Environment variables check:')
-  console.log('  - PROD_SUPABASE_URL exists:', !!process.env.PROD_SUPABASE_URL)
-  console.log('  - PROD_SUPABASE_URL value:', process.env.PROD_SUPABASE_URL)
-  console.log('  - PROD_SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.PROD_SUPABASE_SERVICE_ROLE_KEY)
-  console.log('  - PROD_SUPABASE_SERVICE_ROLE_KEY length:', process.env.PROD_SUPABASE_SERVICE_ROLE_KEY?.length)
-  console.log('  - PROD_SUPABASE_SERVICE_ROLE_KEY first 50:', process.env.PROD_SUPABASE_SERVICE_ROLE_KEY?.substring(0, 50))
-  console.log('  - LOCAL_SUPABASE_URL exists:', !!process.env.LOCAL_SUPABASE_URL)
-  console.log('  - LOCAL_SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY)
-
-  // Debug: Log what we're checking
-  logger.info('getServerConfig called', {
-    PROD_DB: process.env.PROD_DB,
-    isProduction,
-    hasProdUrl: !!process.env.PROD_SUPABASE_URL,
-    hasLocalUrl: !!process.env.LOCAL_SUPABASE_URL,
-    hasProdServiceKey: !!process.env.PROD_SUPABASE_SERVICE_ROLE_KEY,
-    hasLocalServiceKey: !!process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY
-  })
-
   const url = isProduction
     ? process.env.PROD_SUPABASE_URL!
     : process.env.LOCAL_SUPABASE_URL!
@@ -49,11 +23,6 @@ export function getServerConfig() {
   const serviceRoleKey = isProduction
     ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY!
     : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY!
-
-  console.log('[CONFIG] Selected configuration:')
-  console.log('  - url:', url)
-  console.log('  - serviceRoleKey length:', serviceRoleKey?.length)
-  console.log('  - serviceRoleKey first 50:', serviceRoleKey?.substring(0, 50))
 
   return {
     url,

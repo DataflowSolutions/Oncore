@@ -19,13 +19,10 @@ import { logger } from './logger'
  * This prevents multiple components from fetching the same org
  */
 export const getCachedOrg = cache(async (slug: string) => {
-  logger.debug('Cache: getCachedOrg called', { slug });
-  
   const supabase = await getSupabaseServer()
   
   // Check if user is authenticated
   const { data: { user } } = await supabase.auth.getUser()
-  logger.debug('Cache: User authenticated', { authenticated: !!user });
   
   const { data, error } = await supabase
     .from('organizations')
@@ -34,21 +31,20 @@ export const getCachedOrg = cache(async (slug: string) => {
     .single()
   
   if (error) {
-    logger.warn('Cache: Org lookup failed', { 
-      found: !!data, 
+    logger.warn('Org lookup failed', { 
+      slug,
       errorMessage: error?.message,
       errorCode: error?.code
-    });
+    })
   }
   
   // If RLS is blocking, check if user is an org member
   if (!data && user) {
-    const { data: membership } = await supabase
+    await supabase
       .from('org_members')
       .select('org_id, role')
       .eq('user_id', user.id)
       .limit(5)
-    logger.debug('Cache: User memberships fetched', { count: membership?.length ?? 0 });
   }
   
   return { data, error }
