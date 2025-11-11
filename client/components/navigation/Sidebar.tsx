@@ -13,11 +13,20 @@ import {
   Eye,
   UserCircle,
   FileText,
+  Check,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import type { ShowWithVenue } from "@/lib/actions/shows";
 
 interface SidebarProps {
   orgSlug: string;
@@ -28,8 +37,10 @@ const STORAGE_KEY = "oncore_last_show";
 
 export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [lastShowId, setLastShowId] = useState<string | null>(null);
+  const [showSwitcherOpen, setShowSwitcherOpen] = useState(false);
 
   // Extract showId from current URL
   const currentShowId = useMemo(() => {
@@ -79,6 +90,17 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
     },
     enabled: !!showId, // Only run if we have a showId
     staleTime: 5 * 60 * 1000, // 5 minutes - show metadata rarely changes
+  });
+
+  // Fetch all shows for the switcher dropdown
+  const { data: allShows = [] } = useQuery<ShowWithVenue[]>({
+    queryKey: queryKeys.shows(orgSlug),
+    queryFn: async () => {
+      const response = await fetch(`/api/${orgSlug}/shows`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 60 * 1000, // 1 minute
   });
 
   const navigation = [
@@ -254,11 +276,79 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Current Show
                   </h3>
-                  {show?.title && (
-                    <p className="text-xs text-muted-foreground/60 mt-1 truncate">
-                      {show.title}
-                    </p>
-                  )}
+
+                  {/* Show Switcher Dropdown */}
+                  <Popover
+                    open={showSwitcherOpen}
+                    onOpenChange={setShowSwitcherOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <button className="text-xs text-muted-foreground/60 mt-1 truncate hover:text-muted-foreground transition-colors text-left cursor-pointer">
+                        {show?.title || "Select show..."}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[240px] p-0" align="start">
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {/* Top 5 recent shows */}
+                        {allShows.slice(0, 5).map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              router.push(`/${orgSlug}/shows/${s.id}`);
+                              setShowSwitcherOpen(false);
+                              setIsMobileOpen(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-start gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left",
+                              s.id === currentShowId && "bg-accent"
+                            )}
+                          >
+                            {s.id === currentShowId && (
+                              <Check className="h-4 w-4 shrink-0 mt-0.5" />
+                            )}
+                            <div
+                              className={cn(
+                                "flex flex-col",
+                                s.id !== currentShowId && "ml-6"
+                              )}
+                            >
+                              <span className="font-medium truncate">
+                                {s.title}
+                              </span>
+                              {s.date && (
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(s.date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+
+                        {/* View all shows button */}
+                        {allShows.length > 0 && (
+                          <>
+                            <div className="border-t border-border my-1" />
+                            <button
+                              onClick={() => {
+                                router.push(`/${orgSlug}/shows`);
+                                setShowSwitcherOpen(false);
+                                setIsMobileOpen(false);
+                              }}
+                              className="w-full px-3 py-2 text-sm text-center text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              View all shows
+                            </button>
+                          </>
+                        )}
+
+                        {allShows.length === 0 && (
+                          <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                            No shows found
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 {showSubNav.map((item) => {
                   const active = isActive(item.href, item.exact);
