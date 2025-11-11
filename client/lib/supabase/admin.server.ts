@@ -48,7 +48,11 @@ export function getSupabaseAdmin() {
     const config = getServerConfig()
     validateConfig(config, 'admin')
 
-    logger.info('Creating admin client', { isProduction: config.isProduction })
+    logger.info('Creating admin client', { 
+      isProduction: config.isProduction,
+      keyPrefix: config.serviceRoleKey.substring(0, 15) + '...',
+      url: config.url
+    })
     
     adminClient = createClient<Database>(
       config.url,
@@ -58,10 +62,20 @@ export function getSupabaseAdmin() {
           autoRefreshToken: false,
           persistSession: false,
         },
+        db: {
+          schema: 'public',
+        },
+        global: {
+          headers: {
+            'apikey': config.serviceRoleKey,
+          }
+        }
       }
     )
     
     logger.info('Admin client created successfully')
+  } else {
+    logger.debug('Using cached admin client')
   }
 
   return adminClient

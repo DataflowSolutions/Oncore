@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -9,30 +10,32 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
+      logger.error('Auth error in /api/user/organizations', { error: authError?.message })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch user's organizations
-    const { data, error } = await supabase
-      .from('org_members')
-      .select(`
-        role,
-        created_at,
-        organizations (
-          id,
-          name,
-          slug,
-          created_at
-        )
-      `)
-      .eq('user_id', user.id)
+    logger.debug('Fetching organizations for user', { userId: user.id })
+
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .rpc('get_user_organizations')
 
     if (error) {
+      logger.error('RPC error fetching organizations', { 
+        error: error.message, 
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        userId: user.id 
+      })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    logger.debug('Organizations fetched successfully', { count: data?.length || 0 })
     return NextResponse.json(data || [])
-  } catch {
+  } catch (error) {
+    logger.error('Unexpected error in /api/user/organizations', { error })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

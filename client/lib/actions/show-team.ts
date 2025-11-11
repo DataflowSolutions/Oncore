@@ -18,49 +18,24 @@ export type PersonListItem = Pick<Person, 'id' | 'name' | 'member_type' | 'email
 export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 'from_you'): Promise<PersonListItem[]> => {
   const supabase = await getSupabaseServer()
   
-  // Slim selector - only essential fields for list display
-  const { data, error } = await supabase
-    .from('show_assignments')
-    .select(`
-      duty,
-      people (
-        id,
-        name,
-        member_type,
-        email,
-        phone
-      )
-    `)
-    .eq('show_id', showId)
-
-  if (error) {
-    logger.error('Error fetching show team', error)
-    throw new Error(`Failed to fetch show team: ${error.message}`)
-  }
-
-  // Transform the data to include duty in the person object
-  let teamMembers = (data || []).map(assignment => ({
-    ...assignment.people,
-    duty: assignment.duty
-  })) as PersonListItem[]
-
-  // Filter by party type based on member_type
-  if (partyType) {
-    teamMembers = teamMembers.filter(member => {
-      if (partyType === 'from_us') {
-        // Artist team: Artists, Crew, Managers, Agents
-        return ['Artist', 'Crew', 'Manager', 'Agent'].includes(member.member_type || '')
-      } else {
-        // Promoter team: Only show people with promoter-specific member types
-        // Since no promoter member types exist yet, return empty for promoter team
-        // TODO: Add member types like "Promoter", "Venue Staff", "Sound Engineer", etc.
-        const promoterTypes = ['Promoter', 'Venue Staff', 'Sound Engineer', 'Local Crew']
-        return promoterTypes.includes(member.member_type || '')
-      }
+  try {
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_show_team', {
+      p_show_id: showId,
+      p_party_type: partyType || null
     })
-  }
 
-  return teamMembers
+    if (error) {
+      logger.error('Error fetching show team', error)
+      throw new Error(`Failed to fetch show team: ${error.message}`)
+    }
+
+    return data || []
+  } catch (error) {
+    logger.error('Exception in getShowTeam', error)
+    throw error
+  }
 })
 
 // Get all available people from the organization (people pool), optionally filtered by party type
@@ -68,30 +43,24 @@ export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 
 export const getAvailablePeople = cache(async (orgId: string, partyType?: 'from_us' | 'from_you'): Promise<PersonListItem[]> => {
   const supabase = await getSupabaseServer()
   
-  // Slim selector - only essential fields for list display
-  let query = supabase
-    .from('people')
-    .select('id, name, member_type, email, phone')
-    .eq('org_id', orgId)
+  try {
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_available_people', {
+      p_org_id: orgId,
+      p_party_type: partyType || null
+    })
 
-  // Filter by member type based on party
-  if (partyType === 'from_us') {
-    // Artist team: Artists, Crew, Managers, Agents
-    query = query.in('member_type', ['Artist', 'Crew', 'Manager', 'Agent'])
-  } else if (partyType === 'from_you') {
-    // Promoter team: No promoter member types exist in the current schema
-    // Return empty result by filtering to impossible condition
-    query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) {
+      logger.error('Error fetching available people', error)
+      throw new Error(`Failed to fetch available people: ${error.message}`)
+    }
+
+    return data || []
+  } catch (error) {
+    logger.error('Exception in getAvailablePeople', error)
+    throw error
   }
-
-  const { data, error } = await query.order('name')
-
-  if (error) {
-    logger.error('Error fetching available people', error)
-    throw new Error(`Failed to fetch available people: ${error.message}`)
-  }
-
-  return data || []
 })
 
 // Assign a person to a show

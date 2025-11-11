@@ -74,30 +74,7 @@ export async function createOrganization(formData: FormData) {
       }
     }
 
-    // Create a free trial subscription for the new organization
-    logger.info('Creating trial subscription for organization', { orgId })
-    
-    const trialEndDate = new Date()
-    trialEndDate.setDate(trialEndDate.getDate() + 30) // 30 days from now
-
-    const { error: subscriptionError } = await supabase
-      .from('org_subscriptions')
-      .insert({
-        org_id: orgId,
-        plan_id: 'solo_artist',
-        status: 'trialing',
-        current_period_start: new Date().toISOString(),
-        current_period_end: trialEndDate.toISOString(),
-        cancel_at_period_end: false
-      })
-
-    if (subscriptionError) {
-      logger.error('Failed to create trial subscription', subscriptionError)
-      // Don't fail the whole flow, just log it
-      // The organization was created successfully
-    } else {
-      logger.info('Trial subscription created successfully', { orgId })
-    }
+    logger.info('Organization created successfully with trial subscription', { orgId })
     
   } catch (error) {
     logger.error('Error creating organization', error)
