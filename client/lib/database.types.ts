@@ -1926,8 +1926,16 @@ export type Database = {
       }
       is_org_editor: { Args: { p_org: string }; Returns: boolean }
       is_org_editor_and_active: { Args: { p_org: string }; Returns: boolean }
+      is_org_editor_for_contact: {
+        Args: { p_org_id: string }
+        Returns: boolean
+      }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
       is_org_member_and_active: { Args: { p_org: string }; Returns: boolean }
+      is_org_member_for_contact: {
+        Args: { p_org_id: string }
+        Returns: boolean
+      }
       is_supabase_admin: { Args: never; Returns: boolean }
       log_billing_action: {
         Args: {
