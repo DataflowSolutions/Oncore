@@ -1,40 +1,55 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Music, ArrowLeft, FileText } from 'lucide-react'
-import Link from 'next/link'
-import { ScheduleManager } from '@/components/shows/ScheduleManager'
-import { ShowClient } from './ShowClient'
-import { 
-  EditableTitle, 
-  EditableDate, 
-  EditableTime, 
-  EditableVenue, 
-  EditableNotes 
-} from '@/components/shows/EditableShowFields'
-import { useShowWithVenue, useShowSchedule, useShowTeam } from '@/lib/hooks/use-shows'
-import { useVenues } from '@/lib/hooks/use-venues'
-import type { Database } from '@/lib/database.types'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Music, ArrowLeft, FileText } from "lucide-react";
+import Link from "next/link";
+import { ScheduleManager } from "@/components/shows/ScheduleManager";
+import { ShowClient } from "./ShowClient";
+import {
+  EditableTitle,
+  EditableDate,
+  EditableTime,
+  EditableVenue,
+  EditableNotes,
+} from "@/components/shows/EditableShowFields";
+import {
+  useShowWithVenue,
+  useShowSchedule,
+  useShowTeam,
+} from "@/lib/hooks/use-shows";
+import { useVenues } from "@/lib/hooks/use-venues";
+import type { Database } from "@/lib/database.types";
 
-type Person = Database['public']['Tables']['people']['Row']
+type Person = Database["public"]["Tables"]["people"]["Row"];
 
 interface ShowDetailPageClientProps {
-  orgSlug: string
-  showId: string
+  orgSlug: string;
+  showId: string;
 }
 
-export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientProps) {
+export function ShowDetailPageClient({
+  orgSlug,
+  showId,
+}: ShowDetailPageClientProps) {
   // Fetch all data using TanStack Query - will use prefetched data on initial load
-  const { data: show, isLoading: showLoading, error: showError } = useShowWithVenue(showId, orgSlug)
-  const { data: scheduleItems = [], isLoading: scheduleLoading } = useShowSchedule(showId, orgSlug)
-  const { data: teamData, isLoading: teamLoading } = useShowTeam(showId, orgSlug)
-  const { data: venues = [], isLoading: venuesLoading } = useVenues(orgSlug)
+  const {
+    data: show,
+    isLoading: showLoading,
+    error: showError,
+  } = useShowWithVenue(showId, orgSlug);
+  const { data: scheduleItems = [], isLoading: scheduleLoading } =
+    useShowSchedule(showId, orgSlug);
+  const { data: teamData, isLoading: teamLoading } = useShowTeam(
+    showId,
+    orgSlug
+  );
+  const { data: venues = [], isLoading: venuesLoading } = useVenues(orgSlug);
 
   // Extract team data
-  const assignedTeam = (teamData?.assignedTeam || []) as Person[]
-  const availablePeople = (teamData?.availablePeople || []) as Person[]
+  const assignedTeam = (teamData?.assignedTeam || []) as Person[];
+  const availablePeople = (teamData?.availablePeople || []) as Person[];
 
   // Loading state
   if (showLoading || scheduleLoading || teamLoading || venuesLoading) {
@@ -43,7 +58,7 @@ export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientPr
         <div className="h-32 bg-muted rounded-lg"></div>
         <div className="h-96 bg-muted rounded-lg"></div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -52,31 +67,31 @@ export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientPr
       <div className="text-center py-12">
         <p className="text-destructive">Failed to load show details</p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-8">
       {/* Header with Back Button */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <Link href={`/${orgSlug}/shows`} prefetch={true}>
           <Button variant="outline" size="sm" className="gap-2 hover:bg-accent">
             <ArrowLeft className="w-4 h-4" />
             Back to Shows
           </Button>
         </Link>
-        
+
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="space-y-3">
-            <EditableTitle 
+            <EditableTitle
               showId={showId}
               orgSlug={orgSlug}
-              currentValue={show.title || ''}
+              currentValue={show.title || ""}
               className="text-4xl font-bold"
             />
             <div className="flex items-center gap-3 flex-wrap">
-              <Badge 
-                variant={show.status === 'confirmed' ? 'default' : 'secondary'}
+              <Badge
+                variant={show.status === "confirmed" ? "default" : "secondary"}
                 className="text-sm px-3 py-1"
               >
                 {show.status}
@@ -91,7 +106,7 @@ export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientPr
               )}
             </div>
           </div>
-          
+
           {/* Primary Actions */}
           <div className="flex gap-2 flex-wrap">
             <Link href={`/${orgSlug}/shows/${showId}/day`} prefetch={true}>
@@ -100,12 +115,15 @@ export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientPr
                 Day Schedule
               </Button>
             </Link>
-            <ShowClient 
+            <ShowClient
               showId={showId}
               assignedTeam={assignedTeam}
               availablePeople={availablePeople}
             />
-            <Link href={`/${orgSlug}/shows/${showId}/advancing`} prefetch={true}>
+            <Link
+              href={`/${orgSlug}/shows/${showId}/advancing`}
+              prefetch={true}
+            >
               <Button size="lg" variant="outline" className="gap-2">
                 <FileText className="w-5 h-5" />
                 Advancing
@@ -221,5 +239,5 @@ export function ShowDetailPageClient({ orgSlug, showId }: ShowDetailPageClientPr
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,39 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, Settings, UserCircle } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
 import { Notifications } from "./Notifications";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 
 export function TopBar() {
   const [open, setOpen] = React.useState(false);
-  const [isSyncing, setIsSyncing] = React.useState(false);
-
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      const response = await fetch('/api/sync', { method: 'POST' });
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Sync Complete', {
-          description: data.message || `Synced ${data.synced} items`,
-        });
-      } else {
-        toast.error('Sync Failed', {
-          description: data.error || 'Failed to sync data',
-        });
-      }
-    } catch (error) {
-      toast.error('Sync Failed', {
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+  const params = useParams();
+  const orgSlug = params?.org as string;
 
   return (
     <>
@@ -49,7 +27,7 @@ export function TopBar() {
                 onClick={() => setOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />
-                <span className="hidden lg:inline-flex">Search pages...</span>
+                <span className="hidden lg:inline-flex">Search anything</span>
                 <span className="inline-flex lg:hidden">Search...</span>
                 <kbd className="pointer-events-none absolute right-1.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
                   <span className="text-xs">⌘</span>K
@@ -57,17 +35,22 @@ export function TopBar() {
               </Button>
             </div>
             <div className="flex items-center gap-2">
+              <Notifications />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleSync}
-                disabled={isSyncing}
-                title="Sync data"
-                className="relative"
+                asChild
+                title="Profile & Artist Filters"
               >
-                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <Link href={`/${orgSlug}/profile`}>
+                  <UserCircle className="h-4 w-4" />
+                </Link>
               </Button>
-              <Notifications />
+              <Button variant="ghost" size="icon" asChild title="Settings">
+                <Link href={`/${orgSlug}/settings`}>
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

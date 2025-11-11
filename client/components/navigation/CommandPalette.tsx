@@ -60,7 +60,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search for pages..." />
+      <CommandInput placeholder="Search anything" />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         {navigationItems.map((group) => (

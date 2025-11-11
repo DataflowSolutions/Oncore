@@ -817,7 +817,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
 
                     <div className="flex justify-end">
                       <Link
-                        href={`/${orgSlug}/shows/${show.id}`}
+                        href={`/${orgSlug}/shows/${show.id}/day`}
                         className="text-sm font-semibold text-primary hover:underline"
                       >
                         Open show →
@@ -943,20 +943,22 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                             return (
                               <Link
                                 key={show.id}
-                                href={`/${orgSlug}/shows/${show.id}`}
+                                href={`/${orgSlug}/shows/${show.id}/day`}
                                 className="block "
                                 title={`${show.title} - ${artistNames} - ${show.venue?.name}`}
                               >
                                 {/* Mobile-optimized view */}
                                 <div className="sm:hidden text-[9px] leading-tight p-1 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
                                   <div className="font-bold text-foreground line-clamp-1 break-words">
-                                    {artistNames} • {show.venue?.city || "No city"}
+                                    {artistNames} •{" "}
+                                    {show.venue?.city || "No city"}
                                   </div>
                                 </div>
                                 {/* Desktop view */}
                                 <div className="hidden sm:block text-[10px] leading-tight p-1.5 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
                                   <div className="font-bold text-foreground line-clamp-1 break-words">
-                                    {artistNames} • {show.venue?.city || "No city"}
+                                    {artistNames} •{" "}
+                                    {show.venue?.city || "No city"}
                                   </div>
                                 </div>
                               </Link>
@@ -1074,20 +1076,22 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                             return (
                               <Link
                                 key={show.id}
-                                href={`/${orgSlug}/shows/${show.id}`}
+                                href={`/${orgSlug}/shows/${show.id}/day`}
                                 className="block"
                                 title={`${show.title} - ${artistNames} - ${show.venue?.name}`}
                               >
                                 {/* Mobile-optimized week view */}
                                 <div className="sm:hidden text-[9px] leading-tight p-1 rounded-sm bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
                                   <div className="font-bold text-foreground line-clamp-1 break-words">
-                                    {artistNames} • {show.venue?.city || "No city"}
+                                    {artistNames} •{" "}
+                                    {show.venue?.city || "No city"}
                                   </div>
                                 </div>
                                 {/* Desktop week view */}
                                 <div className="hidden sm:block text-xs leading-tight p-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
                                   <div className="font-bold text-foreground line-clamp-1 break-words">
-                                    {artistNames} • {show.venue?.city || "No city"}
+                                    {artistNames} •{" "}
+                                    {show.venue?.city || "No city"}
                                   </div>
                                 </div>
                                 {/* Desktop week view */}

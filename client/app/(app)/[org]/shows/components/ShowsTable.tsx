@@ -99,20 +99,20 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
                   className="rounded-lg border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group"
                 >
                   <Link
-                    href={`/${orgSlug}/shows/${show.id}`}
-                    className="block p-4"
+                    href={`/${orgSlug}/shows/${show.id}/day`}
+                    className="block p-3"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                       {/* Left side - Main content */}
-                      <div className="flex flex-col gap-2 flex-1 min-w-0">
-                        <h4 className="font-semibold text-base group-hover:text-primary transition-colors">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
                           {show.title || "Untitled Show"}
                         </h4>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-xs">
                           {/* Artist and City on one line */}
-                          <div className="flex items-center gap-2">
-                            <Music className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div className="flex items-center gap-1.5">
+                            <Music className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                             <span className="text-foreground/90 font-medium">
                               {artistNames}
                             </span>
@@ -125,23 +125,24 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
                           </div>
 
                           {/* Venue on second line */}
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="text-xs text-muted-foreground">
                           {show.venue && (
-                            <div className="flex items-center gap-2 sm:ml-auto">
-                              <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="flex items-center gap-1.5 sm:ml-auto">
+                              <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                               <span className="text-foreground/70 font-medium hover:text-primary hover:underline">
                                 {show.venue.name}
                               </span>
                             </div>
                           )}
                         </div>
-                      </div>
-
-                      {/* Right side - Date */}
-                      <div className="flex items-center gap-2 text-sm flex-shrink-0 text-muted-foreground">
-                        <Calendar className="h-4 w-4 sm:hidden" />
-                        <span className="font-medium">
-                          {formattedDate}
-                        </span>
+                        {/* Right side - Date */}
+                        <div className="flex items-center gap-1.5 text-xs flex-shrink-0 text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5 sm:hidden" />
+                          <span className="font-medium">{formattedDate}</span>
+                        </div>
                       </div>
                     </div>
                   </Link>
