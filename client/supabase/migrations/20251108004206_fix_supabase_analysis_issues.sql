@@ -51,8 +51,9 @@ CREATE INDEX IF NOT EXISTS idx_org_subscriptions_plan_id
   ON public.org_subscriptions(plan_id);
 
 -- organizations
-CREATE INDEX IF NOT EXISTS idx_organizations_created_by 
-  ON public.organizations(created_by);
+CREATE INDEX IF NOT EXISTS idx_organizations_created_by
+  ON public.organizations(created_by)
+  WHERE created_by IS NOT NULL;;
 
 -- people
 CREATE INDEX IF NOT EXISTS idx_people_user_id 
@@ -72,41 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_venue_contacts_created_by
 -- PART 2: ADD PRIMARY KEYS TO BACKUP TABLES (Performance)
 -- ============================================================================
 
--- Note: These are backup tables, so we add a simple sequential primary key
--- if they don't already have one
-
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = '_show_collaborators_invite_backup_pkey'
-  ) THEN
-    ALTER TABLE public._show_collaborators_invite_backup 
-      ADD COLUMN IF NOT EXISTS backup_id SERIAL PRIMARY KEY;
-  END IF;
-END $$;
-
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = '_org_seats_backup_pkey'
-  ) THEN
-    ALTER TABLE public._org_seats_backup 
-      ADD COLUMN IF NOT EXISTS backup_id SERIAL PRIMARY KEY;
-  END IF;
-END $$;
-
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = '_billing_actions_log_backup_pkey'
-  ) THEN
-    ALTER TABLE public._billing_actions_log_backup 
-      ADD COLUMN IF NOT EXISTS backup_id SERIAL PRIMARY KEY;
-  END IF;
-END $$;
+-- Skip - backup tables don't exist in this version
 
 -- ============================================================================
 -- PART 3: DROP UNUSED INDEXES (Performance)
@@ -429,27 +396,8 @@ CREATE POLICY "Org owners/admins can manage contact commissions" ON public.conta
     )
   );
 
--- parsed_emails table policies
-DROP POLICY IF EXISTS "Org members can manage parsed emails" ON public.parsed_emails;
-CREATE POLICY "Org members can manage parsed emails" ON public.parsed_emails
-  FOR ALL
-  USING (
-    org_id IN (
-      SELECT org_id FROM public.org_members
-      WHERE user_id = (SELECT auth.uid())
-    )
-  );
-
--- parsed_contracts table policies
-DROP POLICY IF EXISTS "Org members can manage parsed contracts" ON public.parsed_contracts;
-CREATE POLICY "Org members can manage parsed contracts" ON public.parsed_contracts
-  FOR ALL
-  USING (
-    org_id IN (
-      SELECT org_id FROM public.org_members
-      WHERE user_id = (SELECT auth.uid())
-    )
-  );
+-- Skip parsed_emails and parsed_contracts - tables don't exist in this version
+-- (They were in migrations that were removed)
 
 -- venue_contacts table policies
 DROP POLICY IF EXISTS "Org members can view venue-contact links" ON public.venue_contacts;
@@ -523,10 +471,7 @@ CREATE POLICY service_role_manage_archive ON public.activity_log_archive
 -- Enable RLS on tables that should have it
 ALTER TABLE public.activity_log_retention_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.database_maintenance_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.rls_expected_access ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public._org_seats_backup ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public._show_collaborators_invite_backup ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public._billing_actions_log_backup ENABLE ROW LEVEL SECURITY;
+-- Skip rls_expected_access and backup tables - they don't exist in this version
 
 -- Create basic policies for these tables
 -- activity_log_retention_config - only admins can access
@@ -554,24 +499,6 @@ CREATE POLICY activity_log_retention_config_all ON public.activity_log_retention
 CREATE POLICY database_maintenance_log_service ON public.database_maintenance_log
   FOR ALL
   USING ((SELECT auth.role()) = 'service_role');
-
--- rls_expected_access - service role only (testing table)
-CREATE POLICY rls_expected_access_service ON public.rls_expected_access
-  FOR ALL
-  USING ((SELECT auth.role()) = 'service_role');
-
--- Backup tables - no access via RLS (only direct admin access)
-CREATE POLICY org_seats_backup_deny ON public._org_seats_backup
-  FOR ALL
-  USING (false);
-
-CREATE POLICY show_collaborators_backup_deny ON public._show_collaborators_invite_backup
-  FOR ALL
-  USING (false);
-
-CREATE POLICY billing_backup_deny ON public._billing_actions_log_backup
-  FOR ALL
-  USING (false);
 
 -- ============================================================================
 -- PART 7: FIX FUNCTION SEARCH PATHS (Security)

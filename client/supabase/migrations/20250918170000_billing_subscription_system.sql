@@ -2,6 +2,11 @@
 -- Implements subscription plans, seat limits, and billing enforcement
 
 -- =====================================
+-- 0. ENABLE REQUIRED EXTENSIONS
+-- =====================================
+CREATE EXTENSION IF NOT EXISTS citext;
+
+-- =====================================
 -- 1. BILLING PLANS (STATIC CATALOG)
 -- =====================================
 -- One row per plan (seed once)

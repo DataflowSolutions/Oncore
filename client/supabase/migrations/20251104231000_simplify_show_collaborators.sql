@@ -17,71 +17,20 @@
 -- STEP 1: VERIFY CURRENT STATE
 -- =====================================
 
--- Check if there are any pending show_collaborator invites
--- These would need to be migrated to the invitations table first
-DO $$
-DECLARE
-  pending_count INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO pending_count
-  FROM show_collaborators
-  WHERE status = 'invited' AND accepted_at IS NULL;
-  
-  IF pending_count > 0 THEN
-    RAISE NOTICE 'Warning: % pending show collaborator invitations found', pending_count;
-    RAISE NOTICE 'These invitations will be preserved but should be handled via the invitations table going forward';
-  END IF;
-END $$;
+-- Skip verification - columns don't exist yet in this version
+-- (show_collaborators was created without invite_token/status columns)
 
 -- =====================================
 -- STEP 2: BACKUP EXISTING INVITE DATA
 -- =====================================
 
--- Create a temporary table to store invite information for rollback if needed
-CREATE TABLE IF NOT EXISTS _show_collaborators_invite_backup AS
-SELECT 
-  id,
-  show_id,
-  user_id,
-  email,
-  invite_token,
-  invited_by,
-  accepted_at,
-  status,
-  created_at
-FROM show_collaborators
-WHERE invite_token IS NOT NULL OR status IN ('invited', 'revoked');
-
-COMMENT ON TABLE _show_collaborators_invite_backup IS 'Backup of show_collaborators invite data before migration - can be dropped after verification';
+-- Skip backup - columns don't exist in this version
 
 -- =====================================
 -- STEP 3: UPDATE EXISTING RECORDS
 -- =====================================
 
--- For invited collaborators who haven't accepted yet:
--- Keep them in the table but note that future invites should go through invitations table
-UPDATE show_collaborators
-SET status = 'invited'  -- Keep existing invited status
-WHERE status = 'invited' AND accepted_at IS NULL;
-
--- For accepted collaborators, ensure they're in org_members
--- (This should already be enforced but let's be safe)
-DO $$
-DECLARE
-  collab RECORD;
-BEGIN
-  FOR collab IN 
-    SELECT DISTINCT sc.user_id, s.org_id
-    FROM show_collaborators sc
-    JOIN shows s ON s.id = sc.show_id
-    WHERE sc.user_id IS NOT NULL
-      AND sc.accepted_at IS NOT NULL
-  LOOP
-    INSERT INTO org_members (org_id, user_id, role)
-    VALUES (collab.org_id, collab.user_id, 'viewer')
-    ON CONFLICT (org_id, user_id) DO NOTHING;
-  END LOOP;
-END $$;
+-- Skip updates - columns don't exist to update
 
 -- =====================================
 -- STEP 4: ADD NEW CONSTRAINT VIA TRIGGER

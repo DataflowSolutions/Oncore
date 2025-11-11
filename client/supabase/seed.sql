@@ -24,16 +24,16 @@ INSERT INTO public.org_members (org_id, user_id, role, created_at) VALUES ('db78
 INSERT INTO public.org_subscriptions (org_id, plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at) VALUES ('db78a629-d2c4-4031-affc-09987c9bc37e', 'solo_artist', 'trialing', NULL, NULL, now(), now() + INTERVAL '30 days', false, now(), now());
 
 -- public.people
-INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, updated_at, member_type) VALUES ('014440bf-ba15-440d-85ad-d7beb6b89011', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'John Doe', 'johndoe@gmail.com', '728494839', 'Lead Artist', 'Great singer!', '2025-10-01 16:47:51.022895+00', '2025-10-01 16:47:51.022895+00', 'Artist');
+INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, member_type) VALUES ('014440bf-ba15-440d-85ad-d7beb6b89011', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'John Doe', 'johndoe@gmail.com', '728494839', 'Lead Artist', 'Great singer!', '2025-10-01 16:47:51.022895+00', 'Artist');
 
 -- public.people
-INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, updated_at, member_type) VALUES ('18137ab6-0fad-40b7-9b58-b169caf5e1ad', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'Johnny Doe', 'johnnydoe@gmail.com', '0709489383', 'Sound Engineer', 'Experience: 20 years', '2025-10-01 16:48:26.462503+00', '2025-10-01 16:48:26.462503+00', 'Crew');
+INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, member_type) VALUES ('18137ab6-0fad-40b7-9b58-b169caf5e1ad', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'Johnny Doe', 'johnnydoe@gmail.com', '0709489383', 'Sound Engineer', 'Experience: 20 years', '2025-10-01 16:48:26.462503+00', 'Crew');
 
 -- public.people
-INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, updated_at, member_type) VALUES ('a9245852-2c4c-4472-9212-7d0c324e55e8', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'Albin Hasanaj', 'albinhasanaj06@gmail.com', '728775359', NULL, 'Experience: 19 years - The best in the world!', '2025-10-01 16:48:59.697542+00', '2025-10-01 16:48:59.697542+00', 'Manager');
+INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, member_type) VALUES ('a9245852-2c4c-4472-9212-7d0c324e55e8', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'Albin Hasanaj', 'albinhasanaj06@gmail.com', '728775359', NULL, 'Experience: 19 years - The best in the world!', '2025-10-01 16:48:59.697542+00', 'Manager');
 
 -- public.people
-INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, updated_at, member_type) VALUES ('b126246c-424d-4f09-ab4d-6af74c39049b', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'The Rock', 'therock@gmail.com', '07070403094', 'Elite Talent Agency', 'The rock', '2025-10-01 16:49:28.524988+00', '2025-10-01 16:49:28.524988+00', 'Agent');
+INSERT INTO public.people (id, org_id, user_id, name, email, phone, role_title, notes, created_at, member_type) VALUES ('b126246c-424d-4f09-ab4d-6af74c39049b', 'db78a629-d2c4-4031-affc-09987c9bc37e', NULL, 'The Rock', 'therock@gmail.com', '07070403094', 'Elite Talent Agency', 'The rock', '2025-10-01 16:49:28.524988+00', 'Agent');
 
 -- public.schedule_items - Sample schedule for the show
 INSERT INTO public.schedule_items (id, org_id, show_id, starts_at, ends_at, title, location, notes, created_at) VALUES 

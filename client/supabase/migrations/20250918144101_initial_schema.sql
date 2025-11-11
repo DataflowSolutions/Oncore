@@ -12,8 +12,25 @@ create table organizations (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   name text not null,
-  created_at timestamptz not null default now()
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+-- Trigger function to auto-update updated_at
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- Trigger for organizations
+create trigger set_organizations_updated_at
+  before update on organizations
+  for each row
+  execute function update_updated_at_column();
 
 create type org_role as enum ('owner','admin','editor','viewer');
 
@@ -47,7 +64,8 @@ create table venues (
   country text,
   capacity int,
   contacts jsonb,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- =====================================
@@ -67,8 +85,20 @@ create table shows (
   status show_status not null default 'draft',
   title text,
   notes text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+-- Triggers for auto-updating updated_at
+create trigger set_venues_updated_at
+  before update on venues
+  for each row
+  execute function update_updated_at_column();
+
+create trigger set_shows_updated_at
+  before update on shows
+  for each row
+  execute function update_updated_at_column();
 
 create type show_collab_role as enum ('promoter_editor','promoter_viewer');
 

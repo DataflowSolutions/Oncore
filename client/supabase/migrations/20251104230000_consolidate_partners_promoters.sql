@@ -94,117 +94,52 @@ ON CONFLICT (id) DO NOTHING;
 -- STEP 3: MIGRATE PARTNERS TO CONTACTS
 -- =====================================
 
--- Migrate all partners data
--- Determine type based on role field
-INSERT INTO public.contacts (
-  id,
-  org_id,
-  type,
-  name,
-  email,
-  phone,
-  company,
-  commission_rate,
-  role,
-  notes,
-  status,
-  created_at,
-  updated_at
-)
-SELECT 
-  id,
-  org_id,
-  -- Determine type from role field
-  CASE 
-    WHEN role ILIKE '%agent%' OR role ILIKE '%booking%' THEN 'agent'
-    WHEN role ILIKE '%manager%' OR role ILIKE '%tour%' THEN 'manager'
-    WHEN role ILIKE '%promoter%' THEN 'promoter'
-    WHEN role ILIKE '%vendor%' OR role ILIKE '%supplier%' THEN 'vendor'
-    ELSE 'other'
-  END AS type,
-  name,
-  email,
-  phone,
-  company,
-  commission_rate,
-  role, -- Keep original role as free text
-  notes,
-  status,
-  created_at,
-  updated_at
-FROM public.partners
-ON CONFLICT (id) DO NOTHING;
+-- Skip partners migration - table never existed in this version
+-- (partners table was in a removed migration)
 
 -- =====================================
--- STEP 4: UPDATE PARTNER_COMMISSIONS → CONTACT_COMMISSIONS
+-- STEP 4: CREATE CONTACT_COMMISSIONS TABLE
 -- =====================================
 
--- Rename table
-ALTER TABLE IF EXISTS public.partner_commissions 
-  RENAME TO contact_commissions;
-
--- Rename foreign key column
-ALTER TABLE public.contact_commissions 
-  RENAME COLUMN partner_id TO contact_id;
-
--- Update foreign key constraint
-ALTER TABLE public.contact_commissions 
-  DROP CONSTRAINT IF EXISTS partner_commissions_partner_id_fkey;
-
-ALTER TABLE public.contact_commissions
-  ADD CONSTRAINT contact_commissions_contact_id_fkey 
-  FOREIGN KEY (contact_id) REFERENCES public.contacts(id) ON DELETE CASCADE;
-
--- Rename indexes
-DROP INDEX IF EXISTS partner_commissions_partner_idx;
-DROP INDEX IF EXISTS partner_commissions_show_idx;
-DROP INDEX IF EXISTS partner_commissions_status_idx;
+-- Create fresh table (partner_commissions never existed in this version)
+CREATE TABLE IF NOT EXISTS public.contact_commissions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id uuid NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
+  show_id uuid REFERENCES public.shows(id) ON DELETE SET NULL,
+  amount numeric(10,2) NOT NULL,
+  description text,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled')),
+  paid_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
 CREATE INDEX contact_commissions_contact_idx ON public.contact_commissions (contact_id);
 CREATE INDEX contact_commissions_show_idx ON public.contact_commissions (show_id);
 CREATE INDEX contact_commissions_status_idx ON public.contact_commissions (status);
 
--- Update comment
 COMMENT ON TABLE public.contact_commissions IS 'Tracks commission payments to contacts (typically agents/managers with commission_rate)';
 
 -- =====================================
--- STEP 5: UPDATE VENUE_PROMOTERS → VENUE_CONTACTS
+-- STEP 5: CREATE VENUE_CONTACTS TABLE
 -- =====================================
 
--- Rename table
-ALTER TABLE IF EXISTS public.venue_promoters 
-  RENAME TO venue_contacts;
-
--- Rename foreign key column
-ALTER TABLE public.venue_contacts 
-  RENAME COLUMN promoter_id TO contact_id;
-
--- Update foreign key constraint
-ALTER TABLE public.venue_contacts 
-  DROP CONSTRAINT IF EXISTS venue_promoters_promoter_id_fkey;
-
-ALTER TABLE public.venue_contacts
-  ADD CONSTRAINT venue_contacts_contact_id_fkey 
-  FOREIGN KEY (contact_id) REFERENCES public.contacts(id) ON DELETE CASCADE;
-
--- Update unique constraint
-ALTER TABLE public.venue_contacts
-  DROP CONSTRAINT IF EXISTS venue_promoters_venue_id_promoter_id_key;
-
-ALTER TABLE public.venue_contacts
-  ADD CONSTRAINT venue_contacts_venue_id_contact_id_key 
-  UNIQUE (venue_id, contact_id);
-
--- Rename indexes
-DROP INDEX IF EXISTS venue_promoters_venue_idx;
-DROP INDEX IF EXISTS venue_promoters_promoter_idx;
-DROP INDEX IF EXISTS venue_promoters_primary_idx;
+-- Create fresh table (venue_promoters never existed in this version)
+CREATE TABLE IF NOT EXISTS public.venue_contacts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  venue_id uuid NOT NULL REFERENCES public.venues(id) ON DELETE CASCADE,
+  contact_id uuid NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
+  is_primary boolean DEFAULT false,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  UNIQUE(venue_id, contact_id)
+);
 
 CREATE INDEX venue_contacts_venue_idx ON public.venue_contacts (venue_id);
 CREATE INDEX venue_contacts_contact_idx ON public.venue_contacts (contact_id);
 CREATE INDEX venue_contacts_primary_idx ON public.venue_contacts (is_primary) WHERE is_primary = true;
 
--- Update comment
 COMMENT ON TABLE public.venue_contacts IS 'Links contacts (typically promoters) to venues they work with (many-to-many)';
 
 -- =====================================
@@ -349,11 +284,8 @@ EXECUTE FUNCTION update_contacts_updated_at();
 -- STEP 9: DROP OLD TABLES
 -- =====================================
 
--- Drop old promoters table (data migrated to contacts)
-DROP TABLE IF EXISTS public.promoters CASCADE;
-
--- Drop old partners table (data migrated to contacts)
-DROP TABLE IF EXISTS public.partners CASCADE;
+-- Skip - old tables never existed in this version
+-- (They were in migrations that were removed during cleanup)
 
 -- =====================================
 -- VERIFICATION QUERIES (COMMENTED OUT)

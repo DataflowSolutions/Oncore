@@ -35,6 +35,51 @@ CREATE INDEX IF NOT EXISTS idx_show_assignments_person
 -- 2. COMBINE RLS FUNCTIONS (HUGE WIN)
 -- =====================================
 
+-- Basic permission check functions
+CREATE OR REPLACE FUNCTION is_org_editor(p_org uuid)
+RETURNS boolean 
+LANGUAGE sql 
+STABLE 
+SECURITY DEFINER 
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM org_members
+    WHERE org_id = p_org
+      AND user_id = auth.uid()
+      AND role IN ('owner','admin','editor')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION is_org_member(p_org uuid)
+RETURNS boolean 
+LANGUAGE sql 
+STABLE 
+SECURITY DEFINER 
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM org_members
+    WHERE org_id = p_org
+      AND user_id = auth.uid()
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION org_is_active(p_org uuid)
+RETURNS boolean 
+LANGUAGE sql 
+STABLE 
+SECURITY DEFINER 
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM org_subscriptions
+    WHERE org_id = p_org
+      AND status IN ('trialing','active','past_due')
+      AND COALESCE(current_period_end, now() + INTERVAL '1 day') > now()
+  );
+$$;
+
 -- Combined function reduces 2 table lookups to 1
 CREATE OR REPLACE FUNCTION is_org_editor_and_active(p_org uuid)
 RETURNS boolean 
@@ -189,9 +234,13 @@ CREATE POLICY advancing_comments_delete ON advancing_comments FOR DELETE
   USING (is_org_editor_and_active(org_id));
 
 -- Advancing Documents
+DROP POLICY IF EXISTS advancing_documents_select ON advancing_documents;
 DROP POLICY IF EXISTS advancing_documents_insert ON advancing_documents;
 DROP POLICY IF EXISTS advancing_documents_update ON advancing_documents;
 DROP POLICY IF EXISTS advancing_documents_delete ON advancing_documents;
+
+CREATE POLICY advancing_documents_select ON advancing_documents FOR SELECT 
+  USING (is_org_member_and_active(org_id));
 
 CREATE POLICY advancing_documents_insert ON advancing_documents FOR INSERT 
   WITH CHECK (is_org_editor_and_active(org_id));
