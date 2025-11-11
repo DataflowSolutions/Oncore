@@ -1,78 +1,79 @@
-'use server'
+"use server";
 
-import { logger } from '@/lib/logger'
-import { createClient } from '@/lib/supabase/server'
-import { parseContractFromURL } from '@/lib/services/contract-parser'
-import { z } from 'zod'
+// NOTE: parseContract function requires a 'parsed_contracts' table that doesn't exist in the current database schema.
+
+import { logger } from "@/lib/logger";
+import { createClient } from "@/lib/supabase/server";
+// import { parseContractFromURL } from '@/lib/services/contract-parser'
+import { z } from "zod";
 
 const uploadFileSchema = z.object({
-  bucket: z.string().default('files'),
+  bucket: z.string().default("files"),
   orgId: z.string().uuid(),
   showId: z.string().uuid().optional(),
   sessionId: z.string().uuid().optional(),
   documentId: z.string().uuid().optional(),
   fieldId: z.string().uuid().optional(),
-  partyType: z.enum(['from_us', 'from_you']).optional(),
-})
+  partyType: z.enum(["from_us", "from_you"]).optional(),
+});
 
 export async function uploadFile(
   file: File,
   params: z.infer<typeof uploadFileSchema>
 ) {
-  const supabase = await createClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) {
-    return { error: 'Authentication required' }
+    return { error: "Authentication required" };
   }
 
-  const validation = uploadFileSchema.safeParse(params)
+  const validation = uploadFileSchema.safeParse(params);
   if (!validation.success) {
-    return { error: validation.error.issues[0].message }
+    return { error: validation.error.issues[0].message };
   }
 
-  const { bucket, orgId, showId, sessionId, documentId, fieldId, partyType } = validation.data
+  const { bucket, orgId, showId, sessionId, documentId, fieldId, partyType } =
+    validation.data;
 
   try {
     // Use Edge Function for enforced metadata uploads
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('orgId', orgId)
-    formData.append('bucket', bucket)
-    
-    if (showId) formData.append('showId', showId)
-    if (sessionId) formData.append('sessionId', sessionId)
-    if (documentId) formData.append('documentId', documentId)
-    if (fieldId) formData.append('fieldId', fieldId)
-    if (partyType) formData.append('partyType', partyType)
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("orgId", orgId);
+    formData.append("bucket", bucket);
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (showId) formData.append("showId", showId);
+    if (sessionId) formData.append("sessionId", sessionId);
+    if (documentId) formData.append("documentId", documentId);
+    if (fieldId) formData.append("fieldId", fieldId);
+    if (partyType) formData.append("partyType", partyType);
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
-      throw new Error('Supabase URL not configured')
+      throw new Error("Supabase URL not configured");
     }
 
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/upload-file`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: formData,
-      }
-    )
+    const response = await fetch(`${supabaseUrl}/functions/v1/upload-file`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    });
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Upload failed')
+      const error = await response.json();
+      throw new Error(error.error || "Upload failed");
     }
 
-    const result = await response.json()
-    return result
-
+    const result = await response.json();
+    return result;
   } catch (error: unknown) {
-    const err = error as { message?: string }
-    return { error: err.message || 'Failed to upload file' }
+    const err = error as { message?: string };
+    return { error: err.message || "Failed to upload file" };
   }
 }
 
@@ -80,9 +81,20 @@ const parseContractSchema = z.object({
   orgId: z.string().uuid(),
   fileUrl: z.string().url(),
   fileName: z.string(),
-})
+});
 
-export async function parseContract(params: z.infer<typeof parseContractSchema>) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function parseContract(
+  _params: z.infer<typeof parseContractSchema>
+) {
+  // TODO: Re-enable this function once the parsed_contracts table is created
+  logger.warn("parseContract function called but table does not exist");
+  return {
+    error:
+      "Contract parsing is currently disabled - database table not available",
+  };
+
+  /* DISABLED - requires parsed_contracts table
   const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
@@ -143,4 +155,5 @@ export async function parseContract(params: z.infer<typeof parseContractSchema>)
     logger.error('Contract parsing error', err)
     return { error: err.message || 'Failed to parse contract' }
   }
+  */
 }

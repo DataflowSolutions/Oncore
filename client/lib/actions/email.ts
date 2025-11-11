@@ -1,18 +1,30 @@
-'use server'
+"use server";
 
-import { logger } from '@/lib/logger'
-import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
-import { parseForwardedEmail } from '@/lib/services/email-parser'
+// NOTE: This file requires a 'parsed_emails' table that doesn't exist in the current database schema.
+// The functionality is disabled until the table is created via a migration.
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { logger } from "@/lib/logger";
+import { z } from "zod";
+// import { createClient } from '@/lib/supabase/server'
+// import { parseForwardedEmail } from '@/lib/services/email-parser'
 
 const parseEmailSchema = z.object({
   subject: z.string(),
   body: z.string(),
   from: z.string().email().optional(),
   orgId: z.string().uuid(),
-})
+});
 
-export async function parseEmail(data: z.infer<typeof parseEmailSchema>) {
+export async function parseEmail(_data: z.infer<typeof parseEmailSchema>) {
+  // TODO: Re-enable this function once the parsed_emails table is created
+  logger.warn("parseEmail function called but table does not exist");
+  return {
+    success: false,
+    error: "Email parsing is currently disabled - database table not available",
+  };
+
+  /* DISABLED - requires parsed_emails table
   const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
@@ -80,6 +92,7 @@ export async function parseEmail(data: z.infer<typeof parseEmailSchema>) {
       error: err.message || 'Failed to parse email',
     }
   }
+  */
 }
 
 const confirmParsedEmailSchema = z.object({
@@ -88,28 +101,41 @@ const confirmParsedEmailSchema = z.object({
     title: z.string(),
     date: z.string(),
     venueId: z.string().uuid().optional(),
-    fee: z.union([z.string(), z.number()]).optional().transform(val => {
-      // Convert string to number if needed
-      if (val === undefined || val === null || val === '') return null;
-      const num = typeof val === 'string' ? parseFloat(val) : val;
-      return isNaN(num) ? null : num;
-    }),
-    feeCurrency: z.string().default('USD').optional(),
+    fee: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform((val) => {
+        // Convert string to number if needed
+        if (val === undefined || val === null || val === "") return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        return isNaN(num) ? null : num;
+      }),
+    feeCurrency: z.string().default("USD").optional(),
     notes: z.string().optional(),
   }),
   createVenue: z.boolean().default(false),
-  venueData: z.object({
-    name: z.string(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    capacity: z.number().optional(),
-  }).optional(),
-})
+  venueData: z
+    .object({
+      name: z.string(),
+      address: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      capacity: z.number().optional(),
+    })
+    .optional(),
+});
 
 export async function confirmParsedEmail(
-  data: z.infer<typeof confirmParsedEmailSchema>
+  _data: z.infer<typeof confirmParsedEmailSchema>
 ) {
+  // TODO: Re-enable this function once the parsed_emails table is created
+  logger.warn("confirmParsedEmail function called but table does not exist");
+  return {
+    success: false,
+    error: "Email parsing is currently disabled - database table not available",
+  };
+
+  /* DISABLED - requires parsed_emails table
   const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
@@ -216,4 +242,5 @@ export async function confirmParsedEmail(
       error: err.message || 'Failed to create show from email',
     }
   }
+  */
 }
