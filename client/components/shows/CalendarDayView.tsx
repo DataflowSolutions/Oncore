@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { ScheduleItemModal } from "./ScheduleItemModal";
-import { PersonScheduleSelector } from "./PersonScheduleSelector";
-import { DateNavigator } from "./DateNavigator";
 import { Database } from "@/lib/database.types";
 import {
   createScheduleItem,
@@ -258,31 +256,6 @@ export function CalendarDayView({
 
   return (
     <div className="space-y-6">
-      {/* Header: Date Navigation and Person Selector */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-        {/* Date Navigator */}
-        <div className="flex-shrink-0">
-          <DateNavigator
-            currentDate={currentDate}
-            datesWithEvents={datesWithEvents}
-          />
-        </div>
-
-        {/* Person Selector */}
-        <div className="flex-1 min-w-0">
-          <PersonScheduleSelector
-            availablePeople={assignedPeople
-              .filter((p) => p.people)
-              .map((p) => ({
-                id: p.person_id,
-                name: p.people!.name,
-                duty: p.duty,
-              }))}
-            selectedPeopleIds={selectedPeopleIds}
-          />
-        </div>
-      </div>
-
       {/* Main Grid Layout - Left: Schedule, Right: Info Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT COLUMN: Show Schedule Timeline */}
@@ -302,12 +275,22 @@ export function CalendarDayView({
             onDeleteItem={async (itemId) => {
               await deleteScheduleItem(orgSlug, showId, itemId);
             }}
+            currentDate={currentDate}
+            datesWithEvents={datesWithEvents}
+            availablePeople={assignedPeople
+              .filter((p) => p.people)
+              .map((p) => ({
+                id: p.person_id,
+                name: p.people!.name,
+                duty: p.duty,
+              }))}
+            selectedPeopleIds={selectedPeopleIds}
           />
         </div>
 
         {/* RIGHT COLUMNS: Info Panels */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <HotelPanel 
+          <HotelPanel
             advancingFields={advancingFields}
             assignedPeople={assignedPeople}
           />
@@ -325,7 +308,7 @@ export function CalendarDayView({
             currentDateStr={currentDateStr}
             getLocalDateStr={getLocalDateStr}
           />
-          <TransportationPanel 
+          <TransportationPanel
             advancingFields={advancingFields}
             assignedPeople={assignedPeople}
           />

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateNavigator } from "../DateNavigator";
+import { PersonScheduleSelector } from "../PersonScheduleSelector";
 import {
   //   Plane,
   //   PlaneLanding,
@@ -39,6 +41,16 @@ interface ScheduleTimelineProps {
     notes: string | null;
   }) => Promise<void>;
   onDeleteItem: (itemId: string) => Promise<void>;
+  // Date navigation props
+  currentDate?: Date;
+  datesWithEvents?: string[];
+  // Person selector props
+  availablePeople?: Array<{
+    id: string;
+    name: string;
+    duty: string | null;
+  }>;
+  selectedPeopleIds?: string[];
 }
 
 export function ScheduleTimeline({
@@ -47,6 +59,10 @@ export function ScheduleTimeline({
   onItemClick,
   onCreateItem,
   onDeleteItem,
+  currentDate,
+  datesWithEvents = [],
+  availablePeople = [],
+  selectedPeopleIds = [],
 }: ScheduleTimelineProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
@@ -97,36 +113,52 @@ export function ScheduleTimeline({
     return date.getHours() * 60 + date.getMinutes();
   };
 
-  // Calculate timeline bounds based on schedule items
-  const times = scheduleItems.flatMap((item) => {
-    const start = parseTime(item.time);
-    const end = item.endTime ? parseTime(item.endTime) : start + 30;
-    return [start, end];
-  });
-  const minTime = times.length > 0 ? Math.min(...times) : 0;
-  const maxTime = times.length > 0 ? Math.max(...times) : 1440;
+  // Show full 24 hours (0:00 to 23:00)
+  const startTime = 0;
+  const endTime = 1440; // 24 * 60 minutes
 
-  // Round to nearest 30 min intervals
-  const startTime = Math.floor(minTime / 30) * 30;
-  const endTime = Math.ceil(maxTime / 30) * 30;
-
-  // Generate 30-min intervals
+  // Generate hourly intervals (every 60 minutes)
   const intervals = [];
-  for (let time = startTime; time <= endTime; time += 30) {
+  for (let time = startTime; time < endTime; time += 60) {
     const hours = Math.floor(time / 60);
-    const mins = time % 60;
     intervals.push({
       time,
-      label: `${hours.toString().padStart(2, "0")}:${mins
-        .toString()
-        .padStart(2, "0")}`,
+      label: `${hours.toString().padStart(2, "0")}:00`,
     });
   }
 
-  const pixelsPerMinute = 1.25; // Smaller gap between intervals
+  // Compact spacing: 40px per hour = ~0.67px per minute
+  // This gives us 960px total height (24h * 40px) instead of 1800px
+  const pixelsPerHour = 40;
+  const pixelsPerMinute = pixelsPerHour / 60;
 
   return (
     <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+      {/* Header with Date Navigator and Person Selector */}
+      {currentDate && (
+        <div className="mb-6 pb-6 border-b border-neutral-800">
+          <div className="flex flex-col gap-4">
+            {/* Date Navigator */}
+            <div className="flex-shrink-0">
+              <DateNavigator
+                currentDate={currentDate}
+                datesWithEvents={datesWithEvents}
+              />
+            </div>
+
+            {/* Person Selector - only show if there are people */}
+            {availablePeople.length > 0 && (
+              <div className="flex-1 min-w-0">
+                <PersonScheduleSelector
+                  availablePeople={availablePeople}
+                  selectedPeopleIds={selectedPeopleIds}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <h2 className="text-lg font-semibold ">Show Schedule</h2>
       <p className="text-neutral-400 text-sm">Event timeline for the day</p>
 
@@ -291,62 +323,57 @@ export function ScheduleTimeline({
             const topPosition = (startMinutes - startTime) * pixelsPerMinute;
             const height = duration * pixelsPerMinute;
 
+            // Determine content to show based on available height
+            // showFullDetails: enough space for title + time + person (3 rows)
+            // showTimeDetails: enough space for title + time (2 rows)
+            // showMinimal: only title
+            const showFullDetails = height > 35;
+            const showTimeDetails = height > 20;
+
             return (
               <div
                 key={item.id}
                 className="absolute left-12 right-0"
                 style={{
                   top: `${topPosition}px`,
-                  height: `${height}px`,
+                  height: `${Math.max(height, 20)}px`, // Minimum height for readability
                 }}
               >
                 <div
                   onClick={() => onItemClick(item)}
-                  className={`group/item relative h-full px-3 py-2 rounded-md border bg-accent hover:bg-card cursor-pointer hover:shadow-md transition-all flex items-center`}
+                  className={`group/item relative h-full px-3 py-1 rounded-md border bg-accent hover:bg-card cursor-pointer hover:shadow-md transition-all flex items-center overflow-hidden`}
                 >
-                  {/* <div
-                onClick={() => onItemClick(item)}
-                className={`group/item relative h-full px-3 py-2 rounded-md border ${getItemColor(
-                  item.type
-                )} cursor-pointer hover:shadow-md transition-all`}
-              > */}
-                  <div className="flex items-start gap-2 w-full">
-                    {/* <div className="flex-shrink-0 mt-0.5">
-                    {getItemIcon(item.type)}
-                  </div> */}
+                  <div className="flex items-start gap-2 w-full min-w-0">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold leading-tight">
+                      <div className="text-xs font-bold leading-tight truncate">
                         {item.title}
                       </div>
-                      <div className="text-xs text-neutral-400 mt-0.5">
-                        {new Date(item.time).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}
-                        {item.endTime && (
-                          <>
-                            {" - "}
-                            {new Date(item.endTime).toLocaleTimeString(
-                              "en-US",
-                              {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: false,
-                              }
-                            )}
-                            {" • "}
-                            {Math.round(duration)} min
-                          </>
-                        )}
-                      </div>
-                      {/* {item.location && (
-                      <div className="text-xs text-neutral-400 mt-0.5 truncate">
-                        {item.location}
-                      </div>
-                    )} */}
-                      {item.personName && (
-                        <div className="text-xs text-neutral-400 mt-0.5">
+                      {showTimeDetails && (
+                        <div className="text-xs text-neutral-400 mt-0.5 truncate">
+                          {new Date(item.time).toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
+                          {item.endTime && (
+                            <>
+                              {" - "}
+                              {new Date(item.endTime).toLocaleTimeString(
+                                "en-US",
+                                {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                }
+                              )}
+                              {" • "}
+                              {Math.round(duration)} min
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {showFullDetails && item.personName && (
+                        <div className="text-xs text-neutral-400 mt-0.5 truncate">
                           {item.personName}
                         </div>
                       )}

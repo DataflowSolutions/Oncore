@@ -128,7 +128,7 @@
 
 ### 13. Full Day Schedule Display
 
-**Status:** [ ]
+**Status:** [✅]
 **Priority:** High
 **Description:** Show entire day schedule from 00-24 in hourly increments. Include day selector within the card (currently outside the card)
 **Location:** Day view component
@@ -142,14 +142,14 @@
 
 ### 15. Key Contacts Layout Update
 
-**Status:** [ ]
+**Status:** [⏳]
 **Priority:** Medium
 **Description:**
 
-- Make role text smaller under key contacts
-- Place role text under the name instead
-- Include buttons for phone number and email
-- Phone button should open WhatsApp chat
+- Make role text smaller under key contacts ✅
+- Place role text under the name instead ✅
+- Include buttons for phone number and email ✅
+- Phone button should open WhatsApp chat ⏳
   **Location:** Key contacts component
 
 ### 16. Top Right Buttons
