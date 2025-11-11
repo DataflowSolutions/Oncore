@@ -22,7 +22,7 @@ function redactPII(data: unknown): unknown {
   const redacted: Record<string, unknown> = {}
   const sensitiveKeys = [
     'id', 'user_id', 'org_id', 'email', 'phone', 'address',
-    'userId', 'orgId', 'sessionId', 'slug', 'token', 
+    'userId', 'orgId', 'sessionId', 'token', 
     'password', 'secret', 'key', 'authorization'
   ]
 

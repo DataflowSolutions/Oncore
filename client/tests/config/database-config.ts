@@ -13,17 +13,11 @@ const envLocalPath = path.resolve(__dirname, '../../.env.local')
 const envTestPath = path.resolve(__dirname, '../.env.test')
 
 if (fs.existsSync(envLocalPath)) {
-  console.log('📄 Loading environment from:', envLocalPath)
   dotenvConfig({ path: envLocalPath, override: false })
-} else {
-  console.warn('⚠️  .env.local not found at:', envLocalPath)
 }
 
 if (fs.existsSync(envTestPath)) {
-  console.log('📄 Loading test config from:', envTestPath)
   dotenvConfig({ path: envTestPath, override: false })
-} else {
-  console.warn('⚠️  .env.test not found at:', envTestPath)
 }
 
 export type DatabaseEnvironment = 'production' | 'local'
@@ -58,15 +52,12 @@ export class TestDatabaseManager {
     
     if (testEnv === 'production' || testEnv === 'prod') {
       this.currentEnv = 'production'
-      console.warn('⚠️  WARNING: Tests will run against PRODUCTION database')
-      
       // Safety check
       if (process.env.ALLOW_DESTRUCTIVE_TESTS_ON_PROD !== 'true') {
-        console.warn('⚠️  Destructive tests are DISABLED for production')
+        console.warn('⚠️  WARNING: Tests against PRODUCTION - Destructive tests DISABLED')
       }
     } else {
       this.currentEnv = 'local'
-      console.log('✅ Tests will run against LOCAL database')
     }
   }
 
