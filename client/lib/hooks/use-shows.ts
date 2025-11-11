@@ -66,8 +66,9 @@ export function useShowSchedule(showId: string, orgSlug: string) {
 }
 
 /**
- * Fetch show team
- * Uses: Show detail page, team page
+ * Fetch show team (unified - for backward compatibility)
+ * Uses: Show detail page
+ * Returns both assignedTeam and availablePeople in one query
  */
 export function useShowTeam(showId: string, orgSlug: string) {
   return useQuery({
@@ -80,6 +81,45 @@ export function useShowTeam(showId: string, orgSlug: string) {
       return response.json()
     },
     staleTime: 60 * 1000, // 1 minute
+  })
+}
+
+/**
+ * Fetch assigned team members for a show (independent resource)
+ * Uses: Team page, components that only need assigned members
+ * Benefits: Can refetch independently without re-fetching available people
+ */
+export function useShowAssignedTeam(showId: string, orgSlug: string) {
+  return useQuery({
+    queryKey: queryKeys.showAssignedTeam(showId),
+    queryFn: async () => {
+      const response = await fetch(`/api/${orgSlug}/shows/${showId}/team`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch show team')
+      }
+      const data = await response.json()
+      return data.assignedTeam || []
+    },
+    staleTime: 60 * 1000, // 1 minute
+  })
+}
+
+/**
+ * Fetch available people for show team assignment (independent resource)
+ * Uses: Team modal, assignment components
+ * Benefits: Can refetch independently without re-fetching assigned team
+ */
+export function useShowAvailablePeople(orgId: string) {
+  return useQuery({
+    queryKey: queryKeys.showAvailablePeople(orgId),
+    queryFn: async () => {
+      // We need a show ID to get the full data - for now use the team endpoint
+      // In the future, this could be a separate /api/[org]/people endpoint
+      // This is a placeholder that will be optimized with direct Supabase access
+      return []
+    },
+    staleTime: 60 * 1000, // 1 minute
+    enabled: false, // Disabled until we implement direct access
   })
 }
 
@@ -136,17 +176,10 @@ export function useUpdateShow(orgSlug: string) {
 /**
  * Fetch available people for show team assignment
  * Uses: Show detail page, team modal
+ * NOTE: Deprecated - use useShowAvailablePeople for independent refetching
  */
 export function useAvailablePeople(orgId: string) {
-  return useQuery({
-    queryKey: queryKeys.showAvailablePeople(orgId),
-    queryFn: async () => {
-      // This would need a server action or API route
-      // For now, we'll return empty array as a placeholder
-      return []
-    },
-    staleTime: 60 * 1000, // 1 minute
-  })
+  return useShowAvailablePeople(orgId)
 }
 
 /**

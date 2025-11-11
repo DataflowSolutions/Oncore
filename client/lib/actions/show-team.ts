@@ -10,15 +10,26 @@ import { z } from 'zod'
 type Person = Database['public']['Tables']['people']['Row']
 type ShowAssignmentInsert = Database['public']['Tables']['show_assignments']['Insert']
 
+// Lightweight person for list contexts - omits large text fields
+export type PersonListItem = Pick<Person, 'id' | 'name' | 'member_type' | 'email' | 'phone'> & { duty?: string }
+
 // Get all people assigned to a specific show, optionally filtered by party type
-export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 'from_you'): Promise<(Person & { duty?: string })[]> => {
+// Lightweight version for list contexts - omits large fields like notes, address, etc.
+export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 'from_you'): Promise<PersonListItem[]> => {
   const supabase = await getSupabaseServer()
   
+  // Slim selector - only essential fields for list display
   const { data, error } = await supabase
     .from('show_assignments')
     .select(`
       duty,
-      people (*)
+      people (
+        id,
+        name,
+        member_type,
+        email,
+        phone
+      )
     `)
     .eq('show_id', showId)
 
@@ -31,7 +42,7 @@ export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 
   let teamMembers = (data || []).map(assignment => ({
     ...assignment.people,
     duty: assignment.duty
-  })) as (Person & { duty?: string })[]
+  })) as PersonListItem[]
 
   // Filter by party type based on member_type
   if (partyType) {
@@ -53,12 +64,14 @@ export const getShowTeam = cache(async (showId: string, partyType?: 'from_us' | 
 })
 
 // Get all available people from the organization (people pool), optionally filtered by party type
-export const getAvailablePeople = cache(async (orgId: string, partyType?: 'from_us' | 'from_you'): Promise<Person[]> => {
+// Lightweight version for list contexts - omits large text fields
+export const getAvailablePeople = cache(async (orgId: string, partyType?: 'from_us' | 'from_you'): Promise<PersonListItem[]> => {
   const supabase = await getSupabaseServer()
   
+  // Slim selector - only essential fields for list display
   let query = supabase
     .from('people')
-    .select('*')
+    .select('id, name, member_type, email, phone')
     .eq('org_id', orgId)
 
   // Filter by member type based on party

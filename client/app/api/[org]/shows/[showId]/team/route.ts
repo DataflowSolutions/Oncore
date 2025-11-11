@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getShowTeam } from '@/lib/actions/show-team'
+import { getShowTeam, getAvailablePeople } from '@/lib/actions/show-team'
 import { getCachedShow, getCachedOrg } from '@/lib/cache'
 import { logger } from '@/lib/logger'
 
@@ -19,16 +19,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get org to validate tenant boundary
-    const { data: org, error: orgError } = await getCachedOrg(orgSlug)
+    // Parallelize org and show fetching
+    const [{ data: org, error: orgError }, { data: show, error: showError }] = await Promise.all([
+      getCachedOrg(orgSlug),
+      getCachedShow(showId)
+    ])
     
     if (orgError || !org) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Get show to validate it belongs to the org
-    const { data: show, error: showError } = await getCachedShow(showId)
-    
     if (showError) {
       return NextResponse.json({ error: showError.message }, { status: 500 })
     }
@@ -42,10 +42,14 @@ export async function GET(
       return NextResponse.json({ error: 'Show not found' }, { status: 404 })
     }
 
-    // Fetch team
-    const team = await getShowTeam(showId)
+    // OPTIMIZED: Parallelize team and available people queries
+    const [assignedTeam, availablePeople] = await Promise.all([
+      getShowTeam(showId),
+      getAvailablePeople(org.id)
+    ])
 
-    return NextResponse.json(team || [])
+    // Return unified envelope matching SSR shape
+    return NextResponse.json({ assignedTeam, availablePeople })
   } catch (error) {
     logger.error('Error fetching show team', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

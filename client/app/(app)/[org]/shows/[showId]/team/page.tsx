@@ -1,4 +1,3 @@
-import { getSupabaseServer } from '@/lib/supabase/server'
 import { getShowTeam, getAvailablePeople } from '@/lib/actions/show-team'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,33 +26,27 @@ const getRoleIcon = (memberType: string | null) => {
 export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
   const { org: orgSlug, showId } = await params
   
-  const supabase = await getSupabaseServer()
+  // OPTIMIZED: Use cached helpers (already validated by layout)
+  const { getCachedOrg, getCachedShow } = await import('@/lib/cache')
   
-  // Get organization and show details
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // Get organization and show details (cached from layout)
+  const { data: org } = await getCachedOrg(orgSlug)
 
   if (!org) {
     return <div>Organization not found</div>
   }
 
-  const { data: show } = await supabase
-    .from('shows')
-    .select('id, title, date, org_id')
-    .eq('id', showId)
-    .eq('org_id', org.id)
-    .single()
+  const { data: show } = await getCachedShow(showId)
 
-  if (!show) {
+  if (!show || show.org_id !== org.id) {
     return <div>Show not found</div>
   }
 
-  // Get assigned team members and available people
-  const assignedTeam = await getShowTeam(showId)
-  const availablePeople = await getAvailablePeople(org.id)
+  // OPTIMIZED: Parallelize team data queries
+  const [assignedTeam, availablePeople] = await Promise.all([
+    getShowTeam(showId),
+    getAvailablePeople(org.id)
+  ])
 
   // Filter out already assigned people
   const unassignedPeople = availablePeople.filter(person => 

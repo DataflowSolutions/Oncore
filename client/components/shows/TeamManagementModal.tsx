@@ -29,20 +29,12 @@ import {
 } from 'lucide-react'
 import { assignPersonToShow, removePersonFromShow } from '@/lib/actions/show-team'
 import { toast } from 'sonner'
-
-interface Person {
-  id: string
-  name: string
-  member_type: string | null
-  email: string | null
-  phone: string | null
-  duty?: string
-}
+import type { PersonListItem } from '@/lib/actions/show-team'
 
 interface TeamManagementModalProps {
   showId: string
-  assignedTeam: Person[]
-  availablePeople: Person[]
+  assignedTeam: PersonListItem[]
+  availablePeople: PersonListItem[]
   isOpen: boolean
   onClose: () => void
 }
@@ -362,7 +354,7 @@ export function TeamManagementModal({
 
 // Team Member Card Component
 interface TeamMemberCardProps {
-  person: Person
+  person: PersonListItem
   onRemove: (id: string, name: string) => void
   isRemoving: boolean
 }

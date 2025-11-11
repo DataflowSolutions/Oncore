@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Users } from 'lucide-react'
 import { TeamManagementModal } from '@/components/shows/TeamManagementModal'
 import { useState } from 'react'
-import type { Database } from '@/lib/database.types'
-
-type Person = Database['public']['Tables']['people']['Row']
+import type { PersonListItem } from '@/lib/actions/show-team'
 
 interface ShowClientProps {
   showId: string
-  assignedTeam: Person[]
-  availablePeople: Person[]
+  assignedTeam: PersonListItem[]
+  availablePeople: PersonListItem[]
 }
 
 export function ShowClient({ showId, assignedTeam, availablePeople }: ShowClientProps) {

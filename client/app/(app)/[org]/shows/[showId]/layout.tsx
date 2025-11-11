@@ -30,12 +30,22 @@ export default async function ShowLayout({ children, params }: ShowLayoutProps) 
     notFound()
   }
 
-  // Prefetch show data for TanStack Query (used by Sidebar)
+  // OPTIMIZED: Single HydrationBoundary for the entire show section
+  // Prefetch show data for TanStack Query (used by Sidebar and all child pages)
   const queryClient = new QueryClient()
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.show(showId),
-    queryFn: async () => show, // Use already-fetched data
-  })
+  
+  await Promise.all([
+    // Prefetch basic show data
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.show(showId),
+      queryFn: async () => show,
+    }),
+    // Prefetch show with venue for detail page
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.showWithVenue(showId),
+      queryFn: async () => show,
+    }),
+  ])
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

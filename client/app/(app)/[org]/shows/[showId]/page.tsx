@@ -18,32 +18,21 @@ export default async function ShowDetailPage({
   const { org: orgSlug, showId } = await params
   
   // OPTIMIZED: Use cached helpers to prevent redundant queries
-  const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import('@/lib/cache')
+  const { getCachedOrg, getCachedShowSchedule } = await import('@/lib/cache')
   
-  // Create a new QueryClient for this request
-  const queryClient = new QueryClient()
-  
-  // Fetch org first (needed for validation and other queries)
+  // Get org (already validated and cached by layout)
   const { data: org } = await getCachedOrg(orgSlug)
   
   if (!org) {
     return <div>Organization not found</div>
   }
 
-  // Prefetch all show detail data in parallel
+  // OPTIMIZED: Reuse the layout's QueryClient by accessing via HydrationBoundary
+  // The layout already prefetched show basic data, we just add page-specific data
+  const queryClient = new QueryClient()
+  
+  // Prefetch remaining show detail data in parallel
   await Promise.all([
-    // Prefetch show with venue
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.showWithVenue(showId),
-      queryFn: async () => {
-        const { data: show } = await getCachedShow(showId)
-        if (!show || show.org_id !== org.id) {
-          throw new Error('Show not found')
-        }
-        return show
-      },
-    }),
-    
     // Prefetch schedule
     queryClient.prefetchQuery({
       queryKey: queryKeys.showSchedule(showId),
@@ -53,12 +42,14 @@ export default async function ShowDetailPage({
       },
     }),
     
-    // Prefetch team data
+    // OPTIMIZED: Prefetch team data with parallel queries
     queryClient.prefetchQuery({
       queryKey: queryKeys.showTeam(showId),
       queryFn: async () => {
-        const assignedTeam = await getShowTeam(showId)
-        const availablePeople = await getAvailablePeople(org.id)
+        const [assignedTeam, availablePeople] = await Promise.all([
+          getShowTeam(showId),
+          getAvailablePeople(org.id)
+        ])
         return { assignedTeam, availablePeople }
       },
     }),
@@ -72,9 +63,11 @@ export default async function ShowDetailPage({
     }),
   ])
 
+  // OPTIMIZED: Nested HydrationBoundary merges with layout's boundary
+  // This approach allows page-specific prefetching while layout handles common data
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ShowDetailPageClient orgSlug={orgSlug} showId={showId} />
+      <ShowDetailPageClient orgSlug={orgSlug} showId={showId} orgId={org.id} />
     </HydrationBoundary>
   )
 }

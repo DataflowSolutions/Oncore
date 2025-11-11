@@ -17,21 +17,21 @@ import {
 import {
   useShowWithVenue,
   useShowSchedule,
-  useShowTeam,
 } from "@/lib/hooks/use-shows";
+import { useShowTeamData } from "@/lib/hooks/use-show-team";
 import { useVenues } from "@/lib/hooks/use-venues";
-import type { Database } from "@/lib/database.types";
-
-type Person = Database["public"]["Tables"]["people"]["Row"];
+import type { PersonListItem } from "@/lib/actions/show-team";
 
 interface ShowDetailPageClientProps {
   orgSlug: string;
   showId: string;
+  orgId: string;
 }
 
 export function ShowDetailPageClient({
   orgSlug,
   showId,
+  orgId,
 }: ShowDetailPageClientProps) {
   // Fetch all data using TanStack Query - will use prefetched data on initial load
   const {
@@ -41,15 +41,17 @@ export function ShowDetailPageClient({
   } = useShowWithVenue(showId, orgSlug);
   const { data: scheduleItems = [], isLoading: scheduleLoading } =
     useShowSchedule(showId, orgSlug);
-  const { data: teamData, isLoading: teamLoading } = useShowTeam(
+  // OPTIMIZED: Direct server action call instead of API route
+  const { data: teamData, isLoading: teamLoading } = useShowTeamData(
     showId,
-    orgSlug
+    orgSlug,
+    orgId
   );
   const { data: venues = [], isLoading: venuesLoading } = useVenues(orgSlug);
 
   // Extract team data
-  const assignedTeam = (teamData?.assignedTeam || []) as Person[];
-  const availablePeople = (teamData?.availablePeople || []) as Person[];
+  const assignedTeam = (teamData?.assignedTeam || []) as PersonListItem[];
+  const availablePeople = (teamData?.availablePeople || []) as PersonListItem[];
 
   // Loading state
   if (showLoading || scheduleLoading || teamLoading || venuesLoading) {
