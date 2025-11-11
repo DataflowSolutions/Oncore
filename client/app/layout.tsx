@@ -5,10 +5,10 @@ import { Toaster } from "sonner";
 import { Providers } from "@/app/providers";
 import { Special_Gothic_Expanded_One } from "next/font/google";
 
-const specialGothic = Special_Gothic_Expanded_One({
+export const specialGothic = Special_Gothic_Expanded_One({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-logo",
+  variable: "--font-header",
 });
 
 export const metadata: Metadata = {
@@ -22,8 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={specialGothic.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={specialGothic.variable} // ← this line is important!
+    >
+      <body>
         <div className="px-1 md:px-8 lg:px-16 xl:px-20 mx-auto">
           <ThemeProvider>
             <Providers>

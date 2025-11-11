@@ -198,8 +198,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
             <Link
               href={`/${orgSlug}`}
               prefetch={true}
-              className="text-xl font-bold text-foreground hover:text-primary transition-colors lowercase"
-              style={{ fontFamily: "var(--font-logo, sans-serif)" }}
+              className="text-xl font-bold font-header text-foreground hover:text-primary transition-colors lowercase"
               onClick={() => setIsMobileOpen(false)}
             >
               oncore

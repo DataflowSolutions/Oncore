@@ -47,6 +47,10 @@
   --tab-bg: #f5f5f5;
 }
 
+.font-header {
+  font-family: var(--font-header);
+}
+
 .dark {
   /* Dark theme - using neutral colors */
   --background: #080808;
@@ -87,7 +91,7 @@
     transition: background-color 0.2s ease, color 0.2s ease;
     overflow-y: scroll !important;
   }
-  
+
   /* Prevent Radix Dialog from adding padding when locking scroll */
   body[data-scroll-locked] {
     padding-right: 0 !important;
