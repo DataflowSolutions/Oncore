@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Search, Settings, UserCircle } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
-import { Notifications } from "./Notifications";
+// import { Notifications } from "./Notifications";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -35,19 +35,19 @@ export function TopBar() {
               </Button>
             </div>
             <div className="flex items-center gap-2">
-              <Notifications />
+              {/* <Notifications /> */}
               <Button
                 variant="ghost"
                 size="icon"
                 asChild
                 title="Profile & Artist Filters"
               >
-                <Link href={`/${orgSlug}/profile`}>
+                <div className="cursor-not-allowed">
                   <UserCircle className="h-4 w-4" />
-                </Link>
+                </div>
               </Button>
               <Button variant="ghost" size="icon" asChild title="Settings">
-                <Link href={`/${orgSlug}/settings`}>
+                <Link href={`/${orgSlug}/profile`}>
                   <Settings className="h-4 w-4" />
                 </Link>
               </Button>

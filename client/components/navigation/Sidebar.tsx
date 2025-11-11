@@ -290,7 +290,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
                     <PopoverContent className="w-[240px] p-0" align="start">
                       <div className="max-h-[300px] overflow-y-auto">
                         {/* Top 5 recent shows */}
-                        {allShows.slice(0, 5).map((s) => (
+                        {allShows.slice(0, 3).map((s) => (
                           <button
                             key={s.id}
                             onClick={() => {
