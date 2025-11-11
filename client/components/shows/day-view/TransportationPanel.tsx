@@ -1,6 +1,6 @@
 "use client";
 
-import { Car, Clock, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 
 interface TransportationPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -15,9 +15,14 @@ interface TransportationPanelProps {
   }>;
 }
 
-export function TransportationPanel({ advancingFields, assignedPeople }: TransportationPanelProps) {
+export function TransportationPanel({
+  advancingFields,
+  assignedPeople,
+}: TransportationPanelProps) {
   // Check for promoter transfers (JSON array)
-  const promoterTransfersField = advancingFields.find(f => f.field_name === 'promoter_transfers')?.value;
+  const promoterTransfersField = advancingFields.find(
+    (f) => f.field_name === "promoter_transfers"
+  )?.value;
   let promoterTransfers: Array<{
     id: string;
     from: string;
@@ -25,30 +30,40 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
     to: string;
     toTime: string;
   }> = [];
-  
+
   if (promoterTransfersField) {
     try {
       promoterTransfers = JSON.parse(promoterTransfersField as string);
       // Filter out empty transfers
-      promoterTransfers = promoterTransfers.filter(t => t.from || t.to || t.fromTime || t.toTime);
+      promoterTransfers = promoterTransfers.filter(
+        (t) => t.from || t.to || t.fromTime || t.toTime
+      );
     } catch {
       promoterTransfers = [];
     }
   }
-  
+
   // Extract transportation information for assigned people (artist-specific)
   const transportData = assignedPeople
     .map((person) => {
       if (!person.people) return null;
-      
+
       const personId = person.person_id;
-      const time = advancingFields.find(f => f.field_name === `transportation_${personId}_time`)?.value as string | undefined;
-      const from = advancingFields.find(f => f.field_name === `transportation_${personId}_from`)?.value as string | undefined;
-      const to = advancingFields.find(f => f.field_name === `transportation_${personId}_to`)?.value as string | undefined;
-      const notes = advancingFields.find(f => f.field_name === `transportation_${personId}_notes`)?.value as string | undefined;
-      
+      const time = advancingFields.find(
+        (f) => f.field_name === `transportation_${personId}_time`
+      )?.value as string | undefined;
+      const from = advancingFields.find(
+        (f) => f.field_name === `transportation_${personId}_from`
+      )?.value as string | undefined;
+      const to = advancingFields.find(
+        (f) => f.field_name === `transportation_${personId}_to`
+      )?.value as string | undefined;
+      const notes = advancingFields.find(
+        (f) => f.field_name === `transportation_${personId}_notes`
+      )?.value as string | undefined;
+
       if (!time && !from && !to) return null;
-      
+
       return {
         personName: person.people.name,
         time,
@@ -63,11 +78,12 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
     return (
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <Car className="w-4 h-4 text-yellow-400" />
           Transportation
         </h3>
         <div className="bg-neutral-800/50 rounded-lg p-4">
-          <p className="text-sm text-neutral-400">No transportation scheduled</p>
+          <p className="text-sm text-neutral-400">
+            No transportation scheduled
+          </p>
           <p className="text-xs text-neutral-500 mt-2">
             Ground transportation will be shown here
           </p>
@@ -79,19 +95,21 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
   return (
     <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
-        <Car className="w-4 h-4 text-yellow-400" />
         Transportation
       </h3>
       <div className="space-y-3">
         {/* Show promoter transfers */}
         {promoterTransfers.map((transfer, idx) => (
-          <div key={`promoter-${transfer.id}`} className="bg-neutral-800/50 rounded-lg p-4">
+          <div
+            key={`promoter-${transfer.id}`}
+            className="bg-neutral-800/50 rounded-lg p-4"
+          >
             <div className="font-medium text-sm mb-2">Transfer {idx + 1}</div>
             <div className="space-y-1">
               {(transfer.from || transfer.fromTime) && (
                 <div className="flex items-center gap-2 text-xs text-neutral-400">
                   <MapPin className="w-3 h-3" />
-                  <span>From: {transfer.from || 'TBD'}</span>
+                  <span>From: {transfer.from || "TBD"}</span>
                   {transfer.fromTime && (
                     <>
                       <Clock className="w-3 h-3 ml-2" />
@@ -103,7 +121,7 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
               {(transfer.to || transfer.toTime) && (
                 <div className="flex items-center gap-2 text-xs text-neutral-400">
                   <MapPin className="w-3 h-3" />
-                  <span>To: {transfer.to || 'TBD'}</span>
+                  <span>To: {transfer.to || "TBD"}</span>
                   {transfer.toTime && (
                     <>
                       <Clock className="w-3 h-3 ml-2" />
@@ -115,11 +133,13 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
             </div>
           </div>
         ))}
-        
+
         {/* Show per-person transport data */}
         {transportData.map((transport, idx) => (
           <div key={idx} className="bg-neutral-800/50 rounded-lg p-4">
-            <div className="font-medium text-sm mb-2">{transport!.personName}</div>
+            <div className="font-medium text-sm mb-2">
+              {transport!.personName}
+            </div>
             {transport!.time && (
               <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
                 <Clock className="w-3 h-3" />
@@ -131,7 +151,9 @@ export function TransportationPanel({ advancingFields, assignedPeople }: Transpo
                 <MapPin className="w-3 h-3" />
                 <span>
                   {transport!.from && <span>{transport!.from}</span>}
-                  {transport!.from && transport!.to && <span className="mx-1">→</span>}
+                  {transport!.from && transport!.to && (
+                    <span className="mx-1">→</span>
+                  )}
                   {transport!.to && <span>{transport!.to}</span>}
                 </span>
               </div>

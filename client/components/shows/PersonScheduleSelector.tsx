@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 interface Person {
   id: string;
@@ -121,7 +122,14 @@ export function PersonScheduleSelector({
 
       {availablePeople.length === 0 && (
         <span className="text-xs text-neutral-500">
-          No team members available
+          No team members available. Add team members{" "}
+          <Link
+            href="./team"
+            className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+          >
+            here
+          </Link>
+          .
         </span>
       )}
     </div>

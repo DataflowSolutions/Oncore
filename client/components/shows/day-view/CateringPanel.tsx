@@ -1,6 +1,6 @@
 "use client";
 
-import { Utensils, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface CateringPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -8,23 +8,37 @@ interface CateringPanelProps {
 
 export function CateringPanel({ advancingFields }: CateringPanelProps) {
   // Extract catering information - check both artist and promoter field names
-  const company = 
-    advancingFields.find(f => f.field_name === 'catering_company')?.value as string | undefined ||
-    advancingFields.find(f => f.field_name === 'promoter_catering')?.value as string | undefined;
-  const serviceTime = advancingFields.find(f => f.field_name === 'catering_serviceTime')?.value as string | undefined;
-  const menuNotes = advancingFields.find(f => f.field_name === 'catering_menu')?.value as string | undefined;
-  const guestCount = advancingFields.find(f => f.field_name === 'catering_guestCount')?.value as string | number | undefined;
+  const company =
+    (advancingFields.find((f) => f.field_name === "catering_company")?.value as
+      | string
+      | undefined) ||
+    (advancingFields.find((f) => f.field_name === "promoter_catering")
+      ?.value as string | undefined);
+  const serviceTime = advancingFields.find(
+    (f) => f.field_name === "catering_serviceTime"
+  )?.value as string | undefined;
+  const menuNotes = advancingFields.find(
+    (f) => f.field_name === "catering_menu"
+  )?.value as string | undefined;
+  const guestCount = advancingFields.find(
+    (f) => f.field_name === "catering_guestCount"
+  )?.value as string | number | undefined;
 
   // If we have promoter catering text, use it as general info
-  const promoterCateringInfo = advancingFields.find(f => f.field_name === 'promoter_catering')?.value as string | undefined;
+  const promoterCateringInfo = advancingFields.find(
+    (f) => f.field_name === "promoter_catering"
+  )?.value as string | undefined;
 
-  if (!company && !serviceTime && !menuNotes && !guestCount && !promoterCateringInfo) {
+  if (
+    !company &&
+    !serviceTime &&
+    !menuNotes &&
+    !guestCount &&
+    !promoterCateringInfo
+  ) {
     return (
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <Utensils className="w-4 h-4 text-orange-400" />
-          Catering
-        </h3>
+        <h3 className="font-semibold mb-4 flex items-center gap-2">Catering</h3>
         <div className="bg-neutral-800/50 rounded-lg p-4">
           <p className="text-sm text-neutral-400">
             No catering information available
@@ -39,10 +53,7 @@ export function CateringPanel({ advancingFields }: CateringPanelProps) {
 
   return (
     <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">
-        <Utensils className="w-4 h-4 text-orange-400" />
-        Catering
-      </h3>
+      <h3 className="font-semibold mb-4 flex items-center gap-2">Catering</h3>
       <div className="bg-neutral-800/50 rounded-lg p-4 space-y-3">
         {promoterCateringInfo && (
           <div className="text-sm text-neutral-300 whitespace-pre-wrap">
@@ -51,7 +62,9 @@ export function CateringPanel({ advancingFields }: CateringPanelProps) {
         )}
         {company && !promoterCateringInfo && (
           <div>
-            <div className="text-sm font-medium text-neutral-300">{company}</div>
+            <div className="text-sm font-medium text-neutral-300">
+              {company}
+            </div>
           </div>
         )}
         {serviceTime && (

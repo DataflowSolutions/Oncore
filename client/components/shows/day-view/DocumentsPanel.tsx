@@ -1,14 +1,31 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { FileText, Upload, Eye, Download, Plus, Loader2, Trash2 } from "lucide-react";
+import {
+  FileText,
+  Upload,
+  Eye,
+  Download,
+  Plus,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { logger } from "@/lib/logger";
-import { getAdvancingFileUrl, uploadAdvancingFile, deleteAdvancingFile } from "@/lib/actions/advancing-files";
+import {
+  getAdvancingFileUrl,
+  uploadAdvancingFile,
+  deleteAdvancingFile,
+} from "@/lib/actions/advancing-files";
 import { createAdvancingDocument } from "@/lib/actions/advancing";
 import { FilePreviewModal } from "@/components/advancing/FilePreviewModal";
 
@@ -61,7 +78,10 @@ const formatFileSize = (bytes: number | null) => {
   if (!bytes || bytes <= 0) return "Unknown size";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    sizes.length - 1
+  );
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
@@ -70,7 +90,8 @@ const getFileIcon = (contentType: string | null) => {
   if (contentType.startsWith("image/")) return "🖼️";
   if (contentType.includes("pdf")) return "📄";
   if (contentType.includes("word")) return "📝";
-  if (contentType.includes("excel") || contentType.includes("sheet")) return "📊";
+  if (contentType.includes("excel") || contentType.includes("sheet"))
+    return "📊";
   return "📎";
 };
 
@@ -80,7 +101,8 @@ const categorizeDocument = (label: string | null): string => {
   if (lower.includes("contract")) return "contract";
   if (lower.includes("rider") || lower.includes("tech")) return "rider";
   if (lower.includes("advancing")) return "advancing";
-  if (lower.includes("boarding") || lower.includes("pass")) return "boarding_pass";
+  if (lower.includes("boarding") || lower.includes("pass"))
+    return "boarding_pass";
   if (lower.includes("visa")) return "visa";
   return "other";
 };
@@ -106,7 +128,7 @@ export function DocumentsPanel({
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
-  
+
   // Preview modal state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>("");
@@ -151,7 +173,12 @@ export function DocumentsPanel({
       const formData = new FormData();
       formData.append("file", file);
 
-      const result = await uploadAdvancingFile(orgSlug!, sessionId!, documentId, formData);
+      const result = await uploadAdvancingFile(
+        orgSlug!,
+        sessionId!,
+        documentId,
+        formData
+      );
 
       if (!result.success) {
         logger.error("File upload failed", result.error);
@@ -187,7 +214,8 @@ export function DocumentsPanel({
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!canUpload || !confirm("Are you sure you want to delete this file?")) return;
+    if (!canUpload || !confirm("Are you sure you want to delete this file?"))
+      return;
 
     setDeletingFileId(fileId);
     try {
@@ -225,12 +253,16 @@ export function DocumentsPanel({
     }
   };
 
-  const handlePreviewFile = async (filePath: string, fileName: string, contentType: string) => {
+  const handlePreviewFile = async (
+    filePath: string,
+    fileName: string,
+    contentType: string
+  ) => {
     setIsLoadingPreview(true);
     setPreviewFileName(fileName);
     setPreviewContentType(contentType);
     setIsPreviewModalOpen(true);
-    
+
     try {
       const result = await getAdvancingFileUrl(filePath);
       if (result.success && result.url) {
@@ -259,7 +291,9 @@ export function DocumentsPanel({
 
   // Get documents for selected category
   const selectedCategoryDocs = selectedCategory
-    ? documents.filter((doc) => categorizeDocument(doc.label) === selectedCategory)
+    ? documents.filter(
+        (doc) => categorizeDocument(doc.label) === selectedCategory
+      )
     : [];
 
   const selectedCategoryLabel =
@@ -269,7 +303,6 @@ export function DocumentsPanel({
     <>
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-blue-400" />
           Documents
         </h3>
         <div className="space-y-2">
@@ -299,7 +332,9 @@ export function DocumentsPanel({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl">{selectedCategoryLabel} Documents</DialogTitle>
+            <DialogTitle className="text-xl">
+              {selectedCategoryLabel} Documents
+            </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto space-y-6 pr-2">
@@ -369,15 +404,19 @@ export function DocumentsPanel({
                             {doc.label || "Untitled Document"}
                           </h5>
                           <p className="text-xs text-neutral-500">
-                            {new Date(doc.created_at).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {new Date(doc.created_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}
                           </p>
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {doc.files.length} {doc.files.length === 1 ? "file" : "files"}
+                          {doc.files.length}{" "}
+                          {doc.files.length === 1 ? "file" : "files"}
                         </Badge>
                       </div>
 
@@ -399,7 +438,9 @@ export function DocumentsPanel({
                                   </p>
                                   <p className="text-xs text-neutral-500">
                                     {formatFileSize(file.size_bytes)} •{" "}
-                                    {new Date(file.created_at).toLocaleDateString("en-US")}
+                                    {new Date(
+                                      file.created_at
+                                    ).toLocaleDateString("en-US")}
                                   </p>
                                 </div>
                               </div>
@@ -408,11 +449,14 @@ export function DocumentsPanel({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handlePreviewFile(
-                                      file.storage_path,
-                                      file.original_name || "file",
-                                      file.content_type || "application/octet-stream"
-                                    )}
+                                    onClick={() =>
+                                      handlePreviewFile(
+                                        file.storage_path,
+                                        file.original_name || "file",
+                                        file.content_type ||
+                                          "application/octet-stream"
+                                      )
+                                    }
                                     title="Preview"
                                   >
                                     <Eye className="w-4 h-4" />
@@ -461,19 +505,25 @@ export function DocumentsPanel({
                             }}
                             type="file"
                             className="hidden"
-                            onChange={(e) => handleFileSelect(doc.id, e.target.files)}
+                            onChange={(e) =>
+                              handleFileSelect(doc.id, e.target.files)
+                            }
                             accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
                           />
                           <div
                             className="border-2 border-dashed border-neutral-700 rounded-lg p-4 text-center hover:border-neutral-600 hover:bg-neutral-800/30 transition-colors cursor-pointer"
-                            onClick={() => fileInputRefs.current[doc.id]?.click()}
+                            onClick={() =>
+                              fileInputRefs.current[doc.id]?.click()
+                            }
                             onDrop={(e) => handleDrop(doc.id, e)}
                             onDragOver={handleDragOver}
                           >
                             {uploadingDocId === doc.id ? (
                               <>
                                 <Loader2 className="w-6 h-6 mx-auto mb-1 text-neutral-500 animate-spin" />
-                                <p className="text-xs text-neutral-500">Uploading...</p>
+                                <p className="text-xs text-neutral-500">
+                                  Uploading...
+                                </p>
                               </>
                             ) : (
                               <>
