@@ -31,7 +31,7 @@
 
 ## 3. Notifications Reconsideration
 
-**Status:** [ ]
+**Status:** [✅]
 **Priority:** Low
 **Description:** Decide if notifications should exist at all. If yes, maybe move to bottom left in the bar instead.
 **Location:** Navigation bar
@@ -59,7 +59,7 @@
 
 ## 6. Search Behavior - Google-like Expansion
 
-**Status:** [ ]
+**Status:** [✅]
 **Priority:** High
 **Description:** Instead of popup, make search behave like Google - search field expands downward (not as popup, just expanding under the field)
 **Location:** Search component
