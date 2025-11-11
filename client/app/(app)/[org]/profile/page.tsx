@@ -39,14 +39,15 @@ const getRoleBadgeColor = (role: OrgRole) => {
   }
 }
 
-export default async function ProfileSettingsPage({ params }: { params: { org: string } }) {
+export default async function ProfileSettingsPage({ params }: { params: Promise<{ org: string }> }) {
   const supabase = await getSupabaseServer();
+  const resolvedParams = await params;
   
   // Get org ID from slug
   const { data: org } = await supabase
     .from('organizations')
     .select('id')
-    .eq('slug', params.org)
+    .eq('slug', resolvedParams.org)
     .single();
 
   let userRole: OrgRole | null = null;
