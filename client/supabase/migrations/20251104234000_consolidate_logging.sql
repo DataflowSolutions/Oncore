@@ -32,79 +32,7 @@ CREATE INDEX IF NOT EXISTS activity_log_org_category_time_idx
 COMMENT ON COLUMN activity_log.category IS 'Event category: general, billing, performance, security, auth, show, advancing';
 
 -- =====================================
--- STEP 2: BACKUP BILLING_ACTIONS_LOG
--- =====================================
-
--- Create backup before migration
-CREATE TABLE IF NOT EXISTS _billing_actions_log_backup AS
-SELECT * FROM billing_actions_log;
-
-COMMENT ON TABLE _billing_actions_log_backup IS 'Backup of billing_actions_log before consolidation - can be dropped after verification';
-
--- =====================================
--- STEP 3: MIGRATE BILLING_ACTIONS_LOG DATA
--- =====================================
-
--- Migrate all billing actions to activity_log
-INSERT INTO activity_log (
-  org_id,
-  user_id,
-  action,
-  resource_type,
-  resource_id,
-  details,
-  created_at,
-  category,
-  ip_address,
-  user_agent
-)
-SELECT 
-  bal.org_id,
-  bal.triggered_by::uuid AS user_id,
-  bal.action,
-  'billing' AS resource_type,
-  bal.org_id AS resource_id, -- Billing actions are org-level (org_id is already UUID)
-  -- Combine previous_state and new_state into details JSON
-  jsonb_build_object(
-    'previous_state', bal.previous_state,
-    'new_state', bal.new_state
-  ) AS details,
-  bal.created_at,
-  'billing' AS category,
-  NULL::inet AS ip_address, -- billing_actions_log didn't track IP
-  NULL AS user_agent  -- billing_actions_log didn't track user agent
-FROM billing_actions_log bal
-ON CONFLICT (id) DO NOTHING; -- In case some were already migrated
-
--- Verify migration
-DO $$
-DECLARE
-  original_count INTEGER;
-  migrated_count INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO original_count FROM billing_actions_log;
-  SELECT COUNT(*) INTO migrated_count FROM activity_log WHERE category = 'billing';
-  
-  RAISE NOTICE 'Original billing_actions_log: % rows', original_count;
-  RAISE NOTICE 'Migrated to activity_log: % rows', migrated_count;
-  
-  IF migrated_count < original_count THEN
-    RAISE WARNING 'Migration incomplete: % rows missing', (original_count - migrated_count);
-  ELSE
-    RAISE NOTICE 'Migration successful';
-  END IF;
-END $$;
-
--- =====================================
--- STEP 4: DROP OLD RLS POLICIES
--- =====================================
-
--- Drop policies from billing_actions_log
-DROP POLICY IF EXISTS "Org owners can view billing actions" ON billing_actions_log;
-DROP POLICY IF EXISTS "Service role can manage billing actions" ON billing_actions_log;
-
--- =====================================
--- STEP 5: UPDATE ACTIVITY_LOG RLS POLICIES
+-- STEP 2: UPDATE ACTIVITY_LOG RLS POLICIES
 -- =====================================
 
 -- Drop existing policies to recreate with category awareness
@@ -144,14 +72,7 @@ WITH CHECK (true); -- Let application code handle authorization
 COMMENT ON POLICY "Org owners can view billing logs" ON activity_log IS 'Billing logs are sensitive and only visible to org owners';
 
 -- =====================================
--- STEP 6: DROP BILLING_ACTIONS_LOG TABLE
--- =====================================
-
--- Drop the old billing_actions_log table
-DROP TABLE IF EXISTS public.billing_actions_log CASCADE;
-
--- =====================================
--- STEP 7: UPDATE LOGGING FUNCTIONS
+-- STEP 3: UPDATE LOGGING FUNCTIONS
 -- =====================================
 
 -- Update or create functions that logged to billing_actions_log
@@ -219,7 +140,7 @@ END;
 $$;
 
 -- =====================================
--- STEP 8: CREATE HELPER FUNCTIONS
+-- STEP 4: CREATE HELPER FUNCTIONS
 -- =====================================
 
 -- Function to log billing events
@@ -267,7 +188,14 @@ GRANT EXECUTE ON FUNCTION log_billing_action(UUID, TEXT, JSONB, UUID) TO authent
 COMMENT ON FUNCTION log_billing_action IS 'Log billing-related actions to activity_log with billing category';
 
 -- =====================================
--- STEP 9: CREATE VIEW FOR BILLING LOGS
+-- STEP 5: DROP OLD BILLING_ACTIONS_LOG TABLE
+-- =====================================
+
+-- Drop the old billing_actions_log table if it exists
+DROP TABLE IF EXISTS billing_actions_log CASCADE;
+
+-- =====================================
+-- STEP 6: CREATE VIEW FOR BILLING LOGS
 -- =====================================
 
 -- Create a view for easy querying of billing logs (backward compatibility)
@@ -289,7 +217,7 @@ COMMENT ON VIEW billing_actions_log IS 'View of billing-category logs from activ
 GRANT SELECT ON billing_actions_log TO authenticated;
 
 -- =====================================
--- STEP 10: UPDATE ADMIN FUNCTIONS
+-- STEP 7: UPDATE ADMIN FUNCTIONS
 -- =====================================
 
 -- Update admin_update_subscription to use new logging
@@ -375,11 +303,4 @@ $$;
 -- FROM activity_log 
 -- GROUP BY category 
 -- ORDER BY COUNT(*) DESC;
-
--- =====================================
--- CLEANUP (RUN AFTER VERIFICATION)
--- =====================================
-
--- After verifying everything works, drop the backup:
--- DROP TABLE IF EXISTS _billing_actions_log_backup;
 
