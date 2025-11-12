@@ -1759,6 +1759,20 @@ export type Database = {
         Args: { org_name: string; org_slug: string }
         Returns: string
       }
+      app_create_show: {
+        Args: {
+          p_date: string
+          p_notes?: string
+          p_org_id: string
+          p_set_time?: string
+          p_title: string
+          p_venue_address?: string
+          p_venue_city?: string
+          p_venue_id?: string
+          p_venue_name?: string
+        }
+        Returns: Json
+      }
       app_log_activity: {
         Args: {
           p_action: string
@@ -1828,6 +1842,7 @@ export type Database = {
         Args: { p_org_id: string; p_show_id: string; p_title?: string }
         Returns: Json
       }
+      debug_auth_context: { Args: never; Returns: Json }
       get_activity_log_stats: { Args: never; Returns: Json }
       get_activity_logs: {
         Args: {
@@ -1854,9 +1869,55 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: Json
       }
+      get_available_people: {
+        Args: { p_org_id: string; p_party_type?: string }
+        Returns: {
+          email: string
+          id: string
+          member_type: Database["public"]["Enums"]["member_type"]
+          name: string
+          phone: string
+        }[]
+      }
       get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
       get_maintenance_stats: { Args: { days_back?: number }; Returns: Json }
+      get_org_by_slug: { Args: { p_slug: string }; Returns: Json }
+      get_org_membership: { Args: { p_org_id: string }; Returns: Json }
+      get_org_subscription: { Args: { p_org_id: string }; Returns: Json }
+      get_show_by_id: { Args: { p_show_id: string }; Returns: Json }
       get_show_stats: { Args: { p_org_id: string }; Returns: Json }
+      get_show_team: {
+        Args: { p_party_type?: string; p_show_id: string }
+        Returns: {
+          duty: string
+          email: string
+          id: string
+          member_type: Database["public"]["Enums"]["member_type"]
+          name: string
+          phone: string
+        }[]
+      }
+      get_shows_by_org: {
+        Args: { p_org_id: string }
+        Returns: {
+          created_at: string
+          date: string
+          doors_at: string
+          id: string
+          notes: string
+          org_id: string
+          set_time: string
+          status: string
+          title: string
+          updated_at: string
+          venue_address: string
+          venue_city: string
+          venue_id: string
+          venue_name: string
+        }[]
+      }
+      get_user_organizations: { Args: never; Returns: Json }
+      get_user_orgs: { Args: never; Returns: Json }
       has_show_access: {
         Args: { min_role: string; p_show: string }
         Returns: boolean
@@ -1902,6 +1963,7 @@ export type Database = {
         Args: { triggered_by?: string }
         Returns: Json
       }
+      test_auth_context: { Args: never; Returns: Json }
       uuid_generate_v1: { Args: never; Returns: string }
       uuid_generate_v1mc: { Args: never; Returns: string }
       uuid_generate_v3: {
