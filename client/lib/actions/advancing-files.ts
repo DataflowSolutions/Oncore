@@ -28,7 +28,8 @@ export async function uploadAdvancingFile(
     }
 
     // Get org_id and show_id from session using RPC (includes permission check)
-    const { data: sessionData, error: sessionError } = await supabase.rpc('get_advancing_session', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: sessionData, error: sessionError } = await (supabase as any).rpc('get_advancing_session', {
       p_session_id: sessionId
     })
 
@@ -66,7 +67,8 @@ export async function uploadAdvancingFile(
     }
 
     // Create file record using RPC (includes permission check)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('upload_advancing_file', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('upload_advancing_file', {
       p_document_id: documentId,
       p_storage_path: filePath,
       p_original_name: file.name,
@@ -105,7 +107,8 @@ export async function deleteAdvancingFile(
 
   try {
     // Use RPC to get file info and delete (includes permission check)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('delete_advancing_file', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('delete_advancing_file', {
       p_file_id: fileId
     })
 
@@ -160,7 +163,8 @@ export async function renameAdvancingFile(
     }
 
     // Use RPC to rename file (includes permission check)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('rename_advancing_file', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('rename_advancing_file', {
       p_file_id: fileId,
       p_new_name: newName
     })

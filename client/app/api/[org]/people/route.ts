@@ -37,7 +37,7 @@ export async function GET(
     // Apply filter if provided
     let filteredPeople = people || []
     if (filter && filter !== 'all') {
-      filteredPeople = filteredPeople.filter(person => 
+      filteredPeople = filteredPeople.filter((person: { member_type?: string }) => 
         person.member_type?.toLowerCase() === filter.toLowerCase()
       )
     }

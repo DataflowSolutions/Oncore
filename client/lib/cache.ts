@@ -55,7 +55,7 @@ export const getCachedOrgSubscription = cache(async (orgId: string) => {
  * Cache user's org membership
  * Prevents redundant lookups when checking permissions
  */
-export const getCachedOrgMembership = cache(async (orgId: string, _userId: string) => {
+export const getCachedOrgMembership = cache(async (orgId: string) => {
   const supabase = await getSupabaseServer()
   // Use RPC function to bypass RLS issues
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,7 +69,7 @@ export const getCachedOrgMembership = cache(async (orgId: string, _userId: strin
  * Cache user's organizations list
  * Used in navigation and org switcher
  */
-export const getCachedUserOrgs = cache(async (_userId: string) => {
+export const getCachedUserOrgs = cache(async () => {
   const supabase = await getSupabaseServer()
   // Use RPC function to bypass RLS issues
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -255,6 +255,7 @@ export const getCachedOrgVenuesWithCounts = cache(async (orgId: string) => {
     }
 
     // Transform to match expected format with nested shows count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const transformed = data?.map((venue: any) => ({
       ...venue,
       shows: [{ count: venue.shows_count }]

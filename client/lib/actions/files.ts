@@ -84,8 +84,9 @@ const parseContractSchema = z.object({
   fileName: z.string(),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function parseContract(
+  // Parameter intentionally unused - function disabled
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _params: z.infer<typeof parseContractSchema>
 ) {
   // TODO: Re-enable this function once the parsed_contracts table is created

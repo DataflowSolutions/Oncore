@@ -38,7 +38,7 @@ export default async function AdvancingPage({ params }: AdvancingPageProps) {
 
   // Filter sessions by this show
   const filteredSessions = sessions.filter(
-    (session) => session.show_id === showId
+    (session: { show_id: string }) => session.show_id === showId
   );
 
   return (
@@ -124,7 +124,12 @@ export default async function AdvancingPage({ params }: AdvancingPageProps) {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredSessions.map((session) => (
+            {filteredSessions.map((session: {
+              id: string;
+              title: string;
+              created_at: string;
+              expires_at: string | null;
+            }) => (
               <Card
                 key={session.id}
                 className="hover:shadow-md transition-shadow"

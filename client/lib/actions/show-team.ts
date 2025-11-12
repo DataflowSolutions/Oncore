@@ -90,7 +90,8 @@ export async function assignPersonToShow(formData: FormData) {
   const validatedData = assignPersonSchema.parse(rawData)
 
   // Use RPC to assign person to show (bypasses RLS issues)
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .rpc('assign_person_to_show', {
       p_show_id: validatedData.showId,
       p_person_id: validatedData.personId,
@@ -118,7 +119,8 @@ export async function removePersonFromShow(showId: string, personId: string) {
   }
 
   // Use RPC to remove person from show (bypasses RLS issues)
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .rpc('remove_person_from_show', {
       p_show_id: showId,
       p_person_id: personId

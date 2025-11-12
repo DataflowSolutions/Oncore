@@ -103,8 +103,9 @@ export default async function ShowDayPage({
   
   if (advancingSession && assignedPeople) {
     console.log('Fetching fields for session:', advancingSession.id);
-    const { data: fields, error: fieldsError } = await supabase
-      .rpc('get_advancing_fields' as any, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: fields, error: fieldsError } = await (supabase as any)
+      .rpc('get_advancing_fields', {
         p_session_id: advancingSession.id
       });
 

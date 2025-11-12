@@ -41,7 +41,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
   }
 
   // Get membership using org.id
-  const { data: membership } = await getCachedOrgMembership(org.id, user.id)
+  const { data: membership } = await getCachedOrgMembership(org.id)
 
   // Verify membership exists
   if (!membership) {

@@ -86,7 +86,8 @@ export async function createAdvancingSession(
   }
 
   // Use the RPC function to create session (no access code - use invitation system)
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .rpc('create_advancing_session', {
       p_show_id: sessionData.showId,
       p_org_id: org.id,
@@ -156,7 +157,8 @@ export async function createAdvancingField(
 
   try {
     // Use RPC to create/update field (bypasses RLS issues)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('create_advancing_field', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('create_advancing_field', {
       p_session_id: sessionId,
       p_section: fieldData.section,
       p_field_name: fieldData.fieldName,
@@ -198,7 +200,8 @@ export async function updateAdvancingField(
   const supabase = await getSupabaseServer()
   
   // Use RPC to update field (bypasses RLS issues)
-  const { data: rpcData, error: rpcError } = await supabase.rpc('update_advancing_field', {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcData, error: rpcError } = await (supabase as any).rpc('update_advancing_field', {
     p_session_id: sessionId,
     p_field_id: fieldId,
     p_value: updates.value || null
@@ -378,7 +381,8 @@ export async function updateAdvancingDocument(
   }
 
   try {
-    const { data, error } = await supabase.rpc('update_advancing_document', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('update_advancing_document', {
       p_document_id: documentId,
       p_label: label
     })
@@ -389,9 +393,11 @@ export async function updateAdvancingDocument(
     }
 
     // Revalidate using session_id from RPC response
-    if (data?.session_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((data as any)?.session_id) {
       revalidatePath(`/${orgSlug}/shows`)
-      revalidatePath(`/${orgSlug}/shows/[showId]/advancing/${data.session_id}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      revalidatePath(`/${orgSlug}/shows/[showId]/advancing/${(data as any).session_id}`)
     }
 
     return { success: true }
@@ -415,7 +421,8 @@ export async function deleteAdvancingDocument(
   }
 
   try {
-    const { data, error } = await supabase.rpc('delete_advancing_document', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('delete_advancing_document', {
       p_document_id: documentId
     })
 
