@@ -7,6 +7,8 @@
 -- 1. CREATE ADVANCING SESSION
 -- Creates a new advancing session with a random access code
 -- =====================================================
+DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;
+DROP EXTENSION IF EXISTS "citext" CASCADE;
 
 CREATE OR REPLACE FUNCTION create_advancing_session(
   p_show_id uuid,

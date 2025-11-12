@@ -1,7 +1,7 @@
 import { getAdvancingSession, getAdvancingFields, loadAdvancingGridData, getAdvancingDocuments } from '@/lib/actions/advancing'
 import { getAvailablePeople, getShowTeam } from '@/lib/actions/show-team'
 import { AdvancingPageClient } from '@/components/advancing/AdvancingPageClient'
-import { getSupabaseServer } from '@/lib/supabase/server'
+import { getCachedOrg } from '@/lib/cache'
 
 interface AdvancingSessionPageProps {
   params: Promise<{ org: string; showId: string; sessionId: string }>
@@ -18,13 +18,12 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     return <div className="container mx-auto p-6">Invalid route - please use /advancing/new</div>
   }
 
-  // Get organization ID first (needed for parallel fetching)
-  const supabase = await getSupabaseServer()
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('slug', orgSlug)
-    .single()
+  // Get organization using cached function
+  const { data: org, error: orgError } = await getCachedOrg(orgSlug)
+  
+  if (orgError || !org) {
+    return <div className="container mx-auto p-6">Organization not found</div>
+  }
 
   // OPTIMIZED: Fetch session, fields, and documents in parallel
   const [session, fields, documents] = await Promise.all([
@@ -58,7 +57,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
   const [artistDataResult, promoterDataResult] = await Promise.all([
     // Artist team data - fetch team and people in parallel
     Promise.all([
-      org ? getAvailablePeople(org.id, 'from_us') : Promise.resolve([]),
+      getAvailablePeople(org.id, 'from_us'),
       getShowTeam(sessionWithShow.shows.id, 'from_us'),
     ]).then(async ([availablePeople, showTeam]) => {
       const teamMemberIds = showTeam.map(member => member.id)
@@ -79,7 +78,7 @@ export default async function AdvancingSessionPage({ params, searchParams }: Adv
     }),
     // Promoter team data - fetch team and people in parallel
     Promise.all([
-      org ? getAvailablePeople(org.id, 'from_you') : Promise.resolve([]),
+      getAvailablePeople(org.id, 'from_you'),
       getShowTeam(sessionWithShow.shows.id, 'from_you'),
     ]).then(async ([availablePeople, showTeam]) => {
       const teamMemberIds = showTeam.map(member => member.id)

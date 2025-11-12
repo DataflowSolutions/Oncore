@@ -14,10 +14,14 @@ export function PeoplePageClient({
   orgSlug: string
   filter?: string
 }) {
+  console.log('PeoplePageClient rendering with:', { orgSlug, filter })
+  
   // Use prefetched data - instant load!
   const { data: allPeople = [], isLoading: peopleLoading, error: peopleError } = usePeople(orgSlug)
   const { data: invitations = [] } = useInvitations(orgSlug)
   const { data: seatInfo } = useAvailableSeats(orgSlug)
+  
+  console.log('PeoplePageClient data:', { allPeople, invitations, seatInfo, peopleError })
   
   // Filter people based on URL parameter (client-side)
   const filteredPeople = useMemo(() => {

@@ -28,6 +28,7 @@ interface SaveableGridEditorProps {
   orgSlug: string
   sessionId: string
   showId?: string
+  partyType?: 'from_us' | 'from_you'
 }
 
 export function SaveableGridEditor({ 
@@ -43,7 +44,8 @@ export function SaveableGridEditor({
   hideAddButton = false,
   orgSlug,
   sessionId,
-  showId
+  showId,
+  partyType = 'from_you'
 }: SaveableGridEditorProps) {
   const [localData, setLocalData] = useState(data)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -97,7 +99,8 @@ export function SaveableGridEditor({
           return Object.entries(row).some(([key, value]) => 
             key !== 'id' && value && String(value).trim() !== ''
           )
-        })
+        }),
+        partyType
       )
       
       if (result.success) {

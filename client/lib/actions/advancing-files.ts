@@ -27,27 +27,18 @@ export async function uploadAdvancingFile(
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Get org_id and show_id from session
-    const { data: session, error: sessionError } = await supabase
-      .from('advancing_sessions')
-      .select('org_id, show_id')
-      .eq('id', sessionId)
-      .single()
+    // Get org_id and show_id from session using RPC (includes permission check)
+    const { data: sessionData, error: sessionError } = await supabase.rpc('get_advancing_session', {
+      p_session_id: sessionId
+    })
 
-    if (sessionError || !session) {
+    if (sessionError || !sessionData) {
       return { success: false, error: 'Session not found' }
     }
 
-    // Verify document belongs to this session
-    const { data: document, error: docError } = await supabase
-      .from('advancing_documents')
-      .select('id')
-      .eq('id', documentId)
-      .eq('session_id', sessionId)
-      .single()
-
-    if (docError || !document) {
-      return { success: false, error: 'Document not found' }
+    const session = typeof sessionData === 'object' && 'org_id' in sessionData ? sessionData : null
+    if (!session || !session.org_id || !session.show_id) {
+      return { success: false, error: 'Invalid session data' }
     }
 
     // Generate unique file path
@@ -74,51 +65,28 @@ export async function uploadAdvancingFile(
       return { success: false, error: uploadError.message }
     }
 
-    // Create file record in database
-    const { data: fileRecord, error: fileError } = await supabase
-      .from('files')
-      .insert({
-        org_id: session.org_id,
-        session_id: sessionId,
-        document_id: documentId,
-        storage_path: filePath,
-        original_name: file.name,
-        content_type: file.type,
-        size_bytes: file.size,
-        uploaded_by: user.id,
-      })
-      .select('id')
-      .single()
+    // Create file record using RPC (includes permission check)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('upload_advancing_file', {
+      p_document_id: documentId,
+      p_storage_path: filePath,
+      p_original_name: file.name,
+      p_size_bytes: file.size,
+      p_content_type: file.type
+    })
 
-    if (fileError) {
-      logger.error('Error creating file record', fileError)
+    if (rpcError) {
+      logger.error('Error creating file record', rpcError)
       // Try to clean up the uploaded file
       await supabase.storage.from('advancing-files').remove([filePath])
-      return { success: false, error: fileError.message }
+      return { success: false, error: rpcError.message }
     }
-
-    // Log activity
-    await supabase
-      .from('activity_log')
-      .insert({
-        org_id: session.org_id,
-        user_id: user.id,
-        action: 'uploaded',
-        resource_type: 'file',
-        resource_id: fileRecord.id,
-        details: {
-          file_name: file.name,
-          file_size: file.size,
-          session_id: sessionId,
-          document_id: documentId,
-        },
-      })
 
     if (session.show_id) {
       revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
     }
 
-    return { success: true, fileId: fileRecord.id }
+    const fileId = rpcData && typeof rpcData === 'object' && 'file_id' in rpcData ? rpcData.file_id : null
+    return { success: true, fileId: fileId as string | undefined }
   } catch (error) {
     logger.error('Error uploading file', error)
     return { success: false, error: 'Failed to upload file' }
@@ -136,48 +104,34 @@ export async function deleteAdvancingFile(
   const supabase = await getSupabaseServer()
 
   try {
-    // Get file info and session info
-    const { data: file, error: fileError } = await supabase
-      .from('files')
-      .select('storage_path, org_id, session_id')
-      .eq('id', fileId)
-      .eq('session_id', sessionId)
-      .single()
+    // Use RPC to get file info and delete (includes permission check)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('delete_advancing_file', {
+      p_file_id: fileId
+    })
 
-    if (fileError || !file) {
-      return { success: false, error: 'File not found' }
+    if (rpcError) {
+      logger.error('Error deleting file record', rpcError)
+      return { success: false, error: rpcError.message }
     }
 
-    // Get show_id from session
-    const { data: session } = await supabase
-      .from('advancing_sessions')
-      .select('show_id')
-      .eq('id', file.session_id!)
-      .single()
+    // Delete from storage using path from RPC response
+    const storagePath = rpcData && typeof rpcData === 'object' && 'storage_path' in rpcData ? rpcData.storage_path : null
+    if (storagePath && typeof storagePath === 'string') {
+      const { error: storageError } = await supabase.storage
+        .from('advancing-files')
+        .remove([storagePath])
 
-    // Delete from storage
-    const { error: storageError } = await supabase.storage
-      .from('advancing-files')
-      .remove([file.storage_path])
-
-    if (storageError) {
-      logger.error('Error deleting file from storage', storageError)
-      // Continue anyway to delete the database record
+      if (storageError) {
+        logger.error('Error deleting file from storage', storageError)
+        // File record already deleted, just log error
+      }
     }
 
-    // Delete database record
-    const { error: deleteError } = await supabase
-      .from('files')
-      .delete()
-      .eq('id', fileId)
-
-    if (deleteError) {
-      logger.error('Error deleting file record', deleteError)
-      return { success: false, error: deleteError.message }
-    }
-
-    if (session?.show_id) {
-      revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+    // Revalidate using IDs from RPC response
+    const showId = rpcData && typeof rpcData === 'object' && 'show_id' in rpcData ? rpcData.show_id : null
+    const rpcSessionId = rpcData && typeof rpcData === 'object' && 'session_id' in rpcData ? rpcData.session_id : null
+    if (showId && rpcSessionId) {
+      revalidatePath(`/${orgSlug}/shows/${showId}/advancing/${rpcSessionId}`)
     }
 
     return { success: true }
@@ -205,38 +159,22 @@ export async function renameAdvancingFile(
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Verify file belongs to this session
-    const { data: file, error: fileError } = await supabase
-      .from('files')
-      .select('id, session_id')
-      .eq('id', fileId)
-      .eq('session_id', sessionId)
-      .single()
+    // Use RPC to rename file (includes permission check)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('rename_advancing_file', {
+      p_file_id: fileId,
+      p_new_name: newName
+    })
 
-    if (fileError || !file) {
-      return { success: false, error: 'File not found' }
+    if (rpcError) {
+      logger.error('Error renaming file', rpcError)
+      return { success: false, error: rpcError.message }
     }
 
-    // Get show_id from session
-    const { data: session } = await supabase
-      .from('advancing_sessions')
-      .select('show_id')
-      .eq('id', file.session_id!)
-      .single()
-
-    // Update the original_name
-    const { error: updateError } = await supabase
-      .from('files')
-      .update({ original_name: newName })
-      .eq('id', fileId)
-
-    if (updateError) {
-      logger.error('Error renaming file', updateError)
-      return { success: false, error: updateError.message }
-    }
-
-    if (session?.show_id) {
-      revalidatePath(`/${orgSlug}/shows/${session.show_id}/advancing/${sessionId}`)
+    // Revalidate using IDs from RPC response
+    const showId = rpcData && typeof rpcData === 'object' && 'show_id' in rpcData ? rpcData.show_id : null
+    const rpcSessionId = rpcData && typeof rpcData === 'object' && 'session_id' in rpcData ? rpcData.session_id : null
+    if (showId && rpcSessionId) {
+      revalidatePath(`/${orgSlug}/shows/${showId}/advancing/${rpcSessionId}`)
     }
 
     return { success: true }

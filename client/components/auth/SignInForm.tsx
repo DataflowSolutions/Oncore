@@ -172,29 +172,8 @@ export function SignInForm() {
         return;
       }
 
-      // Get user's organization(s) and redirect to their dashboard
-      const { data: orgData, error: orgError } = await supabase
-        .from("org_members")
-        .select(
-          `
-          role,
-          organizations (
-            slug
-          )
-        `
-        )
-        .eq("user_id", data.user.id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      // Redirect to user's org dashboard if available, otherwise create-org page
-      if (!orgError && orgData?.organizations && "slug" in orgData.organizations) {
-        router.push(`/${orgData.organizations.slug}`);
-      } else {
-        // User has no org yet - redirect to create-org page
-        router.push("/create-org");
-      }
+      // Redirect to home page to show all organizations
+      router.push("/");
       
       // Note: We don't setLoading(false) here because we're navigating away
       router.refresh();

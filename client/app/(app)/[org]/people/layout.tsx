@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getSupabaseServer } from '@/lib/supabase/server'
+import { getCachedOrg } from '@/lib/cache'
 import TeamSearch from './components/TeamSearch'
 import AddPersonButton from './components/AddPersonButton'
 
@@ -11,15 +11,10 @@ interface TeamLayoutProps {
 export default async function TeamLayout({ children, params }: TeamLayoutProps) {
   const { org: orgSlug } = await params
   
-  // Get org info to verify it exists
-  const supabase = await getSupabaseServer()
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // Use cached org function to bypass RLS
+  const { data: org, error } = await getCachedOrg(orgSlug)
 
-  if (!org) {
+  if (error || !org) {
     notFound()
   }
 

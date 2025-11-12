@@ -60,6 +60,9 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
   const [fieldComments, setFieldComments] = useState<Record<string, AdvancingComment[]>>({})
   const [loadingComments, setLoadingComments] = useState(false)
   
+  // Determine party type from first field
+  const partyType = fields[0]?.party_type || 'from_you'
+  
   // Load comments for all fields when section is expanded
   useEffect(() => {
     if (isExpanded && fields.length > 0 && !loadingComments) {
@@ -217,6 +220,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 orgSlug={orgSlug}
                 sessionId={sessionId}
                 showId={showId}
+                partyType={partyType}
               />
 
               {/* Arrival Flight Grid - Saveable */}
@@ -242,6 +246,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 orgSlug={orgSlug}
                 sessionId={sessionId}
                 showId={showId}
+                partyType={partyType}
               />
 
               {/* Departure Flight Grid - Saveable */}
@@ -267,6 +272,7 @@ export function Section({ title, fields, orgSlug, sessionId, showId, availablePe
                 orgSlug={orgSlug}
                 sessionId={sessionId}
                 showId={showId}
+                partyType={partyType}
               />
             </div>
           )}

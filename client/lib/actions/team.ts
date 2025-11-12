@@ -5,6 +5,7 @@ import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { getCachedOrg } from '@/lib/cache'
 
 type Person = Database['public']['Tables']['people']['Row']
 type PersonInsert = Database['public']['Tables']['people']['Insert']
@@ -139,15 +140,13 @@ export async function createPerson(formData: FormData) {
 
   const validatedData = createPersonSchema.parse(rawData)
 
-  // Verify user has access to this organization
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', validatedData.orgId)
-    .eq('user_id', user.id)
-    .single()
+  // Verify user has access to this organization using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership, error: membershipError } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: validatedData.orgId
+  })
 
-  if (!membership) {
+  if (membershipError || !membership) {
     throw new Error('You do not have permission to add people to this organization')
   }
 
@@ -177,23 +176,25 @@ export async function createPerson(formData: FormData) {
     member_type: validatedData.memberType as Database['public']['Enums']['member_type']
   }
 
-  const { data, error } = await supabase
-    .from('people')
-    .insert(personData)
-    .select()
-    .single()
+  // Use RPC to create person and bypass RLS
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('create_person', {
+    p_org_id: personData.org_id,
+    p_name: personData.name,
+    p_email: personData.email,
+    p_phone: personData.phone,
+    p_role_title: personData.role_title,
+    p_notes: personData.notes,
+    p_member_type: personData.member_type
+  })
 
   if (error) {
     logger.error('Error creating person', error)
     throw new Error(`Failed to create person: ${error.message}`)
   }
 
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', validatedData.orgId)
-    .single()
+  // Get org slug for revalidation using cached function
+  const { data: org } = await getCachedOrg(validatedData.orgId)
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`, 'page')

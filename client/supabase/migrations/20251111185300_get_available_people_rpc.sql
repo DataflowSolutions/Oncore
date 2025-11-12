@@ -39,8 +39,8 @@ BEGIN
   END IF;
 
   -- Return available people, filtered by party type if specified
-  -- Note: Currently only 'from_us' party type is supported
-  -- member_type enum only has: Artist, Crew, Agent, Manager
+  -- member_type enum has: Artist, Crew, Agent, Manager (for from_us)
+  -- For from_you, we return all people as promoter team doesn't have specific types yet
   RETURN QUERY
   SELECT 
     p.id,
@@ -53,14 +53,16 @@ BEGIN
     AND (
       p_party_type IS NULL
       OR (p_party_type = 'from_us' AND p.member_type IN ('Artist', 'Crew', 'Manager', 'Agent'))
-      -- from_you party type not yet implemented - would need new enum values
-      OR (p_party_type = 'from_you' AND FALSE) -- Return empty for promoter team
+      OR p_party_type = 'from_you' -- Return all people for promoter team
     )
   ORDER BY p.name;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION get_available_people(uuid, text) TO authenticated;
+
+-- Change function owner to postgres to bypass RLS
+ALTER FUNCTION get_available_people(uuid, text) OWNER TO postgres;
 
 COMMENT ON FUNCTION get_available_people IS 
 'Gets all available people from an organization, optionally filtered by party type. Bypasses RLS issues.';

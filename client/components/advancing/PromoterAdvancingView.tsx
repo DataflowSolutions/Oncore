@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Building, Lightbulb, Briefcase, Trash2, Plus, Save, X } from "lucide-react";
 import { updateAdvancingField, createAdvancingField } from "@/lib/actions/advancing";
 import { logger } from "@/lib/logger";
+import type { Json } from "@/lib/database.types";
 
 interface PromoterAdvancingViewProps {
   orgSlug: string;
@@ -214,7 +215,7 @@ function TransfersCard({
       if (fieldId) {
         // Update existing field using the UUID
         const result = await updateAdvancingField(orgSlug, sessionId, fieldId, {
-          value: JSON.stringify(transfers)
+          value: transfers as unknown as Json  // Pass as object, not stringified
         });
         
         if (result.success) {
@@ -231,7 +232,7 @@ function TransfersCard({
           fieldName: "promoter_transfers",
           fieldType: "json",
           partyType: "from_you",
-          value: JSON.stringify(transfers)
+          value: transfers as unknown as Json  // Pass as object, not stringified
         });
         
         if (createResult.success && createResult.data) {

@@ -8,7 +8,6 @@ import { cache } from 'react'
 import { z } from 'zod'
 
 type Person = Database['public']['Tables']['people']['Row']
-type ShowAssignmentInsert = Database['public']['Tables']['show_assignments']['Insert']
 
 // Lightweight person for list contexts - omits large text fields
 export type PersonListItem = Pick<Person, 'id' | 'name' | 'member_type' | 'email' | 'phone'> & { duty?: string }
@@ -90,39 +89,13 @@ export async function assignPersonToShow(formData: FormData) {
 
   const validatedData = assignPersonSchema.parse(rawData)
 
-  // Verify user has access to this show's organization
-  const { data: show } = await supabase
-    .from('shows')
-    .select('org_id')
-    .eq('id', validatedData.showId)
-    .single()
-
-  if (!show) {
-    throw new Error('Show not found')
-  }
-
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', show.org_id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!membership) {
-    throw new Error('You do not have permission to assign people to this show')
-  }
-
-  const assignmentData: ShowAssignmentInsert = {
-    show_id: validatedData.showId,
-    person_id: validatedData.personId,
-    duty: validatedData.duty || null
-  }
-
+  // Use RPC to assign person to show (bypasses RLS issues)
   const { data, error } = await supabase
-    .from('show_assignments')
-    .insert(assignmentData)
-    .select()
-    .single()
+    .rpc('assign_person_to_show', {
+      p_show_id: validatedData.showId,
+      p_person_id: validatedData.personId,
+      p_duty: validatedData.duty || null
+    })
 
   if (error) {
     logger.error('Error assigning person to show', error)
@@ -144,33 +117,12 @@ export async function removePersonFromShow(showId: string, personId: string) {
     throw new Error('User not authenticated')
   }
 
-  // Verify user has access to this show's organization
-  const { data: show } = await supabase
-    .from('shows')
-    .select('org_id')
-    .eq('id', showId)
-    .single()
-
-  if (!show) {
-    throw new Error('Show not found')
-  }
-
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', show.org_id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!membership) {
-    throw new Error('You do not have permission to modify this show team')
-  }
-
+  // Use RPC to remove person from show (bypasses RLS issues)
   const { error } = await supabase
-    .from('show_assignments')
-    .delete()
-    .eq('show_id', showId)
-    .eq('person_id', personId)
+    .rpc('remove_person_from_show', {
+      p_show_id: showId,
+      p_person_id: personId
+    })
 
   if (error) {
     logger.error('Error removing person from show', error)

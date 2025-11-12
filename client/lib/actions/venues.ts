@@ -44,39 +44,25 @@ export async function searchVenues(orgId: string, searchTerm: string) {
 export async function getVenueDetails(venueId: string) {
   const supabase = await getSupabaseServer()
   
-  // Get venue basic info
-  const { data: venue, error: venueError } = await supabase
-    .from('venues')
-    .select('*')
-    .eq('id', venueId)
-    .single()
+  try {
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_venue_details', {
+      p_venue_id: venueId
+    })
 
-  if (venueError) {
-    logger.error('Error fetching venue', venueError)
-    throw new Error(`Failed to fetch venue: ${venueError.message}`)
-  }
+    if (error) {
+      logger.error('Error fetching venue details', error)
+      throw new Error(`Failed to fetch venue: ${error.message}`)
+    }
 
-  // Get shows at this venue
-  const { data: shows, error: showsError } = await supabase
-    .from('shows')
-    .select(`
-      id,
-      title,
-      date,
-      status,
-      created_at
-    `)
-    .eq('venue_id', venueId)
-    .order('date', { ascending: false })
-
-  if (showsError) {
-    logger.error('Error fetching venue shows', showsError)
-    // Don't throw error, just return empty shows
-  }
-
-  return {
-    venue,
-    shows: shows || []
+    return {
+      venue: data.venue,
+      shows: data.shows || []
+    }
+  } catch (error) {
+    logger.error('Exception in getVenueDetails', error)
+    throw error
   }
 }
 

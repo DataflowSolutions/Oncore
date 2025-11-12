@@ -1,9 +1,9 @@
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { getShowsByOrg } from "@/lib/actions/shows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getCachedOrg } from "@/lib/cache";
 
 interface NewAdvancingSessionPageProps {
   params: Promise<{ org: string }>;
@@ -17,16 +17,10 @@ export default async function NewAdvancingSessionPage({
   const { org: orgSlug } = await params;
   const { showId } = await searchParams;
 
-  const supabase = await getSupabaseServer();
+  // Get org using cached function
+  const { data: organization, error: orgError } = await getCachedOrg(orgSlug);
 
-  // Get org_id from org slug
-  const { data: organization } = await supabase
-    .from("organizations")
-    .select("id, name")
-    .eq("slug", orgSlug)
-    .single();
-
-  if (!organization) {
+  if (orgError || !organization) {
     return <div>Organization not found</div>;
   }
 

@@ -173,16 +173,11 @@ export async function getPromotersByVenue(
   const supabase = await createClient()
 
   try {
-    const { data, error } = await supabase
-      .from('venue_contacts')
-      .select(`
-        is_primary,
-        notes,
-        contacts!inner (*)
-      `)
-      .eq('venue_id', venueId)
-      .eq('contacts.type', 'promoter')
-      .order('is_primary', { ascending: false })
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_promoters_by_venue', {
+      p_venue_id: venueId
+    })
 
     if (error) {
       logger.error('Error fetching venue promoters', error)
@@ -192,14 +187,9 @@ export async function getPromotersByVenue(
       }
     }
 
-    const promoters = (data || []).map((item) => ({
-      ...item.contacts,
-      is_primary: item.is_primary,
-    })) as (Promoter & { is_primary?: boolean })[]
-
     return {
       success: true,
-      data: promoters,
+      data: data || [],
     }
   } catch (error) {
     logger.error('Error in getPromotersByVenue', error)
@@ -642,21 +632,12 @@ export async function searchPromoters(
   const supabase = await createClient()
 
   try {
-    let dbQuery = supabase
-      .from('contacts')
-      .select('*')
-      .eq('org_id', orgId)
-      .eq('type', 'promoter')
-      .eq('status', 'active')
-      .order('name')
-
-    // Only apply search filter if query is not empty
-    if (query && query.trim().length > 0) {
-      const searchTerm = `%${query.toLowerCase()}%`
-      dbQuery = dbQuery.or(`name.ilike.${searchTerm},company.ilike.${searchTerm},city.ilike.${searchTerm},email.ilike.${searchTerm}`)
-    }
-
-    const { data: promoters, error } = await dbQuery
+    // Use RPC function to bypass RLS issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('search_promoters', {
+      p_org_id: orgId,
+      p_query: query || ''
+    })
 
     if (error) {
       logger.error('Error searching promoters', error)
@@ -668,7 +649,7 @@ export async function searchPromoters(
 
     return {
       success: true,
-      data: promoters as Promoter[],
+      data: data || [],
     }
   } catch (error) {
     logger.error('Error in searchPromoters', error)

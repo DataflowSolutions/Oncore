@@ -102,13 +102,23 @@ export default async function ShowDayPage({
   let advancingFields: Array<{ field_name: string; value: unknown }> = [];
   
   if (advancingSession && assignedPeople) {
-    const { data: fields } = await supabase
-      .from("advancing_fields")
-      .select("field_name, value")
-      .eq("session_id", advancingSession.id);
+    console.log('Fetching fields for session:', advancingSession.id);
+    const { data: fields, error: fieldsError } = await supabase
+      .rpc('get_advancing_fields' as any, {
+        p_session_id: advancingSession.id
+      });
 
-    if (fields) {
-      advancingFields = fields;
+    if (fieldsError) {
+      console.error('Error fetching advancing fields:', fieldsError);
+    }
+
+    console.log('Raw RPC response - fields:', fields);
+    console.log('Raw RPC response - error:', fieldsError);
+
+    if (fields && Array.isArray(fields)) {
+      console.log('Fetched advancing fields count:', fields.length);
+      console.log('Fetched advancing fields:', fields);
+      advancingFields = fields as Array<{ field_name: string; value: unknown }>;
       const arrivalFlights: Array<{
         personId: string;
         time: string;

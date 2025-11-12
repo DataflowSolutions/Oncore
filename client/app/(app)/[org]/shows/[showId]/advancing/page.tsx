@@ -1,4 +1,3 @@
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getAdvancingSessions } from "@/lib/actions/advancing";
+import { getCachedOrg, getCachedShow } from "@/lib/cache";
 
 interface AdvancingPageProps {
   params: Promise<{ org: string; showId: string }>;
@@ -21,39 +21,16 @@ interface AdvancingPageProps {
 export default async function AdvancingPage({ params }: AdvancingPageProps) {
   const { org: orgSlug, showId } = await params;
 
-  const supabase = await getSupabaseServer();
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  const { data: org, error: orgError } = await getCachedOrg(orgSlug);
 
-  if (!org) {
+  if (orgError || !org) {
     return <div>Organization not found</div>;
   }
 
-  // Get show details (showId is always provided from route params)
-  const { data: show } = await supabase
-    .from("shows")
-    .select(
-      `
-      id, 
-      title, 
-      date,
-      venues (
-        name,
-        city
-      ),
-      artists (
-        name
-      )
-    `
-    )
-    .eq("id", showId)
-    .eq("org_id", org.id)
-    .single();
+  // Get show details using cached function
+  const { data: show, error: showError } = await getCachedShow(showId);
 
-  if (!show) {
+  if (showError || !show || show.org_id !== org.id) {
     return <div>Show not found</div>;
   }
 

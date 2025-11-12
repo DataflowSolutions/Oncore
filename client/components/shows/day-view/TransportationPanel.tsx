@@ -33,7 +33,18 @@ export function TransportationPanel({
 
   if (promoterTransfersField) {
     try {
-      promoterTransfers = JSON.parse(promoterTransfersField as string);
+      // Value is already a JSON object from JSONB, no need to parse
+      if (typeof promoterTransfersField === 'string') {
+        promoterTransfers = JSON.parse(promoterTransfersField);
+      } else if (Array.isArray(promoterTransfersField)) {
+        promoterTransfers = promoterTransfersField as Array<{
+          id: string;
+          from: string;
+          fromTime: string;
+          to: string;
+          toTime: string;
+        }>;
+      }
       // Filter out empty transfers
       promoterTransfers = promoterTransfers.filter(
         (t) => t.from || t.to || t.fromTime || t.toTime
