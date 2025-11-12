@@ -1803,6 +1803,10 @@ export type Database = {
         Args: { batch_size?: number; days_to_keep?: number }
         Returns: Json
       }
+      assign_person_to_show: {
+        Args: { p_duty?: string; p_person_id: string; p_show_id: string }
+        Returns: Json
+      }
       auto_downgrade_expired_orgs: {
         Args: never
         Returns: {
@@ -1826,10 +1830,15 @@ export type Database = {
         }
         Returns: Json
       }
+      check_org_membership: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_slug_available: {
         Args: { slug_to_check: string }
         Returns: boolean
       }
+      check_storage_org_access: { Args: { p_org_id: string }; Returns: boolean }
       cleanup_unverified_files: {
         Args: { hours_old?: number }
         Returns: {
@@ -1838,11 +1847,44 @@ export type Database = {
           storage_path: string
         }[]
       }
+      create_advancing_document: {
+        Args: { p_label?: string; p_party_type: string; p_session_id: string }
+        Returns: Json
+      }
+      create_advancing_field: {
+        Args: {
+          p_field_name: string
+          p_field_type: string
+          p_party_type: string
+          p_section: string
+          p_session_id: string
+          p_sort_order?: number
+          p_value?: Json
+        }
+        Returns: Json
+      }
       create_advancing_session: {
         Args: { p_org_id: string; p_show_id: string; p_title?: string }
         Returns: Json
       }
+      create_person: {
+        Args: {
+          p_email?: string
+          p_member_type?: Database["public"]["Enums"]["member_type"]
+          p_name: string
+          p_notes?: string
+          p_org_id: string
+          p_phone?: string
+          p_role_title?: string
+        }
+        Returns: Json
+      }
       debug_auth_context: { Args: never; Returns: Json }
+      delete_advancing_document: {
+        Args: { p_document_id: string }
+        Returns: Json
+      }
+      delete_advancing_file: { Args: { p_file_id: string }; Returns: Json }
       get_activity_log_stats: { Args: never; Returns: Json }
       get_activity_logs: {
         Args: {
@@ -1865,6 +1907,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_advancing_documents: { Args: { p_session_id: string }; Returns: Json }
+      get_advancing_fields: {
+        Args: { p_session_id: string }
+        Returns: {
+          field_name: string
+          value: Json
+        }[]
+      }
+      get_advancing_session: { Args: { p_session_id: string }; Returns: Json }
       get_advancing_session_details: {
         Args: { p_session_id: string }
         Returns: Json
@@ -1881,9 +1932,29 @@ export type Database = {
       }
       get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
       get_maintenance_stats: { Args: { days_back?: number }; Returns: Json }
+      get_org_advancing_sessions: { Args: { p_org_id: string }; Returns: Json }
       get_org_by_slug: { Args: { p_slug: string }; Returns: Json }
+      get_org_invitations: { Args: { p_org_id: string }; Returns: Json }
       get_org_membership: { Args: { p_org_id: string }; Returns: Json }
+      get_org_people: { Args: { p_org_id: string }; Returns: Json }
+      get_org_promoters: { Args: { p_org_id: string }; Returns: Json }
       get_org_subscription: { Args: { p_org_id: string }; Returns: Json }
+      get_org_venues_with_counts: {
+        Args: { p_org_id: string }
+        Returns: {
+          address: string
+          capacity: number
+          city: string
+          country: string
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          shows_count: number
+          updated_at: string
+        }[]
+      }
+      get_promoters_by_venue: { Args: { p_venue_id: string }; Returns: Json }
       get_show_by_id: { Args: { p_show_id: string }; Returns: Json }
       get_show_stats: { Args: { p_org_id: string }; Returns: Json }
       get_show_team: {
@@ -1918,6 +1989,7 @@ export type Database = {
       }
       get_user_organizations: { Args: never; Returns: Json }
       get_user_orgs: { Args: never; Returns: Json }
+      get_venue_details: { Args: { p_venue_id: string }; Returns: Json }
       has_show_access: {
         Args: { min_role: string; p_show: string }
         Returns: boolean
@@ -1952,6 +2024,14 @@ export type Database = {
         Returns: boolean
       }
       org_subscription_status: { Args: { p_org: string }; Returns: Json }
+      remove_person_from_show: {
+        Args: { p_person_id: string; p_show_id: string }
+        Returns: undefined
+      }
+      rename_advancing_file: {
+        Args: { p_file_id: string; p_new_name: string }
+        Returns: Json
+      }
       run_analyze_all_tables: { Args: never; Returns: Json }
       run_analyze_with_logging: {
         Args: { triggered_by?: string }
@@ -1963,7 +2043,39 @@ export type Database = {
         Args: { triggered_by?: string }
         Returns: Json
       }
+      save_advancing_grid_data: {
+        Args: {
+          p_grid_data: Json
+          p_grid_type: string
+          p_org_id: string
+          p_party_type?: string
+          p_session_id: string
+        }
+        Returns: Json
+      }
+      search_promoters: {
+        Args: { p_org_id: string; p_query?: string }
+        Returns: Json
+      }
       test_auth_context: { Args: never; Returns: Json }
+      update_advancing_document: {
+        Args: { p_document_id: string; p_label: string }
+        Returns: Json
+      }
+      update_advancing_field: {
+        Args: { p_field_id: string; p_session_id: string; p_value: Json }
+        Returns: Json
+      }
+      upload_advancing_file: {
+        Args: {
+          p_content_type: string
+          p_document_id: string
+          p_original_name: string
+          p_size_bytes: number
+          p_storage_path: string
+        }
+        Returns: Json
+      }
       uuid_generate_v1: { Args: never; Returns: string }
       uuid_generate_v1mc: { Args: never; Returns: string }
       uuid_generate_v3: {
