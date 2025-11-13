@@ -1,82 +1,80 @@
-import { getShowTeam, getAvailablePeople } from '@/lib/actions/show-team'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Users, Music, Building, Wrench, Mail, Phone, Plus } from 'lucide-react'
-import TeamPageClient from './components/TeamPageClient'
-import UnassignButton from './components/UnassignButton'
+import { getShowTeam, getAvailablePeople } from "@/lib/actions/show-team";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Users,
+  Music,
+  Building,
+  Wrench,
+  Mail,
+  Phone,
+  Plus,
+} from "lucide-react";
+import TeamPageClient from "./components/TeamPageClient";
+import UnassignButton from "./components/UnassignButton";
 
 interface ShowTeamPageProps {
-  params: Promise<{ org: string, showId: string }>
+  params: Promise<{ org: string; showId: string }>;
 }
 
 const getRoleIcon = (memberType: string | null) => {
   switch (memberType) {
-    case 'Artist':
-      return Music
-    case 'Agent':
-    case 'Manager':
-      return Building
-    case 'Crew':
-      return Wrench
+    case "Artist":
+      return Music;
+    case "Agent":
+    case "Manager":
+      return Building;
+    case "Crew":
+      return Wrench;
     default:
-      return Users
+      return Users;
   }
-}
+};
 
 export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
-  const { org: orgSlug, showId } = await params
-  
+  const { org: orgSlug, showId } = await params;
+
   // OPTIMIZED: Use cached helpers (already validated by layout)
-  const { getCachedOrg, getCachedShow } = await import('@/lib/cache')
-  
+  const { getCachedOrg, getCachedShow } = await import("@/lib/cache");
+
   // Get organization and show details (cached from layout)
-  const { data: org } = await getCachedOrg(orgSlug)
+  const { data: org } = await getCachedOrg(orgSlug);
 
   if (!org) {
-    return <div>Organization not found</div>
+    return <div>Organization not found</div>;
   }
 
-  const { data: show } = await getCachedShow(showId)
+  const { data: show } = await getCachedShow(showId);
 
   if (!show || show.org_id !== org.id) {
-    return <div>Show not found</div>
+    return <div>Show not found</div>;
   }
 
   // OPTIMIZED: Parallelize team data queries
   const [assignedTeam, availablePeople] = await Promise.all([
     getShowTeam(showId),
-    getAvailablePeople(org.id)
-  ])
+    getAvailablePeople(org.id),
+  ]);
 
   // Filter out already assigned people
-  const unassignedPeople = availablePeople.filter(person => 
-    !assignedTeam.some(assigned => assigned.id === person.id)
-  )
+  const unassignedPeople = availablePeople.filter(
+    (person) => !assignedTeam.some((assigned) => assigned.id === person.id)
+  );
 
   // Group assigned team by member type
-  const artistTeam = assignedTeam.filter(person => person.member_type === 'Artist')
-  const crewTeam = assignedTeam.filter(person => person.member_type === 'Crew')
-  const promoterTeam = assignedTeam.filter(person => 
-    person.member_type === 'Agent' || person.member_type === 'Manager'
-  )
+  const artistTeam = assignedTeam.filter(
+    (person) => person.member_type === "Artist"
+  );
+  const crewTeam = assignedTeam.filter(
+    (person) => person.member_type === "Crew"
+  );
+  const promoterTeam = assignedTeam.filter(
+    (person) =>
+      person.member_type === "Agent" || person.member_type === "Manager"
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Team Assignment</h1>
-        <p className="text-muted-foreground">
-          Assign people from your organization to this show: {show.title || 'Untitled Show'}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Show Date: {new Date(show.date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          })}
-        </p>
-      </div>
-
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -90,7 +88,7 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -134,9 +132,11 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              <CardTitle className="text-lg">Assigned Team ({assignedTeam.length})</CardTitle>
+              <CardTitle className="text-lg">
+                Assigned Team ({assignedTeam.length})
+              </CardTitle>
             </div>
-            <TeamPageClient 
+            <TeamPageClient
               showId={showId}
               availablePeople={unassignedPeople}
             />
@@ -146,12 +146,14 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
           {assignedTeam.length === 0 ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No team members assigned to this show yet</p>
+              <p className="text-muted-foreground">
+                No team members assigned to this show yet
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {assignedTeam.map((person) => {
-                const RoleIcon = getRoleIcon(person.member_type)
+                const RoleIcon = getRoleIcon(person.member_type);
                 return (
                   <div
                     key={person.id}
@@ -160,7 +162,9 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground">{person.name}</h4>
+                          <h4 className="font-semibold text-foreground">
+                            {person.name}
+                          </h4>
                           {person.member_type && (
                             <Badge variant="outline" className="text-xs">
                               <RoleIcon className="w-3 h-3 mr-1" />
@@ -191,7 +195,7 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                       </div>
 
                       <div className="flex items-center">
-                        <UnassignButton 
+                        <UnassignButton
                           showId={showId}
                           personId={person.id}
                           personName={person.name}
@@ -199,7 +203,7 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -212,7 +216,9 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
-              <CardTitle className="text-lg">Available People ({unassignedPeople.length})</CardTitle>
+              <CardTitle className="text-lg">
+                Available People ({unassignedPeople.length})
+              </CardTitle>
             </div>
           </div>
         </CardHeader>
@@ -220,12 +226,14 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
           {unassignedPeople.length === 0 ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">All available people have been assigned to this show</p>
+              <p className="text-muted-foreground">
+                All available people have been assigned to this show
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {unassignedPeople.map((person) => {
-                const RoleIcon = getRoleIcon(person.member_type)
+                const RoleIcon = getRoleIcon(person.member_type);
                 return (
                   <div
                     key={person.id}
@@ -234,7 +242,9 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground">{person.name}</h4>
+                          <h4 className="font-semibold text-foreground">
+                            {person.name}
+                          </h4>
                           {person.member_type && (
                             <Badge variant="outline" className="text-xs">
                               <RoleIcon className="w-3 h-3 mr-1" />
@@ -248,12 +258,12 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
                       </Badge>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

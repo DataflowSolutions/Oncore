@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Music, ArrowLeft, FileText } from "lucide-react";
+import { Calendar, MapPin, Music, FileText } from "lucide-react";
 import Link from "next/link";
 import { ScheduleManager } from "@/components/shows/ScheduleManager";
 import { ShowClient } from "./ShowClient";
@@ -14,10 +14,7 @@ import {
   EditableVenue,
   EditableNotes,
 } from "@/components/shows/EditableShowFields";
-import {
-  useShowWithVenue,
-  useShowSchedule,
-} from "@/lib/hooks/use-shows";
+import { useShowWithVenue, useShowSchedule } from "@/lib/hooks/use-shows";
 import { useShowTeamData } from "@/lib/hooks/use-show-team";
 import { useVenues } from "@/lib/hooks/use-venues";
 import type { PersonListItem } from "@/lib/actions/show-team";
@@ -73,66 +70,26 @@ export function ShowDetailPageClient({
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header with Back Button */}
-      <div className="space-y-6">
-        <Link href={`/${orgSlug}/shows`} prefetch={true}>
-          <Button variant="outline" size="sm" className="gap-2 hover:bg-accent">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shows
+    <div className="space-y-6">
+      {/* Primary Actions */}
+      <div className="flex gap-2 flex-wrap">
+        <Link href={`/${orgSlug}/shows/${showId}/day`} prefetch={true}>
+          <Button size="lg" className="gap-2">
+            <Calendar className="w-5 h-5" />
+            Day Schedule
           </Button>
         </Link>
-
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div className="space-y-3">
-            <EditableTitle
-              showId={showId}
-              orgSlug={orgSlug}
-              currentValue={show.title || ""}
-              className="text-4xl font-bold"
-            />
-            <div className="flex items-center gap-3 flex-wrap">
-              <Badge
-                variant={show.status === "confirmed" ? "default" : "secondary"}
-                className="text-sm px-3 py-1"
-              >
-                {show.status}
-              </Badge>
-              {show.date && (
-                <EditableDate
-                  showId={showId}
-                  orgSlug={orgSlug}
-                  currentValue={show.date}
-                  className="text-muted-foreground"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Primary Actions */}
-          <div className="flex gap-2 flex-wrap">
-            <Link href={`/${orgSlug}/shows/${showId}/day`} prefetch={true}>
-              <Button size="lg" className="gap-2">
-                <Calendar className="w-5 h-5" />
-                Day Schedule
-              </Button>
-            </Link>
-            <ShowClient
-              showId={showId}
-              assignedTeam={assignedTeam}
-              availablePeople={availablePeople}
-            />
-            <Link
-              href={`/${orgSlug}/shows/${showId}/advancing`}
-              prefetch={true}
-            >
-              <Button size="lg" variant="outline" className="gap-2">
-                <FileText className="w-5 h-5" />
-                Advancing
-              </Button>
-            </Link>
-          </div>
-        </div>
+        <ShowClient
+          showId={showId}
+          assignedTeam={assignedTeam}
+          availablePeople={availablePeople}
+        />
+        <Link href={`/${orgSlug}/shows/${showId}/advancing`} prefetch={true}>
+          <Button size="lg" variant="outline" className="gap-2">
+            <FileText className="w-5 h-5" />
+            Advancing
+          </Button>
+        </Link>
       </div>
 
       {/* Show Details - Simplified Grid */}

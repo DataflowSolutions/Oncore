@@ -1,14 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  Plus,
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  Users,
-} from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
 import { getAdvancingSessions } from "@/lib/actions/advancing";
 import { getCachedOrg, getCachedShow } from "@/lib/cache";
@@ -43,66 +36,18 @@ export default async function AdvancingPage({ params }: AdvancingPageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <Button asChild variant="outline" size="sm" className="w-fit">
-          <Link href={`/${orgSlug}/shows/${showId}`} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Show
+      {/* Actions */}
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href={`/${orgSlug}/shows/${showId}/advancing/new`}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Session
           </Link>
         </Button>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">
-              Advancing - {show.title || "Untitled Show"}
-            </h1>
-            <Button asChild>
-              <Link href={`/${orgSlug}/shows/${showId}/advancing/new`}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Session
-              </Link>
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {new Date(show.date).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </div>
-
-            {show.venues && (
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {show.venues.name}, {show.venues.city}
-              </div>
-            )}
-
-            {show.artists &&
-              Array.isArray(show.artists) &&
-              show.artists.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {show.artists
-                    .map((artist: { name: string }) => artist.name)
-                    .join(", ")}
-                </div>
-              )}
-          </div>
-        </div>
       </div>
 
-      {/* Sessions Grid */}
+      {/* Sessions List */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">
-          Advancing Sessions for {show.title || "Untitled Show"}
-        </h2>
-
         {filteredSessions.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -124,65 +69,67 @@ export default async function AdvancingPage({ params }: AdvancingPageProps) {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredSessions.map((session: {
-              id: string;
-              title: string;
-              created_at: string;
-              expires_at: string | null;
-            }) => (
-              <Card
-                key={session.id}
-                className="hover:shadow-md transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg line-clamp-1">
-                      {session.title}
-                    </CardTitle>
-                    <Badge
-                      variant={session.expires_at ? "default" : "secondary"}
-                    >
-                      {session.expires_at ? "Active" : "No Expiry"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Session Details */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Created</span>
-                      <span>
-                        {new Date(session.created_at).toLocaleDateString(
-                          "en-US"
-                        )}
-                      </span>
+            {filteredSessions.map(
+              (session: {
+                id: string;
+                title: string;
+                created_at: string;
+                expires_at: string | null;
+              }) => (
+                <Card
+                  key={session.id}
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg line-clamp-1">
+                        {session.title}
+                      </CardTitle>
+                      <Badge
+                        variant={session.expires_at ? "default" : "secondary"}
+                      >
+                        {session.expires_at ? "Active" : "No Expiry"}
+                      </Badge>
                     </div>
-
-                    {session.expires_at && (
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Session Details */}
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Expires</span>
+                        <span>Created</span>
                         <span>
-                          {new Date(session.expires_at).toLocaleDateString(
+                          {new Date(session.created_at).toLocaleDateString(
                             "en-US"
                           )}
                         </span>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button asChild size="sm" className="flex-1">
-                      <Link
-                        href={`/${orgSlug}/shows/${showId}/advancing/${session.id}`}
-                      >
-                        Open Session
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      {session.expires_at && (
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Expires</span>
+                          <span>
+                            {new Date(session.expires_at).toLocaleDateString(
+                              "en-US"
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      <Button asChild size="sm" className="flex-1">
+                        <Link
+                          href={`/${orgSlug}/shows/${showId}/advancing/${session.id}`}
+                        >
+                          Open Session
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            )}
           </div>
         )}
       </div>

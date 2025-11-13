@@ -1,13 +1,9 @@
 import { getAdvancingDocuments } from "@/lib/actions/advancing";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Music, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { CalendarDayView } from "@/components/shows/CalendarDayView";
 
 // Force dynamic rendering to show loading state
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 interface ShowDayPageProps {
   params: Promise<{ org: string; showId: string }>;
@@ -43,7 +39,9 @@ export default async function ShowDayPage({
   }
 
   // OPTIMIZED: Use cached helpers and parallelize all data fetching
-  const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import('@/lib/cache')
+  const { getCachedOrg, getCachedShow, getCachedShowSchedule } = await import(
+    "@/lib/cache"
+  );
   const supabase = await getSupabaseServer();
 
   // Parallelize ALL data fetching at once
@@ -78,15 +76,17 @@ export default async function ShowDayPage({
       .single(),
   ]);
 
-  const { data: org } = orgResult
-  const { data: show } = showResult
-  const { data: scheduleItems } = scheduleResult
-  const { data: assignedPeople } = assignedPeopleResult
-  const { data: advancingSession } = advancingSessionResult
+  const { data: org } = orgResult;
+  const { data: show } = showResult;
+  const { data: scheduleItems } = scheduleResult;
+  const { data: assignedPeople } = assignedPeopleResult;
+  const { data: advancingSession } = advancingSessionResult;
 
-  let advancingDocuments = [] as Awaited<ReturnType<typeof getAdvancingDocuments>>
+  let advancingDocuments = [] as Awaited<
+    ReturnType<typeof getAdvancingDocuments>
+  >;
   if (advancingSession?.id) {
-    advancingDocuments = await getAdvancingDocuments(advancingSession.id)
+    advancingDocuments = await getAdvancingDocuments(advancingSession.id);
   }
 
   if (!org) {
@@ -100,25 +100,27 @@ export default async function ShowDayPage({
   // Fetch advancing data (flight times, hotel, etc) for the calendar
   let advancingData = undefined;
   let advancingFields: Array<{ field_name: string; value: unknown }> = [];
-  
+
   if (advancingSession && assignedPeople) {
-    console.log('Fetching fields for session:', advancingSession.id);
+    console.log("Fetching fields for session:", advancingSession.id);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: fields, error: fieldsError } = await (supabase as any)
-      .rpc('get_advancing_fields', {
-        p_session_id: advancingSession.id
-      });
+    const { data: fields, error: fieldsError } = await (supabase as any).rpc(
+      "get_advancing_fields",
+      {
+        p_session_id: advancingSession.id,
+      }
+    );
 
     if (fieldsError) {
-      console.error('Error fetching advancing fields:', fieldsError);
+      console.error("Error fetching advancing fields:", fieldsError);
     }
 
-    console.log('Raw RPC response - fields:', fields);
-    console.log('Raw RPC response - error:', fieldsError);
+    console.log("Raw RPC response - fields:", fields);
+    console.log("Raw RPC response - error:", fieldsError);
 
     if (fields && Array.isArray(fields)) {
-      console.log('Fetched advancing fields count:', fields.length);
-      console.log('Fetched advancing fields:', fields);
+      console.log("Fetched advancing fields count:", fields.length);
+      console.log("Fetched advancing fields:", fields);
       advancingFields = fields as Array<{ field_name: string; value: unknown }>;
       const arrivalFlights: Array<{
         personId: string;
@@ -286,58 +288,8 @@ export default async function ShowDayPage({
     currentDate.setHours(0, 0, 0, 0);
   }
 
-  const showDate = new Date(show.date);
-  const today = new Date();
-  const isToday = showDate.toDateString() === today.toDateString();
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <Button asChild variant="outline" size="sm" className="w-fit">
-          <Link href={`/${orgSlug}/shows/${showId}`} prefetch={true} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Show
-          </Link>
-        </Button>
-
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">
-            {show.title || "Untitled Show"} - Day Schedule
-          </h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {showDate.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-              {isToday && (
-                <Badge variant="default" className="ml-2">
-                  Today
-                </Badge>
-              )}
-            </div>
-
-            {show.venues && (
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {show.venues.name}, {show.venues.city}
-              </div>
-            )}
-
-            {show.artists && (
-              <div className="flex items-center gap-1">
-                <Music className="w-4 h-4" />
-                {show.artists.name}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Main Day Schedule View - Multi-Layer Timeline */}
       <CalendarDayView
         currentDate={currentDate}
