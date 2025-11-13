@@ -114,7 +114,7 @@
 
 ## 12. Typography Selection
 
-**Status:** [ ]
+**Status:** [✅]
 **Priority:** Medium
 **Description:** Need to choose typeface for the site
 **Location:** Global theme/styling
@@ -171,7 +171,7 @@
 
 ## 18. Advancing Section
 
-**Status:** [ ]
+**Status:** [✅]
 **Priority:** Low
 **Description:** Hold off on more changes to Advancing - won't be released in beta but good to have ready
 **Location:** Advancing component

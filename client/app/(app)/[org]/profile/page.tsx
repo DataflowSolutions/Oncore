@@ -12,46 +12,51 @@ import { Shield, Settings, Crown, Edit, Eye, CheckCircle } from "lucide-react";
 import { getCurrentUserRole } from "@/lib/actions/org-members";
 import { getRolePermissions, type OrgRole } from "@/lib/utils/role-permissions";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 const getRoleIcon = (role: OrgRole) => {
   switch (role) {
-    case 'owner':
-      return Crown
-    case 'admin':
-      return Shield
-    case 'editor':
-      return Edit
-    case 'viewer':
-      return Eye
+    case "owner":
+      return Crown;
+    case "admin":
+      return Shield;
+    case "editor":
+      return Edit;
+    case "viewer":
+      return Eye;
   }
-}
+};
 
 const getRoleBadgeColor = (role: OrgRole) => {
   switch (role) {
-    case 'owner':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
-    case 'admin':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-    case 'editor':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-    case 'viewer':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+    case "owner":
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400";
+    case "admin":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
+    case "editor":
+      return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
+    case "viewer":
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400";
   }
-}
+};
 
-export default async function ProfileSettingsPage({ params }: { params: Promise<{ org: string }> }) {
+export default async function ProfileSettingsPage({
+  params,
+}: {
+  params: Promise<{ org: string }>;
+}) {
   const supabase = await getSupabaseServer();
   const resolvedParams = await params;
-  
+
   // Get org ID from slug
   const { data: org } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('slug', resolvedParams.org)
+    .from("organizations")
+    .select("id")
+    .eq("slug", resolvedParams.org)
     .single();
 
   let userRole: OrgRole | null = null;
-  
+
   if (org) {
     userRole = await getCurrentUserRole(org.id);
   }
@@ -76,27 +81,36 @@ export default async function ProfileSettingsPage({ params }: { params: Promise<
           <CardHeader>
             <CardTitle>Your Roles & Permissions</CardTitle>
             <CardDescription>
-              Your current role determines what you can access in the application
+              Your current role determines what you can access in the
+              application
             </CardDescription>
           </CardHeader>
           <CardContent>
             {userRole && roleInfo ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getRoleBadgeColor(userRole)}`}>
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center ${getRoleBadgeColor(
+                      userRole
+                    )}`}
+                  >
                     <RoleIcon className="w-8 h-8" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-2xl font-semibold">{roleInfo.label}</h3>
+                      <h3 className="text-2xl font-semibold">
+                        {roleInfo.label}
+                      </h3>
                       <Badge className={getRoleBadgeColor(userRole)}>
                         {userRole}
                       </Badge>
                     </div>
-                    <p className="text-muted-foreground">{roleInfo.description}</p>
+                    <p className="text-muted-foreground">
+                      {roleInfo.description}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-3">Your Permissions</h4>
                   <ul className="space-y-2">
@@ -167,6 +181,24 @@ export default async function ProfileSettingsPage({ params }: { params: Promise<
                   Customize
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Actions</CardTitle>
+            <CardDescription>Manage your account session</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <div className="font-medium">Sign Out</div>
+                <div className="text-sm text-muted-foreground">
+                  Sign out from your account on this device
+                </div>
+              </div>
+              <SignOutButton variant="destructive" className="cursor-pointer" />
             </div>
           </CardContent>
         </Card>

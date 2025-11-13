@@ -1,30 +1,15 @@
 "use client";
-import { logger } from '@/lib/logger'
+import { logger } from "@/lib/logger";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { User } from "lucide-react";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 interface UserHeaderProps {
   email: string;
 }
 
 export function UserHeader({ email }: UserHeaderProps) {
-  const [signingOut, setSigningOut] = useState(false);
-  const supabase = createClient();
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      logger.error('Error signing out', error);
-    } finally {
-      setSigningOut(false);
-    }
-  };
-
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-4">
@@ -36,19 +21,8 @@ export function UserHeader({ email }: UserHeaderProps) {
           <p className="text-muted-foreground">{email}</p>
         </div>
       </div>
-      
-      <Button 
-        variant="outline" 
-        onClick={handleSignOut}
-        disabled={signingOut}
-      >
-        {signingOut ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        ) : (
-          <LogOut className="h-4 w-4 mr-2" />
-        )}
-        Sign Out
-      </Button>
+
+      <SignOutButton />
     </div>
   );
 }

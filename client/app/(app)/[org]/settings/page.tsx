@@ -2,30 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  FileText, 
-  Phone, 
-  Mail, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  User,
+  Bell,
+  Shield,
+  FileText,
+  Phone,
+  Mail,
   MessageSquare,
   Calendar,
   Users,
-  Filter
+  Filter,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { logger } from '@/lib/logger'
+import { logger } from "@/lib/logger";
 import { RolesPermissionsTab } from "@/components/settings/RolesPermissionsTab";
 import { getOrgMembers, getCurrentUserRole } from "@/lib/actions/org-members";
 import type { OrgRole } from "@/lib/utils/role-permissions";
-
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 interface ActivityLog {
   id: string;
@@ -40,12 +52,12 @@ interface ActivityLog {
 }
 
 interface OrgMemberWithUser {
-  created_at: string
-  org_id: string
-  role: OrgRole
-  user_id: string
-  user_email: string
-  user_name: string | null
+  created_at: string;
+  org_id: string;
+  role: OrgRole;
+  user_id: string;
+  user_email: string;
+  user_name: string | null;
 }
 
 export default function SettingsPage() {
@@ -59,7 +71,7 @@ export default function SettingsPage() {
   const [changelogFilter, setChangelogFilter] = useState({
     date: "all",
     resourceType: "all",
-    userId: "all"
+    userId: "all",
   });
   const [changelogEntries, setChangelogEntries] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,16 +80,18 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchOrgAndUser() {
       const { data: orgData } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', orgSlug)
+        .from("organizations")
+        .select("id")
+        .eq("slug", orgSlug)
         .single();
-      
+
       if (orgData) {
         setOrgId(orgData.id);
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
       }
@@ -94,13 +108,13 @@ export default function SettingsPage() {
       try {
         const [membersData, roleData] = await Promise.all([
           getOrgMembers(orgId!),
-          getCurrentUserRole(orgId!)
+          getCurrentUserRole(orgId!),
         ]);
-        
+
         setMembers(membersData);
         setCurrentUserRole(roleData);
       } catch (error) {
-        logger.error('Error fetching members or role', error);
+        logger.error("Error fetching members or role", error);
       } finally {
         setLoadingMembers(false);
       }
@@ -117,7 +131,7 @@ export default function SettingsPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams({
-          orgId: orgId || '',
+          orgId: orgId || "",
           date: changelogFilter.date,
           resourceType: changelogFilter.resourceType,
           userId: changelogFilter.userId,
@@ -130,7 +144,7 @@ export default function SettingsPage() {
           setChangelogEntries(data.logs);
         }
       } catch (error) {
-        logger.error('Error fetching activity logs', error);
+        logger.error("Error fetching activity logs", error);
       } finally {
         setLoading(false);
       }
@@ -177,7 +191,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
-                  <Input type="email" placeholder="your.email@example.com" defaultValue="john@example.com" />
+                  <Input
+                    type="email"
+                    placeholder="your.email@example.com"
+                    defaultValue="john@example.com"
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
@@ -215,7 +233,27 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button variant="outline">Change Password</Button>
-              <Button variant="outline">Enable Two-Factor Authentication</Button>
+              <Button variant="outline">
+                Enable Two-Factor Authentication
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Actions</CardTitle>
+              <CardDescription>Manage your account session</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <div className="font-medium">Sign Out</div>
+                  <div className="text-sm text-muted-foreground">
+                    Sign out from your account on this device
+                  </div>
+                </div>
+                <SignOutButton variant="destructive" />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -264,23 +302,35 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Email Notifications</h4>
-                  <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive updates via email
+                  </p>
                 </div>
-                <Button variant="outline" size="sm">Configure</Button>
+                <Button variant="outline" size="sm">
+                  Configure
+                </Button>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Show Updates</h4>
-                  <p className="text-sm text-muted-foreground">Get notified about show changes</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified about show changes
+                  </p>
                 </div>
-                <Button variant="outline" size="sm">Configure</Button>
+                <Button variant="outline" size="sm">
+                  Configure
+                </Button>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Team Activity</h4>
-                  <p className="text-sm text-muted-foreground">Updates about team member actions</p>
+                  <p className="text-sm text-muted-foreground">
+                    Updates about team member actions
+                  </p>
                 </div>
-                <Button variant="outline" size="sm">Configure</Button>
+                <Button variant="outline" size="sm">
+                  Configure
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -305,7 +355,12 @@ export default function SettingsPage() {
                   <Filter className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Filter by:</span>
                 </div>
-                <Select value={changelogFilter.date} onValueChange={(value) => setChangelogFilter({ ...changelogFilter, date: value })}>
+                <Select
+                  value={changelogFilter.date}
+                  onValueChange={(value) =>
+                    setChangelogFilter({ ...changelogFilter, date: value })
+                  }
+                >
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder="Date" />
                   </SelectTrigger>
@@ -316,7 +371,15 @@ export default function SettingsPage() {
                     <SelectItem value="month">This Month</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={changelogFilter.resourceType} onValueChange={(value) => setChangelogFilter({ ...changelogFilter, resourceType: value })}>
+                <Select
+                  value={changelogFilter.resourceType}
+                  onValueChange={(value) =>
+                    setChangelogFilter({
+                      ...changelogFilter,
+                      resourceType: value,
+                    })
+                  }
+                >
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder="Resource Type" />
                   </SelectTrigger>
@@ -333,25 +396,40 @@ export default function SettingsPage() {
               {/* Changelog Entries */}
               {loading ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Loading activity logs...</p>
+                  <p className="text-muted-foreground">
+                    Loading activity logs...
+                  </p>
                 </div>
               ) : changelogEntries.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No activity logs found</p>
+                  <p className="text-muted-foreground">
+                    No activity logs found
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {changelogEntries.map((entry) => (
-                    <div key={entry.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div
+                      key={entry.id}
+                      className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <Badge variant="outline" className="flex items-center gap-1">
+                            <Badge
+                              variant="outline"
+                              className="flex items-center gap-1"
+                            >
                               <Calendar className="w-3 h-3" />
                               {entry.date}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">{entry.time}</span>
-                            <Badge variant="secondary" className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">
+                              {entry.time}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className="flex items-center gap-1"
+                            >
                               <Users className="w-3 h-3" />
                               {entry.user}
                             </Badge>
@@ -359,13 +437,16 @@ export default function SettingsPage() {
                           <h4 className="font-medium">{entry.action}</h4>
                           {entry.details && (
                             <p className="text-sm text-muted-foreground mt-1">
-                              {typeof entry.details === 'object' 
-                                ? JSON.stringify(entry.details) 
+                              {typeof entry.details === "object"
+                                ? JSON.stringify(entry.details)
                                 : entry.details}
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">
-                            Resource: {entry.resourceType} {entry.resourceId ? `(${entry.resourceId.slice(0, 8)}...)` : ''}
+                            Resource: {entry.resourceType}{" "}
+                            {entry.resourceId
+                              ? `(${entry.resourceId.slice(0, 8)}...)`
+                              : ""}
                           </p>
                         </div>
                         <Badge variant="outline">{entry.resourceType}</Badge>
@@ -386,9 +467,7 @@ export default function SettingsPage() {
                 <MessageSquare className="w-5 h-5" />
                 Contact Support
               </CardTitle>
-              <CardDescription>
-                Get help from our support team
-              </CardDescription>
+              <CardDescription>Get help from our support team</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -417,10 +496,18 @@ export default function SettingsPage() {
               <div className="border-t pt-4">
                 <h4 className="font-medium mb-2">Quick Links</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <Button variant="ghost" className="justify-start">Documentation</Button>
-                  <Button variant="ghost" className="justify-start">Video Tutorials</Button>
-                  <Button variant="ghost" className="justify-start">FAQ</Button>
-                  <Button variant="ghost" className="justify-start">Community Forum</Button>
+                  <Button variant="ghost" className="justify-start">
+                    Documentation
+                  </Button>
+                  <Button variant="ghost" className="justify-start">
+                    Video Tutorials
+                  </Button>
+                  <Button variant="ghost" className="justify-start">
+                    FAQ
+                  </Button>
+                  <Button variant="ghost" className="justify-start">
+                    Community Forum
+                  </Button>
                 </div>
               </div>
             </CardContent>

@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Settings, UserCircle } from "lucide-react";
+import { Settings } from "lucide-react";
 import { ExpandingSearch } from "./ExpandingSearch";
 // import { Notifications } from "./Notifications";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { UserDropdownMenu } from "./UserDropdownMenu";
 
 export function TopBar() {
   const [open, setOpen] = React.useState(false);
@@ -23,16 +24,7 @@ export function TopBar() {
 
           <div className="flex items-center gap-2">
             {/* <Notifications /> */}
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              title="Profile & Artist Filters"
-            >
-              <div className="cursor-not-allowed">
-                <UserCircle className="h-4 w-4" />
-              </div>
-            </Button>
+            <UserDropdownMenu />
             <Button variant="ghost" size="icon" asChild title="Settings">
               <Link href={`/${orgSlug}/profile`}>
                 <Settings className="h-4 w-4" />
