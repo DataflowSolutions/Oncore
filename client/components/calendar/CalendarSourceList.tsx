@@ -8,7 +8,7 @@ import type { Database } from "@/lib/database.types";
 import {
   updateCalendarSource,
   deleteCalendarSource,
-  triggerCalendarSync,
+  triggerSync,
 } from "@/lib/actions/calendar-sync";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +83,7 @@ function CalendarSourceCard({
 
   const handleSync = () => {
     startTransition(async () => {
-      const result = await triggerCalendarSync({ orgId, sourceId: source.id });
+      const result = await triggerSync({ orgId, sourceId: source.id });
       if (!result.success) {
         toast.error(result.error ?? "Calendar sync failed");
         return;

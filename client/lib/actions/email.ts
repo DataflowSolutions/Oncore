@@ -358,13 +358,8 @@ export async function rejectParsedEmail(
 export async function getParsedEmails(orgId: string) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("parsed_emails")
-    .select(
-      "id, org_id, subject, from_email, parsed_data, raw_content, status, created_at, confidence, error, show_id, reviewed_at, reviewed_by",
-    )
-    .eq("org_id", orgId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await (supabase as any)
+    .rpc('get_parsed_emails', { p_org_id: orgId });
 
   if (error) {
     logger.error("Failed to fetch parsed emails", error);

@@ -264,13 +264,8 @@ export async function updateParsedContractStatus(
 export async function getParsedContracts(orgId: string) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("parsed_contracts")
-    .select(
-      "id, file_name, file_url, parsed_data, status, created_at, confidence, notes, error, reviewed_at, reviewed_by",
-    )
-    .eq("org_id", orgId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await (supabase as any)
+    .rpc('get_parsed_contracts', { p_org_id: orgId });
 
   if (error) {
     logger.error("Failed to fetch parsed contracts", error);

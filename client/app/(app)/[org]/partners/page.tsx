@@ -2,6 +2,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Handshake } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface PartnersPageProps {
   params: Promise<{ org: string }>
@@ -11,15 +12,15 @@ export default async function PartnersPage({ params }: PartnersPageProps) {
   const { org: orgSlug } = await params
   
   const supabase = await getSupabaseServer()
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  const { data: orgData, error } = await supabase
+    .rpc('get_org_by_slug', { p_slug: orgSlug })
 
-  if (!org) {
+  if (error || !orgData) {
+    logger.error('Failed to fetch organization', { slug: orgSlug, error })
     return <div>Organization not found</div>
   }
+  
+  const org = orgData as { id: string; name: string; slug: string }
 
   // TODO: Get partners/external collaborators from database
   // This could be venues, promoters, suppliers, etc.
