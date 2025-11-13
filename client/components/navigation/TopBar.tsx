@@ -26,7 +26,7 @@ export function TopBar() {
             {/* <Notifications /> */}
             <UserDropdownMenu />
             <Button variant="ghost" size="icon" asChild title="Settings">
-              <Link href={`/${orgSlug}/profile`}>
+              <Link href={`/${orgSlug}/settings`}>
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>

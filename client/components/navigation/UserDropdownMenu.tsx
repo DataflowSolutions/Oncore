@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -132,29 +132,33 @@ export function UserDropdownMenu() {
                     <span>Loading...</span>
                   </DropdownMenuItem>
                 ) : (
-                  organizations.map((org) => (
-                    <DropdownMenuItem
-                      key={org.organizations.id}
-                      onClick={() => handleOrgSwitch(org.organizations.slug)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
-                      <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <span className="truncate">
-                          {org.organizations.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          <Badge
-                            variant="outline"
-                            className="text-xs px-1 py-0"
-                          >
-                            {org.role}
-                          </Badge>
-                        </span>
-                      </div>
-                      {org.organizations.slug === currentOrgSlug && (
-                        <Check className="h-4 w-4 ml-2 flex-shrink-0" />
+                  organizations.map((org, index) => (
+                    <Fragment key={org.organizations.id}>
+                      <DropdownMenuItem
+                        onClick={() => handleOrgSwitch(org.organizations.slug)}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                          <span className="truncate">
+                            {org.organizations.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            <Badge
+                              variant="outline"
+                              className="text-xs px-1 py-0"
+                            >
+                              {org.role}
+                            </Badge>
+                          </span>
+                        </div>
+                        {org.organizations.slug === currentOrgSlug && (
+                          <Check className="h-4 w-4 ml-2 flex-shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                      {index < organizations.length - 1 && (
+                        <DropdownMenuSeparator />
                       )}
-                    </DropdownMenuItem>
+                    </Fragment>
                   ))
                 )}
               </DropdownMenuSubContent>

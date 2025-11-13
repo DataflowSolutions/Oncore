@@ -6,7 +6,6 @@ import {
   Calendar,
   Users,
   MapPin,
-  Settings,
   Menu,
   X,
   ClipboardList,
@@ -107,7 +106,6 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
     { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar },
     { name: "People", href: `/${orgSlug}/people`, icon: Users },
     { name: "Venues", href: `/${orgSlug}/venues`, icon: MapPin },
-    { name: "Settings", href: `/${orgSlug}/profile`, icon: Settings },
   ];
 
   // Day view navigation - shown if we have a last visited show (even when not on show page)
