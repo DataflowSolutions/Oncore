@@ -1,11 +1,13 @@
 "use server";
 
-// NOTE: parseContract function requires a 'parsed_contracts' table that doesn't exist in the current database schema.
-
+import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-// import { parseContractFromURL } from '@/lib/services/contract-parser'
+import type { Database } from "@/lib/database.types";
+import { parseContractFromURL } from "@/lib/services/contract-parser";
 import { z } from "zod";
+
+type ParsedContractRow = Database["public"]["Tables"]["parsed_contracts"]["Row"];
 
 const uploadFileSchema = z.object({
   bucket: z.string().default("files"),
@@ -17,9 +19,59 @@ const uploadFileSchema = z.object({
   partyType: z.enum(["from_us", "from_you"]).optional(),
 });
 
+const parseContractSchema = z.object({
+  orgId: z.string().uuid(),
+  fileUrl: z.string().url(),
+  fileName: z.string(),
+});
+
+const updateContractStatusSchema = z.object({
+  orgId: z.string().uuid(),
+  contractId: z.string().uuid(),
+  status: z.enum(["reviewed", "rejected"]),
+  notes: z.string().optional(),
+});
+
+const MEMBER_ROLES = new Set(["owner", "admin", "editor"]);
+
+async function ensureOrgManager(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  userId: string,
+) {
+  const { data: membership, error } = await supabase
+    .from("org_members")
+    .select("role")
+    .eq("org_id", orgId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Error verifying org membership", error);
+    throw new Error("Unable to verify organization access");
+  }
+
+  if (!membership || !MEMBER_ROLES.has(membership.role)) {
+    throw new Error("You do not have permission to manage contracts for this organization");
+  }
+}
+
+async function fetchOrgSlug(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+) {
+  const { data } = await supabase
+    .from("organizations")
+    .select("slug")
+    .eq("id", orgId)
+    .single();
+
+  return data?.slug ?? null;
+}
+
 export async function uploadFile(
   file: File,
-  params: z.infer<typeof uploadFileSchema>
+  params: z.infer<typeof uploadFileSchema>,
 ) {
   const supabase = await createClient();
 
@@ -32,14 +84,20 @@ export async function uploadFile(
 
   const validation = uploadFileSchema.safeParse(params);
   if (!validation.success) {
-    return { error: validation.error.issues[0].message };
+    return { error: validation.error.issues[0]?.message ?? "Invalid request" };
   }
 
-  const { bucket, orgId, showId, sessionId, documentId, fieldId, partyType } =
-    validation.data;
+  const {
+    bucket,
+    orgId,
+    showId,
+    sessionId,
+    documentId,
+    fieldId,
+    partyType,
+  } = validation.data;
 
   try {
-    // Use Edge Function for enforced metadata uploads
     const formData = new FormData();
     formData.append("file", file);
     formData.append("orgId", orgId);
@@ -71,91 +129,153 @@ export async function uploadFile(
 
     const result = await response.json();
     return result;
-  } catch (error: unknown) {
-    const err = error as { message?: string };
+  } catch (error) {
+    const err = error as Error;
+    logger.error("File upload failed", err);
     return { error: err.message || "Failed to upload file" };
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const parseContractSchema = z.object({
-  orgId: z.string().uuid(),
-  fileUrl: z.string().url(),
-  fileName: z.string(),
-});
+export async function parseContract(params: z.infer<typeof parseContractSchema>) {
+  const supabase = await createClient();
 
-export async function parseContract(
-  // Parameter intentionally unused - function disabled
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _params: z.infer<typeof parseContractSchema>
-) {
-  // TODO: Re-enable this function once the parsed_contracts table is created
-  logger.warn("parseContract function called but table does not exist");
-  return {
-    error:
-      "Contract parsing is currently disabled - database table not available",
-  };
-
-  /* DISABLED - requires parsed_contracts table
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) {
-    return { error: 'Authentication required' }
+    return { error: "Authentication required" };
   }
 
-  const validation = parseContractSchema.safeParse(params)
+  const validation = parseContractSchema.safeParse(params);
   if (!validation.success) {
-    return { error: validation.error.issues[0].message }
+    return { error: validation.error.issues[0]?.message ?? "Invalid request" };
   }
 
-  const { orgId, fileUrl, fileName } = validation.data
+  const { orgId, fileUrl, fileName } = validation.data;
 
   try {
-    // Verify user has access to this org
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('role')
-      .eq('org_id', orgId)
-      .eq('user_id', session.user.id)
-      .single()
+    await ensureOrgManager(supabase, orgId, session.user.id);
+  } catch (error) {
+    const err = error as Error;
+    return { error: err.message };
+  }
 
-    if (!membership) {
-      return { error: 'Access denied to this organization' }
-    }
+  let parsed;
+  let parseError: string | null = null;
 
-    // Parse the contract
-    const parsedData = await parseContractFromURL(fileUrl)
+  try {
+    parsed = await parseContractFromURL(fileUrl);
+  } catch (error) {
+    const err = error as Error;
+    parseError = err.message ?? "Failed to parse contract";
+    logger.error("Contract parsing error", err);
+  }
 
-    // Store the parsed contract
-    const { data: contractRecord, error: contractError } = await supabase
-      .from('parsed_contracts')
+  try {
+    const { data: record, error: insertError } = await supabase
+      .from("parsed_contracts")
       .insert({
         org_id: orgId,
         file_name: fileName,
         file_url: fileUrl,
-        parsed_data: parsedData,
-        status: 'pending_review',
-        confidence: parsedData.confidence || 0,
+        parsed_data: parsed ?? null,
+        status: parseError ? "failed" : "pending_review",
+        confidence: parsed?.confidence ?? null,
+        created_by: session.user.id,
+        error: parseError,
       })
-      .select()
-      .single()
+      .select("id")
+      .single();
 
-    if (contractError) {
-      throw contractError
+    if (insertError) {
+      logger.error("Failed to store parsed contract", insertError);
+      return { error: "Unable to store parsed contract" };
     }
 
-    return {
-      success: true,
-      data: {
-        contractId: contractRecord.id,
-        ...parsedData,
-      },
+    const slug = await fetchOrgSlug(supabase, orgId);
+    if (slug) {
+      revalidatePath(`/${slug}/ingestion`);
     }
-  } catch (error: unknown) {
-    const err = error as { message?: string }
-    logger.error('Contract parsing error', err)
-    return { error: err.message || 'Failed to parse contract' }
+
+    if (parseError) {
+      return { error: parseError };
+    }
+
+    return { success: true, data: { contractId: record.id, parsed } };
+  } catch (error) {
+    const err = error as Error;
+    return { error: err.message || "Failed to parse contract" };
   }
-  */
+}
+
+export async function updateParsedContractStatus(
+  params: z.infer<typeof updateContractStatusSchema>,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  const validation = updateContractStatusSchema.safeParse(params);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.issues[0]?.message ?? "Invalid request",
+    };
+  }
+
+  const { orgId, contractId, status, notes } = validation.data;
+
+  try {
+    await ensureOrgManager(supabase, orgId, session.user.id);
+  } catch (error) {
+    const err = error as Error;
+    return { success: false, error: err.message };
+  }
+
+  const { error } = await supabase
+    .from("parsed_contracts")
+    .update({
+      status,
+      notes: notes ?? null,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: session.user.id,
+    })
+    .eq("id", contractId)
+    .eq("org_id", orgId);
+
+  if (error) {
+    logger.error("Failed to update parsed contract", error);
+    return { success: false, error: error.message };
+  }
+
+  const slug = await fetchOrgSlug(supabase, orgId);
+  if (slug) {
+    revalidatePath(`/${slug}/ingestion`);
+  }
+
+  return { success: true };
+}
+
+export async function getParsedContracts(orgId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("parsed_contracts")
+    .select(
+      "id, file_name, file_url, parsed_data, status, created_at, confidence, notes, error, reviewed_at, reviewed_by",
+    )
+    .eq("org_id", orgId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logger.error("Failed to fetch parsed contracts", error);
+    return [] as ParsedContractRow[];
+  }
+
+  return (data ?? []) as ParsedContractRow[];
 }

@@ -378,3 +378,33 @@ export const getCachedAvailableSeats = cache(async (orgId: string) => {
     return null
   }
 })
+
+export const getCachedCalendarSources = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from('calendar_sync_sources')
+    .select(
+      'id, org_id, source_url, sync_interval_minutes, status, last_synced_at, last_error, created_at, created_by, updated_at',
+    )
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: true })
+
+  return { data, error }
+})
+
+export const getCachedCalendarRuns = cache(async (orgId: string) => {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from('calendar_sync_runs')
+    .select(
+      `id, source_id, status, started_at, finished_at, message, events_processed, created_at,
+       source:calendar_sync_sources!inner (id, org_id, source_url, status, sync_interval_minutes, last_synced_at, last_error)`,
+    )
+    .eq('calendar_sync_sources.org_id', orgId)
+    .order('started_at', { ascending: false })
+    .limit(50)
+
+  return { data, error }
+})

@@ -29,12 +29,20 @@ export const queryKeys = {
   venues: (orgSlug: string) => ['venues', orgSlug] as const,
   venue: (venueId: string) => ['venue', venueId] as const,
   venuesWithCounts: (orgSlug: string) => ['venues', orgSlug, 'counts'] as const,
-  
+
   // Invitations
   invitations: (orgSlug: string) => ['invitations', orgSlug] as const,
-  
+
   // Subscription/billing
   seats: (orgSlug: string) => ['seats', orgSlug] as const,
+
+  // AI ingestion
+  parsedEmails: (orgSlug: string) => ['ingestion', orgSlug, 'parsed-emails'] as const,
+  parsedContracts: (orgSlug: string) => ['ingestion', orgSlug, 'parsed-contracts'] as const,
+
+  // Calendar sync
+  calendarSources: (orgSlug: string) => ['calendar', orgSlug, 'sources'] as const,
+  calendarRuns: (orgSlug: string) => ['calendar', orgSlug, 'runs'] as const,
 } as const
 
 /**
@@ -77,5 +85,23 @@ export const invalidationKeys = {
     queryKeys.venue(venueId),
     queryKeys.venues(orgSlug),
     queryKeys.venuesWithCounts(orgSlug),
+  ],
+
+  parsedEmail: (orgSlug: string) => [
+    queryKeys.parsedEmails(orgSlug),
+  ],
+
+  parsedContract: (orgSlug: string) => [
+    queryKeys.parsedContracts(orgSlug),
+  ],
+
+  calendarSources: (orgSlug: string) => [
+    queryKeys.calendarSources(orgSlug),
+    queryKeys.calendarRuns(orgSlug),
+  ],
+
+  calendarRuns: (orgSlug: string) => [
+    queryKeys.calendarRuns(orgSlug),
+    queryKeys.calendarSources(orgSlug),
   ],
 }

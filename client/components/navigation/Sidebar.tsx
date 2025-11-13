@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Globe, Menu, X, ClipboardList } from "lucide-react";
+import {
+  Calendar,
+  Globe,
+  Menu,
+  X,
+  ClipboardList,
+  Mail,
+  Handshake,
+  CalendarClock,
+} from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -74,6 +83,9 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   const navigation = [
     { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar },
     { name: "Network", href: `/${orgSlug}/venues`, icon: Globe },
+    { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },
+    { name: "Partners", href: `/${orgSlug}/partners`, icon: Handshake },
+    { name: "Calendar", href: `/${orgSlug}/calendar`, icon: CalendarClock },
   ];
 
   // Day view navigation - shown if we have a last visited show (even when not on show page)
