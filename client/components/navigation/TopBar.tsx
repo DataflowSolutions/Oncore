@@ -17,20 +17,25 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center px-4 lg:px-8">
-        {/* make parent relative so we can absolutely center the search */}
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end relative">
-          {/* Expanding Search Component */}
-          <ExpandingSearch open={open} onOpenChange={setOpen} />
+        {/* Left spacing for mobile hamburger menu */}
+        <div className="w-10 lg:w-0 shrink-0" />
 
-          <div className="flex items-center gap-2">
-            {/* <Notifications /> */}
-            <UserDropdownMenu />
-            <Button variant="ghost" size="icon" asChild title="Settings">
-              <Link href={`/${orgSlug}/settings`}>
-                <Settings className="h-4 w-4" />
-              </Link>
-            </Button>
+        {/* Center search area */}
+        <div className="flex-1 flex items-center justify-center px-2 sm:px-4">
+          <div className="w-full max-w-md lg:max-w-lg">
+            <ExpandingSearch open={open} onOpenChange={setOpen} />
           </div>
+        </div>
+
+        {/* Right action buttons */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* <Notifications /> */}
+          <UserDropdownMenu />
+          <Button variant="ghost" size="icon" asChild title="Settings">
+            <Link href={`/${orgSlug}/settings`}>
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </header>

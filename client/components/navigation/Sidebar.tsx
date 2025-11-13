@@ -103,7 +103,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden fixed top-4 left-4 z-50"
+        className="lg:hidden fixed top-3 left-4 z-50"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? (
@@ -131,7 +131,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
           lg:translate-x-0
         `}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col mt-[56px] lg:mt-0">
           {/* Logo/Header */}
           <div className="flex h-16 items-center px-6">
             <Link

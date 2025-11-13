@@ -8,7 +8,7 @@ import { TopBar } from "@/components/navigation/TopBar";
 
 // Always render dynamically to ensure fresh auth data
 // React cache() handles request-level deduplication
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -30,26 +30,28 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
   }
 
   // OPTIMIZED: Use cached helpers and parallelize queries
-  const { getCachedOrg, getCachedOrgMembership } = await import('@/lib/cache')
-  
+  const { getCachedOrg, getCachedOrgMembership } = await import("@/lib/cache");
+
   // First get org, then get membership with org.id
-  const { data: org } = await getCachedOrg(resolvedParams.org)
+  const { data: org } = await getCachedOrg(resolvedParams.org);
 
   if (!org) {
-    logger.debug('Layout: Org not found');
+    logger.debug("Layout: Org not found");
     notFound();
   }
 
   // Get membership using org.id
-  const { data: membership } = await getCachedOrgMembership(org.id)
+  const { data: membership } = await getCachedOrgMembership(org.id);
 
   // Verify membership exists
   if (!membership) {
-    logger.debug('Layout: User is not a member of org');
+    logger.debug("Layout: User is not a member of org");
     notFound();
   }
-  
-  logger.debug('Layout: User has access to org with role', { role: membership.role });
+
+  logger.debug("Layout: User has access to org with role", {
+    role: membership.role,
+  });
 
   // Check billing status
   // const billingStatus = await checkOrgBilling(org.id);
@@ -69,17 +71,17 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
       {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
       {/* Simple Sidebar with prefetching */}
-      <Sidebar
-        orgSlug={resolvedParams.org}
-        userRole={membership.role}
-      />
+      <Sidebar orgSlug={resolvedParams.org} userRole={membership.role} />
 
       {/* Main Content Area */}
       <div className="lg:ml-64 min-h-screen">
-        {/* Top Navigation Bar */}
+        {/* Top Navigation Bar - Full Width */}
         <TopBar />
 
-        <div className="py-6 lg:p-8 pt-6 lg:pt-6">{children}</div>
+        {/* Content with responsive padding */}
+        <div className="px-1 md:px-8 lg:px-16 xl:px-20">
+          <div className="py-6 lg:p-8 pt-6 lg:pt-6">{children}</div>
+        </div>
       </div>
     </div>
   );

@@ -95,10 +95,7 @@ export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute left-1/2 transform -translate-x-1/2 w-full sm:w-3/4 md:w-96 lg:w-[500px] max-w-2xl"
-    >
+    <div ref={containerRef} className="relative w-full">
       {/* Search Button/Input */}
       <div className="relative">
         <Button

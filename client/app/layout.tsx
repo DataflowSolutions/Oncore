@@ -30,14 +30,13 @@ export default function RootLayout({
       className={specialGothic.variable} // ← this line is important!
     >
       <body>
-        <div className="px-1 md:px-8 lg:px-16 xl:px-20 mx-auto">
-          <ThemeProvider>
-            <Providers>
-              {children}
-              <Toaster richColors position="top-right" />
-            </Providers>
-          </ThemeProvider>
-        </div>
+        <ThemeProvider>
+          <Providers>
+            {/* Children render without padding - allows full-width elements */}
+            {children}
+            <Toaster richColors position="top-right" />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );
