@@ -1,4 +1,4 @@
-import { LucideIcon, Building, Users } from "lucide-react";
+import { LucideIcon, Building, Users, UserCog } from "lucide-react";
 
 export interface TabLink {
   id: string;
@@ -16,5 +16,10 @@ export const tabLinks: TabLink[] = [
     id: "promoters",
     label: "Promoters",
     icon: Users,
+  },
+  {
+    id: "team",
+    label: "Team",
+    icon: UserCog,
   },
 ];

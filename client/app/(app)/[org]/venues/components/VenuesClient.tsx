@@ -10,6 +10,9 @@ import VenuesSearchbar from "./VenuesSearchbar";
 import { PromotersList } from "@/components/promoters/PromotersList";
 import { UnifiedSearchResults } from "./UnifiedSearchResults";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
+import PeoplePageContent from "@/components/team/PeoplePageClient";
+import type { Database } from "@/lib/database.types";
+import type { SeatCheckResult } from "@/lib/actions/invitations";
 
 interface Venue {
   id: string;
@@ -23,9 +26,23 @@ interface Venue {
   shows?: Array<{ count: number }>;
 }
 
+type Person = Database["public"]["Tables"]["people"]["Row"];
+type Invitation = Database["public"]["Tables"]["invitations"]["Row"] & {
+  people: {
+    id: string;
+    name: string;
+    email: string | null;
+    role_title: string | null;
+    member_type: "Artist" | "Crew" | "Agent" | "Manager" | null;
+  };
+};
+
 interface VenuesClientProps {
   venues: Venue[];
   promoters: PromoterWithVenues[];
+  people: Person[];
+  invitations: Invitation[];
+  seatInfo: SeatCheckResult | null;
   orgId: string;
   orgSlug: string;
   view: string;
@@ -34,6 +51,9 @@ interface VenuesClientProps {
 export default function VenuesClient({
   venues,
   promoters,
+  people,
+  invitations,
+  seatInfo,
   orgId,
   orgSlug,
   view,
@@ -88,7 +108,25 @@ export default function VenuesClient({
 
   return (
     <>
-      {view === "promoters" ? (
+      {view === "team" ? (
+        // Team view - show people page content
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">Team</h2>
+              <p className="text-muted-foreground mt-1">
+                Manage your team members and internal staff
+              </p>
+            </div>
+            <VenueViewToggler />
+          </div>
+          <PeoplePageContent
+            allPeople={people}
+            seatInfo={seatInfo}
+            invitations={invitations}
+          />
+        </>
+      ) : view === "promoters" ? (
         // Promoters view - show actual promoters
         <>
           <div className="flex items-center justify-between mb-6">
