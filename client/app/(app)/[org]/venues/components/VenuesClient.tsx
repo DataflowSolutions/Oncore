@@ -13,6 +13,7 @@ import type { PromoterWithVenues } from "@/lib/actions/promoters";
 import PeoplePageContent from "@/components/team/PeoplePageClient";
 import type { Database } from "@/lib/database.types";
 import type { SeatCheckResult } from "@/lib/actions/invitations";
+import AddPersonButton from "../../people/components/AddPersonButton";
 
 interface Venue {
   id: string;
@@ -118,7 +119,10 @@ export default function VenuesClient({
                 Manage your team members and internal staff
               </p>
             </div>
-            <VenueViewToggler />
+            <div className="flex gap-2">
+              <AddPersonButton orgId={orgId} />
+              <VenueViewToggler />
+            </div>
           </div>
           <PeoplePageContent
             allPeople={people}
