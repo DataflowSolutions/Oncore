@@ -1,13 +1,14 @@
 "use server";
 
-// NOTE: This file requires a 'parsed_emails' table that doesn't exist in the current database schema.
-// The functionality is disabled until the table is created via a migration.
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
-// import { createClient } from '@/lib/supabase/server'
-// import { parseForwardedEmail } from '@/lib/services/email-parser'
+
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/database.types";
+import { parseForwardedEmail } from "@/lib/services/email-parser";
+
+type ParsedEmailRow = Database["public"]["Tables"]["parsed_emails"]["Row"];
 
 const parseEmailSchema = z.object({
   subject: z.string(),
@@ -15,85 +16,6 @@ const parseEmailSchema = z.object({
   from: z.string().email().optional(),
   orgId: z.string().uuid(),
 });
-
-export async function parseEmail(_data: z.infer<typeof parseEmailSchema>) {
-  // TODO: Re-enable this function once the parsed_emails table is created
-  logger.warn("parseEmail function called but table does not exist");
-  return {
-    success: false,
-    error: "Email parsing is currently disabled - database table not available",
-  };
-
-  /* DISABLED - requires parsed_emails table
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  const validation = parseEmailSchema.safeParse(data)
-  if (!validation.success) {
-    return {
-      success: false,
-      error: validation.error.issues[0].message,
-    }
-  }
-
-  const { subject, body, from, orgId } = validation.data
-
-  try {
-    // Verify user has access to this org
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('role')
-      .eq('org_id', orgId)
-      .eq('user_id', session.user.id)
-      .single()
-
-    if (!membership) {
-      return { success: false, error: 'Access denied to this organization' }
-    }
-
-    // Parse the email content
-    const emailContent = `Subject: ${subject}\n\nFrom: ${from || 'Unknown'}\n\n${body}`
-    const parsed = await parseForwardedEmail(emailContent)
-
-    // Store the parsed email for review
-    const { data: emailRecord, error: emailError } = await supabase
-      .from('parsed_emails')
-      .insert({
-        org_id: orgId,
-        subject,
-        from_email: from,
-        raw_content: body,
-        parsed_data: parsed,
-        status: 'pending_review',
-      })
-      .select()
-      .single()
-
-    if (emailError) {
-      throw emailError
-    }
-
-    return {
-      success: true,
-      data: {
-        emailId: emailRecord.id,
-        ...parsed,
-      },
-    }
-  } catch (error: unknown) {
-    const err = error as { message?: string }
-    logger.error('Email parsing error', err)
-    return {
-      success: false,
-      error: err.message || 'Failed to parse email',
-    }
-  }
-  */
-}
 
 const confirmParsedEmailSchema = z.object({
   emailId: z.string().uuid(),
@@ -105,10 +27,9 @@ const confirmParsedEmailSchema = z.object({
       .union([z.string(), z.number()])
       .optional()
       .transform((val) => {
-        // Convert string to number if needed
         if (val === undefined || val === null || val === "") return null;
-        const num = typeof val === "string" ? parseFloat(val) : val;
-        return isNaN(num) ? null : num;
+        const num = typeof val === "string" ? Number.parseFloat(val) : val;
+        return Number.isFinite(num) ? num : null;
       }),
     feeCurrency: z.string().default("USD").optional(),
     notes: z.string().optional(),
@@ -125,122 +46,325 @@ const confirmParsedEmailSchema = z.object({
     .optional(),
 });
 
-export async function confirmParsedEmail(
-  _data: z.infer<typeof confirmParsedEmailSchema>
+const rejectParsedEmailSchema = z.object({
+  emailId: z.string().uuid(),
+  orgId: z.string().uuid(),
+  reason: z.string().optional(),
+});
+
+const MEMBER_ROLES = new Set(["owner", "admin", "editor"]);
+
+async function getOrgSlug(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
 ) {
-  // TODO: Re-enable this function once the parsed_emails table is created
-  logger.warn("confirmParsedEmail function called but table does not exist");
-  return {
-    success: false,
-    error: "Email parsing is currently disabled - database table not available",
-  };
+  const { data } = await supabase
+    .from("organizations")
+    .select("slug")
+    .eq("id", orgId)
+    .single();
 
-  /* DISABLED - requires parsed_emails table
-  const supabase = await createClient()
+  return data?.slug ?? null;
+}
 
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    return { success: false, error: 'Authentication required' }
+async function ensureCanManageOrg(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  userId: string,
+) {
+  const { data: membership, error } = await supabase
+    .from("org_members")
+    .select("role")
+    .eq("org_id", orgId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Error checking org membership", error);
+    throw new Error("Unable to verify organization membership");
   }
 
-  const validation = confirmParsedEmailSchema.safeParse(data)
+  if (!membership || !MEMBER_ROLES.has(membership.role)) {
+    throw new Error("You do not have permission to manage this organization");
+  }
+}
+
+export async function parseEmail(input: z.infer<typeof parseEmailSchema>) {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  const validation = parseEmailSchema.safeParse(input);
   if (!validation.success) {
     return {
       success: false,
-      error: validation.error.issues[0].message,
-    }
+      error: validation.error.issues[0]?.message ?? "Invalid request",
+    };
   }
 
-  const { emailId, showData, createVenue, venueData } = validation.data
+  const { subject, body, from, orgId } = validation.data;
 
   try {
-    // Get the parsed email
-    const { data: parsedEmail, error: emailError } = await supabase
-      .from('parsed_emails')
-      .select('org_id')
-      .eq('id', emailId)
-      .single()
+    await ensureCanManageOrg(supabase, orgId, session.user.id);
+  } catch (error) {
+    const err = error as Error;
+    return { success: false, error: err.message };
+  }
 
-    if (emailError || !parsedEmail) {
-      throw new Error('Parsed email not found')
-    }
+  const emailContent = `Subject: ${subject}\n\nFrom: ${from ?? "Unknown"}\n\n${body}`;
+  let parsed;
+  let parseError: string | null = null;
 
-    // Verify user has access
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('role')
-      .eq('org_id', parsedEmail.org_id)
-      .eq('user_id', session.user.id)
-      .single()
+  try {
+    parsed = await parseForwardedEmail(emailContent);
+  } catch (error) {
+    const err = error as Error;
+    logger.error("Gemini email parsing failure", err);
+    parseError = err.message ?? "Failed to parse email";
+  }
 
-    if (!membership) {
-      return { success: false, error: 'Access denied' }
-    }
-
-    let venueId = showData.venueId
-
-    // Create venue if needed
-    if (createVenue && venueData) {
-      const { data: newVenue, error: venueError } = await supabase
-        .from('venues')
-        .insert({
-          org_id: parsedEmail.org_id,
-          name: venueData.name,
-          address: venueData.address,
-          city: venueData.city,
-          state: venueData.state,
-          capacity: venueData.capacity,
-        })
-        .select()
-        .single()
-
-      if (venueError) {
-        throw venueError
-      }
-
-      venueId = newVenue.id
-    }
-
-    // Create the show
-    const { data: show, error: showError } = await supabase
-      .from('shows')
+  try {
+    const { data: record, error: insertError } = await supabase
+      .from("parsed_emails")
       .insert({
-        org_id: parsedEmail.org_id,
-        title: showData.title,
-        date: showData.date,
-        venue_id: venueId,
-        fee: showData.fee,
-        fee_currency: showData.feeCurrency || 'USD',
-        notes: showData.notes,
-        status: 'confirmed',
+        org_id: orgId,
+        subject,
+        from_email: from ?? null,
+        raw_content: body,
+        parsed_data: parsed ?? null,
+        status: parseError ? "failed" : "pending_review",
+        confidence: parsed?.showDetails?.confidence ?? null,
+        created_by: session.user.id,
+        error: parseError,
       })
-      .select()
-      .single()
+      .select("id")
+      .single();
 
-    if (showError) {
-      throw showError
+    if (insertError) {
+      logger.error("Failed to store parsed email", insertError);
+      return { success: false, error: "Unable to store parsed email" };
     }
 
-    // Mark parsed email as confirmed
-    await supabase
-      .from('parsed_emails')
-      .update({ status: 'confirmed' })
-      .eq('id', emailId)
+    const slug = await getOrgSlug(supabase, orgId);
+    if (slug) {
+      revalidatePath(`/${slug}/ingestion`);
+    }
+
+    if (parseError) {
+      return { success: false, error: parseError };
+    }
 
     return {
       success: true,
       data: {
-        showId: show.id,
-        venueId,
+        emailId: record.id,
+        parsed,
       },
-    }
-  } catch (error: unknown) {
-    const err = error as { message?: string }
-    logger.error('Error confirming parsed email', err)
+    };
+  } catch (error) {
+    const err = error as Error;
+    logger.error("Error saving parsed email", err);
+    return { success: false, error: err.message || "Failed to parse email" };
+  }
+}
+
+export async function confirmParsedEmail(
+  input: z.infer<typeof confirmParsedEmailSchema>,
+) {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  const validation = confirmParsedEmailSchema.safeParse(input);
+  if (!validation.success) {
     return {
       success: false,
-      error: err.message || 'Failed to create show from email',
-    }
+      error: validation.error.issues[0]?.message ?? "Invalid request",
+    };
   }
-  */
+
+  const { emailId, showData, createVenue, venueData } = validation.data;
+
+  const { data: parsedEmail, error: fetchError } = await supabase
+    .from("parsed_emails")
+    .select("org_id, status")
+    .eq("id", emailId)
+    .single();
+
+  if (fetchError || !parsedEmail) {
+    logger.error("Parsed email lookup failed", fetchError);
+    return { success: false, error: "Parsed email not found" };
+  }
+
+  if (parsedEmail.status !== "pending_review") {
+    return { success: false, error: "This email has already been reviewed" };
+  }
+
+  try {
+    await ensureCanManageOrg(supabase, parsedEmail.org_id, session.user.id);
+  } catch (error) {
+    const err = error as Error;
+    return { success: false, error: err.message };
+  }
+
+  let venueId = showData.venueId ?? null;
+
+  if (!venueId && createVenue && venueData) {
+    const { data: newVenue, error: venueError } = await supabase
+      .from("venues")
+      .insert({
+        org_id: parsedEmail.org_id,
+        name: venueData.name,
+        address: venueData.address ?? null,
+        city: venueData.city ?? null,
+        state: venueData.state ?? null,
+        capacity: venueData.capacity ?? null,
+      })
+      .select("id")
+      .single();
+
+    if (venueError) {
+      logger.error("Failed to create venue from parsed email", venueError);
+      return {
+        success: false,
+        error: venueError.message || "Failed to create venue",
+      };
+    }
+
+    venueId = newVenue?.id ?? null;
+  }
+
+  const showDate = showData.date;
+
+  const { data: createdShow, error: showError } = await (supabase as any).rpc(
+    "app_create_show",
+    {
+      p_org_id: parsedEmail.org_id,
+      p_title: showData.title,
+      p_date: showDate,
+      p_venue_id: venueId,
+      p_venue_name: venueId ? null : venueData?.name ?? null,
+      p_venue_city: venueId ? null : venueData?.city ?? null,
+      p_venue_address: venueId ? null : venueData?.address ?? null,
+      p_set_time: null,
+      p_notes: showData.notes ?? null,
+    },
+  );
+
+  if (showError) {
+    logger.error("Failed to create show from parsed email", showError);
+    return {
+      success: false,
+      error: showError.message || "Failed to create show",
+    };
+  }
+
+  const showRecord = createdShow as Database["public"]["Tables"]["shows"]["Row"];
+
+  const updatePayload: Partial<ParsedEmailRow> = {
+    status: "confirmed",
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: session.user.id,
+    show_id: showRecord.id,
+  };
+
+  const { error: updateError } = await supabase
+    .from("parsed_emails")
+    .update(updatePayload)
+    .eq("id", emailId);
+
+  if (updateError) {
+    logger.error("Failed to update parsed email status", updateError);
+  }
+
+  const slug = await getOrgSlug(supabase, parsedEmail.org_id);
+  if (slug) {
+    revalidatePath(`/${slug}/ingestion`);
+    revalidatePath(`/${slug}/shows`);
+    revalidatePath(`/${slug}/shows/${showRecord.id}`);
+  }
+
+  return {
+    success: true,
+    data: {
+      showId: showRecord.id,
+    },
+  };
+}
+
+export async function rejectParsedEmail(
+  input: z.infer<typeof rejectParsedEmailSchema>,
+) {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  const validation = rejectParsedEmailSchema.safeParse(input);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.issues[0]?.message ?? "Invalid request",
+    };
+  }
+
+  const { emailId, orgId, reason } = validation.data;
+
+  try {
+    await ensureCanManageOrg(supabase, orgId, session.user.id);
+  } catch (error) {
+    const err = error as Error;
+    return { success: false, error: err.message };
+  }
+
+  const { error } = await supabase
+    .from("parsed_emails")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: session.user.id,
+      error: reason ?? null,
+    })
+    .eq("id", emailId)
+    .eq("org_id", orgId);
+
+  if (error) {
+    logger.error("Failed to reject parsed email", error);
+    return { success: false, error: error.message };
+  }
+
+  const slug = await getOrgSlug(supabase, orgId);
+  if (slug) {
+    revalidatePath(`/${slug}/ingestion`);
+  }
+
+  return { success: true };
+}
+
+export async function getParsedEmails(orgId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await (supabase as any)
+    .rpc('get_parsed_emails', { p_org_id: orgId });
+
+  if (error) {
+    logger.error("Failed to fetch parsed emails", error);
+    return [] as ParsedEmailRow[];
+  }
+
+  return (data ?? []) as ParsedEmailRow[];
 }
