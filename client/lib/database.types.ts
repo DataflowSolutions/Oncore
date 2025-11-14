@@ -2178,7 +2178,17 @@ export type Database = {
       get_advancing_fields: {
         Args: { p_session_id: string }
         Returns: {
+          created_at: string
+          created_by: string
+          field_id: string
           field_name: string
+          field_type: string
+          org_id: string
+          party_type: Database["public"]["Enums"]["party"]
+          section: string
+          session_id: string
+          sort_order: number
+          status: Database["public"]["Enums"]["field_status"]
           value: Json
         }[]
       }
