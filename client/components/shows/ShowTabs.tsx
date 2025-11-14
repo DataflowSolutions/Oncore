@@ -48,7 +48,7 @@ export function ShowTabs({ orgSlug, showId }: ShowTabsProps) {
   };
 
   return (
-    <div className="border-b border-border">
+    <div className="border-b border-border overflow-x-auto overflow-y-hidden">
       <nav className="flex gap-1" aria-label="Show navigation">
         {tabs.map((tab) => {
           const href = tab.href(orgSlug, showId);

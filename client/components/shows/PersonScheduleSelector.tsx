@@ -63,47 +63,45 @@ export function PersonScheduleSelector({
   );
 
   return (
-    <div className="">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-2">
+      {selectedPeople.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
           {selectedPeople.map((person) => (
             <Badge
               key={person.id}
               variant="secondary"
-              className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1"
+              className="flex items-center gap-1 pl-2 pr-1 py-0.5 text-[11px] h-6 bg-neutral-800/50 border-neutral-700/50"
             >
-              <span className="text-xs font-medium">{person.name}</span>
+              <span className="font-medium">{person.name}</span>
               {person.duty && (
-                <span className="text-xs text-neutral-500">
-                  • {person.duty}
-                </span>
+                <span className="text-neutral-500">• {person.duty}</span>
               )}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent ml-1"
+                className="h-4 w-4 p-0 hover:bg-transparent"
                 onClick={() => handleRemovePerson(person.id)}
               >
-                <X className="h-3 w-3" />
+                <X className="h-2.5 w-2.5" />
               </Button>
             </Badge>
           ))}
         </div>
-      </div>
+      )}
 
       {/* Add person selector */}
       {availableToAdd.length > 0 && (
         <Select onValueChange={handleAddPerson}>
-          <SelectTrigger className="w-full max-w-xs">
-            <SelectValue placeholder="+ Add person to schedule" />
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="+ Filter by person" />
           </SelectTrigger>
           <SelectContent>
             {availableToAdd.map((person) => (
-              <SelectItem key={person.id} value={person.id}>
+              <SelectItem key={person.id} value={person.id} className="text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{person.name}</span>
                   {person.duty && (
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-[10px] text-neutral-500">
                       ({person.duty})
                     </span>
                   )}
@@ -115,21 +113,20 @@ export function PersonScheduleSelector({
       )}
 
       {availableToAdd.length === 0 && availablePeople.length > 0 && (
-        <span className="text-xs text-neutral-500">
+        <span className="text-[10px] text-neutral-600">
           All team members selected
         </span>
       )}
 
       {availablePeople.length === 0 && (
-        <span className="text-xs text-neutral-500">
-          No team members available. Add team members{" "}
+        <span className="text-[10px] text-neutral-600">
+          No team members available.{" "}
           <Link
             href="./team"
-            className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+            className="text-blue-500 hover:text-blue-400 transition-colors"
           >
-            here
+            Add team members
           </Link>
-          .
         </span>
       )}
     </div>

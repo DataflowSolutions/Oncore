@@ -6,12 +6,18 @@ import { Input } from "@/components/ui/input";
 import { DateNavigator } from "../DateNavigator";
 import { PersonScheduleSelector } from "../PersonScheduleSelector";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   //   Plane,
   //   PlaneLanding,
   //   MapPin,
   //   Music,
   Plus,
-  X,
   Trash2,
 } from "lucide-react";
 
@@ -64,9 +70,11 @@ export function ScheduleTimeline({
   availablePeople = [],
   selectedPeopleIds = [],
 }: ScheduleTimelineProps) {
-  const [isAdding, setIsAdding] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: "",
+    date: currentDateStr,
     starts_at: "",
     ends_at: "",
     location: "",
@@ -132,183 +140,279 @@ export function ScheduleTimeline({
   const pixelsPerHour = 40;
   const pixelsPerMinute = pixelsPerHour / 60;
 
+  // Helper function to calculate snapped position from mouse event
+  const calculateSnappedMinutes = (
+    e: React.MouseEvent<HTMLDivElement>,
+    rect: DOMRect
+  ) => {
+    const clickY = e.clientY - rect.top - 32;
+    const minutes = Math.max(0, Math.round(clickY / pixelsPerMinute));
+    return Math.round(minutes / 15) * 15;
+  };
+
+  // Function to open dialog with pre-filled time
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-event-item]") || target.closest("button")) {
+      return;
+    }
+
+    // Use the current hover position if available, otherwise calculate it
+    const snappedMinutes =
+      hoverPosition !== null
+        ? hoverPosition
+        : calculateSnappedMinutes(e, e.currentTarget.getBoundingClientRect());
+
+    const hours = Math.floor(snappedMinutes / 60);
+    const mins = snappedMinutes % 60;
+
+    const timeStr = `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}`;
+
+    setFormData({
+      title: "",
+      date: currentDateStr,
+      starts_at: timeStr,
+      ends_at: "",
+      location: "",
+      notes: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-event-item]") || target.closest("button")) {
+      setHoverPosition(null);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const snappedMinutes = calculateSnappedMinutes(e, rect);
+    setHoverPosition(snappedMinutes);
+  };
+
+  const handleTimelineMouseLeave = () => {
+    setHoverPosition(null);
+  };
+
   return (
-    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-      {/* Header with Date Navigator and Person Selector */}
+    <div className="space-y-4">
+      {/* Header with Date Navigator and Person Selector - Outside card */}
       {currentDate && (
-        <div className="mb-6 pb-6 border-b border-neutral-800">
-          <div className="flex flex-col gap-4">
-            {/* Date Navigator */}
-            <div className="flex-shrink-0">
-              <DateNavigator
-                currentDate={currentDate}
-                datesWithEvents={datesWithEvents}
-              />
-            </div>
+        <div className="space-y-3">
+          {/* Date Navigator */}
+          <DateNavigator
+            currentDate={currentDate}
+            datesWithEvents={datesWithEvents}
+          />
 
-            {/* Person Selector - only show if there are people */}
-            {availablePeople.length > 0 && (
-              <div className="flex-1 min-w-0">
-                <PersonScheduleSelector
-                  availablePeople={availablePeople}
-                  selectedPeopleIds={selectedPeopleIds}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <h2 className="text-lg font-semibold ">Show Schedule</h2>
-      <p className="text-neutral-400 text-sm">Event timeline for the day</p>
-
-      <div className="flex items-center justify-between mb-8 mt-4">
-        <Button
-          size="sm"
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2"
-          variant={isAdding ? "outline" : "default"}
-        >
-          {isAdding ? (
-            <>
-              <X className="w-4 h-4" />
-              Cancel
-            </>
-          ) : (
-            <>
-              <Plus className="w-4 h-4" />
-              Add Item
-            </>
+          {/* Person Selector - only show if there are people */}
+          {availablePeople.length > 0 && (
+            <PersonScheduleSelector
+              availablePeople={availablePeople}
+              selectedPeopleIds={selectedPeopleIds}
+            />
           )}
-        </Button>
-      </div>
-
-      {/* Add Item Form */}
-      {isAdding && (
-        <div className="mb-4 p-4 bg-neutral-800/50 rounded-lg border border-dashed border-neutral-700">
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const startsAt = new Date(
-                `${currentDateStr}T${formData.starts_at}:00`
-              ).toISOString();
-              const endsAt = formData.ends_at
-                ? new Date(
-                    `${currentDateStr}T${formData.ends_at}:00`
-                  ).toISOString()
-                : null;
-
-              await onCreateItem({
-                title: formData.title,
-                starts_at: startsAt,
-                ends_at: endsAt,
-                location: formData.location || null,
-                notes: formData.notes || null,
-              });
-
-              setFormData({
-                title: "",
-                starts_at: "",
-                ends_at: "",
-                location: "",
-                notes: "",
-              });
-              setIsAdding(false);
-            }}
-            className="space-y-3"
-          >
-            <div>
-              <label className="text-sm font-medium mb-2 block">Title *</label>
-              <Input
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="e.g., Load In, Sound Check"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Start Time *
-                </label>
-                <Input
-                  type="time"
-                  value={formData.starts_at}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      starts_at: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  End Time
-                </label>
-                <Input
-                  type="time"
-                  value={formData.ends_at}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ends_at: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Location</label>
-              <Input
-                type="text"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, location: e.target.value }))
-                }
-                placeholder="e.g., Main Stage"
-              />
-            </div>
-
-            <Button type="submit" size="sm" className="w-full">
-              Add to Schedule
-            </Button>
-          </form>
         </div>
       )}
 
-      {/* Empty State */}
-      {scheduleItems.length === 0 && !isAdding && (
-        <div className="flex items-center justify-center py-12 text-neutral-500">
-          <p className="text-sm">Nothing scheduled today</p>
-        </div>
-      )}
+      {/* Timeline Section - Inside card */}
+      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-neutral-400">
+            {scheduleItems.length === 0
+              ? "No events today"
+              : `${scheduleItems.length} event${
+                  scheduleItems.length === 1 ? "" : "s"
+                } scheduled`}
+          </h3>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Add Event
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Schedule Event</DialogTitle>
+              </DialogHeader>
 
-      {/* Timeline View */}
-      {scheduleItems.length > 0 && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const startsAt = new Date(
+                    `${formData.date}T${formData.starts_at}:00`
+                  ).toISOString();
+                  const endsAt = formData.ends_at
+                    ? new Date(
+                        `${formData.date}T${formData.ends_at}:00`
+                      ).toISOString()
+                    : null;
+
+                  await onCreateItem({
+                    title: formData.title,
+                    starts_at: startsAt,
+                    ends_at: endsAt,
+                    location: formData.location || null,
+                    notes: formData.notes || null,
+                  });
+
+                  setFormData({
+                    title: "",
+                    date: currentDateStr,
+                    starts_at: "",
+                    ends_at: "",
+                    location: "",
+                    notes: "",
+                  });
+                  setIsDialogOpen(false);
+                }}
+                className="space-y-3 mt-4"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-neutral-400">
+                    Title
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                    placeholder="e.g., Sound Check, Load In"
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-neutral-400">
+                    Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, date: e.target.value }))
+                    }
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-neutral-400">
+                      Start Time
+                    </label>
+                    <Input
+                      type="time"
+                      value={formData.starts_at}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          starts_at: e.target.value,
+                        }))
+                      }
+                      className="h-9 text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-neutral-400">
+                      End Time
+                    </label>
+                    <Input
+                      type="time"
+                      value={formData.ends_at}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          ends_at: e.target.value,
+                        }))
+                      }
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-neutral-400">
+                    Location
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        location: e.target.value,
+                      }))
+                    }
+                    placeholder="e.g., Main Stage, Green Room"
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <Button type="submit" size="sm" className="w-full">
+                  Add Event
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Timeline View */}
         <div
-          className="relative"
-          style={{ minHeight: `${(endTime - startTime) * pixelsPerMinute}px` }}
+          className="relative bg-neutral-950/30 rounded-lg border border-neutral-800/50 py-8 px-4 cursor-crosshair"
+          onClick={handleTimelineClick}
+          onMouseMove={handleTimelineMouseMove}
+          onMouseLeave={handleTimelineMouseLeave}
+          style={{
+            minHeight: `${(endTime - startTime) * pixelsPerMinute + 32}px`,
+          }}
         >
+          {/* Hover placeholder */}
+          {hoverPosition !== null && (
+            <div
+              className="absolute left-10 right-0 pointer-events-none"
+              style={{
+                top: `${hoverPosition * pixelsPerMinute + 32}px`,
+                height: "30px",
+              }}
+            >
+              <div className="h-full px-2.5 py-1.5 rounded border border-dashed border-neutral-600/50 bg-neutral-700/20 flex items-center">
+                <div className="text-[10px] text-neutral-500 font-mono">
+                  {`${Math.floor(hoverPosition / 60)
+                    .toString()
+                    .padStart(2, "0")}:${(hoverPosition % 60)
+                    .toString()
+                    .padStart(2, "0")}`}{" "}
+                  • Click to add event
+                </div>
+              </div>
+            </div>
+          )}
           {/* Time intervals */}
           {intervals.map((interval, idx) => {
-            const topPosition = (interval.time - startTime) * pixelsPerMinute;
+            const topPosition =
+              (interval.time - startTime) * pixelsPerMinute + 32;
             return (
               <div
                 key={idx}
-                className="absolute left-0 right-0 flex items-center"
+                className="absolute left-0 right-0 flex items-center px-2"
                 style={{ top: `${topPosition}px`, height: "1px" }}
               >
-                <span className="text-xs text-neutral-500 w-12 flex-shrink-0 font-mono -translate-y-2">
+                <span className="text-[10px] text-neutral-600 w-10 flex-shrink-0 font-mono">
                   {interval.label}
                 </span>
-                <div className="flex-1 border-t border-neutral-800" />
+                <div className="flex-1 border-t border-neutral-800/50" />
               </div>
             );
           })}
@@ -320,36 +424,34 @@ export function ScheduleTimeline({
               ? parseTime(item.endTime)
               : startMinutes + 30;
             const duration = endMinutes - startMinutes;
-            const topPosition = (startMinutes - startTime) * pixelsPerMinute;
+            const topPosition =
+              (startMinutes - startTime) * pixelsPerMinute + 32;
             const height = duration * pixelsPerMinute;
 
-            // Determine content to show based on available height
-            // showFullDetails: enough space for title + time + person (3 rows)
-            // showTimeDetails: enough space for title + time (2 rows)
-            // showMinimal: only title
             const showFullDetails = height > 35;
             const showTimeDetails = height > 20;
 
             return (
               <div
                 key={item.id}
-                className="absolute left-12 right-0"
+                className="absolute left-10 right-0"
                 style={{
                   top: `${topPosition}px`,
-                  height: `${Math.max(height, 20)}px`, // Minimum height for readability
+                  height: `${Math.max(height, 18)}px`,
                 }}
               >
                 <div
+                  data-event-item
                   onClick={() => onItemClick(item)}
-                  className={`group/item relative h-full px-3 py-1 rounded-md border bg-accent hover:bg-card cursor-pointer hover:shadow-md transition-all flex items-center overflow-hidden`}
+                  className="group/item relative h-full px-2.5 py-1.5 rounded border border-neutral-700/50 bg-neutral-800/40 hover:bg-neutral-800/60 hover:border-neutral-600/50 cursor-pointer transition-all flex items-center overflow-hidden"
                 >
                   <div className="flex items-start gap-2 w-full min-w-0">
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold leading-tight truncate">
+                      <div className="text-[11px] font-semibold leading-tight truncate text-neutral-200">
                         {item.title}
                       </div>
                       {showTimeDetails && (
-                        <div className="text-xs text-neutral-400 mt-0.5 truncate">
+                        <div className="text-[10px] text-neutral-500 mt-0.5 truncate">
                           {new Date(item.time).toLocaleTimeString("en-US", {
                             hour: "numeric",
                             minute: "2-digit",
@@ -366,14 +468,12 @@ export function ScheduleTimeline({
                                   hour12: false,
                                 }
                               )}
-                              {" • "}
-                              {Math.round(duration)} min
                             </>
                           )}
                         </div>
                       )}
                       {showFullDetails && item.personName && (
-                        <div className="text-xs text-neutral-400 mt-0.5 truncate">
+                        <div className="text-[10px] text-neutral-500 mt-0.5 truncate">
                           {item.personName}
                         </div>
                       )}
@@ -391,9 +491,9 @@ export function ScheduleTimeline({
                           await onDeleteItem(item.id);
                         }
                       }}
-                      className="opacity-0 group-hover/item:opacity-100 transition-opacity absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
+                      className="opacity-0 group-hover/item:opacity-100 transition-opacity absolute -top-1.5 -right-1.5 h-5 w-5 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-2.5 h-2.5" />
                     </Button>
                   )}
                 </div>
@@ -401,7 +501,7 @@ export function ScheduleTimeline({
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
