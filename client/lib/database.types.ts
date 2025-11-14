@@ -476,6 +476,101 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_sync_runs: {
+        Row: {
+          created_at: string
+          events_processed: number | null
+          finished_at: string | null
+          id: string
+          message: string | null
+          source_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          events_processed?: number | null
+          finished_at?: string | null
+          id?: string
+          message?: string | null
+          source_id: string
+          started_at?: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          events_processed?: number | null
+          finished_at?: string | null
+          id?: string
+          message?: string | null
+          source_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_sync_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_sync_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_sync_sources: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          org_id: string
+          source_url: string
+          status: string
+          sync_interval_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          org_id: string
+          source_url: string
+          status?: string
+          sync_interval_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          org_id?: string
+          source_url?: string
+          status?: string
+          sync_interval_minutes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_sync_sources_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "calendar_sync_sources_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_commissions: {
         Row: {
           amount: number
@@ -989,6 +1084,155 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      parsed_contracts: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          parsed_data: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          org_id: string
+          parsed_data?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          org_id?: string
+          parsed_data?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parsed_contracts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "parsed_contracts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parsed_emails: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          from_email: string | null
+          id: string
+          org_id: string
+          parsed_data: Json | null
+          raw_content: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          show_id: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          from_email?: string | null
+          id?: string
+          org_id: string
+          parsed_data?: Json | null
+          raw_content?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          show_id?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          from_email?: string | null
+          id?: string
+          org_id?: string
+          parsed_data?: Json | null
+          raw_content?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          show_id?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parsed_emails_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "parsed_emails_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parsed_emails_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parsed_emails_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows_list_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       people: {
         Row: {
@@ -1867,6 +2111,25 @@ export type Database = {
         Args: { p_org_id: string; p_show_id: string; p_title?: string }
         Returns: Json
       }
+      create_calendar_sync_run: {
+        Args: {
+          p_events_processed?: number
+          p_message?: string
+          p_org_id: string
+          p_source_id: string
+          p_status: string
+        }
+        Returns: string
+      }
+      create_calendar_sync_source: {
+        Args: {
+          p_created_by: string
+          p_org_id: string
+          p_source_url: string
+          p_sync_interval_minutes: number
+        }
+        Returns: string
+      }
       create_person: {
         Args: {
           p_email?: string
@@ -1885,6 +2148,10 @@ export type Database = {
         Returns: Json
       }
       delete_advancing_file: { Args: { p_file_id: string }; Returns: Json }
+      delete_calendar_sync_source: {
+        Args: { p_org_id: string; p_source_id: string }
+        Returns: undefined
+      }
       get_activity_log_stats: { Args: never; Returns: Json }
       get_activity_logs: {
         Args: {
@@ -1930,9 +2197,55 @@ export type Database = {
           phone: string
         }[]
       }
+      get_calendar_sync_runs: {
+        Args: { p_org_id: string }
+        Returns: {
+          created_at: string
+          events_processed: number
+          finished_at: string
+          id: string
+          message: string
+          source_id: string
+          source_status: string
+          source_url: string
+          started_at: string
+          status: string
+        }[]
+      }
+      get_calendar_sync_source: {
+        Args: { p_org_id: string; p_source_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          last_error: string
+          last_synced_at: string
+          org_id: string
+          source_url: string
+          status: string
+          sync_interval_minutes: number
+          updated_at: string
+        }[]
+      }
+      get_calendar_sync_sources: {
+        Args: { p_org_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          last_error: string
+          last_synced_at: string
+          org_id: string
+          source_url: string
+          status: string
+          sync_interval_minutes: number
+          updated_at: string
+        }[]
+      }
       get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
       get_maintenance_stats: { Args: { days_back?: number }; Returns: Json }
       get_org_advancing_sessions: { Args: { p_org_id: string }; Returns: Json }
+      get_org_by_id: { Args: { p_org_id: string }; Returns: Json }
       get_org_by_slug: { Args: { p_slug: string }; Returns: Json }
       get_org_invitations: { Args: { p_org_id: string }; Returns: Json }
       get_org_membership: { Args: { p_org_id: string }; Returns: Json }
@@ -1951,6 +2264,45 @@ export type Database = {
           name: string
           org_id: string
           shows_count: number
+          updated_at: string
+        }[]
+      }
+      get_parsed_contracts: {
+        Args: { p_org_id: string }
+        Returns: {
+          confidence: number
+          created_at: string
+          created_by: string
+          error: string
+          file_name: string
+          file_url: string
+          id: string
+          notes: string
+          org_id: string
+          parsed_data: Json
+          reviewed_at: string
+          reviewed_by: string
+          status: string
+          updated_at: string
+        }[]
+      }
+      get_parsed_emails: {
+        Args: { p_org_id: string }
+        Returns: {
+          confidence: number
+          created_at: string
+          created_by: string
+          error: string
+          from_email: string
+          id: string
+          org_id: string
+          parsed_data: Json
+          raw_content: string
+          reviewed_at: string
+          reviewed_by: string
+          show_id: string
+          status: string
+          subject: string
           updated_at: string
         }[]
       }
@@ -2065,6 +2417,25 @@ export type Database = {
       update_advancing_field: {
         Args: { p_field_id: string; p_session_id: string; p_value: Json }
         Returns: Json
+      }
+      update_calendar_source_sync_metadata: {
+        Args: {
+          p_last_error?: string
+          p_last_synced_at?: string
+          p_org_id: string
+          p_source_id: string
+        }
+        Returns: undefined
+      }
+      update_calendar_sync_source: {
+        Args: {
+          p_org_id: string
+          p_source_id: string
+          p_source_url?: string
+          p_status?: string
+          p_sync_interval_minutes?: number
+        }
+        Returns: undefined
       }
       upload_advancing_file: {
         Args: {
