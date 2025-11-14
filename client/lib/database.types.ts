@@ -525,6 +525,7 @@ export type Database = {
           last_error: string | null
           last_synced_at: string | null
           org_id: string
+          source_name: string | null
           source_url: string
           status: string
           sync_interval_minutes: number
@@ -537,6 +538,7 @@ export type Database = {
           last_error?: string | null
           last_synced_at?: string | null
           org_id: string
+          source_name?: string | null
           source_url: string
           status?: string
           sync_interval_minutes?: number
@@ -549,6 +551,7 @@ export type Database = {
           last_error?: string | null
           last_synced_at?: string | null
           org_id?: string
+          source_name?: string | null
           source_url?: string
           status?: string
           sync_interval_minutes?: number
@@ -1385,6 +1388,7 @@ export type Database = {
           created_by: string | null
           duration_minutes: number | null
           ends_at: string | null
+          external_calendar_id: string | null
           id: string
           item_type: string | null
           location: string | null
@@ -1396,6 +1400,7 @@ export type Database = {
           show_id: string | null
           source_field_id: string | null
           starts_at: string
+          sync_run_id: string | null
           title: string
           visibility: string | null
         }
@@ -1405,6 +1410,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           ends_at?: string | null
+          external_calendar_id?: string | null
           id?: string
           item_type?: string | null
           location?: string | null
@@ -1416,6 +1422,7 @@ export type Database = {
           show_id?: string | null
           source_field_id?: string | null
           starts_at: string
+          sync_run_id?: string | null
           title: string
           visibility?: string | null
         }
@@ -1425,6 +1432,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           ends_at?: string | null
+          external_calendar_id?: string | null
           id?: string
           item_type?: string | null
           location?: string | null
@@ -1436,6 +1444,7 @@ export type Database = {
           show_id?: string | null
           source_field_id?: string | null
           starts_at?: string
+          sync_run_id?: string | null
           title?: string
           visibility?: string | null
         }
@@ -1487,6 +1496,13 @@ export type Database = {
             columns: ["source_field_id"]
             isOneToOne: false
             referencedRelation: "advancing_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_sync_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -2125,6 +2141,7 @@ export type Database = {
         Args: {
           p_created_by: string
           p_org_id: string
+          p_source_name?: string
           p_source_url: string
           p_sync_interval_minutes: number
         }
@@ -2216,6 +2233,7 @@ export type Database = {
           id: string
           message: string
           source_id: string
+          source_name: string
           source_status: string
           source_url: string
           started_at: string
@@ -2349,12 +2367,33 @@ export type Database = {
           venue_name: string
         }[]
       }
+      get_sync_run_items: {
+        Args: { p_sync_run_id: string }
+        Returns: {
+          created_at: string
+          ends_at: string
+          external_calendar_id: string
+          id: string
+          location: string
+          notes: string
+          starts_at: string
+          title: string
+        }[]
+      }
       get_user_organizations: { Args: never; Returns: Json }
       get_user_orgs: { Args: never; Returns: Json }
       get_venue_details: { Args: { p_venue_id: string }; Returns: Json }
       has_show_access: {
         Args: { min_role: string; p_show: string }
         Returns: boolean
+      }
+      import_calendar_events: {
+        Args: { p_events: Json; p_org_id: string; p_sync_run_id?: string }
+        Returns: {
+          inserted: number
+          total: number
+          updated: number
+        }[]
       }
       is_org_editor: { Args: { p_org: string }; Returns: boolean }
       is_org_editor_and_active: { Args: { p_org: string }; Returns: boolean }
@@ -2437,16 +2476,36 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_calendar_sync_source: {
+      update_calendar_sync_run_status: {
         Args: {
-          p_org_id: string
-          p_source_id: string
-          p_source_url?: string
-          p_status?: string
-          p_sync_interval_minutes?: number
+          p_events_processed: number
+          p_message: string
+          p_run_id: string
+          p_status: string
         }
         Returns: undefined
       }
+      update_calendar_sync_source:
+        | {
+            Args: {
+              p_org_id: string
+              p_source_id: string
+              p_source_url?: string
+              p_status?: string
+              p_sync_interval_minutes?: number
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_source_id: string
+              p_source_name?: string
+              p_source_url: string
+              p_status: string
+              p_sync_interval_minutes: number
+            }
+            Returns: undefined
+          }
       upload_advancing_file: {
         Args: {
           p_content_type: string
