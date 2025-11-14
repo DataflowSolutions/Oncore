@@ -43,6 +43,9 @@ export const queryKeys = {
   // Calendar sync
   calendarSources: (orgSlug: string) => ['calendar', orgSlug, 'sources'] as const,
   calendarRuns: (orgSlug: string) => ['calendar', orgSlug, 'runs'] as const,
+
+  // Today's overview
+  today: (orgSlug: string) => ['today', orgSlug] as const,
 } as const
 
 /**

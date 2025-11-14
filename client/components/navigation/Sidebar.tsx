@@ -11,6 +11,7 @@ import {
   Mail,
   Handshake,
   CalendarClock,
+  CalendarDays,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   });
 
   const navigation = [
+    { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
     { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar },
     { name: "Network", href: `/${orgSlug}/venues`, icon: Globe },
     { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },

@@ -114,14 +114,24 @@ export async function createAdvancingSession(
 
 // Fields Management
 export const getAdvancingFields = cache(async (sessionId: string): Promise<AdvancingField[]> => {
+  console.log('[advancing.ts] getAdvancingFields called', { sessionId });
+  
   const supabase = await getSupabaseServer()
   
   try {
     // Use RPC to bypass RLS issues
+    console.log('[advancing.ts] Calling get_advancing_fields RPC', { p_session_id: sessionId });
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc('get_advancing_fields', {
       p_session_id: sessionId
     })
+    
+    console.log('[advancing.ts] get_advancing_fields RPC response', {
+      dataLength: data?.length,
+      error,
+      data: data,
+    });
     
     if (error) {
       logger.error('Error fetching advancing fields', error)
@@ -130,6 +140,7 @@ export const getAdvancingFields = cache(async (sessionId: string): Promise<Advan
 
     return data || []
   } catch (error) {
+    console.error('[advancing.ts] Exception in getAdvancingFields', error);
     logger.error('Exception in getAdvancingFields', error)
     return []
   }
@@ -147,16 +158,35 @@ export async function createAdvancingField(
     sortOrder?: number
   }
 ): Promise<{ success: boolean; error?: string; data?: AdvancingField }> {
+  console.log('[advancing.ts] createAdvancingField called', {
+    orgSlug,
+    sessionId,
+    fieldData,
+  });
+
   const supabase = await getSupabaseServer()
   
   // Get current user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
+    console.error('[advancing.ts] User not authenticated');
     return { success: false, error: 'User not authenticated' }
   }
 
+  console.log('[advancing.ts] User authenticated', user.id);
+
   try {
     // Use RPC to create/update field (bypasses RLS issues)
+    console.log('[advancing.ts] Calling create_advancing_field RPC', {
+      p_session_id: sessionId,
+      p_section: fieldData.section,
+      p_field_name: fieldData.fieldName,
+      p_field_type: fieldData.fieldType,
+      p_party_type: fieldData.partyType,
+      p_value: fieldData.value,
+      p_sort_order: fieldData.sortOrder || 1000,
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rpcData, error: rpcError } = await (supabase as any).rpc('create_advancing_field', {
       p_session_id: sessionId,
@@ -168,6 +198,11 @@ export async function createAdvancingField(
       p_sort_order: fieldData.sortOrder || 1000
     })
 
+    console.log('[advancing.ts] RPC response', {
+      rpcData,
+      rpcError,
+    });
+
     if (rpcError) {
       logger.error('Error creating advancing field via RPC', rpcError)
       return { success: false, error: rpcError.message }
@@ -175,17 +210,29 @@ export async function createAdvancingField(
 
     const result = rpcData as { success: boolean; field_id: string; show_id: string }
     
+    console.log('[advancing.ts] Parsed result', result);
+
     // Revalidate both advancing and day pages
     if (result.show_id) {
+      console.log('[advancing.ts] Revalidating paths', {
+        advancingPath: `/${orgSlug}/shows/${result.show_id}/advancing/${sessionId}`,
+        dayPath: `/${orgSlug}/shows/${result.show_id}/day`,
+      });
+      
       revalidatePath(`/${orgSlug}/shows/${result.show_id}/advancing/${sessionId}`)
       revalidatePath(`/${orgSlug}/shows/${result.show_id}/day`)
     }
+
+    console.log('[advancing.ts] Returning success', {
+      field_id: result.field_id,
+    });
 
     return { 
       success: true, 
       data: { id: result.field_id } as AdvancingField 
     }
   } catch (error) {
+    console.error('[advancing.ts] Exception in createAdvancingField', error);
     logger.error('Error in createAdvancingField', error)
     return { success: false, error: String(error) }
   }
@@ -197,15 +244,33 @@ export async function updateAdvancingField(
   fieldId: string,
   updates: AdvancingFieldUpdate
 ): Promise<{ success: boolean; error?: string; data?: AdvancingField }> {
+  console.log('[advancing.ts] updateAdvancingField called', {
+    orgSlug,
+    sessionId,
+    fieldId,
+    updates,
+  });
+
   const supabase = await getSupabaseServer()
   
   // Use RPC to update field (bypasses RLS issues)
+  console.log('[advancing.ts] Calling update_advancing_field RPC', {
+    p_session_id: sessionId,
+    p_field_id: fieldId,
+    p_value: updates.value,
+  });
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: rpcData, error: rpcError } = await (supabase as any).rpc('update_advancing_field', {
     p_session_id: sessionId,
     p_field_id: fieldId,
     p_value: updates.value || null
   })
+
+  console.log('[advancing.ts] RPC response', {
+    rpcData,
+    rpcError,
+  });
 
   if (rpcError) {
     logger.error('Error updating advancing field via RPC', rpcError)
@@ -214,12 +279,23 @@ export async function updateAdvancingField(
 
   const result = rpcData as { success: boolean; field_id: string; show_id: string }
   
+  console.log('[advancing.ts] Parsed result', result);
+
   // Revalidate both advancing and day pages
   if (result.show_id) {
+    console.log('[advancing.ts] Revalidating paths', {
+      advancingPath: `/${orgSlug}/shows/${result.show_id}/advancing/${sessionId}`,
+      dayPath: `/${orgSlug}/shows/${result.show_id}/day`,
+    });
+    
     revalidatePath(`/${orgSlug}/shows/${result.show_id}/advancing/${sessionId}`)
     revalidatePath(`/${orgSlug}/shows/${result.show_id}/day`)
   }
   
+  console.log('[advancing.ts] Returning success', {
+    field_id: result.field_id,
+  });
+
   return { 
     success: true, 
     data: { id: result.field_id } as AdvancingField 

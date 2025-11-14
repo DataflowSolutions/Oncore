@@ -9,6 +9,7 @@ import { Building, Lightbulb, Briefcase, Trash2, Plus, Save, X } from "lucide-re
 import { updateAdvancingField, createAdvancingField } from "@/lib/actions/advancing";
 import { logger } from "@/lib/logger";
 import type { Json } from "@/lib/database.types";
+import { toast } from "sonner";
 
 interface PromoterAdvancingViewProps {
   orgSlug: string;
@@ -72,6 +73,10 @@ function SectionCard({
     setValue(initialValue);
   }, [initialValue]);
 
+  useEffect(() => {
+    setFieldId(existingFieldId);
+  }, [existingFieldId]);
+
   const handleValueChange = (newValue: string) => {
     setValue(newValue);
     setHasUnsavedChanges(newValue !== initialValue);
@@ -80,21 +85,51 @@ function SectionCard({
   const handleSave = async () => {
     if (!hasUnsavedChanges) return;
 
+    console.log('[PromoterAdvancingView] SectionCard handleSave called', {
+      fieldName,
+      section,
+      value,
+      fieldId,
+      hasFieldId: !!fieldId,
+    });
+
     setIsSaving(true);
     try {
       if (fieldId) {
         // Update existing field
+        console.log('[PromoterAdvancingView] Updating existing field', {
+          orgSlug,
+          sessionId,
+          fieldId,
+          value,
+        });
+        
         const result = await updateAdvancingField(orgSlug, sessionId, fieldId, {
           value: value
         });
+        
+        console.log('[PromoterAdvancingView] Update result', result);
+        
         if (result.success) {
           setHasUnsavedChanges(false);
           logger.debug("Field updated successfully");
+          toast.success("Field saved successfully");
         } else {
           logger.error("Failed to update field", result.error);
+          toast.error(result.error || "Failed to save field");
         }
       } else {
         // Create new field
+        console.log('[PromoterAdvancingView] Creating new field', {
+          orgSlug,
+          sessionId,
+          section,
+          fieldName,
+          fieldType: "text",
+          partyType: "from_you",
+          value,
+        });
+        
         const result = await createAdvancingField(orgSlug, sessionId, {
           section: section,
           fieldName: fieldName,
@@ -102,16 +137,23 @@ function SectionCard({
           partyType: "from_you",
           value: value
         });
+        
+        console.log('[PromoterAdvancingView] Create result', result);
+        
         if (result.success && result.data) {
           setFieldId(result.data.id);
           setHasUnsavedChanges(false);
-          logger.debug("Field created successfully");
+          logger.debug("Field created successfully", result.data);
+          toast.success("Field saved successfully");
         } else {
           logger.error("Failed to create field", result.error);
+          toast.error(result.error || "Failed to create field");
         }
       }
     } catch (error) {
+      console.error('[PromoterAdvancingView] Error saving field', error);
       logger.error("Error saving field", error);
+      toast.error("An error occurred while saving");
     } finally {
       setIsSaving(false);
     }
@@ -186,6 +228,20 @@ function TransfersCard({
   const [savedTransfersJson, setSavedTransfersJson] = useState(JSON.stringify(initialTransfers));
   const [fieldId, setFieldId] = useState(existingFieldId);
 
+  useEffect(() => {
+    setTransfers(initialTransfers.length > 0 ? initialTransfers : [
+      { id: "1", from: "", fromTime: "", to: "", toTime: "" },
+      { id: "2", from: "", fromTime: "", to: "", toTime: "" },
+      { id: "3", from: "", fromTime: "", to: "", toTime: "" },
+      { id: "4", from: "", fromTime: "", to: "", toTime: "" },
+    ]);
+    setSavedTransfersJson(JSON.stringify(initialTransfers));
+  }, [initialTransfers]);
+
+  useEffect(() => {
+    setFieldId(existingFieldId);
+  }, [existingFieldId]);
+
   const addTransfer = () => {
     const newTransfers = [...transfers, { id: Date.now().toString(), from: "", fromTime: "", to: "", toTime: "" }];
     setTransfers(newTransfers);
@@ -222,8 +278,10 @@ function TransfersCard({
           setSavedTransfersJson(JSON.stringify(transfers));
           setHasUnsavedChanges(false);
           logger.debug("Transfers updated successfully");
+          toast.success("Transfers saved successfully");
         } else {
           logger.error("Failed to update transfers", result.error);
+          toast.error(result.error || "Failed to save transfers");
         }
       } else {
         // Create new field
@@ -239,13 +297,16 @@ function TransfersCard({
           setFieldId(createResult.data.id);
           setSavedTransfersJson(JSON.stringify(transfers));
           setHasUnsavedChanges(false);
-          logger.debug("Transfers created successfully");
+          logger.debug("Transfers created successfully", createResult.data);
+          toast.success("Transfers saved successfully");
         } else {
           logger.error("Failed to create transfers", createResult.error);
+          toast.error(createResult.error || "Failed to create transfers");
         }
       }
     } catch (error) {
       logger.error("Error saving transfers", error);
+      toast.error("An error occurred while saving");
     } finally {
       setIsSaving(false);
     }
