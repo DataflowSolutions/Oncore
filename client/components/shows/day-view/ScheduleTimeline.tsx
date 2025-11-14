@@ -62,7 +62,6 @@ interface ScheduleTimelineProps {
 export function ScheduleTimeline({
   scheduleItems,
   currentDateStr,
-  onItemClick,
   onCreateItem,
   onDeleteItem,
   currentDate,
@@ -71,7 +70,10 @@ export function ScheduleTimeline({
   selectedPeopleIds = [],
 }: ScheduleTimelineProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [hoverPosition, setHoverPosition] = useState<number | null>(null);
+  const [draggingItem, setDraggingItem] = useState<ScheduleItem | null>(null);
+  const [itemWasDragged, setItemWasDragged] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     date: currentDateStr,
@@ -152,6 +154,11 @@ export function ScheduleTimeline({
 
   // Function to open dialog with pre-filled time
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Don't create new event if we just dragged something
+    if (itemWasDragged) {
+      return;
+    }
+
     const target = e.target as HTMLElement;
     if (target.closest("[data-event-item]") || target.closest("button")) {
       return;
@@ -170,11 +177,19 @@ export function ScheduleTimeline({
       .toString()
       .padStart(2, "0")}`;
 
+    // Calculate end time (1 hour after start)
+    const endMinutes = snappedMinutes + 60;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    const endTimeStr = `${endHours.toString().padStart(2, "0")}:${endMins
+      .toString()
+      .padStart(2, "0")}`;
+
     setFormData({
       title: "",
       date: currentDateStr,
       starts_at: timeStr,
-      ends_at: "",
+      ends_at: endTimeStr,
       location: "",
       notes: "",
     });
@@ -182,6 +197,17 @@ export function ScheduleTimeline({
   };
 
   const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggingItem) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const snappedMinutes = calculateSnappedMinutes(e, rect);
+      const originalStartMinutes = parseTime(draggingItem.time);
+      if (snappedMinutes !== originalStartMinutes) {
+        setItemWasDragged(true);
+      }
+      setHoverPosition(snappedMinutes);
+      return;
+    }
+
     const target = e.target as HTMLElement;
     if (target.closest("[data-event-item]") || target.closest("button")) {
       setHoverPosition(null);
@@ -197,8 +223,88 @@ export function ScheduleTimeline({
     setHoverPosition(null);
   };
 
+  const handleTimelineMouseUp = () => {
+    if (draggingItem && itemWasDragged) {
+      const startMinutes = parseTime(draggingItem.time);
+      const endMinutes = draggingItem.endTime
+        ? parseTime(draggingItem.endTime)
+        : startMinutes + 60;
+      const duration = endMinutes - startMinutes;
+
+      const newStartMinutes = hoverPosition ?? startMinutes;
+      const hours = Math.floor(newStartMinutes / 60);
+      const mins = newStartMinutes % 60;
+      const timeStr = `${hours.toString().padStart(2, "0")}:${mins
+        .toString()
+        .padStart(2, "0")}`;
+
+      const endHours = Math.floor((newStartMinutes + duration) / 60);
+      const endMins = (newStartMinutes + duration) % 60;
+      const endTimeStr = `${endHours.toString().padStart(2, "0")}:${endMins
+        .toString()
+        .padStart(2, "0")}`;
+
+      const startsAt = new Date(
+        `${currentDateStr}T${timeStr}:00`
+      ).toISOString();
+      const endsAt = new Date(
+        `${currentDateStr}T${endTimeStr}:00`
+      ).toISOString();
+
+      onDeleteItem(draggingItem.id).then(() => {
+        onCreateItem({
+          title: draggingItem.title,
+          starts_at: startsAt,
+          ends_at: endsAt,
+          location: draggingItem.location || null,
+          notes: draggingItem.notes || null,
+        });
+      });
+    }
+
+    setDraggingItem(null);
+    setTimeout(() => setItemWasDragged(false), 300);
+  };
+
+  const handleItemMouseDown = (e: React.MouseEvent, item: ScheduleItem) => {
+    e.stopPropagation();
+    setDraggingItem(item);
+  };
+
+  const handleItemClick = (item: ScheduleItem) => {
+    if (itemWasDragged) {
+      return;
+    }
+
+    setEditingItem(item);
+    const startTime = new Date(item.time);
+    const timeStr = `${startTime
+      .getHours()
+      .toString()
+      .padStart(2, "0")}:${startTime.getMinutes().toString().padStart(2, "0")}`;
+
+    let endTimeStr = "";
+    if (item.endTime) {
+      const endTime = new Date(item.endTime);
+      endTimeStr = `${endTime.getHours().toString().padStart(2, "0")}:${endTime
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+    }
+
+    setFormData({
+      title: item.title,
+      date: currentDateStr,
+      starts_at: timeStr,
+      ends_at: endTimeStr,
+      location: item.location || "",
+      notes: item.notes || "",
+    });
+    setIsDialogOpen(true);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
       {/* Header with Date Navigator and Person Selector - Outside card */}
       {currentDate && (
         <div className="space-y-3">
@@ -237,7 +343,9 @@ export function ScheduleTimeline({
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Add Schedule Event</DialogTitle>
+                <DialogTitle>
+                  {editingItem ? "Edit Schedule Event" : "Add Schedule Event"}
+                </DialogTitle>
               </DialogHeader>
 
               <form
@@ -251,6 +359,10 @@ export function ScheduleTimeline({
                         `${formData.date}T${formData.ends_at}:00`
                       ).toISOString()
                     : null;
+
+                  if (editingItem) {
+                    await onDeleteItem(editingItem.id);
+                  }
 
                   await onCreateItem({
                     title: formData.title,
@@ -268,6 +380,7 @@ export function ScheduleTimeline({
                     location: "",
                     notes: "",
                   });
+                  setEditingItem(null);
                   setIsDialogOpen(false);
                 }}
                 className="space-y-3 mt-4"
@@ -360,9 +473,37 @@ export function ScheduleTimeline({
                   />
                 </div>
 
-                <Button type="submit" size="sm" className="w-full">
-                  Add Event
-                </Button>
+                <div className="flex gap-2">
+                  {editingItem && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        if (confirm("Delete this schedule item?")) {
+                          await onDeleteItem(editingItem.id);
+                          setIsDialogOpen(false);
+                          setEditingItem(null);
+                          setFormData({
+                            title: "",
+                            date: currentDateStr,
+                            starts_at: "",
+                            ends_at: "",
+                            location: "",
+                            notes: "",
+                          });
+                        }
+                      }}
+                      className="flex-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Delete
+                    </Button>
+                  )}
+                  <Button type="submit" size="sm" className="flex-1">
+                    {editingItem ? "Save Changes" : "Add Event"}
+                  </Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
@@ -374,12 +515,13 @@ export function ScheduleTimeline({
           onClick={handleTimelineClick}
           onMouseMove={handleTimelineMouseMove}
           onMouseLeave={handleTimelineMouseLeave}
+          onMouseUp={handleTimelineMouseUp}
           style={{
             minHeight: `${(endTime - startTime) * pixelsPerMinute + 32}px`,
           }}
         >
           {/* Hover placeholder */}
-          {hoverPosition !== null && (
+          {hoverPosition !== null && !draggingItem && (
             <div
               className="absolute left-10 right-0 pointer-events-none"
               style={{
@@ -395,6 +537,49 @@ export function ScheduleTimeline({
                     .toString()
                     .padStart(2, "0")}`}{" "}
                   • Click to add event
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Drag preview */}
+          {draggingItem && hoverPosition !== null && (
+            <div
+              className="absolute left-10 right-0 pointer-events-none"
+              style={{
+                top: `${hoverPosition * pixelsPerMinute + 32}px`,
+                height: `${Math.max(
+                  (draggingItem.endTime
+                    ? parseTime(draggingItem.endTime) -
+                      parseTime(draggingItem.time)
+                    : 60) * pixelsPerMinute,
+                  18
+                )}px`,
+              }}
+            >
+              <div className="h-full px-2.5 py-1.5 rounded border border-green-500/60 bg-green-500/20 flex flex-col justify-center">
+                <div className="text-[11px] font-semibold text-green-200 truncate">
+                  {draggingItem.title}
+                </div>
+                <div className="text-[10px] text-green-300/80 mt-0.5 truncate">
+                  {`${Math.floor(hoverPosition / 60)
+                    .toString()
+                    .padStart(2, "0")}:${(hoverPosition % 60)
+                    .toString()
+                    .padStart(2, "0")}`}
+                  {" - "}
+                  {(() => {
+                    const duration = draggingItem.endTime
+                      ? parseTime(draggingItem.endTime) -
+                        parseTime(draggingItem.time)
+                      : 60;
+                    const endMinutes = hoverPosition + duration;
+                    return `${Math.floor(endMinutes / 60)
+                      .toString()
+                      .padStart(2, "0")}:${(endMinutes % 60)
+                      .toString()
+                      .padStart(2, "0")}`;
+                  })()}
                 </div>
               </div>
             </div>
@@ -442,8 +627,12 @@ export function ScheduleTimeline({
               >
                 <div
                   data-event-item
-                  onClick={() => onItemClick(item)}
-                  className="group/item relative h-full px-2.5 py-1.5 rounded border border-neutral-700/50 bg-neutral-800/40 hover:bg-neutral-800/60 hover:border-neutral-600/50 cursor-pointer transition-all flex items-center overflow-hidden"
+                  onClick={() => handleItemClick(item)}
+                  onMouseDown={(e) => handleItemMouseDown(e, item)}
+                  className="group/item relative h-full px-2.5 py-1.5 rounded border border-neutral-700/50 bg-neutral-800/40 hover:bg-neutral-800/60 hover:border-neutral-600/50 cursor-move transition-all flex items-center overflow-hidden"
+                  style={{
+                    opacity: draggingItem?.id === item.id ? 0.3 : 1,
+                  }}
                 >
                   <div className="flex items-start gap-2 w-full min-w-0">
                     <div className="flex-1 min-w-0">
@@ -491,7 +680,7 @@ export function ScheduleTimeline({
                           await onDeleteItem(item.id);
                         }
                       }}
-                      className="opacity-0 group-hover/item:opacity-100 transition-opacity absolute -top-1.5 -right-1.5 h-5 w-5 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
+                      className="opacity-0 group-hover/item:opacity-100 transition-opacity flex-shrink-0 h-5 w-5 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
                     >
                       <Trash2 className="w-2.5 h-2.5" />
                     </Button>
