@@ -153,10 +153,7 @@ export const getVenuesByOrg = cache(async (orgId: string): Promise<Venue[]> => {
   const supabase = await getSupabaseServer();
 
   const { data: venues, error } = await supabase
-    .from("venues")
-    .select("*")
-    .eq("org_id", orgId)
-    .order("name", { ascending: true });
+    .rpc('get_org_venues_with_counts', { p_org_id: orgId });
 
   if (error) {
     logger.error("Error fetching venues", error);

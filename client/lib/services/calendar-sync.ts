@@ -31,40 +31,56 @@ export class CalendarService {
   /**
    * Sync calendar events to schedule_items
    */
-  async syncCalendarEvents(orgId: string, events: CalendarEvent[]) {
+  async syncCalendarEvents(orgId: string, events: CalendarEvent[], syncRunId: string | null = null) {
     try {
-      // Convert calendar events to schedule_items format
+      console.log('[CalendarService] Syncing events', { orgId, eventCount: events.length, syncRunId });
+      
+      // Convert calendar events to the format expected by the RPC
       const scheduleItems = events.map(event => {
         const startsAt = event.start.dateTime || `${event.start.date}T00:00:00Z`
         const endsAt = event.end.dateTime || `${event.end.date}T23:59:59Z`
 
         return {
-          org_id: orgId,
           title: event.summary,
           starts_at: startsAt,
           ends_at: endsAt,
           location: event.location || null,
           notes: event.description || null,
-          show_id: null, // To be matched later if possible
           external_calendar_id: event.id,
         }
       })
 
-      // Insert schedule items (on conflict, update)
-      const { data, error } = await this.supabase
-        .from('schedule_items')
-        .upsert(scheduleItems, {
-          onConflict: 'external_calendar_id',
-          ignoreDuplicates: false,
-        })
-        .select()
+      console.log('[CalendarService] Prepared schedule items', { 
+        count: scheduleItems.length,
+        sample: scheduleItems[0] 
+      });
 
-      if (error) throw error
+      // Use RPC to bypass RLS issues
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (this.supabase as any).rpc('import_calendar_events', {
+        p_org_id: orgId,
+        p_events: scheduleItems,
+        p_sync_run_id: syncRunId
+      })
 
-      return { success: true, data, count: data?.length || 0 }
+      if (error) {
+        console.error('[CalendarService] RPC error', error);
+        throw error
+      }
+
+      const result = data?.[0] || { inserted: 0, updated: 0, total: 0 }
+      console.log('[CalendarService] Sync complete', result);
+
+      return { 
+        success: true, 
+        count: result.total,
+        inserted: result.inserted,
+        updated: result.updated
+      }
     } catch (error: unknown) {
       const err = error as { message?: string }
       logger.error('Error syncing calendar events', err)
+      console.error('[CalendarService] Sync failed', err);
       return {
         success: false,
         error: err.message || 'Failed to sync calendar events',
@@ -189,10 +205,10 @@ export class CalendarService {
   /**
    * Parse iCalendar format and import events
    */
-  async importICalendar(orgId: string, icalContent: string) {
+  async importICalendar(orgId: string, icalContent: string, syncRunId: string | null = null) {
     try {
       const events = this.parseICalendar(icalContent)
-      return await this.syncCalendarEvents(orgId, events)
+      return await this.syncCalendarEvents(orgId, events, syncRunId)
     } catch (error: unknown) {
       const err = error as { message?: string }
       logger.error('Error importing iCalendar', err)

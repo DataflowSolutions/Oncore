@@ -11,6 +11,7 @@ RETURNS TABLE (
   events_processed INTEGER,
   created_at TIMESTAMPTZ,
   source_url TEXT,
+  source_name TEXT,
   source_status TEXT
 )
 LANGUAGE plpgsql
@@ -47,6 +48,7 @@ BEGIN
     csr.events_processed,
     csr.created_at,
     css.source_url,
+    css.source_name,
     css.status as source_status
   FROM public.calendar_sync_runs csr
   INNER JOIN public.calendar_sync_sources css ON css.id = csr.source_id
