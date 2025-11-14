@@ -59,7 +59,9 @@ export type ParsedContract = z.infer<typeof ParsedContractSchema>
 async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
   try {
     // Dynamic import for CommonJS module
-    const pdfParse = (await import('pdf-parse')).default
+    const pdfParseModule = await import('pdf-parse')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfParse = (pdfParseModule as any).default || pdfParseModule
     
     // Convert ArrayBuffer to Buffer for pdf-parse
     const nodeBuffer = Buffer.from(buffer)

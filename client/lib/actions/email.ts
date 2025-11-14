@@ -70,8 +70,8 @@ async function getOrgSlug(
 async function ensureCanManageOrg(
   supabase: Awaited<ReturnType<typeof createClient>>,
   orgId: string,
-  userId: string,
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: membership, error } = await (supabase as any).rpc('get_org_membership', {
     p_org_id: orgId,
   });
@@ -107,7 +107,7 @@ export async function parseEmail(input: z.infer<typeof parseEmailSchema>) {
   const { subject, body, from, orgId } = validation.data;
 
   try {
-    await ensureCanManageOrg(supabase, orgId, session.user.id);
+    await ensureCanManageOrg(supabase, orgId);
   } catch (error) {
     const err = error as Error;
     return { success: false, error: err.message };
@@ -126,6 +126,7 @@ export async function parseEmail(input: z.infer<typeof parseEmailSchema>) {
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: emailId, error: insertError } = await (supabase as any).rpc(
       "insert_parsed_email",
       {
@@ -191,6 +192,7 @@ export async function confirmParsedEmail(
 
   const { emailId, showData, createVenue, venueData } = validation.data;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: parsedEmailData, error: fetchError } = await (supabase as any).rpc(
     "get_parsed_email_by_id",
     { p_email_id: emailId }
@@ -208,7 +210,7 @@ export async function confirmParsedEmail(
   }
 
   try {
-    await ensureCanManageOrg(supabase, parsedEmail.org_id, session.user.id);
+    await ensureCanManageOrg(supabase, parsedEmail.org_id);
   } catch (error) {
     const err = error as Error;
     return { success: false, error: err.message };
@@ -218,6 +220,8 @@ export async function confirmParsedEmail(
   const venueId = showData.venueId ?? null;
   const showDate = showData.date;
 
+  // Create show (app_create_show RPC handles venue creation)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: createdShow, error: showError } = await (supabase as any).rpc(
     "app_create_show",
     {
@@ -244,6 +248,7 @@ export async function confirmParsedEmail(
   const showRecord = createdShow as Database["public"]["Tables"]["shows"]["Row"];
 
   // Update parsed email status using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateError } = await (supabase as any).rpc(
     "update_parsed_email_status",
     {
@@ -302,12 +307,13 @@ export async function rejectParsedEmail(
   const { emailId, orgId, reason } = validation.data;
 
   try {
-    await ensureCanManageOrg(supabase, orgId, session.user.id);
+    await ensureCanManageOrg(supabase, orgId);
   } catch (error) {
     const err = error as Error;
     return { success: false, error: err.message };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: success, error } = await (supabase as any).rpc(
     "update_parsed_email_status",
     {
@@ -339,6 +345,7 @@ export async function rejectParsedEmail(
 export async function getParsedEmails(orgId: string) {
   const supabase = await createClient();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .rpc('get_parsed_emails', { p_org_id: orgId });
 

@@ -11,6 +11,19 @@ type ShowUpdate = Database["public"]["Tables"]["shows"]["Update"];
 type Venue = Database["public"]["Tables"]["venues"]["Row"];
 type Person = Database["public"]["Tables"]["people"]["Row"];
 
+export interface VenueWithCount {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  country: string;
+  capacity: number;
+  org_id: string;
+  created_at: string;
+  updated_at: string;
+  shows_count: number;
+}
+
 export interface ShowWithVenue extends Show {
   venue?: Venue | null;
   show_assignments?: { people: Person | null }[] | null;
@@ -149,7 +162,7 @@ export async function deleteShow(showId: string) {
 }
 
 // Cache venues by org to prevent redundant queries
-export const getVenuesByOrg = cache(async (orgId: string): Promise<Venue[]> => {
+export const getVenuesByOrg = cache(async (orgId: string): Promise<VenueWithCount[]> => {
   const supabase = await getSupabaseServer();
 
   const { data: venues, error } = await supabase

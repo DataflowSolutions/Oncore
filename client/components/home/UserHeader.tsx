@@ -1,7 +1,4 @@
 "use client";
-import { logger } from "@/lib/logger";
-
-import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 

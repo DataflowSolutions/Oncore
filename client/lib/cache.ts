@@ -382,6 +382,7 @@ export const getCachedAvailableSeats = cache(async (orgId: string) => {
 export const getCachedCalendarSources = cache(async (orgId: string) => {
   const supabase = await getSupabaseServer()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .rpc('get_calendar_sync_sources', { p_org_id: orgId })
 
@@ -391,6 +392,7 @@ export const getCachedCalendarSources = cache(async (orgId: string) => {
 export const getCachedCalendarRuns = cache(async (orgId: string) => {
   const supabase = await getSupabaseServer()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .rpc('get_calendar_sync_runs', { p_org_id: orgId })
 

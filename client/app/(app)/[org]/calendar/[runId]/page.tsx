@@ -46,7 +46,15 @@ export default async function SyncRunPage({
             </div>
           ) : (
             <div className="space-y-4">
-              {items.map((item) => (
+              {items.map((item: {
+                id: string;
+                title: string;
+                starts_at: string;
+                ends_at: string | null;
+                location: string | null;
+                notes: string | null;
+                external_calendar_id: string | null;
+              }) => (
                 <div key={item.id} className="rounded-md border p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">

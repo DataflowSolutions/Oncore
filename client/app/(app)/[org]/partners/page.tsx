@@ -19,8 +19,6 @@ export default async function PartnersPage({ params }: PartnersPageProps) {
     logger.error('Failed to fetch organization', { slug: orgSlug, error })
     return <div>Organization not found</div>
   }
-  
-  const org = orgData as { id: string; name: string; slug: string }
 
   // TODO: Get partners/external collaborators from database
   // This could be venues, promoters, suppliers, etc.

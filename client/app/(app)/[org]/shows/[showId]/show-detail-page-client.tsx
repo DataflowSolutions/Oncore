@@ -8,8 +8,6 @@ import Link from "next/link";
 import { ScheduleManager } from "@/components/shows/ScheduleManager";
 import { ShowClient } from "./ShowClient";
 import {
-  EditableTitle,
-  EditableDate,
   EditableTime,
   EditableVenue,
   EditableNotes,

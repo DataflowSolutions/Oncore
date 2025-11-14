@@ -11,7 +11,9 @@ type CalendarSourceRow = Database["public"]["Tables"]["calendar_sync_sources"]["
 type CalendarRunRow = Database["public"]["Tables"]["calendar_sync_runs"]["Row"] & {
   source?: {
     id: string;
-    source_url: string;
+    source_url: string | null;
+    source_name: string | null;
+    status: string;
   } | null;
 };
 

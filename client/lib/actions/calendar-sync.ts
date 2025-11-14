@@ -8,8 +8,6 @@ import { CalendarService } from "@/lib/services/calendar-sync";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-const MANAGER_ROLES = new Set(["owner", "admin", "editor"]);
-
 const createSourceSchema = z.object({
   orgId: z.string().uuid(),
   sourceUrl: z.string().url(),
@@ -36,25 +34,8 @@ const triggerSyncSchema = z.object({
   sourceId: z.string().uuid(),
 });
 
-async function ensureOrgManager(
-  supabase: SupabaseServerClient,
-  orgId: string,
-  userId: string,
-) {
-  const { data: membership, error } = await (supabase as any)
-    .rpc('get_org_membership', { p_org_id: orgId });
-
-  if (error) {
-    logger.error("Failed to verify org membership", error);
-    throw new Error("Unable to verify organization access");
-  }
-
-  if (!membership || !MANAGER_ROLES.has(membership.role)) {
-    throw new Error("You do not have permission to manage calendar sync");
-  }
-}
-
 async function getOrgSlug(supabase: SupabaseServerClient, orgId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .rpc('get_org_by_id', { p_org_id: orgId });
 
@@ -79,7 +60,8 @@ export async function createCalendarSource(input: z.infer<typeof createSourceSch
 
   const { orgId, sourceUrl, syncIntervalMinutes, sourceName } = validation.data;
 
-  const { data: sourceId, error } = await (supabase as any).rpc(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc(
     'create_calendar_sync_source',
     {
       p_org_id: orgId,
@@ -121,6 +103,7 @@ export async function updateCalendarSource(input: z.infer<typeof updateSourceSch
 
   const { orgId, sourceId, status, sourceUrl, syncIntervalMinutes, sourceName } = validation.data;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).rpc(
     'update_calendar_sync_source',
     {
@@ -164,6 +147,7 @@ export async function deleteCalendarSource(input: z.infer<typeof deleteSourceSch
 
   const { orgId, sourceId } = validation.data;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).rpc(
     'delete_calendar_sync_source',
     {
@@ -203,6 +187,7 @@ export async function triggerSync(input: z.infer<typeof triggerSyncSchema>) {
 
   const { orgId, sourceId } = validation.data;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sources, error: sourceError } = await (supabase as any)
     .rpc('get_calendar_sync_source', { 
       p_source_id: sourceId,
@@ -351,6 +336,7 @@ export async function getSyncRunItems(input: { orgId: string; runId: string }) {
   }
 
   // Verify user has access to org
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: membership } = await (supabase as any).rpc('get_org_membership', {
     p_org_id: input.orgId,
   });
@@ -359,6 +345,7 @@ export async function getSyncRunItems(input: { orgId: string; runId: string }) {
     throw new Error("Access denied");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc('get_sync_run_items', {
     p_sync_run_id: input.runId,
   });

@@ -37,8 +37,8 @@ const MEMBER_ROLES = new Set(["owner", "admin", "editor"]);
 async function ensureOrgManager(
   supabase: Awaited<ReturnType<typeof createClient>>,
   orgId: string,
-  userId: string,
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: membership, error } = await (supabase as any).rpc('get_org_membership', {
     p_org_id: orgId,
   });
@@ -151,7 +151,7 @@ export async function parseContract(params: z.infer<typeof parseContractSchema>)
   const { orgId, fileUrl, fileName } = validation.data;
 
   try {
-    await ensureOrgManager(supabase, orgId, session.user.id);
+    await ensureOrgManager(supabase, orgId);
   } catch (error) {
     const err = error as Error;
     return { error: err.message };
@@ -228,7 +228,7 @@ export async function updateParsedContractStatus(
   const { orgId, contractId, status, notes } = validation.data;
 
   try {
-    await ensureOrgManager(supabase, orgId, session.user.id);
+    await ensureOrgManager(supabase, orgId);
   } catch (error) {
     const err = error as Error;
     return { success: false, error: err.message };
@@ -261,6 +261,7 @@ export async function updateParsedContractStatus(
 export async function getParsedContracts(orgId: string) {
   const supabase = await createClient();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .rpc('get_parsed_contracts', { p_org_id: orgId });
 

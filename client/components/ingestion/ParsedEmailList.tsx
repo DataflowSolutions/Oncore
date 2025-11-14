@@ -235,7 +235,8 @@ function ParsedEmailItem({
           venueId: !useNewVenue && venueOption ? venueOption : undefined,
           notes: notes.trim() || undefined,
           fee: fee.trim() || undefined,
-        },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
         createVenue: useNewVenue,
         venueData: useNewVenue
           ? {

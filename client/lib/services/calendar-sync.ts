@@ -56,11 +56,10 @@ export class CalendarService {
       });
 
       // Use RPC to bypass RLS issues
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (this.supabase as any).rpc('import_calendar_events', {
+      const { data, error } = await this.supabase.rpc('import_calendar_events', {
         p_org_id: orgId,
         p_events: scheduleItems,
-        p_sync_run_id: syncRunId
+        p_sync_run_id: syncRunId ?? undefined
       })
 
       if (error) {
