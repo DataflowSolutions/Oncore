@@ -20,6 +20,7 @@ interface CalendarSourceFormProps {
 
 export function CalendarSourceForm({ orgId }: CalendarSourceFormProps) {
   const [sourceUrl, setSourceUrl] = useState("");
+  const [sourceName, setSourceName] = useState("");
   const [interval, setInterval] = useState(60);
   const [isPending, startTransition] = useTransition();
 
@@ -35,6 +36,7 @@ export function CalendarSourceForm({ orgId }: CalendarSourceFormProps) {
       const result = await createCalendarSource({
         orgId,
         sourceUrl: sourceUrl.trim(),
+        sourceName: sourceName.trim() || undefined,
         syncIntervalMinutes: interval,
       });
 
@@ -45,6 +47,7 @@ export function CalendarSourceForm({ orgId }: CalendarSourceFormProps) {
 
       toast.success("Calendar feed added");
       setSourceUrl("");
+      setSourceName("");
       setInterval(60);
     });
   };
@@ -68,6 +71,17 @@ export function CalendarSourceForm({ orgId }: CalendarSourceFormProps) {
               placeholder="https://example.com/calendar.ics"
               type="url"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="calendar-source-name">Calendar name (optional)</Label>
+            <Input
+              id="calendar-source-name"
+              value={sourceName}
+              onChange={(event) => setSourceName(event.target.value)}
+              placeholder="My Agency Calendar"
+              type="text"
             />
           </div>
 

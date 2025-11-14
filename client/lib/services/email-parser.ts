@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // Schema for parsed show details
 export const ParsedShowDetailsSchema = z.object({
@@ -9,9 +10,9 @@ export const ParsedShowDetailsSchema = z.object({
   venue: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  fee: z.string().optional(),
+  state: z.string().nullish(),
+  zip: z.string().nullish(),
+  fee: z.string().nullish(),
   guarantee: z.string().optional(),
   capacity: z.number().optional(),
   doorTime: z.string().optional(),
@@ -37,10 +38,10 @@ export const ParsedVenueDetailsSchema = z.object({
 
 export const ParsedContactSchema = z.object({
   name: z.string().optional(),
-  email: z.string().optional(),
-  phone: z.string().optional(),
-  role: z.string().optional(),
-  company: z.string().optional(),
+  email: z.string().nullish(),
+  phone: z.string().nullish(),
+  role: z.string().nullish(),
+  company: z.string().nullish(),
   confidence: z.number().min(0).max(1).optional(),
 })
 
@@ -49,16 +50,32 @@ export type ParsedVenueDetails = z.infer<typeof ParsedVenueDetailsSchema>
 export type ParsedContact = z.infer<typeof ParsedContactSchema>
 
 /**
- * Extract show details from email text using AI
+ * Helper to call Gemini AI
  */
-export async function extractShowDetails(text: string): Promise<ParsedShowDetails> {
+async function callGemini(prompt: string): Promise<string> {
   const geminiKey = process.env.GEMINI_API_KEY
 
   if (!geminiKey) {
-    logger.warn('Gemini API key not configured, returning empty result')
-    return { confidence: 0 }
+    throw new Error('Gemini API key not configured')
   }
 
+  const genAI = new GoogleGenerativeAI(geminiKey)
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.0-flash',
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: 'application/json'
+    }
+  })
+
+  const result = await model.generateContent(prompt)
+  return result.response.text()
+}
+
+/**
+ * Extract show details from email text using AI
+ */
+export async function extractShowDetails(text: string): Promise<ParsedShowDetails> {
   try {
     const prompt = `You are an expert at extracting show and event details from emails and documents. 
 Extract structured information about shows, performances, or events. Return ONLY a valid JSON object with the following fields:
@@ -84,37 +101,11 @@ Only include fields you find in the text. Be conservative with confidence scores
 Text to analyze:
 ${text}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'application/json'
-        }
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!content) {
-      return { confidence: 0 }
-    }
-
+    const content = await callGemini(prompt)
     const parsed = JSON.parse(content)
-    return ParsedShowDetailsSchema.parse(parsed)
+    // Handle if Gemini returns an array instead of object
+    const showData = Array.isArray(parsed) ? parsed[0] : parsed
+    return ParsedShowDetailsSchema.parse(showData || { confidence: 0 })
 
   } catch (error) {
     logger.error('Error extracting show details', error)
@@ -126,13 +117,6 @@ ${text}`
  * Extract venue details from email text using AI
  */
 export async function extractVenueDetails(text: string): Promise<ParsedVenueDetails> {
-  const geminiKey = process.env.GEMINI_API_KEY
-
-  if (!geminiKey) {
-    logger.warn('Gemini API key not configured, returning empty result')
-    return { confidence: 0 }
-  }
-
   try {
     const prompt = `You are an expert at extracting venue information from emails and documents.
 Extract structured venue information. Return ONLY a valid JSON object with these fields:
@@ -153,37 +137,11 @@ Only include fields you find in the text.
 Text to analyze:
 ${text}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'application/json'
-        }
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!content) {
-      return { confidence: 0 }
-    }
-
+    const content = await callGemini(prompt)
     const parsed = JSON.parse(content)
-    return ParsedVenueDetailsSchema.parse(parsed)
+    // Handle if Gemini returns an array instead of object
+    const venueData = Array.isArray(parsed) ? parsed[0] : parsed
+    return ParsedVenueDetailsSchema.parse(venueData || { confidence: 0 })
 
   } catch (error) {
     logger.error('Error extracting venue details', error)
@@ -195,13 +153,6 @@ ${text}`
  * Extract contact information from email text using AI
  */
 export async function extractContactDetails(text: string): Promise<ParsedContact[]> {
-  const geminiKey = process.env.GEMINI_API_KEY
-
-  if (!geminiKey) {
-    logger.warn('Gemini API key not configured, returning empty result')
-    return []
-  }
-
   try {
     const prompt = `You are an expert at extracting contact information from emails and documents.
 Extract all contacts mentioned. Return ONLY a valid JSON object with a "contacts" array containing objects with these fields:
@@ -218,35 +169,7 @@ Only include contacts you find in the text.
 Text to analyze:
 ${text}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'application/json'
-        }
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!content) {
-      return []
-    }
-
+    const content = await callGemini(prompt)
     const parsed = JSON.parse(content)
     const contacts = parsed.contacts || []
     

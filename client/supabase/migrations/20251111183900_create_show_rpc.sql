@@ -65,10 +65,19 @@ BEGIN
   IF p_venue_id IS NOT NULL THEN
     v_final_venue_id := p_venue_id;
   ELSIF p_venue_name IS NOT NULL AND p_venue_city IS NOT NULL THEN
-    -- Create new venue
-    INSERT INTO venues (name, city, address, org_id)
-    VALUES (p_venue_name, p_venue_city, p_venue_address, p_org_id)
-    RETURNING id INTO v_final_venue_id;
+    -- Check if venue already exists (case-insensitive name and city match)
+    SELECT id INTO v_final_venue_id
+    FROM venues
+    WHERE org_id = p_org_id
+      AND LOWER(name) = LOWER(p_venue_name)
+      AND LOWER(city) = LOWER(p_venue_city);
+    
+    -- Create new venue only if it doesn't exist
+    IF v_final_venue_id IS NULL THEN
+      INSERT INTO venues (name, city, address, org_id)
+      VALUES (p_venue_name, p_venue_city, p_venue_address, p_org_id)
+      RETURNING id INTO v_final_venue_id;
+    END IF;
   END IF;
 
   -- Create the show

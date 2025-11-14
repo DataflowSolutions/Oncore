@@ -105,12 +105,21 @@ function CalendarSourceCard({
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <CardTitle className="text-base font-semibold">{source.source_url}</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            {source.source_name || source.source_url}
+          </CardTitle>
+          {source.source_name && (
+            <div className="text-xs text-muted-foreground">
+              {source.source_url}
+            </div>
+          )}
           <div className="text-xs text-muted-foreground">
             Sync every {source.sync_interval_minutes} minutes • Last synced {lastSyncedLabel}
           </div>
-          {source.last_error ? (
+          {source.last_error && !source.last_error.includes("Successfully") ? (
             <div className="text-xs text-destructive">Last error: {source.last_error}</div>
+          ) : source.last_error && source.last_error.includes("Successfully") ? (
+            <div className="text-xs text-green-600">{source.last_error}</div>
           ) : null}
         </div>
         <Badge variant={source.status === "active" ? "secondary" : "outline"}>

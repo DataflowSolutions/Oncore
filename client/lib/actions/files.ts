@@ -39,15 +39,12 @@ async function ensureOrgManager(
   orgId: string,
   userId: string,
 ) {
-  const { data: membership, error } = await supabase
-    .from("org_members")
-    .select("role")
-    .eq("org_id", orgId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: membership, error } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: orgId,
+  });
 
   if (error) {
-    logger.error("Error verifying org membership", error);
+    logger.error("Error checking org membership", error);
     throw new Error("Unable to verify organization access");
   }
 

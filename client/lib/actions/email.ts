@@ -72,12 +72,9 @@ async function ensureCanManageOrg(
   orgId: string,
   userId: string,
 ) {
-  const { data: membership, error } = await supabase
-    .from("org_members")
-    .select("role")
-    .eq("org_id", orgId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: membership, error } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: orgId,
+  });
 
   if (error) {
     logger.error("Error checking org membership", error);
@@ -129,21 +126,20 @@ export async function parseEmail(input: z.infer<typeof parseEmailSchema>) {
   }
 
   try {
-    const { data: record, error: insertError } = await supabase
-      .from("parsed_emails")
-      .insert({
-        org_id: orgId,
-        subject,
-        from_email: from ?? null,
-        raw_content: body,
-        parsed_data: parsed ?? null,
-        status: parseError ? "failed" : "pending_review",
-        confidence: parsed?.showDetails?.confidence ?? null,
-        created_by: session.user.id,
-        error: parseError,
-      })
-      .select("id")
-      .single();
+    const { data: emailId, error: insertError } = await (supabase as any).rpc(
+      "insert_parsed_email",
+      {
+        p_org_id: orgId,
+        p_subject: subject,
+        p_from_email: from ?? null,
+        p_raw_content: body,
+        p_parsed_data: parsed ?? null,
+        p_status: parseError ? "failed" : "pending_review",
+        p_confidence: parsed?.showDetails?.confidence ?? null,
+        p_created_by: session.user.id,
+        p_error: parseError,
+      }
+    );
 
     if (insertError) {
       logger.error("Failed to store parsed email", insertError);
@@ -162,7 +158,7 @@ export async function parseEmail(input: z.infer<typeof parseEmailSchema>) {
     return {
       success: true,
       data: {
-        emailId: record.id,
+        emailId: emailId,
         parsed,
       },
     };
@@ -195,16 +191,17 @@ export async function confirmParsedEmail(
 
   const { emailId, showData, createVenue, venueData } = validation.data;
 
-  const { data: parsedEmail, error: fetchError } = await supabase
-    .from("parsed_emails")
-    .select("org_id, status")
-    .eq("id", emailId)
-    .single();
+  const { data: parsedEmailData, error: fetchError } = await (supabase as any).rpc(
+    "get_parsed_email_by_id",
+    { p_email_id: emailId }
+  );
 
-  if (fetchError || !parsedEmail) {
+  if (fetchError || !parsedEmailData || parsedEmailData.length === 0) {
     logger.error("Parsed email lookup failed", fetchError);
     return { success: false, error: "Parsed email not found" };
   }
+
+  const parsedEmail = parsedEmailData[0];
 
   if (parsedEmail.status !== "pending_review") {
     return { success: false, error: "This email has already been reviewed" };
@@ -217,33 +214,8 @@ export async function confirmParsedEmail(
     return { success: false, error: err.message };
   }
 
-  let venueId = showData.venueId ?? null;
-
-  if (!venueId && createVenue && venueData) {
-    const { data: newVenue, error: venueError } = await supabase
-      .from("venues")
-      .insert({
-        org_id: parsedEmail.org_id,
-        name: venueData.name,
-        address: venueData.address ?? null,
-        city: venueData.city ?? null,
-        state: venueData.state ?? null,
-        capacity: venueData.capacity ?? null,
-      })
-      .select("id")
-      .single();
-
-    if (venueError) {
-      logger.error("Failed to create venue from parsed email", venueError);
-      return {
-        success: false,
-        error: venueError.message || "Failed to create venue",
-      };
-    }
-
-    venueId = newVenue?.id ?? null;
-  }
-
+  // app_create_show RPC will handle venue creation if needed
+  const venueId = showData.venueId ?? null;
   const showDate = showData.date;
 
   const { data: createdShow, error: showError } = await (supabase as any).rpc(
@@ -253,9 +225,9 @@ export async function confirmParsedEmail(
       p_title: showData.title,
       p_date: showDate,
       p_venue_id: venueId,
-      p_venue_name: venueId ? null : venueData?.name ?? null,
-      p_venue_city: venueId ? null : venueData?.city ?? null,
-      p_venue_address: venueId ? null : venueData?.address ?? null,
+      p_venue_name: venueId ? null : (createVenue && venueData?.name) ?? null,
+      p_venue_city: venueId ? null : (createVenue && venueData?.city) ?? null,
+      p_venue_address: venueId ? null : (createVenue && venueData?.address) ?? null,
       p_set_time: null,
       p_notes: showData.notes ?? null,
     },
@@ -271,17 +243,22 @@ export async function confirmParsedEmail(
 
   const showRecord = createdShow as Database["public"]["Tables"]["shows"]["Row"];
 
-  const updatePayload: Partial<ParsedEmailRow> = {
-    status: "confirmed",
-    reviewed_at: new Date().toISOString(),
-    reviewed_by: session.user.id,
-    show_id: showRecord.id,
-  };
+  // Update parsed email status using RPC
+  const { error: updateError } = await (supabase as any).rpc(
+    "update_parsed_email_status",
+    {
+      p_email_id: emailId,
+      p_org_id: parsedEmail.org_id,
+      p_status: "confirmed",
+      p_reviewed_by: session.user.id,
+      p_error: null,
+      p_show_id: showRecord.id,
+    }
+  );
 
-  const { error: updateError } = await supabase
-    .from("parsed_emails")
-    .update(updatePayload)
-    .eq("id", emailId);
+  if (updateError) {
+    logger.error("Failed to update parsed email status", updateError);
+  }
 
   if (updateError) {
     logger.error("Failed to update parsed email status", updateError);
@@ -331,20 +308,24 @@ export async function rejectParsedEmail(
     return { success: false, error: err.message };
   }
 
-  const { error } = await supabase
-    .from("parsed_emails")
-    .update({
-      status: "rejected",
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: session.user.id,
-      error: reason ?? null,
-    })
-    .eq("id", emailId)
-    .eq("org_id", orgId);
+  const { data: success, error } = await (supabase as any).rpc(
+    "update_parsed_email_status",
+    {
+      p_email_id: emailId,
+      p_org_id: orgId,
+      p_status: "rejected",
+      p_reviewed_by: session.user.id,
+      p_error: reason ?? null,
+    }
+  );
 
   if (error) {
     logger.error("Failed to reject parsed email", error);
     return { success: false, error: error.message };
+  }
+
+  if (!success) {
+    return { success: false, error: "Email not found or already processed" };
   }
 
   const slug = await getOrgSlug(supabase, orgId);

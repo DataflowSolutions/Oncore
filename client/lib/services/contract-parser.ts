@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export const ParsedContractSchema = z.object({
   // Show Details
@@ -52,17 +53,30 @@ export const ParsedContractSchema = z.object({
 export type ParsedContract = z.infer<typeof ParsedContractSchema>
 
 /**
- * Extract text from PDF buffer (placeholder - requires pdf-parse or similar)
- * @param buffer - PDF file buffer (currently unused, placeholder for future implementation)
+ * Extract text from PDF buffer using pdf-parse
+ * @param buffer - PDF file buffer
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
-  // This is a placeholder. In production, you would use a library like pdf-parse
-  // or call a service that can extract text from PDFs
-  
-  // For now, return empty string with a note
-  logger.warn('PDF text extraction not implemented. Install pdf-parse or use a service.')
-  return ''
+  try {
+    // Dynamic import for CommonJS module
+    const pdfParse = (await import('pdf-parse')).default
+    
+    // Convert ArrayBuffer to Buffer for pdf-parse
+    const nodeBuffer = Buffer.from(buffer)
+    
+    // Parse PDF and extract text
+    const data = await pdfParse(nodeBuffer)
+    
+    logger.info('PDF text extracted successfully', { 
+      pages: data.numpages,
+      textLength: data.text.length 
+    })
+    
+    return data.text
+  } catch (error) {
+    logger.error('Failed to extract text from PDF', error)
+    throw new Error('Failed to extract text from PDF')
+  }
 }
 
 /**
@@ -77,6 +91,15 @@ export async function parseContractText(text: string): Promise<ParsedContract> {
   }
 
   try {
+    const genAI = new GoogleGenerativeAI(geminiKey)
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.0-flash',
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json'
+      }
+    })
+
     const prompt = `You are an expert at extracting information from performance contracts and venue agreements.
 Extract all relevant information from the contract. Return ONLY a valid JSON object with these fields:
 
@@ -132,30 +155,9 @@ Only include fields found in the contract. Be thorough and accurate.
 Contract text to analyze:
 ${text}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json'
-        }
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+    const result = await model.generateContent(prompt)
+    const response = result.response
+    const content = response.text()
 
     if (!content) {
       return { confidence: 0 }
