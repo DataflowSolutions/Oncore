@@ -13,8 +13,8 @@ const contacts = [
 
 export function ContactsPanel() {
   return (
-    <div className="bg-card border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">
+    <div className="bg-card border border-card-border rounded-[20px] p-6">
+      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
         {/* <Users className="w-4 h-4 text-green-400" /> */}
         Key Contacts
       </h3>

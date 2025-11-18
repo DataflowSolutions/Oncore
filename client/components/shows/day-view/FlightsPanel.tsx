@@ -31,8 +31,8 @@ export function FlightsPanel({
   getLocalDateStr,
 }: FlightsPanelProps) {
   return (
-    <div className="bg-card border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">
+    <div className="bg-card border border-card-border rounded-[20px] p-6">
+      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
         {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
         Flights
       </h3>
@@ -113,7 +113,7 @@ export function FlightsPanel({
           })}
         </div>
       ) : (
-        <div className="bg-card-cell rounded-lg p-4">
+        <div>
           <p className="text-sm text-neutral-400">
             {selectedPeopleIds.length === 0
               ? "Select people above to view flight information"

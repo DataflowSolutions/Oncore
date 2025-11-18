@@ -55,12 +55,14 @@ export function HotelPanel({
     })
     .filter(Boolean);
 
-  // Show empty state only if no data at all
-  if (hotelData.length === 0 && !promoterAccommodation) {
-    return (
-      <div className="bg-card border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">Hotel</h3>
-        <div className="bg-card-cell rounded-lg p-4">
+  return (
+    <div className="bg-card border border-card-border rounded-[20px] p-6">
+      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
+        Hotel
+      </h3>
+
+      {hotelData.length === 0 && !promoterAccommodation ? (
+        <div>
           <p className="text-sm text-neutral-400">
             No hotel information available
           </p>
@@ -68,56 +70,54 @@ export function HotelPanel({
             Hotel details will be shown here
           </p>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-card border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">Hotel</h3>
-      <div className="space-y-3">
-        {/* Show promoter general accommodation info if available */}
-        {promoterAccommodation && (
-          <div className="bg-card-cell rounded-lg p-4">
-            <div className="text-sm text-neutral-300 whitespace-pre-wrap">
-              {promoterAccommodation}
+      ) : (
+        <div className="space-y-3">
+          {/* Show promoter general accommodation info if available */}
+          {promoterAccommodation && (
+            <div>
+              <div className="text-sm text-neutral-300 whitespace-pre-wrap">
+                {promoterAccommodation}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Show per-person hotel data */}
-        {hotelData.map((hotel, idx) => (
-          <div key={idx} className="bg-neutral-800/50 rounded-lg p-4">
-            <div className="font-medium text-sm mb-2">{hotel!.personName}</div>
-            {hotel!.hotelName && (
-              <div className="text-sm text-neutral-300 mb-2">
-                {hotel!.hotelName}
+          {/* Show per-person hotel data */}
+          {hotelData.map((hotel, idx) => (
+            <div key={idx} className="bg-neutral-800/50 rounded-lg p-4">
+              <div className="font-medium text-sm mb-2">
+                {hotel!.personName}
               </div>
-            )}
-            {(hotel!.checkIn || hotel!.checkOut) && (
-              <div className="flex items-center gap-1 text-xs text-neutral-400 mb-1">
-                <Calendar className="w-3 h-3" />
-                {hotel!.checkIn && (
-                  <span>
-                    Check-in: {new Date(hotel!.checkIn).toLocaleDateString()}
-                  </span>
-                )}
-                {hotel!.checkIn && hotel!.checkOut && (
-                  <span className="mx-1">•</span>
-                )}
-                {hotel!.checkOut && (
-                  <span>
-                    Check-out: {new Date(hotel!.checkOut).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            )}
-            {hotel!.address && (
-              <div className="text-xs text-neutral-500">{hotel!.address}</div>
-            )}
-          </div>
-        ))}
-      </div>
+              {hotel!.hotelName && (
+                <div className="text-sm text-neutral-300 mb-2">
+                  {hotel!.hotelName}
+                </div>
+              )}
+              {(hotel!.checkIn || hotel!.checkOut) && (
+                <div className="flex items-center gap-1 text-xs text-neutral-400 mb-1">
+                  <Calendar className="w-3 h-3" />
+                  {hotel!.checkIn && (
+                    <span>
+                      Check-in: {new Date(hotel!.checkIn).toLocaleDateString()}
+                    </span>
+                  )}
+                  {hotel!.checkIn && hotel!.checkOut && (
+                    <span className="mx-1">•</span>
+                  )}
+                  {hotel!.checkOut && (
+                    <span>
+                      Check-out:{" "}
+                      {new Date(hotel!.checkOut).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              )}
+              {hotel!.address && (
+                <div className="text-xs text-neutral-500">{hotel!.address}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -289,29 +289,36 @@ export function CalendarDayView({
         </div>
 
         {/* RIGHT COLUMNS: Info Panels */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <HotelPanel
-            advancingFields={advancingFields}
-            assignedPeople={assignedPeople}
-          />
-          <DocumentsPanel
-            documents={documents}
-            assignedPeople={assignedPeople}
-            orgSlug={orgSlug}
-            sessionId={advancingSessionId || ""}
-          />
-          <CateringPanel advancingFields={advancingFields} />
-          <ContactsPanel />
-          <FlightsPanel
-            selectedPeopleIds={selectedPeopleIds}
-            advancingData={advancingData}
-            currentDateStr={currentDateStr}
-            getLocalDateStr={getLocalDateStr}
-          />
-          <TransportationPanel
-            advancingFields={advancingFields}
-            assignedPeople={assignedPeople}
-          />
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <HotelPanel
+              advancingFields={advancingFields}
+              assignedPeople={assignedPeople}
+            />
+            <CateringPanel advancingFields={advancingFields} />
+            <FlightsPanel
+              selectedPeopleIds={selectedPeopleIds}
+              advancingData={advancingData}
+              currentDateStr={currentDateStr}
+              getLocalDateStr={getLocalDateStr}
+            />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <ContactsPanel />
+            <DocumentsPanel
+              documents={documents}
+              assignedPeople={assignedPeople}
+              orgSlug={orgSlug}
+              sessionId={advancingSessionId || ""}
+            />
+            <TransportationPanel
+              advancingFields={advancingFields}
+              assignedPeople={assignedPeople}
+            />
+          </div>
         </div>
       </div>
 

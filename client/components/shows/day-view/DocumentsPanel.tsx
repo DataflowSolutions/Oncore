@@ -301,8 +301,8 @@ export function DocumentsPanel({
 
   return (
     <>
-      <div className="bg-card border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-card border border-card-border rounded-[20px] p-6">
+        <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
           Documents
         </h3>
         <div className="space-y-2">

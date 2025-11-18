@@ -302,7 +302,7 @@ export function ScheduleTimeline({
       )}
 
       {/* Timeline Section - Inside card */}
-      <div className="bg-card border border-card-border rounded-lg p-5 space-y-3">
+      <div className="bg-card border border-card-border rounded-[20px] p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-medium text-card-foreground font-header">
             Schedule

@@ -29,17 +29,18 @@ export function CateringPanel({ advancingFields }: CateringPanelProps) {
     (f) => f.field_name === "promoter_catering"
   )?.value as string | undefined;
 
-  if (
-    !company &&
-    !serviceTime &&
-    !menuNotes &&
-    !guestCount &&
-    !promoterCateringInfo
-  ) {
-    return (
-      <div className="bg-card border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">Catering</h3>
-        <div className="bg-card-cell rounded-lg p-4">
+  return (
+    <div className="bg-card border border-card-border rounded-[20px] p-6">
+      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
+        Catering
+      </h3>
+
+      {!company &&
+      !serviceTime &&
+      !menuNotes &&
+      !guestCount &&
+      !promoterCateringInfo ? (
+        <div>
           <p className="text-sm text-neutral-400">
             No catering information available
           </p>
@@ -47,43 +48,38 @@ export function CateringPanel({ advancingFields }: CateringPanelProps) {
             Catering details will be shown here
           </p>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-card border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">Catering</h3>
-      <div className="bg-card-cell rounded-lg p-4 space-y-3">
-        {promoterCateringInfo && (
-          <div className="text-sm text-neutral-300 whitespace-pre-wrap">
-            {promoterCateringInfo}
-          </div>
-        )}
-        {company && !promoterCateringInfo && (
-          <div>
-            <div className="text-sm font-medium text-neutral-300">
-              {company}
+      ) : (
+        <div>
+          {promoterCateringInfo && (
+            <div className="text-sm text-neutral-300 whitespace-pre-wrap">
+              {promoterCateringInfo}
             </div>
-          </div>
-        )}
-        {serviceTime && (
-          <div className="flex items-center gap-2 text-sm text-neutral-400">
-            <Clock className="w-3 h-3" />
-            <span>Service time: {serviceTime}</span>
-          </div>
-        )}
-        {guestCount && (
-          <div className="text-sm text-neutral-400">
-            Guest count: {guestCount}
-          </div>
-        )}
-        {menuNotes && (
-          <div className="text-xs text-neutral-500 mt-2 pt-2 border-t border-neutral-700">
-            {menuNotes}
-          </div>
-        )}
-      </div>
+          )}
+          {company && !promoterCateringInfo && (
+            <div>
+              <div className="text-sm font-medium text-neutral-300">
+                {company}
+              </div>
+            </div>
+          )}
+          {serviceTime && (
+            <div className="flex items-center gap-2 text-sm text-neutral-400">
+              <Clock className="w-3 h-3" />
+              <span>Service time: {serviceTime}</span>
+            </div>
+          )}
+          {guestCount && (
+            <div className="text-sm text-neutral-400">
+              Guest count: {guestCount}
+            </div>
+          )}
+          {menuNotes && (
+            <div className="text-xs text-neutral-500 mt-2 pt-2 border-t border-neutral-700">
+              {menuNotes}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
