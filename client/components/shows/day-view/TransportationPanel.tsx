@@ -34,7 +34,7 @@ export function TransportationPanel({
   if (promoterTransfersField) {
     try {
       // Value is already a JSON object from JSONB, no need to parse
-      if (typeof promoterTransfersField === 'string') {
+      if (typeof promoterTransfersField === "string") {
         promoterTransfers = JSON.parse(promoterTransfersField);
       } else if (Array.isArray(promoterTransfersField)) {
         promoterTransfers = promoterTransfersField as Array<{
@@ -87,11 +87,11 @@ export function TransportationPanel({
 
   if (transportData.length === 0 && promoterTransfers.length === 0) {
     return (
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+      <div className="bg-card border border-neutral-800 rounded-lg p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           Transportation
         </h3>
-        <div className="bg-neutral-800/50 rounded-lg p-4">
+        <div className="bg-card-cell rounded-lg p-4">
           <p className="text-sm text-neutral-400">
             No transportation scheduled
           </p>
@@ -104,7 +104,7 @@ export function TransportationPanel({
   }
 
   return (
-    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+    <div className="bg-card border border-neutral-800 rounded-lg p-6">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         Transportation
       </h3>
@@ -113,7 +113,7 @@ export function TransportationPanel({
         {promoterTransfers.map((transfer, idx) => (
           <div
             key={`promoter-${transfer.id}`}
-            className="bg-neutral-800/50 rounded-lg p-4"
+            className="bg-card-cell rounded-lg p-4"
           >
             <div className="font-medium text-sm mb-2">Transfer {idx + 1}</div>
             <div className="space-y-1">

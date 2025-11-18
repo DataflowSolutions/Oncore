@@ -31,7 +31,7 @@ export function FlightsPanel({
   getLocalDateStr,
 }: FlightsPanelProps) {
   return (
-    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+    <div className="bg-card border border-neutral-800 rounded-lg p-6">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
         Flights
@@ -113,7 +113,7 @@ export function FlightsPanel({
           })}
         </div>
       ) : (
-        <div className="bg-neutral-800/50 rounded-lg p-4">
+        <div className="bg-card-cell rounded-lg p-4">
           <p className="text-sm text-neutral-400">
             {selectedPeopleIds.length === 0
               ? "Select people above to view flight information"

@@ -58,9 +58,9 @@ export function HotelPanel({
   // Show empty state only if no data at all
   if (hotelData.length === 0 && !promoterAccommodation) {
     return (
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+      <div className="bg-card border border-neutral-800 rounded-lg p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">Hotel</h3>
-        <div className="bg-neutral-800/50 rounded-lg p-4">
+        <div className="bg-card-cell rounded-lg p-4">
           <p className="text-sm text-neutral-400">
             No hotel information available
           </p>
@@ -73,12 +73,12 @@ export function HotelPanel({
   }
 
   return (
-    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+    <div className="bg-card border border-neutral-800 rounded-lg p-6">
       <h3 className="font-semibold mb-4 flex items-center gap-2">Hotel</h3>
       <div className="space-y-3">
         {/* Show promoter general accommodation info if available */}
         {promoterAccommodation && (
-          <div className="bg-neutral-800/50 rounded-lg p-4">
+          <div className="bg-card-cell rounded-lg p-4">
             <div className="text-sm text-neutral-300 whitespace-pre-wrap">
               {promoterAccommodation}
             </div>

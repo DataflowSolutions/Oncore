@@ -301,7 +301,7 @@ export function DocumentsPanel({
 
   return (
     <>
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+      <div className="bg-card border border-neutral-800 rounded-lg p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           Documents
         </h3>
@@ -309,7 +309,7 @@ export function DocumentsPanel({
           {categoryCounts.map((category) => (
             <div
               key={category.value}
-              className="flex items-center justify-between p-3 bg-neutral-800/50 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 bg-card-cell hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
               onClick={() => {
                 setSelectedCategory(category.value);
                 setIsModalOpen(true);

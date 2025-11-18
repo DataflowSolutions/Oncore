@@ -29,12 +29,12 @@ const tabs = [
     href: (orgSlug: string, showId: string) =>
       `/${orgSlug}/shows/${showId}/team`,
   },
-  {
-    name: "Advancing",
-    icon: FileText,
-    href: (orgSlug: string, showId: string) =>
-      `/${orgSlug}/shows/${showId}/advancing`,
-  },
+  // {
+  //   name: "Advancing",
+  //   icon: FileText,
+  //   href: (orgSlug: string, showId: string) =>
+  //     `/${orgSlug}/shows/${showId}/advancing`,
+  // },
 ];
 
 export function ShowTabs({ orgSlug, showId }: ShowTabsProps) {

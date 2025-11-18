@@ -139,7 +139,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
       <aside
         className={`
           fixed top-0 left-0 z-40 h-screen w-64
-          border-r border-border bg-card
+          border-r border-sidebar-border bg-sidebar-bg
           transition-transform duration-200 ease-in-out
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0

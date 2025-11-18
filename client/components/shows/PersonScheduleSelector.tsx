@@ -88,36 +88,6 @@ export function PersonScheduleSelector({
           ))}
         </div>
       )}
-
-      {/* Add person selector */}
-      {availableToAdd.length > 0 && (
-        <Select onValueChange={handleAddPerson}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder="+ Filter by person" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableToAdd.map((person) => (
-              <SelectItem key={person.id} value={person.id} className="text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{person.name}</span>
-                  {person.duty && (
-                    <span className="text-[10px] text-neutral-500">
-                      ({person.duty})
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {availableToAdd.length === 0 && availablePeople.length > 0 && (
-        <span className="text-[10px] text-neutral-600">
-          All team members selected
-        </span>
-      )}
-
       {availablePeople.length === 0 && (
         <span className="text-[10px] text-neutral-600">
           No team members available.{" "}

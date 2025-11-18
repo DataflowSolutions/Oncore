@@ -1,25 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DateNavigator } from "../DateNavigator";
 import { PersonScheduleSelector } from "../PersonScheduleSelector";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  //   Plane,
-  //   PlaneLanding,
-  //   MapPin,
-  //   Music,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { TimelineHoverPlaceholder } from "./TimelineHoverPlaceholder";
+import { TimelineDragPreview } from "./TimelineDragPreview";
+import { TimelineIntervals } from "./TimelineIntervals";
+import { ScheduleEventItem } from "./ScheduleEventItem";
+import { ScheduleEventDialog } from "./ScheduleEventDialog";
 
 interface ScheduleItem {
   id: string;
@@ -305,213 +293,88 @@ export function ScheduleTimeline({
 
   return (
     <div className="space-y-4 select-none">
-      {/* Header with Date Navigator and Person Selector - Outside card */}
-      {currentDate && (
-        <div className="space-y-3">
-          {/* Date Navigator */}
-          <DateNavigator
-            currentDate={currentDate}
-            datesWithEvents={datesWithEvents}
-          />
-
-          {/* Person Selector - only show if there are people */}
-          {availablePeople.length > 0 && (
-            <PersonScheduleSelector
-              availablePeople={availablePeople}
-              selectedPeopleIds={selectedPeopleIds}
-            />
-          )}
-        </div>
+      {/* Person Selector - Outside card */}
+      {currentDate && availablePeople.length > 0 && (
+        <PersonScheduleSelector
+          availablePeople={availablePeople}
+          selectedPeopleIds={selectedPeopleIds}
+        />
       )}
 
       {/* Timeline Section - Inside card */}
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4 space-y-3">
+      <div className="bg-card border border-card-border rounded-lg p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-neutral-400">
-            {scheduleItems.length === 0
-              ? "No events today"
-              : `${scheduleItems.length} event${
-                  scheduleItems.length === 1 ? "" : "s"
-                } scheduled`}
+          <h3 className="text-xl font-medium text-card-foreground font-header">
+            Schedule
           </h3>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add Event
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Edit Schedule Event" : "Add Schedule Event"}
-                </DialogTitle>
-              </DialogHeader>
+          <ScheduleEventDialog
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            editingItem={editingItem}
+            formData={formData}
+            onFormDataChange={setFormData}
+            onSubmit={async () => {
+              const startsAt = new Date(
+                `${formData.date}T${formData.starts_at}:00`
+              ).toISOString();
+              const endsAt = formData.ends_at
+                ? new Date(
+                    `${formData.date}T${formData.ends_at}:00`
+                  ).toISOString()
+                : null;
 
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const startsAt = new Date(
-                    `${formData.date}T${formData.starts_at}:00`
-                  ).toISOString();
-                  const endsAt = formData.ends_at
-                    ? new Date(
-                        `${formData.date}T${formData.ends_at}:00`
-                      ).toISOString()
-                    : null;
+              if (editingItem) {
+                await onDeleteItem(editingItem.id);
+              }
 
-                  if (editingItem) {
-                    await onDeleteItem(editingItem.id);
-                  }
+              await onCreateItem({
+                title: formData.title,
+                starts_at: startsAt,
+                ends_at: endsAt,
+                location: formData.location || null,
+                notes: formData.notes || null,
+              });
 
-                  await onCreateItem({
-                    title: formData.title,
-                    starts_at: startsAt,
-                    ends_at: endsAt,
-                    location: formData.location || null,
-                    notes: formData.notes || null,
-                  });
-
-                  setFormData({
-                    title: "",
-                    date: currentDateStr,
-                    starts_at: "",
-                    ends_at: "",
-                    location: "",
-                    notes: "",
-                  });
-                  setEditingItem(null);
-                  setIsDialogOpen(false);
-                }}
-                className="space-y-3 mt-4"
-              >
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-neutral-400">
-                    Title
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                    placeholder="e.g., Sound Check, Load In"
-                    className="h-9 text-sm"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-neutral-400">
-                    Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, date: e.target.value }))
-                    }
-                    className="h-9 text-sm"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-neutral-400">
-                      Start Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.starts_at}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          starts_at: e.target.value,
-                        }))
-                      }
-                      className="h-9 text-sm"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-neutral-400">
-                      End Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.ends_at}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          ends_at: e.target.value,
-                        }))
-                      }
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-neutral-400">
-                    Location
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        location: e.target.value,
-                      }))
-                    }
-                    placeholder="e.g., Main Stage, Green Room"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  {editingItem && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={async () => {
-                        if (confirm("Delete this schedule item?")) {
-                          await onDeleteItem(editingItem.id);
-                          setIsDialogOpen(false);
-                          setEditingItem(null);
-                          setFormData({
-                            title: "",
-                            date: currentDateStr,
-                            starts_at: "",
-                            ends_at: "",
-                            location: "",
-                            notes: "",
-                          });
-                        }
-                      }}
-                      className="flex-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                      Delete
-                    </Button>
-                  )}
-                  <Button type="submit" size="sm" className="flex-1">
-                    {editingItem ? "Save Changes" : "Add Event"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+              setFormData({
+                title: "",
+                date: currentDateStr,
+                starts_at: "",
+                ends_at: "",
+                location: "",
+                notes: "",
+              });
+              setEditingItem(null);
+              setIsDialogOpen(false);
+            }}
+            onDelete={async (itemId) => {
+              await onDeleteItem(itemId);
+              setIsDialogOpen(false);
+              setEditingItem(null);
+              setFormData({
+                title: "",
+                date: currentDateStr,
+                starts_at: "",
+                ends_at: "",
+                location: "",
+                notes: "",
+              });
+            }}
+          />
         </div>
+
+        {/* Date Navigator */}
+        {currentDate && (
+          <div className="flex items-center justify-between">
+            <DateNavigator
+              currentDate={currentDate}
+              datesWithEvents={datesWithEvents}
+            />
+          </div>
+        )}
 
         {/* Timeline View */}
         <div
-          className="relative bg-neutral-950/30 rounded-lg border border-neutral-800/50 py-8 px-4 cursor-crosshair"
+          className="relative rounded-lg cursor-crosshair"
           onClick={handleTimelineClick}
           onMouseMove={handleTimelineMouseMove}
           onMouseLeave={handleTimelineMouseLeave}
@@ -522,85 +385,27 @@ export function ScheduleTimeline({
         >
           {/* Hover placeholder */}
           {hoverPosition !== null && !draggingItem && (
-            <div
-              className="absolute left-10 right-0 pointer-events-none"
-              style={{
-                top: `${hoverPosition * pixelsPerMinute + 32}px`,
-                height: "30px",
-              }}
-            >
-              <div className="h-full px-2.5 py-1.5 rounded border border-dashed border-neutral-600/50 bg-neutral-700/20 flex items-center">
-                <div className="text-[10px] text-neutral-500 font-mono">
-                  {`${Math.floor(hoverPosition / 60)
-                    .toString()
-                    .padStart(2, "0")}:${(hoverPosition % 60)
-                    .toString()
-                    .padStart(2, "0")}`}{" "}
-                  • Click to add event
-                </div>
-              </div>
-            </div>
+            <TimelineHoverPlaceholder
+              hoverPosition={hoverPosition}
+              pixelsPerMinute={pixelsPerMinute}
+            />
           )}
 
           {/* Drag preview */}
           {draggingItem && hoverPosition !== null && (
-            <div
-              className="absolute left-10 right-0 pointer-events-none"
-              style={{
-                top: `${hoverPosition * pixelsPerMinute + 32}px`,
-                height: `${Math.max(
-                  (draggingItem.endTime
-                    ? parseTime(draggingItem.endTime) -
-                      parseTime(draggingItem.time)
-                    : 60) * pixelsPerMinute,
-                  18
-                )}px`,
-              }}
-            >
-              <div className="h-full px-2.5 py-1.5 rounded border border-green-500/60 bg-green-500/20 flex flex-col justify-center">
-                <div className="text-[11px] font-semibold text-green-200 truncate">
-                  {draggingItem.title}
-                </div>
-                <div className="text-[10px] text-green-300/80 mt-0.5 truncate">
-                  {`${Math.floor(hoverPosition / 60)
-                    .toString()
-                    .padStart(2, "0")}:${(hoverPosition % 60)
-                    .toString()
-                    .padStart(2, "0")}`}
-                  {" - "}
-                  {(() => {
-                    const duration = draggingItem.endTime
-                      ? parseTime(draggingItem.endTime) -
-                        parseTime(draggingItem.time)
-                      : 60;
-                    const endMinutes = hoverPosition + duration;
-                    return `${Math.floor(endMinutes / 60)
-                      .toString()
-                      .padStart(2, "0")}:${(endMinutes % 60)
-                      .toString()
-                      .padStart(2, "0")}`;
-                  })()}
-                </div>
-              </div>
-            </div>
+            <TimelineDragPreview
+              draggingItem={draggingItem}
+              hoverPosition={hoverPosition}
+              pixelsPerMinute={pixelsPerMinute}
+              parseTime={parseTime}
+            />
           )}
           {/* Time intervals */}
-          {intervals.map((interval, idx) => {
-            const topPosition =
-              (interval.time - startTime) * pixelsPerMinute + 32;
-            return (
-              <div
-                key={idx}
-                className="absolute left-0 right-0 flex items-center px-2"
-                style={{ top: `${topPosition}px`, height: "1px" }}
-              >
-                <span className="text-[10px] text-neutral-600 w-10 flex-shrink-0 font-mono">
-                  {interval.label}
-                </span>
-                <div className="flex-1 border-t border-neutral-800/50" />
-              </div>
-            );
-          })}
+          <TimelineIntervals
+            intervals={intervals}
+            startTime={startTime}
+            pixelsPerMinute={pixelsPerMinute}
+          />
 
           {/* Activity boxes */}
           {scheduleItems.map((item) => {
@@ -613,80 +418,17 @@ export function ScheduleTimeline({
               (startMinutes - startTime) * pixelsPerMinute + 32;
             const height = duration * pixelsPerMinute;
 
-            const showFullDetails = height > 35;
-            const showTimeDetails = height > 20;
-
             return (
-              <div
+              <ScheduleEventItem
                 key={item.id}
-                className="absolute left-10 right-0"
-                style={{
-                  top: `${topPosition}px`,
-                  height: `${Math.max(height, 18)}px`,
-                }}
-              >
-                <div
-                  data-event-item
-                  onClick={() => handleItemClick(item)}
-                  onMouseDown={(e) => handleItemMouseDown(e, item)}
-                  className="group/item relative h-full px-2.5 py-1.5 rounded border border-neutral-700/50 bg-neutral-800/40 hover:bg-neutral-800/60 hover:border-neutral-600/50 cursor-move transition-all flex items-center overflow-hidden"
-                  style={{
-                    opacity: draggingItem?.id === item.id ? 0.3 : 1,
-                  }}
-                >
-                  <div className="flex items-start gap-2 w-full min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-semibold leading-tight truncate text-neutral-200">
-                        {item.title}
-                      </div>
-                      {showTimeDetails && (
-                        <div className="text-[10px] text-neutral-500 mt-0.5 truncate">
-                          {new Date(item.time).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}
-                          {item.endTime && (
-                            <>
-                              {" - "}
-                              {new Date(item.endTime).toLocaleTimeString(
-                                "en-US",
-                                {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                }
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
-                      {showFullDetails && item.personName && (
-                        <div className="text-[10px] text-neutral-500 mt-0.5 truncate">
-                          {item.personName}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Delete button */}
-                  {item.type === "schedule" && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (confirm("Delete this schedule item?")) {
-                          await onDeleteItem(item.id);
-                        }
-                      }}
-                      className="opacity-0 group-hover/item:opacity-100 transition-opacity flex-shrink-0 h-5 w-5 p-0 bg-red-500/90 hover:bg-red-600 text-white rounded-full"
-                    >
-                      <Trash2 className="w-2.5 h-2.5" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+                item={item}
+                topPosition={topPosition}
+                height={height}
+                isDragging={draggingItem?.id === item.id}
+                onMouseDown={handleItemMouseDown}
+                onClick={handleItemClick}
+                onDelete={onDeleteItem}
+              />
             );
           })}
         </div>

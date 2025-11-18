@@ -2,12 +2,53 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-dimmed-background: var(--dimmed-background);
   --color-foreground: var(--foreground);
+  --color-description-foreground: var(--description-foreground);
+
+  /* CARD */
   --color-card: var(--card);
-  --color-card-foreground: var(--foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-card-border: var(--card-border);
+
+  --color-card-cell: var(--card-cell);
+  --color-card-cell-border: var(--card-cell-border);
+  --color-card-foreground: var(--card-foreground);
+
+  /* SIDEBAR */
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+
+  /* BUTTON */
+  --color-button-bg: var(--button-bg);
+  --color-button-border: var(--button-border);
+  --color-button-bg-hover: var(--button-bg-hover);
+
+  /* SEARCH */
+  --color-search-bg: var(--search-bg);
+  --color-search-border: var(--search-border);
+  --color-search-placeholder: var(--search-placeholder);
+
+  /* TABS */
+  --color-tab-bg: var(--tab-bg);
+  --color-tab-border: var(--tab-border);
+  --color-tab-text: var(--tab-text);
+
+  --color-tab-bg-active: var(--tab-bg-active);
+  --color-tab-border-active: var(--tab-border-active);
+
+  /* SCHEDULE */
+  --color-schedule-event-bg: var(--schedule-event-bg);
+  --color-schedule-event-bg-hover: var(--schedule-event-bg-hover);
+  --color-schedule-event-border: var(--schedule-event-border);
+  --color-schedule-event-foreground: var(--schedule-event-foreground);
+  --color-schedule-event-bg-hover: var(--schedule-event-bg-hover);
+
+  --color-timestamp: var(--timestamp);
+  --color-timestamp-divider: var(--timestamp-divider);
+
+  /* REST */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -18,17 +59,60 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
   --radius: 0.5rem;
 }
 
+/* All colors */
 :root {
   /* Light theme */
   --background: #ffffff;
+  --dimmed-background: rgba(255, 255, 255, 0.6);
   --foreground: #0a0a0a;
+  --description-foreground: #737373;
+
+  /* CARD */
   --card: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.07);
+
+  --card-cell: #f5f5f5;
+  --card-cell-border: rgba(0, 0, 0, 0.05);
   --card-foreground: #0a0a0a;
+
+  /* SIDEBAR */
+  --sidebar-bg: #fafafa;
+  --sidebar-border: rgba(0, 0, 0, 0.1);
+
+  /* BUTTON */
+  --button-bg: #0a0a0a;
+  --button-border: rgba(200, 200, 200, 0.75);
+  --button-bg-hover: #262626;
+
+  /* SEARCH */
+  --search-bg: #f5f5f5;
+  --search-border: rgba(0, 0, 0, 0.1);
+  --search-placeholder: #737373;
+
+  /* TABS */
+  --tab-bg: #f5f5f5;
+  --tab-border: rgba(0, 0, 0, 0.1);
+  --tab-text: #0a0a0a;
+
+  --tab-bg-active: #e5e5e5;
+  --tab-border-active: rgba(0, 0, 0, 0.1);
+
+  /* SCHEDULE */
+  --schedule-event-bg: #262626;
+  --schedule-event-border: rgba(0, 0, 0, 0.05);
+  --schedule-event-foreground: #fafafa;
+
+  --timestamp: #737373;
+  --timestamp-divider: #d4d4d4;
+
+  /* REST */
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
   --primary: #171717;
@@ -44,19 +128,56 @@
   --border: #e5e5e5;
   --input: #e5e5e5;
   --ring: #171717;
-  --tab-bg: #f5f5f5;
-}
-
-.font-header {
-  font-family: var(--font-header);
 }
 
 .dark {
   /* Dark theme - using neutral colors */
-  --background: #080808;
-  --foreground: #f2f2f2;
-  --card: #141414;
+  --background: rgb(0, 0, 0);
+  --dimmed-background: rgba(0, 0, 0, 0.6);
+  --foreground: rgb(240, 240, 240);
+  --description-foreground: rgb(175, 175, 175);
+
+  /* CARD */
+  --card: rgb(50, 50, 50);
+  --card-border: rgba(255, 255, 255, 0.07);
+
+  --card-cell: #1e1e1e;
+  --card-cell-border: rgba(255, 255, 255, 0.05);
   --card-foreground: #f2f2f2;
+
+  /* SIDEBAR */
+  --sidebar-bg: #0a0a0a;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+
+  /* BUTTON */
+  --button-bg: rgb(240, 240, 240);
+  --button-border: rgba(75, 75, 75, 0.75);
+  --button-bg-hover: rgb(200, 200, 200);
+
+  /* SEARCH */
+  --search-bg: rgb(40, 40, 40);
+  --search-border: rgba(255, 255, 255, 0.1);
+  --search-placeholder: rgb(175, 175, 175);
+
+  /* TABS */
+  --tab-bg: rgb(40, 40, 40);
+  --tab-border: rgba(255, 255, 255, 0.1);
+  --tab-text: rgb(240, 240, 240);
+
+  --tab-bg-active: rgb(75, 75, 75);
+  --tab-border-active: rgba(255, 255, 255, 0.1);
+
+  /* SCHEDULE */
+  --schedule-event-bg: rgb(210, 210, 210);
+  --schedule-event-bg-hover: rgb(157, 157, 157);
+  --schedule-event-border: rgba(255, 255, 255, 0.05);
+  --schedule-event-foreground: rgb(20, 20, 20);
+  --schedule-event-bg-hover: rgb(10, 10, 10);
+
+  --timestamp: rgb(175, 175, 175);
+  --timestamp-divider: rgb(75, 75, 75);
+
+  /* REST */
   --popover: #141414;
   --popover-foreground: #f2f2f2;
   --primary: #f2f2f2;
@@ -69,10 +190,12 @@
   --accent-foreground: #f2f2f2;
   --destructive: #ef4444;
   --destructive-foreground: #f2f2f2;
-  --border: #262626;
   --input: #262626;
   --ring: #525252;
-  --tab-bg: #262626;
+}
+
+.font-header {
+  font-family: var(--font-header);
 }
 
 @layer base {
