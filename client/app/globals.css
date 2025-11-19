@@ -46,6 +46,12 @@
   --color-timestamp: var(--timestamp);
   --color-timestamp-divider: var(--timestamp-divider);
 
+  /* BADGES */
+  --color-badge-bg: var(--badge-bg);
+  --color-badge-text: var(--badge-text);
+  --color-badge-pending-bg: var(--badge-pending-bg);
+  --color-badge-pending-text: var(--badge-pending-text);
+
   /* REST */
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -177,6 +183,12 @@
   --timestamp: rgb(175, 175, 175);
   --timestamp-divider: rgb(75, 75, 75);
 
+  /* BADGES */
+  --badge-bg: var(--card);
+  --badge-text: var(--card-foreground);
+
+  --badge-pending-bg: rgba(255, 255, 255, 0.5);
+  --badge-pending-text: #171717;
   /* REST */
   --popover: #141414;
   --popover-foreground: #f2f2f2;

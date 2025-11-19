@@ -1,6 +1,9 @@
 "use client";
 
 import { Clock, MapPin } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Popup } from "@/components/ui/popup";
 
 interface TransportationPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -19,6 +22,7 @@ export function TransportationPanel({
   advancingFields,
   assignedPeople,
 }: TransportationPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
   // Check for promoter transfers (JSON array)
   const promoterTransfersField = advancingFields.find(
     (f) => f.field_name === "promoter_transfers"
@@ -87,9 +91,17 @@ export function TransportationPanel({
 
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
-      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
-        Transportation
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-medium text-card-foreground font-header">
+          Transportation
+        </h3>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="text-button-bg hover:text-button-bg-hover cursor-pointer"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+      </div>
 
       {transportData.length === 0 && promoterTransfers.length === 0 ? (
         <div>
@@ -171,6 +183,9 @@ export function TransportationPanel({
           ))}
         </div>
       )}
+      <Popup title="Transportation" open={isOpen} onOpenChange={setIsOpen}>
+        <div>Placeholder content for Transportation</div>
+      </Popup>
     </div>
   );
 }

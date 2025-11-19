@@ -1,6 +1,11 @@
 "use client";
 
 import { Plane, PlaneLanding } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Popup } from "@/components/ui/popup";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface FlightsPanelProps {
   selectedPeopleIds: string[];
@@ -30,12 +35,34 @@ export function FlightsPanel({
   currentDateStr,
   getLocalDateStr,
 }: FlightsPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [airlineName, setAirlineName] = useState("");
+  const [bookingRef, setBookingRef] = useState("");
+  const [ticketNumber, setTicketNumber] = useState("");
+  const [aircraftModel, setAircraftModel] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [departureAirportCode, setDepartureAirportCode] = useState("");
+  const [departureAirportCity, setDepartureAirportCity] = useState("");
+  const [departureTime, setDepartureTime] = useState("");
+  const [arrivalAirportCode, setArrivalAirportCode] = useState("");
+  const [arrivalAirportCity, setArrivalAirportCity] = useState("");
+  const [arrivalTime, setArrivalTime] = useState("");
+  const [seatNumber, setSeatNumber] = useState("");
+  const [travelClass, setTravelClass] = useState("");
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
-      <h3 className="text-xl font-medium text-card-foreground font-header mb-4">
-        {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
-        Flights
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-medium text-card-foreground font-header">
+          {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
+          Flights
+        </h3>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="text-button-bg hover:text-button-bg-hover cursor-pointer"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+      </div>
 
       {advancingData && selectedPeopleIds.length > 0 ? (
         <div className="space-y-3">
@@ -121,6 +148,204 @@ export function FlightsPanel({
           </p>
         </div>
       )}
+      <Popup
+        title="Flights"
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className="sm:max-w-[720px]"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            // Handle add flight logic here
+            setIsOpen(false);
+          }}
+          className="space-y-6"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Airline Name
+              </label>
+              <Input
+                type="text"
+                value={airlineName}
+                onChange={(e) => setAirlineName(e.target.value)}
+                placeholder="Enter airline name"
+                className="bg-card-cell! border-card-cell-border"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Booking Reference
+              </label>
+              <Input
+                type="text"
+                value={bookingRef}
+                onChange={(e) => setBookingRef(e.target.value)}
+                placeholder="Enter booking reference"
+                className="bg-card-cell! border-card-cell-border"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Ticket Number
+              </label>
+              <Input
+                type="text"
+                value={ticketNumber}
+                onChange={(e) => setTicketNumber(e.target.value)}
+                placeholder="Enter ticket number"
+                className="bg-card-cell! border-card-cell-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Aircraft Model
+              </label>
+              <Input
+                type="text"
+                value={aircraftModel}
+                onChange={(e) => setAircraftModel(e.target.value)}
+                placeholder="e.g. Boeing 737"
+                className="bg-card-cell! border-card-cell-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Travel Class
+              </label>
+              <Input
+                type="text"
+                value={travelClass}
+                onChange={(e) => setTravelClass(e.target.value)}
+                placeholder="e.g. Economy"
+                className="bg-card-cell! border-card-cell-border"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Passenger Full Name
+            </label>
+            <Input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Enter passenger full name"
+              className="bg-card-cell! border-card-cell-border"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-foreground">Departure</h4>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Airport Code
+                </label>
+                <Input
+                  type="text"
+                  value={departureAirportCode}
+                  onChange={(e) => setDepartureAirportCode(e.target.value)}
+                  placeholder="e.g. JFK"
+                  className="bg-card-cell! border-card-cell-border"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  City
+                </label>
+                <Input
+                  type="text"
+                  value={departureAirportCity}
+                  onChange={(e) => setDepartureAirportCity(e.target.value)}
+                  placeholder="e.g. New York"
+                  className="bg-card-cell! border-card-cell-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Time
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={departureTime}
+                  onChange={(e) => setDepartureTime(e.target.value)}
+                  className="bg-card-cell! border-card-cell-border"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-foreground">Arrival</h4>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Airport Code
+                </label>
+                <Input
+                  type="text"
+                  value={arrivalAirportCode}
+                  onChange={(e) => setArrivalAirportCode(e.target.value)}
+                  placeholder="e.g. LAX"
+                  className="bg-card-cell! border-card-cell-border"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  City
+                </label>
+                <Input
+                  type="text"
+                  value={arrivalAirportCity}
+                  onChange={(e) => setArrivalAirportCity(e.target.value)}
+                  placeholder="e.g. Los Angeles"
+                  className="bg-card-cell! border-card-cell-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Time
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={arrivalTime}
+                  onChange={(e) => setArrivalTime(e.target.value)}
+                  className="bg-card-cell! border-card-cell-border"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Seat Number
+            </label>
+            <Input
+              type="text"
+              value={seatNumber}
+              onChange={(e) => setSeatNumber(e.target.value)}
+              placeholder="e.g. 12A"
+              className="bg-card-cell! border-card-cell-border"
+            />
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button type="submit" size="sm">
+              Add Flight
+            </Button>
+          </div>
+        </form>
+      </Popup>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface PopupProps {
   title: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -29,7 +29,7 @@ export function Popup({
 }: PopupProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogPortal>
         <DialogPrimitive.Overlay
           className={cn(
