@@ -1,13 +1,6 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,15 +25,6 @@ export function PersonScheduleSelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleAddPerson = (personId: string) => {
-    if (selectedPeopleIds.includes(personId)) return;
-
-    const newSelectedIds = [...selectedPeopleIds, personId];
-    const params = new URLSearchParams(searchParams);
-    params.set("people", newSelectedIds.join(","));
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
   const handleRemovePerson = (personId: string) => {
     const newSelectedIds = selectedPeopleIds.filter((id) => id !== personId);
     const params = new URLSearchParams(searchParams);
@@ -56,10 +40,6 @@ export function PersonScheduleSelector({
 
   const selectedPeople = availablePeople.filter((p) =>
     selectedPeopleIds.includes(p.id)
-  );
-
-  const availableToAdd = availablePeople.filter(
-    (p) => !selectedPeopleIds.includes(p.id)
   );
 
   return (
