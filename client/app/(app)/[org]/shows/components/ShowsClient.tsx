@@ -51,7 +51,7 @@ export default function ShowsClient({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <div className="">
           <ShowsSearchbar value={searchQuery} onChange={setSearchQuery} />
         </div>

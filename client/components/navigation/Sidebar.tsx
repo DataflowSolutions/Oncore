@@ -21,12 +21,11 @@ import { queryKeys } from "@/lib/query-keys";
 
 interface SidebarProps {
   orgSlug: string;
-  userRole: string;
 }
 
 const STORAGE_KEY = "oncore_last_show";
 
-export function Sidebar({ orgSlug, userRole }: SidebarProps) {
+export function Sidebar({ orgSlug }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [lastShowId, setLastShowId] = useState<string | null>(null);
@@ -221,14 +220,6 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
               );
             })}
           </nav>
-
-          {/* Footer */}
-          <div className="border-t border-border p-4">
-            <div className="text-xs text-muted-foreground">
-              Role:{" "}
-              <span className="font-medium text-foreground">{userRole}</span>
-            </div>
-          </div>
         </div>
       </aside>
     </>

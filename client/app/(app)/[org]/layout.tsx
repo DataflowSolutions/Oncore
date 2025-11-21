@@ -71,7 +71,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
       {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
       {/* Simple Sidebar with prefetching */}
-      <Sidebar orgSlug={resolvedParams.org} userRole={membership.role} />
+      <Sidebar orgSlug={resolvedParams.org} />
 
       {/* Main Content Area */}
       <div className="lg:ml-64 min-h-screen">

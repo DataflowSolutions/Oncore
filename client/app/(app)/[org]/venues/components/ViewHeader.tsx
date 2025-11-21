@@ -14,7 +14,7 @@ export default function ViewHeader({
 }: ViewHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-10 gap-20">
-      <div className="flex items-center gap-3 w-full">
+      <div className="flex items-center gap-4 w-full">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <input

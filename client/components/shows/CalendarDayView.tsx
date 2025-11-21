@@ -295,6 +295,9 @@ export function CalendarDayView({
             <HotelPanel
               advancingFields={advancingFields}
               assignedPeople={assignedPeople}
+              orgSlug={orgSlug}
+              sessionId={advancingSessionId || ""}
+              showId={showId}
             />
             <CateringPanel advancingFields={advancingFields} />
             <FlightsPanel

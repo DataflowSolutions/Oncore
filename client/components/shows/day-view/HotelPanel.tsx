@@ -1,11 +1,14 @@
 "use client";
 
-import { Calendar } from "lucide-react";
+import { Calendar, Phone, Mail } from "lucide-react";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createAdvancingField } from "@/lib/actions/advancing";
+import { logger } from "@/lib/logger";
+import Link from "next/link";
 
 interface HotelPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -18,11 +21,17 @@ interface HotelPanelProps {
       member_type: string | null;
     } | null;
   }>;
+  orgSlug: string;
+  sessionId: string;
+  showId: string;
 }
 
 export function HotelPanel({
   advancingFields,
   assignedPeople,
+  orgSlug,
+  sessionId,
+  showId, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: HotelPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hotelName, setHotelName] = useState("");
@@ -34,6 +43,8 @@ export function HotelPanel({
   const [notes, setNotes] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const addBookingRef = () => {
     setBookingRefs([...bookingRefs, ""]);
@@ -54,6 +65,23 @@ export function HotelPanel({
   const promoterAccommodation = advancingFields.find(
     (f) => f.field_name === "promoter_accommodation"
   )?.value as string | undefined;
+
+  // Extract general hotel information from single JSON field
+  const hotelField = advancingFields.find((f) => f.field_name === "hotel");
+
+  const hotelInfo = hotelField?.value as
+    | {
+        name?: string;
+        address?: string;
+        city?: string;
+        checkIn?: string;
+        checkOut?: string;
+        bookingRefs?: string[];
+        notes?: string;
+        phone?: string;
+        email?: string;
+      }
+    | undefined;
 
   // Extract hotel information for assigned people (artist-specific)
   const hotelData = assignedPeople
@@ -100,7 +128,7 @@ export function HotelPanel({
         </button>
       </div>
 
-      {hotelData.length === 0 && !promoterAccommodation ? (
+      {hotelData.length === 0 && !promoterAccommodation && !hotelInfo ? (
         <div>
           <p className="text-sm text-neutral-400">
             No hotel information available
@@ -110,7 +138,104 @@ export function HotelPanel({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Show general hotel info if available */}
+          {hotelInfo && (
+            <div
+              className="flex flex-col gap-4 cursor-pointer hover:opacity-50 transition-opacity"
+              onClick={() => setIsDetailsOpen(true)}
+            >
+              {/* Hotel Name centered */}
+
+              {/* Check-in and Check-out in two columns */}
+              {(hotelInfo.checkIn || hotelInfo.checkOut) && (
+                <div className="flex gap-4 justify-between">
+                  {/* Check-in */}
+                  <div className="text-left">
+                    <div className="text-sm text-description-foreground font-bold mb-1">
+                      <span>Check-in</span>
+                    </div>
+                    {hotelInfo.checkIn && (
+                      <>
+                        <div className="text-base text-description-foreground">
+                          <span>
+                            {" "}
+                            {new Date(hotelInfo.checkIn).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-base text-description-foreground">
+                          <span>
+                            {" "}
+                            {new Date(hotelInfo.checkIn).toLocaleTimeString(
+                              "en-GB",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-px bg-neutral-700"></div>
+                  </div>
+
+                  {/* Check-out */}
+                  <div className="text-right -ml-4">
+                    <div className="text-sm text-description-foreground font-bold mb-1">
+                      <span>Check-out</span>
+                    </div>
+                    {hotelInfo.checkOut && (
+                      <>
+                        <div className="text-base text-description-foreground">
+                          <span>
+                            {new Date(hotelInfo.checkOut).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-base text-description-foreground">
+                          <span>
+                            {new Date(hotelInfo.checkOut).toLocaleTimeString(
+                              "en-GB",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              {hotelInfo.name && (
+                <div className="text-center text-lg font-header text-card-foreground">
+                  {hotelInfo.name}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Show promoter general accommodation info if available */}
           {promoterAccommodation && (
             <div>
@@ -164,21 +289,64 @@ export function HotelPanel({
         className="sm:max-w-[720px]"
       >
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // Handle add hotel logic here
-            console.log("Adding hotel:", {
-              hotelName,
-              address,
-              city,
-              checkIn,
-              checkOut,
-              bookingRefs,
-              notes,
-              phone,
-              email,
-            });
-            setIsOpen(false);
+
+            if (!sessionId) {
+              logger.error("No advancing session found");
+              return;
+            }
+
+            setIsSaving(true);
+
+            try {
+              // Save all hotel data as a single JSON object
+              const hotelData = {
+                name: hotelName,
+                address,
+                city,
+                checkIn,
+                checkOut,
+                bookingRefs: bookingRefs.filter((ref) => ref.trim()),
+                notes,
+                phone,
+                email,
+              };
+
+              const result = await createAdvancingField(orgSlug, sessionId, {
+                section: "hotel",
+                fieldName: "hotel",
+                fieldType: "json",
+                partyType: "from_you",
+                value: hotelData,
+              });
+
+              if (!result.success) {
+                logger.error("Failed to save hotel data", {
+                  error: result.error,
+                });
+                throw new Error(result.error || "Failed to save hotel data");
+              }
+
+              // Reset form
+              setHotelName("");
+              setAddress("");
+              setCity("");
+              setCheckIn("");
+              setCheckOut("");
+              setBookingRefs([""]);
+              setNotes("");
+              setPhone("");
+              setEmail("");
+              setIsOpen(false);
+
+              // Reload the page to show updated data
+              window.location.reload();
+            } catch (error) {
+              logger.error("Error saving hotel data", error);
+            } finally {
+              setIsSaving(false);
+            }
           }}
           className="space-y-6"
         >
@@ -329,11 +497,187 @@ export function HotelPanel({
           </div>
 
           <div className="flex gap-2 justify-end">
-            <Button type="submit" size="sm">
-              Add Hotel
+            <Button type="submit" size="sm" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Add Hotel"}
             </Button>
           </div>
         </form>
+      </Popup>
+
+      {/* Hotel Details Popup */}
+      <Popup
+        title="Hotel"
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        className="sm:max-w-[540px]"
+      >
+        <div className="space-y-6">
+          {/* Hotel Name */}
+          {hotelInfo?.name && (
+            <div>
+              <h3 className="text-xl font-header text-card-foreground mb-1">
+                {hotelInfo.name}
+              </h3>
+              {(hotelInfo.address || hotelInfo.city) && (
+                <div className="flex flex-col">
+                  <p className="text-sm text-description-foreground">
+                    {hotelInfo.address}
+                  </p>
+                  <p className="text-sm text-description-foreground">
+                    {hotelInfo.city}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Check-in and Check-out */}
+          {(hotelInfo?.checkIn || hotelInfo?.checkOut) && (
+            <div className="bg-card-cell rounded-lg p-4">
+              <div className="flex justify-between">
+                {/* Check-in */}
+                <div className="flex flex-col gap-1">
+                  <div className="text-sm text-description-foreground font-header">
+                    Check-in
+                  </div>
+                  <div className="flex flex-col">
+                    {hotelInfo.checkIn && (
+                      <>
+                        <div className="text-base text-card-foreground">
+                          {new Date(hotelInfo.checkIn).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )}
+                        </div>
+                        <div className="text-base text-card-foreground">
+                          {new Date(hotelInfo.checkIn).toLocaleTimeString(
+                            "en-GB",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            }
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute left-0 top-0 bottom-0 w-px bg-neutral-700"></div>
+                </div>
+
+                {/* Check-out */}
+                <div className="-ml-4 flex flex-col gap-1">
+                  <div className="text-sm text-description-foreground font-header text-end">
+                    Check-out
+                  </div>
+                  <div className="flex flex-col">
+                    {" "}
+                    {hotelInfo.checkOut && (
+                      <>
+                        <div className="text-base text-card-foreground text-end">
+                          {new Date(hotelInfo.checkOut).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )}
+                        </div>
+                        <div className="text-base text-card-foreground text-end">
+                          {new Date(hotelInfo.checkOut).toLocaleTimeString(
+                            "en-GB",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            }
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Booking References */}
+          {hotelInfo?.bookingRefs && hotelInfo.bookingRefs.length > 0 && (
+            <div>
+              <h4 className="text-sm font-header text-card-foreground mb-2">
+                Booking Reference
+              </h4>
+              <div className="space-y-1">
+                {hotelInfo.bookingRefs.map((ref, idx) => (
+                  <p key={idx} className="text-sm text-description-foreground">
+                    {ref}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {hotelInfo?.notes && (
+            <div>
+              <h4 className="text-sm font-header text-card-foreground mb-2">
+                Notes
+              </h4>
+              <p className="text-sm text-description-foreground whitespace-pre-wrap">
+                {hotelInfo.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Contact Information */}
+          {(hotelInfo?.phone || hotelInfo?.email) && (
+            <div className="space-y-3 pt-4 border-t border-neutral-800">
+              {hotelInfo.phone && (
+                <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
+                  <span className="text-sm text-card-foreground">
+                    {hotelInfo.phone}
+                  </span>
+                  <Link
+                    className="bg-button-bg-contact border border-button-border-contact rounded-full flex items-center justify-center size-7"
+                    title={`Call ${hotelInfo.phone}`}
+                    href={`tel:${hotelInfo.phone}`}
+                  >
+                    <Phone
+                      size={16}
+                      className="inline-block text-card-foreground hover:text-neutral-400 cursor-pointer"
+                    />
+                  </Link>
+                </div>
+              )}
+              {hotelInfo.email && (
+                <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
+                  <span className="text-sm text-card-foreground">
+                    {hotelInfo.email}
+                  </span>
+                  <Link
+                    title={`Email ${hotelInfo.email}`}
+                    href={`mailto:${hotelInfo.email}`}
+                    className="bg-button-bg-contact border border-button-border-contact rounded-full flex items-center justify-center size-7"
+                  >
+                    <Mail
+                      size={16}
+                      className="inline-block text-card-foreground hover:text-neutral-400 cursor-pointer"
+                    />
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </Popup>
     </div>
   );

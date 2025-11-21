@@ -246,7 +246,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
       <div className="flex flex-col gap-4">
         {/* Title and Main Navigation */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-6 items-center">
+          <div className="flex gap-4 items-center">
             <h2 className="text-xl font-header truncate">
               {dayViewDate
                 ? dayViewDate.toLocaleDateString("en-US", {
