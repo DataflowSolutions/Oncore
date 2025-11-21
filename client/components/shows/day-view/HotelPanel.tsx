@@ -7,6 +7,7 @@ import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createAdvancingField } from "@/lib/actions/advancing";
+import { createScheduleItem } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
 import Link from "next/link";
 
@@ -31,7 +32,7 @@ export function HotelPanel({
   assignedPeople,
   orgSlug,
   sessionId,
-  showId, // eslint-disable-line @typescript-eslint/no-unused-vars
+  showId,
 }: HotelPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hotelName, setHotelName] = useState("");
@@ -326,6 +327,45 @@ export function HotelPanel({
                   error: result.error,
                 });
                 throw new Error(result.error || "Failed to save hotel data");
+              }
+
+              // Create schedule items for check-in and check-out
+              if (checkIn) {
+                const checkInDate = new Date(checkIn);
+                const checkInEnd = new Date(checkInDate.getTime() + 15 * 60000); // Add 15 minutes
+
+                await createScheduleItem(orgSlug, showId, {
+                  title: `Hotel Check-in - ${hotelName}`,
+                  starts_at: checkIn,
+                  ends_at: checkInEnd.toISOString(),
+                  location:
+                    address && city
+                      ? `${address}, ${city}`
+                      : address || city || hotelName,
+                  notes: `Check-in at ${hotelName}`,
+                  item_type: "hotel",
+                  auto_generated: true,
+                });
+              }
+
+              if (checkOut) {
+                const checkOutDate = new Date(checkOut);
+                const checkOutEnd = new Date(
+                  checkOutDate.getTime() + 15 * 60000
+                ); // Add 15 minutes
+
+                await createScheduleItem(orgSlug, showId, {
+                  title: `Hotel Check-out - ${hotelName}`,
+                  starts_at: checkOut,
+                  ends_at: checkOutEnd.toISOString(),
+                  location:
+                    address && city
+                      ? `${address}, ${city}`
+                      : address || city || hotelName,
+                  notes: `Check-out from ${hotelName}`,
+                  item_type: "hotel",
+                  auto_generated: true,
+                });
               }
 
               // Reset form
