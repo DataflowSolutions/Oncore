@@ -140,16 +140,16 @@ export async function updateSession(request: NextRequest) {
 
   mwLogger.security("Protected route access", "allowed");
 
-  // Allow users to create multiple organizations
-  // No redirect from /create-org page
-
-  // Redirect from /[org] to /[org]/shows
+  // Redirect from /[org] to /[org]/shows (but allow /create-org)
   const orgPathMatch = pathname.match(/^\/([^\/]+)$/);
   if (orgPathMatch) {
     const orgSlug = orgPathMatch[1];
-    mwLogger.debug(`Redirecting from /${orgSlug} to /${orgSlug}/shows`);
-    const redirectUrl = new URL(`/${orgSlug}/shows`, request.url);
-    return NextResponse.redirect(redirectUrl);
+    // Don't redirect create-org or other special routes
+    if (orgSlug !== "create-org") {
+      mwLogger.debug(`Redirecting from /${orgSlug} to /${orgSlug}/shows`);
+      const redirectUrl = new URL(`/${orgSlug}/shows`, request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   return supabaseResponse;
