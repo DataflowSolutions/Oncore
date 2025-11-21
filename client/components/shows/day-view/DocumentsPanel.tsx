@@ -312,7 +312,7 @@ export function DocumentsPanel({
             return (
               <div
                 key={category.value}
-                className={`relative bg-card-cell hover:bg-neutral-800 rounded-full transition-colors cursor-pointer flex items-center justify-center py-3 shadow group ${
+                className={`relative bg-card-cell hover:bg-card-cell/50 rounded-full transition-colors cursor-pointer flex items-center justify-center py-3 shadow group  ${
                   isOther ? "col-span-2" : ""
                 }`}
                 onClick={() => {
@@ -320,7 +320,7 @@ export function DocumentsPanel({
                   setIsModalOpen(true);
                 }}
               >
-                <span className="z-10 text-xs font-semibold group-hover:scale-105 transition-transform duration-150">
+                <span className="z-10 text-xs font-semibold group-hover:scale-105 transition-transform duration-150 font-header">
                   {category.label}
                 </span>
                 {category.count > 0 ? (

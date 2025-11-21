@@ -52,7 +52,7 @@ export function FlightsPanel({
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-medium text-card-foreground font-header">
+        <h3 className="text-xl text-card-foreground font-header">
           {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
           Flights
         </h3>

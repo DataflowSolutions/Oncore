@@ -71,7 +71,7 @@ export default async function ShowLayout({
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-2 flex-1">
             <div className="flex gap-4 items-center">
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl font-header">
                 {show.title || "Untitled Show"}
               </h1>
               <Badge

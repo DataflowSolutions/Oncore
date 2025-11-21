@@ -69,7 +69,7 @@ export function ShowTabs({ orgSlug, showId }: ShowTabsProps) {
                 key={tab.name}
                 onClick={tab.onClick}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap rounded-full bg-tab-bg text-tab-text hover:bg-tab-bg-active border-tab-border"
+                  "flex cursor-not-allowed items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap rounded-full bg-tab-bg text-tab-text hover:bg-tab-bg-active border-tab-border"
                 )}
               >
                 <Icon className="h-4 w-4" />

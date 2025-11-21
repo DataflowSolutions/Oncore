@@ -19,7 +19,7 @@ export function TopBar() {
       <div className="flex h-16 items-center px-4 lg:px-8">
         {/* Left spacing for mobile hamburger menu */}
         <div className="w-10 lg:w-0 shrink-0" />
-        <Button className="rounded-full font-header text-xs">
+        <Button className="rounded-full font-header text-xs cursor-not-allowed">
           Import Data
         </Button>
         {/* Center search area */}
