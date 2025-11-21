@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useTransition } from "react";
 import TeamFilters from "./TeamFilters";
 import type { TeamMemberFilterValue } from "@/lib/constants/team-filters";
+import { AddVenueModal } from "@/components/venues/AddVenueModal";
 
 interface Venue {
   id: string;
@@ -334,11 +335,7 @@ export default function VenuesClient({
           <ViewHeader
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            actionButton={
-              <Button className="rounded-full font-header" size="default">
-                Add New
-              </Button>
-            }
+            actionButton={<AddVenueModal orgId={orgId} />}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

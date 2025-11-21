@@ -2,9 +2,8 @@
 import { logger } from '@/lib/logger'
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Popup } from "@/components/ui/popup"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { EditableText } from "@/components/ui/editable-text"
 import { 
   Plane, 
@@ -13,8 +12,7 @@ import {
   Music, 
   Clock,
   User,
-  Calendar,
-  X 
+  Calendar
 } from "lucide-react"
 
 interface ScheduleItemModalProps {
@@ -127,41 +125,33 @@ export function ScheduleItemModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg border ${getTypeColor()}`}>
-                {getIcon()}
-              </div>
-              <div>
-                <DialogTitle className="text-2xl">
-                  {isEditable && item.type === 'schedule' ? (
-                    <EditableText
-                      value={item.title}
-                      onSave={(value) => handleUpdate('title', value)}
-                      className="text-2xl font-semibold"
-                    />
-                  ) : (
-                    item.title
-                  )}
-                </DialogTitle>
-                <Badge className={`mt-1 ${getTypeColor()}`}>
-                  {item.type.toUpperCase()}
-                </Badge>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              disabled={isUpdating}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </DialogHeader>
+    <Popup 
+      open={isOpen} 
+      onOpenChange={onClose}
+      title=""
+      className="max-w-2xl"
+    >
+      <div className="flex items-center gap-3 -mt-4 mb-4">
+        <div className={`p-2 rounded-lg border ${getTypeColor()}`}>
+          {getIcon()}
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            {isEditable && item.type === 'schedule' ? (
+              <EditableText
+                value={item.title}
+                onSave={(value) => handleUpdate('title', value)}
+                className="text-2xl font-semibold"
+              />
+            ) : (
+              item.title
+            )}
+          </h2>
+          <Badge className={`mt-1 ${getTypeColor()}`}>
+            {item.type.toUpperCase()}
+          </Badge>
+        </div>
+      </div>
 
         <div className="space-y-6 pt-4">
           {/* Time Information */}
@@ -249,7 +239,7 @@ export function ScheduleItemModal({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Popup>
   )
 }

@@ -60,7 +60,7 @@ export default function ShowsClient({
 
       <div className="flex gap-10">
         <ShowsTable shows={filteredShows} orgSlug={orgSlug} />
-        <div className="flex-1">
+        <div className="flex-1 hidden md:block">
           <ShowsCalendar shows={filteredShows} orgSlug={orgSlug} />
         </div>
       </div>

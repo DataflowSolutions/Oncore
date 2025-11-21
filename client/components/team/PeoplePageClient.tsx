@@ -5,14 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSectionContainer } from "@/components/ui/CardSectionContainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Popup } from "@/components/ui/popup";
 import {
   Select,
   SelectContent,
@@ -459,81 +452,14 @@ export default function PeoplePageClient({
       />
 
       {/* Invite Role Selection Dialog */}
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>
-              Choose the role for {selectedInvitePerson?.name}. They will
-              receive an email invitation to join your organization.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium">
-                Role
-              </label>
-              <Select
-                value={selectedRole}
-                onValueChange={(
-                  value: "viewer" | "editor" | "admin" | "owner"
-                ) => setSelectedRole(value)}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="viewer">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Viewer</div>
-                        <div className="text-xs text-muted-foreground">
-                          Can view all data but cannot make changes
-                        </div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="editor">
-                    <div className="flex items-center gap-2">
-                      <Edit className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Editor</div>
-                        <div className="text-xs text-muted-foreground">
-                          Can create and edit content
-                        </div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Admin</div>
-                        <div className="text-xs text-muted-foreground">
-                          Can manage team members and settings
-                        </div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="owner">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Owner</div>
-                        <div className="text-xs text-muted-foreground">
-                          Full control (use with caution)
-                        </div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
+      <Popup
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        title="Invite Team Member"
+        description={`Choose the role for ${selectedInvitePerson?.name}. They will receive an email invitation to join your organization.`}
+        className="sm:max-w-[425px]"
+        footer={
+          <>
             <Button
               variant="outline"
               onClick={() => setInviteDialogOpen(false)}
@@ -544,9 +470,73 @@ export default function PeoplePageClient({
               <Send className="w-4 h-4 mr-2" />
               Send Invitation
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <label htmlFor="role" className="text-sm font-medium">
+              Role
+            </label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value: "viewer" | "editor" | "admin" | "owner") =>
+                setSelectedRole(value)
+              }
+            >
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="viewer">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Viewer</div>
+                      <div className="text-xs text-muted-foreground">
+                        Can view all data but cannot make changes
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="editor">
+                  <div className="flex items-center gap-2">
+                    <Edit className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Editor</div>
+                      <div className="text-xs text-muted-foreground">
+                        Can create and edit content
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Admin</div>
+                      <div className="text-xs text-muted-foreground">
+                        Can manage team members and settings
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="owner">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    <div>
+                      <div className="font-medium">Owner</div>
+                      <div className="text-xs text-muted-foreground">
+                        Full control (use with caution)
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Popup>
     </>
   );
 }

@@ -274,7 +274,6 @@ export function CateringPanel({
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Enter catering company name"
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -290,7 +289,7 @@ export function CateringPanel({
                       value={ref}
                       onChange={(e) => updateBookingRef(index, e.target.value)}
                       placeholder="Enter booking reference"
-                      className="bg-card-cell! border-card-cell-border flex-1"
+                      className="flex-1"
                     />
                     {bookingRefs.length > 1 && (
                       <Button
@@ -329,7 +328,6 @@ export function CateringPanel({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Enter catering address"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -341,7 +339,6 @@ export function CateringPanel({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Enter city"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
           </div>
@@ -355,7 +352,6 @@ export function CateringPanel({
                 type="date"
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -367,7 +363,6 @@ export function CateringPanel({
                 type="time"
                 value={serviceTimeForm}
                 onChange={(e) => setServiceTimeForm(e.target.value)}
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -383,7 +378,6 @@ export function CateringPanel({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Enter phone number"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -395,7 +389,6 @@ export function CateringPanel({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
           </div>

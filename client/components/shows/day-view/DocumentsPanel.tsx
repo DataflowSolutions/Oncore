@@ -13,12 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Popup } from "@/components/ui/popup";
 import { Input } from "@/components/ui/input";
 import { logger } from "@/lib/logger";
 import {
@@ -339,227 +334,223 @@ export function DocumentsPanel({
       </div>
 
       {/* Document Category Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl">
-              {selectedCategoryLabel} Documents
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-            {/* Create New Document Section */}
-            {canUpload && (
-              <div className="border-2 border-dashed border-neutral-700 rounded-lg p-4 bg-neutral-900/50">
-                <h4 className="font-semibold text-sm mb-3">Add New Document</h4>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder={`e.g., ${selectedCategoryLabel} 2025`}
-                    value={newDocLabel}
-                    onChange={(e) => setNewDocLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreateDocument();
-                    }}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={handleCreateDocument}
-                    disabled={isCreatingDoc || !newDocLabel.trim()}
-                  >
-                    {isCreatingDoc ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create
-                      </>
-                    )}
-                  </Button>
-                </div>
+      <Popup
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title={`${selectedCategoryLabel} Documents`}
+        className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+          {/* Create New Document Section */}
+          {canUpload && (
+            <div className="border-2 border-dashed border-neutral-700 rounded-lg p-4 bg-neutral-900/50">
+              <h4 className="font-semibold text-sm mb-3">Add New Document</h4>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder={`e.g., ${selectedCategoryLabel} 2025`}
+                  value={newDocLabel}
+                  onChange={(e) => setNewDocLabel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateDocument();
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleCreateDocument}
+                  disabled={isCreatingDoc || !newDocLabel.trim()}
+                >
+                  {isCreatingDoc ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Existing Documents */}
-            <div>
-              <h4 className="font-semibold mb-3">
-                Uploaded Documents ({selectedCategoryDocs.length})
-              </h4>
+          {/* Existing Documents */}
+          <div>
+            <h4 className="font-semibold mb-3">
+              Uploaded Documents ({selectedCategoryDocs.length})
+            </h4>
 
-              {selectedCategoryDocs.length === 0 ? (
-                <div className="bg-neutral-800/50 rounded-lg p-6 text-center">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-600" />
-                  <p className="text-sm text-neutral-400 mb-1">
-                    No {selectedCategoryLabel.toLowerCase()} documents yet
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {canUpload
-                      ? "Create a new document above to get started"
-                      : "Documents will appear here once uploaded in the Advancing section"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {selectedCategoryDocs.map((doc) => {
-                    const files = doc.files || [];
-                    return (
-                      <div
-                        key={doc.id}
-                        className="border border-neutral-700 rounded-lg p-4 bg-neutral-900/60"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h5 className="font-medium text-sm">
-                              {doc.label || "Untitled Document"}
-                            </h5>
-                            <p className="text-xs text-neutral-500">
-                              {new Date(doc.created_at).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              )}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {files.length}{" "}
-                            {files.length === 1 ? "file" : "files"}
-                          </Badge>
+            {selectedCategoryDocs.length === 0 ? (
+              <div className="bg-neutral-800/50 rounded-lg p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-600" />
+                <p className="text-sm text-neutral-400 mb-1">
+                  No {selectedCategoryLabel.toLowerCase()} documents yet
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {canUpload
+                    ? "Create a new document above to get started"
+                    : "Documents will appear here once uploaded in the Advancing section"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedCategoryDocs.map((doc) => {
+                  const files = doc.files || [];
+                  return (
+                    <div
+                      key={doc.id}
+                      className="border border-neutral-700 rounded-lg p-4 bg-neutral-900/60"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h5 className="font-medium text-sm">
+                            {doc.label || "Untitled Document"}
+                          </h5>
+                          <p className="text-xs text-neutral-500">
+                            {new Date(doc.created_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}
+                          </p>
                         </div>
+                        <Badge variant="outline" className="text-xs">
+                          {files.length} {files.length === 1 ? "file" : "files"}
+                        </Badge>
+                      </div>
 
-                        {/* Files */}
-                        {files.length > 0 && (
-                          <div className="space-y-2 mb-3">
-                            {files.map((file) => (
-                              <div
-                                key={file.id}
-                                className="flex items-center justify-between bg-neutral-800/50 border border-neutral-700 rounded-md p-3"
-                              >
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <span className="text-base flex-shrink-0">
-                                    {getFileIcon(file.content_type)}
-                                  </span>
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-medium truncate">
-                                      {file.original_name || "Unnamed file"}
-                                    </p>
-                                    <p className="text-xs text-neutral-500">
-                                      {formatFileSize(file.size_bytes)} •{" "}
-                                      {new Date(
-                                        file.created_at
-                                      ).toLocaleDateString("en-US")}
-                                    </p>
-                                  </div>
+                      {/* Files */}
+                      {files.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {files.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center justify-between bg-neutral-800/50 border border-neutral-700 rounded-md p-3"
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <span className="text-base flex-shrink-0">
+                                  {getFileIcon(file.content_type)}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {file.original_name || "Unnamed file"}
+                                  </p>
+                                  <p className="text-xs text-neutral-500">
+                                    {formatFileSize(file.size_bytes)} •{" "}
+                                    {new Date(
+                                      file.created_at
+                                    ).toLocaleDateString("en-US")}
+                                  </p>
                                 </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  {canPreview(file.content_type) && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() =>
-                                        handlePreviewFile(
-                                          file.storage_path,
-                                          file.original_name || "file",
-                                          file.content_type ||
-                                            "application/octet-stream"
-                                        )
-                                      }
-                                      title="Preview"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </Button>
-                                  )}
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {canPreview(file.content_type) && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     onClick={() =>
-                                      handleDownloadFile(
+                                      handlePreviewFile(
                                         file.storage_path,
-                                        file.original_name || "file"
+                                        file.original_name || "file",
+                                        file.content_type ||
+                                          "application/octet-stream"
                                       )
                                     }
-                                    title="Download"
+                                    title="Preview"
                                   >
-                                    <Download className="w-4 h-4" />
+                                    <Eye className="w-4 h-4" />
                                   </Button>
-                                  {canUpload && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleDeleteFile(file.id)}
-                                      disabled={deletingFileId === file.id}
-                                      title="Delete"
-                                    >
-                                      {deletingFileId === file.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                  )}
-                                </div>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    handleDownloadFile(
+                                      file.storage_path,
+                                      file.original_name || "file"
+                                    )
+                                  }
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                {canUpload && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteFile(file.id)}
+                                    disabled={deletingFileId === file.id}
+                                    title="Delete"
+                                  >
+                                    {deletingFileId === file.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Upload Area */}
-                        {canUpload && (
-                          <div>
-                            <input
-                              ref={(el) => {
-                                fileInputRefs.current[doc.id] = el;
-                              }}
-                              type="file"
-                              className="hidden"
-                              onChange={(e) =>
-                                handleFileSelect(doc.id, e.target.files)
-                              }
-                              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
-                            />
-                            <div
-                              className="border-2 border-dashed border-neutral-700 rounded-lg p-4 text-center hover:border-neutral-600 hover:bg-neutral-800/30 transition-colors cursor-pointer"
-                              onClick={() =>
-                                fileInputRefs.current[doc.id]?.click()
-                              }
-                              onDrop={(e) => handleDrop(doc.id, e)}
-                              onDragOver={handleDragOver}
-                            >
-                              {uploadingDocId === doc.id ? (
-                                <>
-                                  <Loader2 className="w-6 h-6 mx-auto mb-1 text-neutral-500 animate-spin" />
-                                  <p className="text-xs text-neutral-500">
-                                    Uploading...
-                                  </p>
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="w-6 h-6 mx-auto mb-1 text-neutral-500" />
-                                  <p className="text-xs text-neutral-400">
-                                    Drop files here or click to upload
-                                  </p>
-                                  <p className="text-xs text-neutral-600 mt-1">
-                                    PDF, DOC, DOCX, TXT, JPG, PNG
-                                  </p>
-                                </>
-                              )}
                             </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Upload Area */}
+                      {canUpload && (
+                        <div>
+                          <input
+                            ref={(el) => {
+                              fileInputRefs.current[doc.id] = el;
+                            }}
+                            type="file"
+                            className="hidden"
+                            onChange={(e) =>
+                              handleFileSelect(doc.id, e.target.files)
+                            }
+                            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                          />
+                          <div
+                            className="border-2 border-dashed border-neutral-700 rounded-lg p-4 text-center hover:border-neutral-600 hover:bg-neutral-800/30 transition-colors cursor-pointer"
+                            onClick={() =>
+                              fileInputRefs.current[doc.id]?.click()
+                            }
+                            onDrop={(e) => handleDrop(doc.id, e)}
+                            onDragOver={handleDragOver}
+                          >
+                            {uploadingDocId === doc.id ? (
+                              <>
+                                <Loader2 className="w-6 h-6 mx-auto mb-1 text-neutral-500 animate-spin" />
+                                <p className="text-xs text-neutral-500">
+                                  Uploading...
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-6 h-6 mx-auto mb-1 text-neutral-500" />
+                                <p className="text-xs text-neutral-400">
+                                  Drop files here or click to upload
+                                </p>
+                                <p className="text-xs text-neutral-600 mt-1">
+                                  PDF, DOC, DOCX, TXT, JPG, PNG
+                                </p>
+                              </>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Popup>
 
       {/* Preview Modal */}
       <FilePreviewModal

@@ -286,7 +286,6 @@ export function FlightsPanel({
                 value={airlineName}
                 onChange={(e) => setAirlineName(e.target.value)}
                 placeholder="Enter airline name"
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -299,7 +298,6 @@ export function FlightsPanel({
                 value={flightNumber}
                 onChange={(e) => setFlightNumber(e.target.value)}
                 placeholder="e.g. AA123"
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -314,7 +312,6 @@ export function FlightsPanel({
               value={bookingRef}
               onChange={(e) => setBookingRef(e.target.value)}
               placeholder="Enter booking reference"
-              className="bg-card-cell! border-card-cell-border"
             />
           </div>
 
@@ -328,7 +325,6 @@ export function FlightsPanel({
                 value={ticketNumber}
                 onChange={(e) => setTicketNumber(e.target.value)}
                 placeholder="Enter ticket number"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -340,7 +336,6 @@ export function FlightsPanel({
                 value={aircraftModel}
                 onChange={(e) => setAircraftModel(e.target.value)}
                 placeholder="e.g. Boeing 737"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -352,7 +347,6 @@ export function FlightsPanel({
                 value={travelClass}
                 onChange={(e) => setTravelClass(e.target.value)}
                 placeholder="e.g. Economy"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
           </div>
@@ -369,7 +363,6 @@ export function FlightsPanel({
                   value={departureAirportCode}
                   onChange={(e) => setDepartureAirportCode(e.target.value)}
                   placeholder="e.g. JFK"
-                  className="bg-card-cell! border-card-cell-border"
                   required
                 />
               </div>
@@ -382,7 +375,6 @@ export function FlightsPanel({
                   value={departureAirportCity}
                   onChange={(e) => setDepartureAirportCity(e.target.value)}
                   placeholder="e.g. New York"
-                  className="bg-card-cell! border-card-cell-border"
                 />
               </div>
               <div className="space-y-2">
@@ -393,7 +385,6 @@ export function FlightsPanel({
                   type="datetime-local"
                   value={departureTime}
                   onChange={(e) => setDepartureTime(e.target.value)}
-                  className="bg-card-cell! border-card-cell-border"
                   required
                 />
               </div>
@@ -409,7 +400,6 @@ export function FlightsPanel({
                   value={arrivalAirportCode}
                   onChange={(e) => setArrivalAirportCode(e.target.value)}
                   placeholder="e.g. LAX"
-                  className="bg-card-cell! border-card-cell-border"
                   required
                 />
               </div>
@@ -422,7 +412,6 @@ export function FlightsPanel({
                   value={arrivalAirportCity}
                   onChange={(e) => setArrivalAirportCity(e.target.value)}
                   placeholder="e.g. Los Angeles"
-                  className="bg-card-cell! border-card-cell-border"
                 />
               </div>
               <div className="space-y-2">
@@ -433,7 +422,6 @@ export function FlightsPanel({
                   type="datetime-local"
                   value={arrivalTime}
                   onChange={(e) => setArrivalTime(e.target.value)}
-                  className="bg-card-cell! border-card-cell-border"
                   required
                 />
               </div>
@@ -449,7 +437,6 @@ export function FlightsPanel({
               value={seatNumber}
               onChange={(e) => setSeatNumber(e.target.value)}
               placeholder="e.g. 12A"
-              className="bg-card-cell! border-card-cell-border"
             />
           </div>
 

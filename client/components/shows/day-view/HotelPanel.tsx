@@ -431,7 +431,6 @@ export function HotelPanel({
                 value={hotelName}
                 onChange={(e) => setHotelName(e.target.value)}
                 placeholder="Enter hotel name"
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -447,7 +446,7 @@ export function HotelPanel({
                       value={ref}
                       onChange={(e) => updateBookingRef(index, e.target.value)}
                       placeholder="Enter booking reference"
-                      className="bg-card-cell! border-card-cell-border flex-1"
+                      className="flex-1"
                     />
                     {bookingRefs.length > 1 && (
                       <Button
@@ -486,7 +485,6 @@ export function HotelPanel({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Enter hotel address"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -498,7 +496,6 @@ export function HotelPanel({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Enter city"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
           </div>
@@ -512,7 +509,6 @@ export function HotelPanel({
                 type="datetime-local"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -524,7 +520,6 @@ export function HotelPanel({
                 type="datetime-local"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="bg-card-cell! border-card-cell-border"
                 required
               />
             </div>
@@ -540,7 +535,6 @@ export function HotelPanel({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Enter phone number"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
             <div className="space-y-2">
@@ -552,7 +546,6 @@ export function HotelPanel({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                className="bg-card-cell! border-card-cell-border"
               />
             </div>
           </div>

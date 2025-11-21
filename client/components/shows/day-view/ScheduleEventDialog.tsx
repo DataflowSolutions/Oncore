@@ -78,7 +78,6 @@ export function ScheduleEventDialog({
                 })
               }
               placeholder="Enter your name"
-              className="bg-card-cell border-card-cell-border"
               required
             />
           </div>
@@ -96,7 +95,6 @@ export function ScheduleEventDialog({
                 })
               }
               placeholder="Enter your location"
-              className="bg-card-cell border-card-cell-border"
             />
           </div>
           <div className="space-y-2">
@@ -112,7 +110,6 @@ export function ScheduleEventDialog({
                   starts_at: e.target.value,
                 })
               }
-              className="bg-card-cell border-card-cell-border"
               required
             />
           </div>
@@ -130,21 +127,13 @@ export function ScheduleEventDialog({
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Name</label>
-            <Input
-              type="text"
-              placeholder="Enter your name"
-              className="bg-card-cell border-card-cell-border"
-            />
+            <Input type="text" placeholder="Enter your name" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Location
             </label>
-            <Input
-              type="text"
-              placeholder="Enter your location"
-              className="bg-card-cell border-card-cell-border"
-            />
+            <Input type="text" placeholder="Enter your location" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
@@ -159,7 +148,6 @@ export function ScheduleEventDialog({
                   ends_at: e.target.value,
                 })
               }
-              className="bg-card-cell border-card-cell-border"
             />
           </div>
         </div>

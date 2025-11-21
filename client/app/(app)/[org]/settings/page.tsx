@@ -255,12 +255,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
-              <Input
-                type="email"
-                value={user?.email || ""}
-                disabled
-                className="bg-card-cell!"
-              />
+              <Input type="email" value={user?.email || ""} disabled />
               <p className="text-xs text-muted-foreground">
                 Email cannot be changed yet!
               </p>
@@ -273,7 +268,6 @@ export default function SettingsPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your full name"
-                className="bg-card-cell!"
               />
             </div>
 
@@ -284,7 +278,6 @@ export default function SettingsPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+1 (555) 000-0000"
-                className="bg-card-cell!"
               />
             </div>
 
@@ -310,7 +303,6 @@ export default function SettingsPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="bg-card-cell!"
               />
             </div>
 
@@ -321,7 +313,6 @@ export default function SettingsPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="bg-card-cell!"
               />
             </div>
 
@@ -349,7 +340,7 @@ export default function SettingsPage() {
                 value={supportMessage}
                 onChange={(e) => setSupportMessage(e.target.value)}
                 placeholder="How can we help you?"
-                className="bg-card-cell! min-h-[120px]"
+                className="min-h-[120px]"
               />
               <div className="flex justify-end">
                 <Button className="rounded-full font-header">
