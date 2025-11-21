@@ -7,7 +7,11 @@ import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createAdvancingField } from "@/lib/actions/advancing";
-import { createScheduleItem } from "@/lib/actions/schedule";
+import {
+  createScheduleItem,
+  deleteScheduleItem,
+  getScheduleItemsForShow,
+} from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
 import Link from "next/link";
 
@@ -23,7 +27,6 @@ interface HotelPanelProps {
     } | null;
   }>;
   orgSlug: string;
-  sessionId: string;
   showId: string;
 }
 
@@ -31,7 +34,6 @@ export function HotelPanel({
   advancingFields,
   assignedPeople,
   orgSlug,
-  sessionId,
   showId,
 }: HotelPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -293,11 +295,6 @@ export function HotelPanel({
           onSubmit={async (e) => {
             e.preventDefault();
 
-            if (!sessionId) {
-              logger.error("No advancing session found");
-              return;
-            }
-
             setIsSaving(true);
 
             try {
@@ -314,7 +311,7 @@ export function HotelPanel({
                 email,
               };
 
-              const result = await createAdvancingField(orgSlug, sessionId, {
+              const result = await createAdvancingField(orgSlug, showId, {
                 section: "hotel",
                 fieldName: "hotel",
                 fieldType: "json",
@@ -329,43 +326,77 @@ export function HotelPanel({
                 throw new Error(result.error || "Failed to save hotel data");
               }
 
+              const advancingFieldId = result.data?.id;
+
+              // Delete existing auto-generated hotel schedule items first
+              const existingItems = await getScheduleItemsForShow(showId);
+              const hotelItems = existingItems.filter(
+                (item) => item.item_type === "hotel" && item.auto_generated
+              );
+
+              for (const item of hotelItems) {
+                await deleteScheduleItem(orgSlug, showId, item.id);
+              }
+
               // Create schedule items for check-in and check-out
               if (checkIn) {
                 const checkInDate = new Date(checkIn);
-                const checkInEnd = new Date(checkInDate.getTime() + 15 * 60000); // Add 15 minutes
+                const checkInEnd = new Date(checkInDate);
+                checkInEnd.setMinutes(checkInEnd.getMinutes() + 15); // Add 15 minutes
 
-                await createScheduleItem(orgSlug, showId, {
-                  title: `Hotel Check-in - ${hotelName}`,
-                  starts_at: checkIn,
-                  ends_at: checkInEnd.toISOString(),
-                  location:
-                    address && city
-                      ? `${address}, ${city}`
-                      : address || city || hotelName,
-                  notes: `Check-in at ${hotelName}`,
-                  item_type: "hotel",
-                  auto_generated: true,
-                });
+                const checkInResult = await createScheduleItem(
+                  orgSlug,
+                  showId,
+                  {
+                    title: `Hotel Check-in - ${hotelName}`,
+                    starts_at: checkInDate.toISOString(),
+                    ends_at: checkInEnd.toISOString(),
+                    location:
+                      address && city
+                        ? `${address}, ${city}`
+                        : address || city || hotelName,
+                    notes: `Check-in at ${hotelName}`,
+                    item_type: "hotel",
+                    auto_generated: true,
+                    source_field_id: advancingFieldId,
+                  }
+                );
+
+                if (!checkInResult.success) {
+                  logger.error("Failed to create check-in schedule item", {
+                    error: checkInResult.error,
+                  });
+                }
               }
 
               if (checkOut) {
                 const checkOutDate = new Date(checkOut);
-                const checkOutEnd = new Date(
-                  checkOutDate.getTime() + 15 * 60000
-                ); // Add 15 minutes
+                const checkOutEnd = new Date(checkOutDate);
+                checkOutEnd.setMinutes(checkOutEnd.getMinutes() + 15); // Add 15 minutes
 
-                await createScheduleItem(orgSlug, showId, {
-                  title: `Hotel Check-out - ${hotelName}`,
-                  starts_at: checkOut,
-                  ends_at: checkOutEnd.toISOString(),
-                  location:
-                    address && city
-                      ? `${address}, ${city}`
-                      : address || city || hotelName,
-                  notes: `Check-out from ${hotelName}`,
-                  item_type: "hotel",
-                  auto_generated: true,
-                });
+                const checkOutResult = await createScheduleItem(
+                  orgSlug,
+                  showId,
+                  {
+                    title: `Hotel Check-out - ${hotelName}`,
+                    starts_at: checkOutDate.toISOString(),
+                    ends_at: checkOutEnd.toISOString(),
+                    location:
+                      address && city
+                        ? `${address}, ${city}`
+                        : address || city || hotelName,
+                    notes: `Check-out from ${hotelName}`,
+                    item_type: "hotel",
+                    auto_generated: true,
+                    source_field_id: advancingFieldId,
+                  }
+                );
+
+                if (!checkOutResult.success) {
+                  logger.error("Failed to create check-out schedule item", {
+                    error: checkOutResult.error,
+                  });
+                }
               }
 
               // Reset form

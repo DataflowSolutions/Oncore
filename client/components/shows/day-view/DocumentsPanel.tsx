@@ -62,7 +62,7 @@ interface DocumentsPanelProps {
   documents: AdvancingDocument[];
   assignedPeople: AssignedPerson[];
   orgSlug: string;
-  sessionId: string;
+  showId: string;
 }
 
 const documentCategories = [
@@ -119,7 +119,7 @@ const canPreview = (contentType: string | null) => {
 export function DocumentsPanel({
   documents,
   orgSlug,
-  sessionId,
+  showId,
 }: DocumentsPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,7 +136,7 @@ export function DocumentsPanel({
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
-  const canUpload = Boolean(orgSlug && sessionId);
+  const canUpload = Boolean(orgSlug && showId);
 
   const handleCreateDocument = async () => {
     if (!canUpload || !selectedCategory || !newDocLabel.trim()) return;
@@ -145,7 +145,7 @@ export function DocumentsPanel({
     try {
       const result = await createAdvancingDocument(
         orgSlug!,
-        sessionId!,
+        showId!,
         "from_us", // Default to "from_us", could be made configurable
         newDocLabel
       );
@@ -175,7 +175,7 @@ export function DocumentsPanel({
 
       const result = await uploadAdvancingFile(
         orgSlug!,
-        sessionId!,
+        showId!,
         documentId,
         formData
       );
@@ -219,7 +219,7 @@ export function DocumentsPanel({
 
     setDeletingFileId(fileId);
     try {
-      const result = await deleteAdvancingFile(orgSlug!, sessionId!, fileId);
+      const result = await deleteAdvancingFile(orgSlug!, showId!, fileId);
       if (!result.success) {
         logger.error("File deletion failed", result.error);
         alert(`Delete failed: ${result.error}`);

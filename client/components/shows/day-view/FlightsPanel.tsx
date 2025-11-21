@@ -1,42 +1,33 @@
 "use client";
 
-import { Plane, PlaneLanding } from "lucide-react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createAdvancingField } from "@/lib/actions/advancing";
+import {
+  createScheduleItem,
+  deleteScheduleItem,
+  getScheduleItemsForShow,
+} from "@/lib/actions/schedule";
+import { logger } from "@/lib/logger";
 
 interface FlightsPanelProps {
-  selectedPeopleIds: string[];
-  advancingData?: {
-    arrivalFlights: Array<{
-      personId: string;
-      time?: string;
-      flightNumber?: string;
-      from?: string;
-      to?: string;
-    }>;
-    departureFlights: Array<{
-      personId: string;
-      time?: string;
-      flightNumber?: string;
-      from?: string;
-      to?: string;
-    }>;
-  };
-  currentDateStr: string;
-  getLocalDateStr: (date: Date) => string;
+  advancingFields: Array<{ field_name: string; value: unknown }>;
+  orgSlug: string;
+  showId: string;
 }
 
 export function FlightsPanel({
-  selectedPeopleIds,
-  advancingData,
-  currentDateStr,
-  getLocalDateStr,
+  advancingFields,
+  orgSlug,
+  showId,
 }: FlightsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [airlineName, setAirlineName] = useState("");
+  const [flightNumber, setFlightNumber] = useState("");
   const [bookingRef, setBookingRef] = useState("");
   const [ticketNumber, setTicketNumber] = useState("");
   const [aircraftModel, setAircraftModel] = useState("");
@@ -49,11 +40,33 @@ export function FlightsPanel({
   const [arrivalTime, setArrivalTime] = useState("");
   const [seatNumber, setSeatNumber] = useState("");
   const [travelClass, setTravelClass] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Extract flight information from single JSON field
+  const flightField = advancingFields.find((f) => f.field_name === "flight");
+
+  const flightInfo = flightField?.value as
+    | {
+        airlineName?: string;
+        flightNumber?: string;
+        bookingRef?: string;
+        ticketNumber?: string;
+        aircraftModel?: string;
+        fullName?: string;
+        departureAirportCode?: string;
+        departureAirportCity?: string;
+        departureDateTime?: string;
+        arrivalAirportCode?: string;
+        arrivalAirportCity?: string;
+        arrivalDateTime?: string;
+        seatNumber?: string;
+        travelClass?: string;
+      }
+    | undefined;
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl text-card-foreground font-header">
-          {/* <Plane className="w-4 h-4 text-cyan-400" /> */}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-xl font-medium text-card-foreground font-header">
           Flights
         </h3>
         <button
@@ -64,88 +77,79 @@ export function FlightsPanel({
         </button>
       </div>
 
-      {advancingData && selectedPeopleIds.length > 0 ? (
-        <div className="space-y-3">
-          {selectedPeopleIds.map((personId) => {
-            const arrival = advancingData.arrivalFlights.find(
-              (f) => f.personId === personId
-            );
-            const departure = advancingData.departureFlights.find(
-              (f) => f.personId === personId
-            );
-
-            const arrivalOnCurrentDate =
-              arrival?.time &&
-              getLocalDateStr(new Date(arrival.time)) === currentDateStr;
-            const departureOnCurrentDate =
-              departure?.time &&
-              getLocalDateStr(new Date(departure.time)) === currentDateStr;
-
-            if (!arrivalOnCurrentDate && !departureOnCurrentDate) return null;
-
-            return (
-              <div key={personId} className="space-y-2">
-                {arrivalOnCurrentDate && arrival?.time && (
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <PlaneLanding className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-emerald-300 mb-1">
-                          Arrival: {arrival.flightNumber || "Flight"}
-                        </div>
-                        <div className="text-sm text-neutral-300">
-                          {arrival.from || "Unknown"} →{" "}
-                          {arrival.to || "Unknown"}
-                        </div>
-                        <div className="text-sm text-neutral-400 mt-1">
-                          {new Date(arrival.time).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {departureOnCurrentDate && departure?.time && (
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <Plane className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-blue-300 mb-1">
-                          Return: {departure.flightNumber || "Flight"}
-                        </div>
-                        <div className="text-sm text-neutral-300">
-                          {departure.from || "Unknown"} →{" "}
-                          {departure.to || "Unknown"}
-                        </div>
-                        <div className="text-sm text-neutral-400 mt-1">
-                          {new Date(departure.time).toLocaleTimeString(
-                            "en-US",
-                            {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              hour12: true,
-                            }
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {!flightInfo ? (
+        <div>
+          <p className="text-sm text-neutral-400">
+            No flight information available
+          </p>
+          <p className="text-xs text-neutral-500 mt-2">
+            Flight details will be shown here
+          </p>
         </div>
       ) : (
         <div>
-          <p className="text-sm text-neutral-400">
-            {selectedPeopleIds.length === 0
-              ? "Select people above to view flight information"
-              : "No flights scheduled for this date"}
-          </p>
+          <div
+            className="cursor-pointer hover:opacity-50 transition-opacity flex flex-col gap-2"
+            onClick={() => setIsDetailsOpen(true)}
+          >
+            {/* Departure and Arrival in two columns */}
+            <div className="flex gap-4 justify-between items-center">
+              {/* Departure */}
+              {flightInfo.departureDateTime && (
+                <div className="text-left flex items-center gap-2">
+                  <div>
+                    <div className="text-xs text-description-foreground">
+                      {flightInfo.departureAirportCode || "Departure"}
+                    </div>
+                    <div className="font-header text-lg">
+                      {new Date(
+                        flightInfo.departureDateTime
+                      ).toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Arrow or divider */}
+              {flightInfo.departureDateTime && flightInfo.arrivalDateTime && (
+                <div className="text-description-foreground">→</div>
+              )}
+
+              {/* Arrival */}
+              {flightInfo.arrivalDateTime && (
+                <div className="text-right flex items-center gap-2">
+                  <div>
+                    <div className="text-xs text-description-foreground">
+                      {flightInfo.arrivalAirportCode || "Arrival"}
+                    </div>
+                    <div className="font-header text-lg">
+                      {new Date(flightInfo.arrivalDateTime).toLocaleTimeString(
+                        "en-GB",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        }
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Flight Number and Airline */}
+            {(flightInfo.flightNumber || flightInfo.airlineName) && (
+              <div className="text-center text-xs font-header text-card-foreground">
+                {flightInfo.airlineName && flightInfo.flightNumber
+                  ? `${flightInfo.airlineName} ${flightInfo.flightNumber}`
+                  : flightInfo.flightNumber || flightInfo.airlineName}
+              </div>
+            )}
+          </div>
         </div>
       )}
       <Popup
@@ -155,10 +159,120 @@ export function FlightsPanel({
         className="sm:max-w-[720px]"
       >
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // Handle add flight logic here
-            setIsOpen(false);
+
+            setIsSaving(true);
+
+            try {
+              // Save all flight data as a single JSON object
+              const flightData = {
+                airlineName,
+                flightNumber,
+                bookingRef,
+                ticketNumber,
+                aircraftModel,
+                fullName,
+                departureAirportCode,
+                departureAirportCity,
+                departureDateTime: departureTime,
+                arrivalAirportCode,
+                arrivalAirportCity,
+                arrivalDateTime: arrivalTime,
+                seatNumber,
+                travelClass,
+              };
+
+              const result = await createAdvancingField(orgSlug, showId, {
+                section: "flight",
+                fieldName: "flight",
+                fieldType: "json",
+                partyType: "from_you",
+                value: flightData,
+              });
+
+              if (!result.success) {
+                logger.error("Failed to save flight data", {
+                  error: result.error,
+                });
+                throw new Error(result.error || "Failed to save flight data");
+              }
+
+              const advancingFieldId = result.data?.id;
+
+              // Delete existing auto-generated flight schedule items first
+              const existingItems = await getScheduleItemsForShow(showId);
+              const flightItems = existingItems.filter(
+                (item) =>
+                  (item.item_type === "departure" ||
+                    item.item_type === "arrival") &&
+                  item.auto_generated
+              );
+
+              for (const item of flightItems) {
+                await deleteScheduleItem(orgSlug, showId, item.id);
+              }
+
+              // Create single schedule item for the flight (using departure time as primary)
+              if (departureTime && arrivalTime) {
+                // Ensure consistent ISO string handling - append seconds if not present
+                const departureISO = departureTime.includes(":00:00")
+                  ? departureTime
+                  : `${departureTime}:00`;
+                const arrivalISO = arrivalTime.includes(":00:00")
+                  ? arrivalTime
+                  : `${arrivalTime}:00`;
+
+                const flightResult = await createScheduleItem(orgSlug, showId, {
+                  title: `Flight ${flightNumber || ""} - ${
+                    airlineName || "Flight"
+                  }`,
+                  starts_at: departureISO,
+                  ends_at: arrivalISO,
+                  location: `${departureAirportCode || "Departure"} → ${
+                    arrivalAirportCode || "Arrival"
+                  }`,
+                  notes: `${
+                    departureAirportCity ? `From ${departureAirportCity}` : ""
+                  } ${
+                    arrivalAirportCity ? `to ${arrivalAirportCity}` : ""
+                  }`.trim(),
+                  item_type: "departure",
+                  auto_generated: true,
+                  source_field_id: advancingFieldId,
+                });
+
+                if (!flightResult.success) {
+                  logger.error("Failed to create flight schedule item", {
+                    error: flightResult.error,
+                  });
+                }
+              }
+
+              // Reset form
+              setAirlineName("");
+              setFlightNumber("");
+              setBookingRef("");
+              setTicketNumber("");
+              setAircraftModel("");
+              setFullName("");
+              setDepartureAirportCode("");
+              setDepartureAirportCity("");
+              setDepartureTime("");
+              setArrivalAirportCode("");
+              setArrivalAirportCity("");
+              setArrivalTime("");
+              setSeatNumber("");
+              setTravelClass("");
+              setIsOpen(false);
+
+              // Reload the page to show updated data
+              window.location.reload();
+            } catch (error) {
+              logger.error("Error saving flight data", error);
+            } finally {
+              setIsSaving(false);
+            }
           }}
           className="space-y-6"
         >
@@ -178,16 +292,30 @@ export function FlightsPanel({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Booking Reference
+                Flight Number
               </label>
               <Input
                 type="text"
-                value={bookingRef}
-                onChange={(e) => setBookingRef(e.target.value)}
-                placeholder="Enter booking reference"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                placeholder="e.g. AA123"
                 className="bg-card-cell! border-card-cell-border"
+                required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Booking Reference
+            </label>
+            <Input
+              type="text"
+              value={bookingRef}
+              onChange={(e) => setBookingRef(e.target.value)}
+              placeholder="Enter booking reference"
+              className="bg-card-cell! border-card-cell-border"
+            />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -227,20 +355,6 @@ export function FlightsPanel({
                 className="bg-card-cell! border-card-cell-border"
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Passenger Full Name
-            </label>
-            <Input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter passenger full name"
-              className="bg-card-cell! border-card-cell-border"
-              required
-            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -340,11 +454,179 @@ export function FlightsPanel({
           </div>
 
           <div className="flex gap-2 justify-end">
-            <Button type="submit" size="sm">
-              Add Flight
+            <Button type="submit" size="sm" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Add Flight"}
             </Button>
           </div>
         </form>
+      </Popup>
+
+      {/* Flight Details Popup */}
+      <Popup
+        title="Flight"
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        className="sm:max-w-[540px]"
+      >
+        <div className="space-y-6">
+          {/* Airline and Flight Number */}
+          {(flightInfo?.airlineName || flightInfo?.flightNumber) && (
+            <div>
+              <h3 className="text-xl font-header text-card-foreground mb-1">
+                {flightInfo.airlineName && flightInfo.flightNumber
+                  ? `${flightInfo.airlineName} ${flightInfo.flightNumber}`
+                  : flightInfo.flightNumber || flightInfo.airlineName}
+              </h3>
+            </div>
+          )}
+
+          {/* Departure and Arrival Times */}
+          {(flightInfo?.departureDateTime || flightInfo?.arrivalDateTime) && (
+            <div className="bg-card-cell rounded-lg p-4">
+              <div className="flex justify-between gap-4">
+                {/* Departure */}
+                {flightInfo.departureDateTime && (
+                  <div className="flex flex-col gap-1">
+                    <div className="text-sm text-description-foreground font-bold mb-1 flex items-center gap-2">
+                      <span>Departure</span>
+                    </div>
+                    <div className="text-lg font-header text-card-foreground">
+                      {flightInfo.departureAirportCode || "Airport"}
+                    </div>
+                    {flightInfo.departureAirportCity && (
+                      <div className="text-sm text-description-foreground">
+                        {flightInfo.departureAirportCity}
+                      </div>
+                    )}
+                    <div className="text-sm text-description-foreground mt-2">
+                      {new Date(
+                        flightInfo.departureDateTime
+                      ).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                    <div className="text-sm text-description-foreground">
+                      {new Date(
+                        flightInfo.departureDateTime
+                      ).toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Divider */}
+                {flightInfo.departureDateTime && flightInfo.arrivalDateTime && (
+                  <div className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-px bg-neutral-700"></div>
+                  </div>
+                )}
+
+                {/* Arrival */}
+                {flightInfo.arrivalDateTime && (
+                  <div className="-ml-4 flex flex-col gap-1">
+                    <div className="text-sm text-description-foreground font-bold mb-1 flex items-center gap-2">
+                      <span>Arrival</span>
+                    </div>
+                    <div className="text-lg font-header text-card-foreground">
+                      {flightInfo.arrivalAirportCode || "Airport"}
+                    </div>
+                    {flightInfo.arrivalAirportCity && (
+                      <div className="text-sm text-description-foreground">
+                        {flightInfo.arrivalAirportCity}
+                      </div>
+                    )}
+                    <div className="text-sm text-description-foreground mt-2">
+                      {new Date(flightInfo.arrivalDateTime).toLocaleDateString(
+                        "en-GB",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
+                      )}
+                    </div>
+                    <div className="text-sm text-description-foreground">
+                      {new Date(flightInfo.arrivalDateTime).toLocaleTimeString(
+                        "en-GB",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        }
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
+
+          {/* Flight Details Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            {flightInfo?.ticketNumber && (
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-1">
+                  Ticket Number
+                </h4>
+                <p className="text-sm text-description-foreground">
+                  {flightInfo.ticketNumber}
+                </p>
+              </div>
+            )}
+            {flightInfo?.aircraftModel && (
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-1">
+                  Aircraft
+                </h4>
+                <p className="text-sm text-description-foreground">
+                  {flightInfo.aircraftModel}
+                </p>
+              </div>
+            )}
+            {flightInfo?.seatNumber && (
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-1">
+                  Seat
+                </h4>
+                <p className="text-sm text-description-foreground">
+                  {flightInfo.seatNumber}
+                </p>
+              </div>
+            )}
+            {flightInfo?.travelClass && (
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-1">
+                  Class
+                </h4>
+                <p className="text-sm text-description-foreground">
+                  {flightInfo.travelClass}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Booking References */}
+          {flightInfo?.bookingRef && (
+            <>
+              <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-2">
+                  Booking Reference
+                </h4>
+                <p className="text-sm text-description-foreground">
+                  {flightInfo.bookingRef}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       </Popup>
     </div>
   );
