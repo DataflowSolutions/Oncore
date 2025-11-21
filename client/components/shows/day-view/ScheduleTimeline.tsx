@@ -294,12 +294,12 @@ export function ScheduleTimeline({
   return (
     <div className="space-y-4 select-none">
       {/* Person Selector - Outside card */}
-      {currentDate && availablePeople.length > 0 && (
+      {/* {currentDate && availablePeople.length > 0 && (
         <PersonScheduleSelector
           availablePeople={availablePeople}
           selectedPeopleIds={selectedPeopleIds}
         />
-      )}
+      )} */}
 
       {/* Timeline Section - Inside card */}
       <div className="bg-card border border-card-border rounded-[20px] p-5 space-y-3">

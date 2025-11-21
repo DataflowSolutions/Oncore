@@ -307,13 +307,13 @@ export function CalendarDayView({
 
           {/* Right Column */}
           <div className="space-y-6">
-            <ContactsPanel />
             <DocumentsPanel
               documents={documents}
               assignedPeople={assignedPeople}
               orgSlug={orgSlug}
               sessionId={advancingSessionId || ""}
             />
+            <ContactsPanel />
             <TransportationPanel
               advancingFields={advancingFields}
               assignedPeople={assignedPeople}

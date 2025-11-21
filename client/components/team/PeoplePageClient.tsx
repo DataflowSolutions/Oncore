@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSectionContainer } from "@/components/ui/CardSectionContainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -97,8 +96,13 @@ export default function PeoplePageClient({
   const [, startTransition] = useTransition();
   const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [selectedInvitePerson, setSelectedInvitePerson] = useState<{ id: string; name: string } | null>(null);
-  const [selectedRole, setSelectedRole] = useState<'viewer' | 'editor' | 'admin' | 'owner'>('viewer');
+  const [selectedInvitePerson, setSelectedInvitePerson] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedRole, setSelectedRole] = useState<
+    "viewer" | "editor" | "admin" | "owner"
+  >("viewer");
   const router = useRouter();
 
   const handlePersonClick = (personId: string) => {
@@ -111,7 +115,11 @@ export default function PeoplePageClient({
     setSelectedPersonId(null);
   };
 
-  const openInviteDialog = (personId: string, personName: string, e: React.MouseEvent) => {
+  const openInviteDialog = (
+    personId: string,
+    personName: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation(); // Prevent card click
 
     if (!seatInfo?.can_invite) {
@@ -122,7 +130,7 @@ export default function PeoplePageClient({
     }
 
     setSelectedInvitePerson({ id: personId, name: personName });
-    setSelectedRole('viewer'); // Reset to default
+    setSelectedRole("viewer"); // Reset to default
     setInviteDialogOpen(true);
   };
 
@@ -209,62 +217,9 @@ export default function PeoplePageClient({
 
   const crewTeam = allPeople.filter((person) => person.member_type === "Crew");
 
-  const seatPercentage = seatInfo
-    ? (seatInfo.used_seats / seatInfo.max_seats) * 100
-    : 0;
-  const getProgressColorClass = () => {
-    if (seatPercentage >= 100) return "[&>div]:bg-destructive";
-    if (seatPercentage >= 80) return "[&>div]:bg-amber-500";
-    return "[&>div]:bg-primary";
-  };
-
   return (
     <>
       <div className="space-y-6">
-        {/* Seat Usage Banner */}
-        {seatInfo && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold">Team Seats</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {seatInfo.used_seats} / {seatInfo.max_seats} seats used
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {seatInfo.plan_id.replace("_", " ")} plan
-                    </p>
-                  </div>
-                </div>
-                <Progress
-                  value={seatPercentage}
-                  className={`h-2 ${getProgressColorClass()}`}
-                />
-                {!seatInfo.can_invite && (
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertCircle className="w-4 h-4 text-amber-500" />
-                      <span>No available seats</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-primary/30"
-                    >
-                      <Crown className="w-3 h-3 mr-2" />
-                      Upgrade Plan
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Overview Stats */}
         <CardSectionContainer>
           <Card>
@@ -354,12 +309,18 @@ export default function PeoplePageClient({
                             </h4>
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {person.member_type && (
-                                <Badge variant="outline" className="text-xs h-5">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs h-5"
+                                >
                                   <RoleIcon className="w-3 h-3 mr-1" />
                                   {person.member_type}
                                 </Badge>
                               )}
-                              <Badge variant={status.variant} className="text-xs h-5">
+                              <Badge
+                                variant={status.variant}
+                                className="text-xs h-5"
+                              >
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {status.label}
                               </Badge>
@@ -414,7 +375,9 @@ export default function PeoplePageClient({
                             {person.email && (
                               <div className="flex items-center gap-1">
                                 <Mail className="w-3 h-3 flex-shrink-0" />
-                                <span className="break-all">{person.email}</span>
+                                <span className="break-all">
+                                  {person.email}
+                                </span>
                               </div>
                             )}
                             {person.phone && (
@@ -501,16 +464,22 @@ export default function PeoplePageClient({
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Choose the role for {selectedInvitePerson?.name}. They will receive an email invitation to join your organization.
+              Choose the role for {selectedInvitePerson?.name}. They will
+              receive an email invitation to join your organization.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <label htmlFor="role" className="text-sm font-medium">
                 Role
               </label>
-              <Select value={selectedRole} onValueChange={(value: 'viewer' | 'editor' | 'admin' | 'owner') => setSelectedRole(value)}>
+              <Select
+                value={selectedRole}
+                onValueChange={(
+                  value: "viewer" | "editor" | "admin" | "owner"
+                ) => setSelectedRole(value)}
+              >
                 <SelectTrigger id="role">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -520,7 +489,9 @@ export default function PeoplePageClient({
                       <Eye className="w-4 h-4" />
                       <div>
                         <div className="font-medium">Viewer</div>
-                        <div className="text-xs text-muted-foreground">Can view all data but cannot make changes</div>
+                        <div className="text-xs text-muted-foreground">
+                          Can view all data but cannot make changes
+                        </div>
                       </div>
                     </div>
                   </SelectItem>
@@ -529,7 +500,9 @@ export default function PeoplePageClient({
                       <Edit className="w-4 h-4" />
                       <div>
                         <div className="font-medium">Editor</div>
-                        <div className="text-xs text-muted-foreground">Can create and edit content</div>
+                        <div className="text-xs text-muted-foreground">
+                          Can create and edit content
+                        </div>
                       </div>
                     </div>
                   </SelectItem>
@@ -538,7 +511,9 @@ export default function PeoplePageClient({
                       <Shield className="w-4 h-4" />
                       <div>
                         <div className="font-medium">Admin</div>
-                        <div className="text-xs text-muted-foreground">Can manage team members and settings</div>
+                        <div className="text-xs text-muted-foreground">
+                          Can manage team members and settings
+                        </div>
                       </div>
                     </div>
                   </SelectItem>
@@ -547,7 +522,9 @@ export default function PeoplePageClient({
                       <Crown className="w-4 h-4" />
                       <div>
                         <div className="font-medium">Owner</div>
-                        <div className="text-xs text-muted-foreground">Full control (use with caution)</div>
+                        <div className="text-xs text-muted-foreground">
+                          Full control (use with caution)
+                        </div>
                       </div>
                     </div>
                   </SelectItem>
@@ -557,7 +534,10 @@ export default function PeoplePageClient({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setInviteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleInvite}>

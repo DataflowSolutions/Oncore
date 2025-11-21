@@ -23,6 +23,9 @@
   --color-button-border: var(--button-border);
   --color-button-bg-hover: var(--button-bg-hover);
 
+  --color-button-bg-contact: var(--button-bg-contact);
+  --color-button-border-contact: var(--button-border-contact);
+
   /* SEARCH */
   --color-search-bg: var(--search-bg);
   --color-search-border: var(--search-border);
@@ -96,6 +99,9 @@
   --button-bg: #0a0a0a;
   --button-border: rgba(200, 200, 200, 0.75);
   --button-bg-hover: #262626;
+
+  --button-bg-contact: rgb(75, 75, 75);
+  --button-border-contact: rgba(255, 255, 255, 0.07);
 
   /* SEARCH */
   --search-bg: #f5f5f5;

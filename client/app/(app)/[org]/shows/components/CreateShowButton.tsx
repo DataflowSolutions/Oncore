@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Calendar, AlertCircle, CheckCircle } from "lucide-react";
+import { Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { createShow } from "@/lib/actions/shows";
 import VenueFormFields from "@/components/advancing/VenueFormFields";
-import { logger } from '@/lib/logger'
+import { logger } from "@/lib/logger";
 
 interface CreateShowButtonProps {
   orgId: string;
@@ -218,9 +218,8 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
       onClick={() => setShowForm(true)}
       size="lg"
       type="button"
-      className="font-semibold cursor-pointer"
+      className="font-header cursor-pointer rounded-full"
     >
-      <Plus className="w-5 h-5 " />
       Create Show
     </Button>
   );

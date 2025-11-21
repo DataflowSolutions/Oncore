@@ -1,9 +1,8 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
-import { logger } from '@/lib/logger'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -12,75 +11,72 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { createPromoter } from '@/lib/actions/promoters'
-import { toast } from 'sonner'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { createPromoter } from "@/lib/actions/promoters";
+import { toast } from "sonner";
 
 interface AddPromoterModalProps {
-  orgId: string
+  orgId: string;
 }
 
 export function AddPromoterModal({ orgId }: AddPromoterModalProps) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    city: '',
-    country: '',
-    notes: '',
-  })
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    city: "",
+    country: "",
+    notes: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const result = await createPromoter({
         orgId,
-        status: 'active',
-        type: 'promoter', // Explicitly set type for contacts table
+        status: "active",
+        type: "promoter", // Explicitly set type for contacts table
         ...formData,
-      })
+      });
 
       if (result.success) {
-        toast.success('Promoter added successfully')
-        setOpen(false)
+        toast.success("Promoter added successfully");
+        setOpen(false);
         setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          company: '',
-          city: '',
-          country: '',
-          notes: '',
-        })
-        router.refresh()
+          name: "",
+          email: "",
+          phone: "",
+          company: "",
+          city: "",
+          country: "",
+          notes: "",
+        });
+        router.refresh();
       } else {
-        toast.error(result.error || 'Failed to add promoter')
+        toast.error(result.error || "Failed to add promoter");
       }
     } catch (error) {
-      logger.error('Error adding promoter', error)
-      toast.error('Failed to add promoter')
+      logger.error("Error adding promoter", error);
+      toast.error("Failed to add promoter");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2">
-          <Plus className="w-5 h-5" />
-          Add Promoter
-        </Button>
+        <Button className="rounded-full font-header gap-2">Add New</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -193,11 +189,11 @@ export function AddPromoterModal({ orgId }: AddPromoterModalProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Promoter'}
+              {loading ? "Adding..." : "Add Promoter"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
