@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { ShowWithVenue } from "@/lib/actions/shows";
-import { Music, MapPin, Calendar } from "lucide-react";
 
 interface ShowsTableProps {
   shows: ShowWithVenue[];
