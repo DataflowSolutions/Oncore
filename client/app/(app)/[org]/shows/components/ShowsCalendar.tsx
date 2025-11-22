@@ -241,9 +241,9 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-[calc(100vh-15rem)] space-y-4">
       {/* Calendar Header */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 flex-shrink-0">
         {/* Title and Main Navigation */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex gap-4 items-center">
@@ -535,9 +535,9 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
         </div>
       ) : (
         <>
-          <div className="overflow-hidden select-none w-full">
+          <div className="overflow-hidden select-none w-full flex flex-col flex-1 min-h-0">
             {/* Week day headers */}
-            <div className="grid grid-cols-7 ">
+            <div className="grid grid-cols-7 flex-shrink-0">
               {weekDays.map((day) => (
                 <div
                   key={day}
@@ -550,7 +550,14 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
             </div>
 
             {/* Calendar days - Month View */}
-            <div className="grid grid-cols-7 auto-rows-[100px] sm:auto-rows-[110px] lg:auto-rows-[120px]">
+            <div
+              className="grid grid-cols-7 flex-1 min-h-0"
+              style={{
+                gridTemplateRows: `repeat(${Math.ceil(
+                  calendarDays.length / 7
+                )}, minmax(0, 1fr))`,
+              }}
+            >
               {calendarDays.map((dayInfo, index) => {
                 const { day, isCurrentMonth, date: cellDate } = dayInfo;
                 const dayShows = getShowsForDate(cellDate);
@@ -566,17 +573,17 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                     role="button"
                     tabIndex={0}
                     aria-pressed={isSelectedDayInMonth}
-                    onClick={(event) => {
-                      if ((event.target as HTMLElement).closest("a")) return;
-                      openDayView(cellDate);
-                    }}
+                    // onClick={(event) => {
+                    //   if ((event.target as HTMLElement).closest("a")) return;
+                    //   openDayView(cellDate);
+                    // }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
                         openDayView(cellDate);
                       }
                     }}
-                    className={`h-full border-b border-input p-0.5 sm:p-2 transition-colors overflow-hidden cursor-pointer outline-none hover:bg-accent/5 active:bg-accent/10 focus-visible:ring-2 focus-visible:ring-primary/60 ${
+                    className={`h-full border-b border-input p-0.5 sm:p-2 transition-colors overflow-hidden outline-none hover:bg-accent/5 active:bg-accent/10 focus-visible:ring-2 focus-visible:ring-primary/60 ${
                       index % 7 !== 6 ? "border-r" : ""
                     } ${
                       isSelectedDayInMonth

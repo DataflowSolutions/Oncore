@@ -55,6 +55,10 @@
   --color-badge-pending-bg: var(--badge-pending-bg);
   --color-badge-pending-text: var(--badge-pending-text);
 
+  /* INPUT */
+  --color-input: var(--input);
+  --color-input-border: var(--input-border);
+
   /* REST */
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -69,7 +73,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
-  --color-input: var(--input);
+
   --color-ring: var(--ring);
 
   --radius: 0.5rem;
@@ -96,7 +100,7 @@
   --sidebar-border: rgba(0, 0, 0, 0.1);
 
   /* BUTTON */
-  --button-bg: #0a0a0a;
+  --button-bg: lch(2.74% 0 296.81);
   --button-border: rgba(200, 200, 200, 0.75);
   --button-bg-hover: #262626;
 
@@ -150,21 +154,24 @@
   --description-foreground: rgb(175, 175, 175);
 
   /* CARD */
-  --card: rgb(50, 50, 50);
-  --card-border: rgba(255, 255, 255, 0.07);
+  --card: rgb(30, 30, 30);
+  --card-border: rgba(255, 255, 255, 0.05);
 
-  --card-cell: #1e1e1e;
-  --card-cell-border: rgba(255, 255, 255, 0.05);
+  --card-cell: rgb(50, 50, 50);
+  --card-cell-border: rgba(255, 255, 255, 0.07);
   --card-foreground: #f2f2f2;
 
   /* SIDEBAR */
-  --sidebar-bg: #0a0a0a;
+  --sidebar-bg: rgb(10, 10, 10);
   --sidebar-border: rgba(255, 255, 255, 0.1);
 
   /* BUTTON */
   --button-bg: rgb(240, 240, 240);
   --button-border: rgba(75, 75, 75, 0.75);
   --button-bg-hover: rgb(200, 200, 200);
+
+  --button-bg-contact: rgb(75, 75, 75);
+  --button-border-contact: rgba(255, 255, 255, 0.07);
 
   /* SEARCH */
   --search-bg: rgb(40, 40, 40);
@@ -195,6 +202,11 @@
 
   --badge-pending-bg: rgba(255, 255, 255, 0.5);
   --badge-pending-text: #171717;
+
+  /* INPUT */
+  --input: rgb(50, 50, 50);
+  --input-border: rgba(255, 255, 255, 0.1);
+
   /* REST */
   --popover: #141414;
   --popover-foreground: #f2f2f2;
@@ -208,7 +220,7 @@
   --accent-foreground: #f2f2f2;
   --destructive: #ef4444;
   --destructive-foreground: #f2f2f2;
-  --input: #202020;
+
   --ring: #525252;
 }
 
