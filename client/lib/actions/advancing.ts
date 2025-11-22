@@ -817,3 +817,101 @@ export async function verifyAccessCode(accessCode: string): Promise<{
 
   return { success: true, sessionId: session.id, showId: session.show_id };
 }
+
+// Sync schedule item updates back to advancing fields (for flights, hotel, etc.)
+export async function syncScheduleToAdvancingField(
+  sourceFieldId: string,
+  scheduleItemId: string,
+  startsAt: string,
+  endsAt?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await getSupabaseServer();
+
+  try {
+    // Get the advancing field
+    const { data: field, error: fieldError } = await supabase
+      .from("advancing_fields")
+      .select("*")
+      .eq("id", sourceFieldId)
+      .single();
+
+    if (fieldError || !field) {
+      logger.error("Error fetching advancing field for sync", fieldError);
+      return { success: false, error: "Advancing field not found" };
+    }
+
+    // Only sync for specific field types (flights, hotel, etc.)
+    if (field.field_name === "flights") {
+      // For flights array, find and update the specific flight
+      const flightsArray = (field.value as unknown[]) || [];
+
+      // Get the specific schedule item being updated
+      const { data: scheduleItem } = await supabase
+        .from("schedule_items")
+        .select("*")
+        .eq("id", scheduleItemId)
+        .single();
+
+      if (scheduleItem && scheduleItem.notes) {
+        // Extract flight index from notes field [FLIGHT_INDEX:0]
+        const indexMatch = scheduleItem.notes.match(/\[FLIGHT_INDEX:(\d+)\]/);
+
+        if (indexMatch) {
+          const flightIndex = parseInt(indexMatch[1], 10);
+
+          if (flightsArray[flightIndex]) {
+            // Update the flight times in the array at the correct index
+            const updatedFlights = [...flightsArray];
+            const existingFlight = updatedFlights[flightIndex];
+
+            // Ensure existingFlight is an object before spreading
+            if (existingFlight && typeof existingFlight === "object") {
+              updatedFlights[flightIndex] = {
+                ...existingFlight,
+                departureDateTime: startsAt,
+                arrivalDateTime: endsAt || startsAt,
+              };
+            }
+
+            // Update the advancing field
+            const { error: updateError } = await supabase
+              .from("advancing_fields")
+              .update({ value: updatedFlights as unknown as never })
+              .eq("id", sourceFieldId);
+
+            if (updateError) {
+              logger.error(
+                "Error updating flights advancing field",
+                updateError
+              );
+              return { success: false, error: updateError.message };
+            }
+          }
+        }
+      }
+    } else if (field.field_name === "hotel") {
+      // For hotel, update check-in/check-out times
+      const hotelData = (field.value as Record<string, unknown>) || {};
+      const updatedHotel = {
+        ...hotelData,
+        checkIn: startsAt,
+        checkOut: endsAt || startsAt,
+      };
+
+      const { error: updateError } = await supabase
+        .from("advancing_fields")
+        .update({ value: updatedHotel as unknown as never })
+        .eq("id", sourceFieldId);
+
+      if (updateError) {
+        logger.error("Error updating hotel advancing field", updateError);
+        return { success: false, error: updateError.message };
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    logger.error("Exception in syncScheduleToAdvancingField", error);
+    return { success: false, error: String(error) };
+  }
+}

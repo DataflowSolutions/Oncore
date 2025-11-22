@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popup } from "@/components/ui/popup";
+import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
 
 interface ScheduleItem {
@@ -154,7 +155,7 @@ export function ScheduleEventDialog({
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Notes</label>
-          <textarea
+          <Textarea
             value={formData.notes}
             onChange={(e) =>
               onFormDataChange({

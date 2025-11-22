@@ -14,6 +14,7 @@ import {
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
 import Link from "next/link";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CateringPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -395,7 +396,7 @@ export function CateringPanel({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Notes</label>
-            <textarea
+            <Textarea
               value={menuNotesForm}
               onChange={(e) => setMenuNotesForm(e.target.value)}
               placeholder="Write notes..."

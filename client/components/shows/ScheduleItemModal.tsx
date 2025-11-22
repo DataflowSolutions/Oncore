@@ -49,7 +49,7 @@ export function ScheduleItemModal({
   onUpdate,
   isEditable = false,
 }: ScheduleItemModalProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [, setIsUpdating] = useState(false);
 
   if (!item) return null;
 

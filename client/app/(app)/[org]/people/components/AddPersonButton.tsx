@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Popup } from "@/components/ui/popup";
 import {
   Plus,
-  UserPlus,
   CheckCircle,
   AlertCircle,
   Music,
@@ -15,6 +15,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { createPerson } from "@/lib/actions/team";
+import { Textarea } from "@/components/ui/textarea";
 
 interface AddPersonButtonProps {
   orgId: string;
@@ -63,36 +64,26 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
     }
   };
 
-  if (!isOpen) {
-    return (
+  const selectedMemberType = memberTypes.find(
+    (type) => type.id === selectedType
+  );
+
+  return (
+    <>
       <Button
         onClick={() => setIsOpen(true)}
         className="bg-foreground text-background hover:bg-foreground/90 font-header rounded-full"
       >
         Add New
       </Button>
-    );
-  }
 
-  const selectedMemberType = memberTypes.find(
-    (type) => type.id === selectedType
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background p-6 rounded-lg shadow-lg max-w-[600px] w-full mx-4 max-h-[90vh] overflow-y-auto border">
-        {/* Header */}
-        <div className="flex flex-col space-y-1.5 text-center sm:text-left mb-6">
-          <h2 className="font-semibold tracking-tight flex items-center gap-2 text-xl">
-            <UserPlus className="h-5 w-5" />
-            Add New Team Member
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Create a new team member profile. Choose the type and fill in their
-            details.
-          </p>
-        </div>
-
+      <Popup
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        title="Add New Team Member"
+        description="Create a new team member profile. Choose the type and fill in their details."
+        className="sm:max-w-[600px]"
+      >
         {error && (
           <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -126,7 +117,7 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
                     onClick={() => setSelectedType(type.id)}
                     disabled={isSubmitting || success}
                     className={`
-                      p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105
+                      p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105 cursor-pointer
                       ${
                         isSelected
                           ? "border-primary bg-primary/10 shadow-md"
@@ -272,12 +263,11 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Bio / Notes
             </label>
-            <textarea
+            <Textarea
               name="notes"
               placeholder="Additional information, skills, or notes..."
               disabled={isSubmitting || success}
               rows={3}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 focus:scale-[1.01] resize-none"
             />
           </div>
 
@@ -326,7 +316,7 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </Popup>
+    </>
   );
 }
