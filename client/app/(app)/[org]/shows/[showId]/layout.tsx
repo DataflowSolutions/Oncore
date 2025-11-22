@@ -7,9 +7,6 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import { ShowTabs } from "@/components/shows/ShowTabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 
 interface ShowLayoutProps {
   children: React.ReactNode;
@@ -63,25 +60,27 @@ export default async function ShowLayout({
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="space-y-6">
         {/* Back Button */}
-        <Link href={`/${orgSlug}/shows`} prefetch={true}>
+        {/* <Link href={`/${orgSlug}/shows`} prefetch={true}>
           <Button variant="ghost" size="sm" className="gap-2 -ml-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Shows
           </Button>
-        </Link>
+        </Link> */}
 
         {/* Shared Header */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              {show.title || "Untitled Show"}
-            </h1>
-            <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex justify-between items-start gap-4">
+          <div className="space-y-2 flex-1">
+            <div className="flex gap-4 items-center">
+              <h1 className="text-3xl font-header">
+                {show.title || "Untitled Show"}
+              </h1>
               <Badge
                 variant={show.status === "confirmed" ? "default" : "secondary"}
               >
                 {show.status}
               </Badge>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
               {show.date && (
                 <span className="text-sm text-muted-foreground">
                   {new Date(show.date).toLocaleDateString("en-US", {

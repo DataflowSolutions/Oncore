@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { ShowWithVenue } from "@/lib/actions/shows";
-import { Music, MapPin, Calendar } from "lucide-react";
 
 interface ShowsTableProps {
   shows: ShowWithVenue[];
@@ -62,14 +61,14 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
       {Object.entries(showsByMonth).map(([monthYear, shows]) => (
         <div key={monthYear}>
           <div className="flex gap-2 mb-2">
-            <h4 className="text-lg font-semibold text-foreground">
+            <h4 className="text-xl  text-foreground font-header">
               {monthYear}
             </h4>
-            <div className="border border-input flex items-center justify-center rounded-full px-2.5 py-0.5 font-semibold text-sm">
+            {/* <div className="border border-input flex items-center justify-center rounded-full px-2.5 py-0.5 font-semibold text-sm">
               <span>
                 {shows.length} {shows.length === 1 ? "show" : "shows"}
               </span>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex flex-col gap-2.5">
@@ -96,7 +95,7 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
               return (
                 <div
                   key={show.id}
-                  className="rounded-lg border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group"
+                  className="rounded-[20px] border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group w-[400px]"
                 >
                   <Link
                     href={`/${orgSlug}/shows/${show.id}/day`}
@@ -105,43 +104,36 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                       {/* Left side - Main content */}
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                        <h4 className="font-header text-sm  transition-colors">
                           {show.title || "Untitled Show"}
                         </h4>
 
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-xs">
                           {/* Artist and City on one line */}
                           <div className="flex items-center gap-1.5">
-                            <Music className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                            <span className="text-foreground/90 font-medium">
+                            <span className="text-description-foreground font-medium">
                               {artistNames}
                             </span>
-                            <span className="text-muted-foreground">•</span>
-                            {show.venue?.city && (
-                              <span className="text-muted-foreground">
-                                {show.venue.city}
-                              </span>
-                            )}
                           </div>
 
                           {/* Venue on second line */}
                         </div>
                       </div>
-                      <div className="flex gap-4">
+                      <div className="flex flex-col gap-2">
                         <div className="text-xs text-muted-foreground">
                           {show.venue && (
-                            <div className="flex items-center gap-1.5 sm:ml-auto">
-                              <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                              <span className="text-foreground/70 font-medium hover:text-primary hover:underline">
+                            <div className="flex items-center gap-1.5 sm:ml-auto justify-end">
+                              <span className="text-description-foreground font-medium hover:text-primary hover:underline">
                                 {show.venue.name}
                               </span>
                             </div>
                           )}
                         </div>
                         {/* Right side - Date */}
-                        <div className="flex items-center gap-1.5 text-xs flex-shrink-0 text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5 sm:hidden" />
-                          <span className="font-medium">{formattedDate}</span>
+                        <div className="flex items-center gap-1.5 text-xs flex-shrink-0 justify-end">
+                          <span className="font-medium text-description-foreground">
+                            {formattedDate}
+                          </span>
                         </div>
                       </div>
                     </div>

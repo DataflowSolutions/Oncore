@@ -1,40 +1,42 @@
-'use client'
+"use client";
 
-import { useShows } from '@/lib/hooks/use-shows'
+import { useShows } from "@/lib/hooks/use-shows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, MapPin, Music } from "lucide-react";
 import Link from "next/link";
 import { VenueLink } from "./shows/components/VenueLink";
-import { useMemo } from 'react';
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 
-export function OrgPageClient({ 
-  orgSlug, 
-  orgName 
-}: { 
-  orgSlug: string
-  orgName: string 
+export function OrgPageClient({
+  orgSlug,
+  orgName,
+}: {
+  orgSlug: string;
+  orgName: string;
 }) {
+  const router = useRouter();
   // Use prefetched data - instant load!
-  const { data: allShows = [] } = useShows(orgSlug)
-  
-  // Filter to upcoming shows only (client-side filtering of cached data)
-  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], [])
-  const upcomingShows = useMemo(() => 
-    allShows?.filter(show => show.date >= todayStr).slice(0, 5) || [],
-    [allShows, todayStr]
-  )
+  const { data: allShows = [] } = useShows(orgSlug);
 
-  const todaysShows = useMemo(() => 
-    upcomingShows?.filter((show) => show.date === todayStr) || [],
+  // Filter to upcoming shows only (client-side filtering of cached data)
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const upcomingShows = useMemo(
+    () => allShows?.filter((show) => show.date >= todayStr).slice(0, 5) || [],
+    [allShows, todayStr]
+  );
+
+  const todaysShows = useMemo(
+    () => upcomingShows?.filter((show) => show.date === todayStr) || [],
     [upcomingShows, todayStr]
-  )
-  
-  const nextWeekShows = useMemo(() => 
-    upcomingShows?.filter((show) => show.date !== todayStr) || [],
+  );
+
+  const nextWeekShows = useMemo(
+    () => upcomingShows?.filter((show) => show.date !== todayStr) || [],
     [upcomingShows, todayStr]
-  )
+  );
 
   type ShowAssignment = {
     people: {
@@ -75,30 +77,32 @@ export function OrgPageClient({
           </CardHeader>
           <CardContent className="space-y-3">
             {todaysShows.map((show) => (
-              <Link key={show.id} href={`/${orgSlug}/shows/${show.id}`}>
-                <div className="p-4 bg-background rounded-lg hover:shadow-md transition-all border border-border hover:border-primary">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg">{show.title}</h3>
-                      <p className="text-muted-foreground">
-                        {show.venue?.id ? (
-                          <VenueLink
-                            href={`/${orgSlug}/venues/${show.venue.id}`}
-                            venueName={show.venue.name}
-                            className="hover:text-primary hover:underline"
-                          />
-                        ) : (
-                          show.venue?.name || "No venue"
-                        )}
-                        {show.venue?.city && ` • ${show.venue.city}`}
-                      </p>
-                    </div>
-                    <Badge className="text-base px-3 py-1">
-                      {show.set_time || "TBD"}
-                    </Badge>
+              <div
+                key={show.id}
+                className="p-4 bg-background rounded-lg hover:shadow-md transition-all border border-border hover:border-primary cursor-pointer"
+                onClick={() => router.push(`/${orgSlug}/shows/${show.id}`)}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-lg">{show.title}</h3>
+                    <p className="text-muted-foreground">
+                      {show.venue?.id ? (
+                        <VenueLink
+                          href={`/${orgSlug}/venues/${show.venue.id}`}
+                          venueName={show.venue.name}
+                          className="hover:text-primary hover:underline"
+                        />
+                      ) : (
+                        show.venue?.name || "No venue"
+                      )}
+                      {show.venue?.city && ` • ${show.venue.city}`}
+                    </p>
                   </div>
+                  <Badge className="text-base px-3 py-1">
+                    {show.set_time || "TBD"}
+                  </Badge>
                 </div>
-              </Link>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -142,10 +146,15 @@ export function OrgPageClient({
                 show.show_assignments
                   ?.map((assignment: ShowAssignment) => assignment.people)
                   .filter(
-                    (person: ShowAssignment['people']): person is NonNullable<typeof person> =>
+                    (
+                      person: ShowAssignment["people"]
+                    ): person is NonNullable<typeof person> =>
                       person?.member_type === "Artist"
                   )
-                  .map((person: NonNullable<ShowAssignment['people']>) => person.name)
+                  .map(
+                    (person: NonNullable<ShowAssignment["people"]>) =>
+                      person.name
+                  )
                   .filter(Boolean) || [];
 
               const artistNames =
@@ -162,19 +171,15 @@ export function OrgPageClient({
               return (
                 <div
                   key={show.id}
-                  className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group"
+                  className="rounded-lg border border-input bg-card text-foreground shadow-sm p-3 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group cursor-pointer"
+                  onClick={() => router.push(`/${orgSlug}/shows/${show.id}`)}
                 >
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     {/* Left side - Main content */}
                     <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                      <Link
-                        href={`/${orgSlug}/shows/${show.id}`}
-                        className="cursor-pointer"
-                      >
-                        <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
-                          {show.title || "Untitled Show"}
-                        </h4>
-                      </Link>
+                      <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                        {show.title || "Untitled Show"}
+                      </h4>
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-xs">
                         {/* Artists */}

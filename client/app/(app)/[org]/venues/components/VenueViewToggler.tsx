@@ -19,23 +19,22 @@ const VenueViewToggler = () => {
 
   return (
     <div>
-      <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted">
+      <div className="inline-flex items-center rounded-full bg-tab-bg">
         {tabLinks.map((link) => {
-          const Icon = link.icon;
           const isActive = activeTab === link.id;
 
           return (
             <Button
               key={link.id}
               onClick={() => handleTabChange(link.id)}
-              variant={isActive ? "default" : "ghost"}
               size="sm"
               className={cn(
-                "gap-2 cursor-pointer transition-all",
-                !isActive && "hover:bg-background/50"
+                "gap-2 rounded-full cursor-pointer transition-all text-tab-text px-8 py-5 font-header",
+                isActive
+                  ? "bg-tab-bg-active hover:bg-tab-bg-active/50 "
+                  : "bg-transparent hover:bg-tab-bg-active/50"
               )}
             >
-              {Icon && <Icon size={16} />}
               <span>{link.label}</span>
             </Button>
           );

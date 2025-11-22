@@ -1,19 +1,23 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Globe, Calendar, Users, Building } from "lucide-react";
+import { Building } from "lucide-react";
 import Link from "next/link";
-import VenueViewToggler from "./VenueViewToggler";
-import VenuesSearchbar from "./VenuesSearchbar";
-import { PromotersList } from "@/components/promoters/PromotersList";
-import { UnifiedSearchResults } from "./UnifiedSearchResults";
+import ViewHeader from "./ViewHeader";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
-import PeoplePageContent from "@/components/team/PeoplePageClient";
 import type { Database } from "@/lib/database.types";
 import type { SeatCheckResult } from "@/lib/actions/invitations";
 import AddPersonButton from "../../people/components/AddPersonButton";
+import { AddPromoterModal } from "@/components/promoters/AddPromoterModal";
+import { invitePerson } from "@/lib/actions/invitations";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useTransition } from "react";
+import TeamFilters from "./TeamFilters";
+import type { TeamMemberFilterValue } from "@/lib/constants/team-filters";
+import { AddVenueModal } from "@/components/venues/AddVenueModal";
 
 interface Venue {
   id: string;
@@ -60,6 +64,11 @@ export default function VenuesClient({
   view,
 }: VenuesClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] =
+    useState<TeamMemberFilterValue>("all");
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
 
   // Filter venues based on search query
   const filteredVenues = useMemo(() => {
@@ -70,16 +79,9 @@ export default function VenuesClient({
     const query = searchQuery.toLowerCase();
 
     return venues.filter((venue) => {
-      // Search in venue name
       const nameMatch = venue.name?.toLowerCase().includes(query);
-
-      // Search in city
       const cityMatch = venue.city?.toLowerCase().includes(query);
-
-      // Search in country
       const countryMatch = venue.country?.toLowerCase().includes(query);
-
-      // Search in address
       const addressMatch = venue.address?.toLowerCase().includes(query);
 
       return nameMatch || cityMatch || countryMatch || addressMatch;
@@ -89,7 +91,7 @@ export default function VenuesClient({
   // Filter promoters based on search query
   const filteredPromoters = useMemo(() => {
     if (!searchQuery.trim()) {
-      return [];
+      return promoters;
     }
 
     const query = searchQuery.toLowerCase();
@@ -104,185 +106,288 @@ export default function VenuesClient({
     });
   }, [promoters, searchQuery]);
 
-  // Check if we should show unified search results
-  const showUnifiedSearch = searchQuery.trim().length > 0;
+  // Filter people based on search query and member type
+  const filteredPeople = useMemo(() => {
+    let filtered = people;
+
+    // Apply member type filter
+    if (activeFilter !== "all") {
+      filtered = filtered.filter(
+        (person) => person.member_type === activeFilter
+      );
+    }
+
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((person) => {
+        const nameMatch = person.name?.toLowerCase().includes(query);
+        const emailMatch = person.email?.toLowerCase().includes(query);
+        const phoneMatch = person.phone?.toLowerCase().includes(query);
+        const roleMatch = person.role_title?.toLowerCase().includes(query);
+
+        return nameMatch || emailMatch || phoneMatch || roleMatch;
+      });
+    }
+
+    return filtered;
+  }, [people, searchQuery, activeFilter]);
+
+  // Create a map of person_id to invitation for quick lookup
+  const invitationMap = new Map(invitations.map((inv) => [inv.person_id, inv]));
+
+  const handleInvite = async (
+    personId: string,
+    personName: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!seatInfo?.can_invite) {
+      toast.error("No available seats", {
+        description: "Upgrade your plan to invite more team members",
+      });
+      return;
+    }
+
+    setInvitingPersonId(personId);
+
+    startTransition(async () => {
+      const result = await invitePerson(personId);
+
+      if (result.success) {
+        toast.success("Invitation sent!", {
+          description: `${personName} will receive an email to join the team`,
+        });
+        router.refresh();
+      } else {
+        toast.error("Failed to send invitation", {
+          description: result.error || "Please try again",
+        });
+      }
+
+      setInvitingPersonId(null);
+    });
+  };
 
   return (
     <>
       {view === "team" ? (
-        // Team view - show people page content
+        // Team view
         <>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">Team</h2>
-              <p className="text-muted-foreground mt-1">
-                Manage your team members and internal staff
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <AddPersonButton orgId={orgId} />
-              <VenueViewToggler />
-            </div>
-          </div>
-          <PeoplePageContent
-            allPeople={people}
-            seatInfo={seatInfo}
-            invitations={invitations}
+          <ViewHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            actionButton={<AddPersonButton orgId={orgId} />}
           />
+
+          <TeamFilters
+            people={people}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredPeople.map((person) => {
+              return (
+                <div
+                  key={person.id}
+                  className="rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between h-full">
+                    {/* Left side: Name, phone, email */}
+                    <div className="flex flex-col gap-2 flex-1">
+                      <h4 className="font-header text-foreground">
+                        {person.name}
+                      </h4>
+                      {person.phone && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span>{person.phone}</span>
+                        </div>
+                      )}
+                      {person.email && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span className="break-all">{person.email}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right side: Role and invite button */}
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      {person.member_type && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs w-[84px] h-[24px] flex items-center justify-center"
+                        >
+                          {person.member_type}
+                        </Badge>
+                      )}
+                      {!person.user_id &&
+                        person.email &&
+                        !invitationMap.has(person.id) && (
+                          <Button
+                            size="sm"
+                            disabled={
+                              !seatInfo?.can_invite ||
+                              invitingPersonId === person.id
+                            }
+                            onClick={(e) =>
+                              handleInvite(person.id, person.name, e)
+                            }
+                            className="rounded-full text-xs w-[84px] h-[24px] flex items-center justify-center"
+                          >
+                            {invitingPersonId === person.id
+                              ? "Sending..."
+                              : "Invite"}
+                          </Button>
+                        )}
+                      {invitationMap.has(person.id) && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs w-[84px] h-[24px] flex items-center justify-center"
+                        >
+                          Invited
+                        </Badge>
+                      )}
+                      {person.user_id && (
+                        <Badge
+                          variant="default"
+                          className="text-xs w-[84px] h-[24px] flex items-center justify-center"
+                        >
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </>
       ) : view === "promoters" ? (
-        // Promoters view - show actual promoters
+        // Promoters view
         <>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">Promoters</h2>
-              <p className="text-muted-foreground mt-1">
-                Manage promoters and their venue relationships
-              </p>
-            </div>
-            <VenueViewToggler />
+          <ViewHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            actionButton={<AddPromoterModal orgId={orgId} />}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredPromoters.map((promoter) => {
+              const venueCount = promoter.venues?.length || 0;
+
+              return (
+                <div
+                  key={promoter.id}
+                  className="rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Left side: Name, location, company */}
+                    <div className="flex flex-col gap-2 flex-1">
+                      <h4 className="font-header text-foreground">
+                        {promoter.name}
+                      </h4>
+                      {(promoter.city || promoter.country) && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span>
+                            {promoter.city}
+                            {promoter.city && promoter.country && ", "}
+                            {promoter.country}
+                          </span>
+                        </div>
+                      )}
+                      {promoter.company && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span>{promoter.company}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right side: Email and phone */}
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      {promoter.email && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span className="break-all">{promoter.email}</span>
+                        </div>
+                      )}
+                      {promoter.phone && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span>{promoter.phone}</span>
+                        </div>
+                      )}
+                      {venueCount > 0 && (
+                        <Badge variant="secondary" className="text-xs mt-1">
+                          {venueCount} venue{venueCount !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <PromotersList promoters={promoters} orgId={orgId} />
         </>
       ) : (
-        // Venues view - full functionality
+        // Venues view
         <>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">Venues</h2>
-              <p className="text-muted-foreground mt-1">
-                Manage venues and their promoter relationships
-              </p>
-            </div>
-            <VenueViewToggler />
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <div className="flex-1">
-              <VenuesSearchbar value={searchQuery} onChange={setSearchQuery} />
-            </div>
-          </div>
+          <ViewHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            actionButton={<AddVenueModal orgId={orgId} />}
+          />
 
-          {/* Show unified search results when searching */}
-          {showUnifiedSearch ? (
-            <UnifiedSearchResults
-              venues={filteredVenues}
-              promoters={filteredPromoters}
-              searchQuery={searchQuery}
-              orgSlug={orgSlug}
-            />
-          ) : (
-            <div className="space-y-6">
-              {/* All Venues */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Building className="w-5 h-5" />
-                    <CardTitle className="text-lg">
-                      All Venues ({filteredVenues.length})
-                    </CardTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredVenues.map((venue) => {
+              const showCount = venue.shows?.[0]?.count || 0;
+
+              return (
+                <Link
+                  key={venue.id}
+                  href={`/${orgSlug}/venues/${venue.id}`}
+                  className="block rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Left side: Name, location */}
+                    <div className="flex flex-col gap-2 flex-1">
+                      <h4 className="font-header text-foreground">
+                        {venue.name}
+                      </h4>
+                      {venue.city && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span>
+                            {venue.city}
+                            {venue.country && `, ${venue.country}`}
+                          </span>
+                        </div>
+                      )}
+                      {venue.address && (
+                        <div className="flex items-center gap-2 text-sm text-description-foreground">
+                          <span className="break-all">{venue.address}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right side: Capacity and show count */}
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      {venue.capacity && (
+                        <Badge variant="outline" className="text-xs">
+                          <Building className="w-3 h-3 mr-1" />
+                          Cap. {venue.capacity}
+                        </Badge>
+                      )}
+                      {showCount > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {showCount} show{showCount !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {filteredVenues.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Building className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchQuery.trim()
-                          ? "No venues found matching your search."
-                          : "No venues added yet. Add your first venue to get started!"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {filteredVenues.map((venue) => {
-                        const showCount = venue.shows?.[0]?.count || 0;
-                        return (
-                          <Link
-                            key={venue.id}
-                            href={`/${orgSlug}/venues/${venue.id}`}
-                            className="block rounded-lg border border-input bg-card text-foreground shadow-sm p-2.5 sm:p-3 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
-                          >
-                            <div className="flex flex-col gap-2">
-                              {/* Header with name and badges */}
-                              <div className="flex flex-col gap-1.5">
-                                <h4 className="font-semibold text-foreground text-sm">
-                                  {venue.name}
-                                </h4>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {showCount > 0 && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs h-5"
-                                    >
-                                      <Calendar className="w-3 h-3 mr-1" />
-                                      {showCount} show
-                                      {showCount !== 1 ? "s" : ""}
-                                    </Badge>
-                                  )}
-                                  {venue.capacity && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs h-5"
-                                    >
-                                      <Building className="w-3 h-3 mr-1" />
-                                      Cap. {venue.capacity}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Location and contact information */}
-                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 text-xs text-muted-foreground">
-                                <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
-                                  {venue.city && (
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="w-3 h-3 flex-shrink-0" />
-                                      <span>
-                                        {venue.city}
-                                        {venue.country && `, ${venue.country}`}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {venue.address && (
-                                    <div className="flex items-center gap-1">
-                                      <Globe className="w-3 h-3 flex-shrink-0" />
-                                      <span className="break-all">
-                                        {venue.address}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {venue.contacts !== null &&
-                                    venue.contacts !== undefined && (
-                                      <div className="flex items-center gap-1">
-                                        <Users className="w-3 h-3 flex-shrink-0" />
-                                        <span>Contact info available</span>
-                                      </div>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                  <span>
-                                    Added{" "}
-                                    {new Date(
-                                      venue.created_at
-                                    ).toLocaleDateString("en-US", {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                </Link>
+              );
+            })}
+          </div>
         </>
       )}
     </>

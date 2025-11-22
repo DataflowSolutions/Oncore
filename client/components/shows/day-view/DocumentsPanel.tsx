@@ -13,12 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Popup } from "@/components/ui/popup";
 import { Input } from "@/components/ui/input";
 import { logger } from "@/lib/logger";
 import {
@@ -45,7 +40,7 @@ interface AdvancingDocument {
   label: string | null;
   party_type: PartyType;
   created_at: string;
-  files: DocumentFile[];
+  files: DocumentFile[] | null;
 }
 
 interface AssignedPerson {
@@ -62,13 +57,13 @@ interface DocumentsPanelProps {
   documents: AdvancingDocument[];
   assignedPeople: AssignedPerson[];
   orgSlug: string;
-  sessionId: string;
+  showId: string;
 }
 
 const documentCategories = [
   { value: "contract", label: "Contract" },
   { value: "rider", label: "Rider" },
-  { value: "advancing", label: "Advancing" },
+  // { value: "advancing", label: "Advancing" },
   { value: "boarding_pass", label: "Boarding Pass" },
   { value: "visa", label: "Visa" },
   { value: "other", label: "Other" },
@@ -119,7 +114,7 @@ const canPreview = (contentType: string | null) => {
 export function DocumentsPanel({
   documents,
   orgSlug,
-  sessionId,
+  showId,
 }: DocumentsPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,7 +131,7 @@ export function DocumentsPanel({
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
-  const canUpload = Boolean(orgSlug && sessionId);
+  const canUpload = Boolean(orgSlug && showId);
 
   const handleCreateDocument = async () => {
     if (!canUpload || !selectedCategory || !newDocLabel.trim()) return;
@@ -145,7 +140,7 @@ export function DocumentsPanel({
     try {
       const result = await createAdvancingDocument(
         orgSlug!,
-        sessionId!,
+        showId!,
         "from_us", // Default to "from_us", could be made configurable
         newDocLabel
       );
@@ -175,7 +170,7 @@ export function DocumentsPanel({
 
       const result = await uploadAdvancingFile(
         orgSlug!,
-        sessionId!,
+        showId!,
         documentId,
         formData
       );
@@ -219,7 +214,7 @@ export function DocumentsPanel({
 
     setDeletingFileId(fileId);
     try {
-      const result = await deleteAdvancingFile(orgSlug!, sessionId!, fileId);
+      const result = await deleteAdvancingFile(orgSlug!, showId!, fileId);
       if (!result.success) {
         logger.error("File deletion failed", result.error);
         alert(`Delete failed: ${result.error}`);
@@ -301,99 +296,109 @@ export function DocumentsPanel({
 
   return (
     <>
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-card border border-card-border rounded-[20px] p-8 w-full max-w-md mx-auto shadow-lg">
+        <h3 className="text-xl font-medium text-card-foreground font-header mb-6 tracking-wide">
           Documents
         </h3>
-        <div className="space-y-2">
-          {categoryCounts.map((category) => (
-            <div
-              key={category.value}
-              className="flex items-center justify-between p-3 bg-neutral-800/50 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
-              onClick={() => {
-                setSelectedCategory(category.value);
-                setIsModalOpen(true);
-              }}
-            >
-              <span className="text-sm">{category.label}</span>
-              {category.count > 0 ? (
-                <span className="text-xs text-green-500 font-medium">
-                  ({category.count}) attached
+        <div className="grid grid-cols-2 gap-4">
+          {categoryCounts.map((category) => {
+            // Make 'Other' span 2 columns
+            const isOther = category.value === "other";
+            return (
+              <div
+                key={category.value}
+                className={`relative bg-card-cell hover:bg-card-cell/50 rounded-full transition-colors cursor-pointer flex items-center justify-center py-3 shadow group  ${
+                  isOther ? "col-span-2" : ""
+                }`}
+                onClick={() => {
+                  setSelectedCategory(category.value);
+                  setIsModalOpen(true);
+                }}
+              >
+                <span className="z-10 text-xs font-semibold group-hover:scale-105 transition-transform duration-150 font-header">
+                  {category.label}
                 </span>
-              ) : (
-                <span className="text-xs text-neutral-500">not attached</span>
-              )}
-            </div>
-          ))}
+                {category.count > 0 ? (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-20">
+                    {category.count}
+                  </span>
+                ) : (
+                  <span className="absolute top-0 right-0 text-xs text-neutral-500 font-medium bg-card border-card-border px-2 py-0.5 rounded-full z-20">
+                    0
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Document Category Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl">
-              {selectedCategoryLabel} Documents
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-            {/* Create New Document Section */}
-            {canUpload && (
-              <div className="border-2 border-dashed border-neutral-700 rounded-lg p-4 bg-neutral-900/50">
-                <h4 className="font-semibold text-sm mb-3">Add New Document</h4>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder={`e.g., ${selectedCategoryLabel} 2025`}
-                    value={newDocLabel}
-                    onChange={(e) => setNewDocLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreateDocument();
-                    }}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={handleCreateDocument}
-                    disabled={isCreatingDoc || !newDocLabel.trim()}
-                  >
-                    {isCreatingDoc ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create
-                      </>
-                    )}
-                  </Button>
-                </div>
+      <Popup
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title={`${selectedCategoryLabel} Documents`}
+        className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+          {/* Create New Document Section */}
+          {canUpload && (
+            <div className="border-2 border-dashed border-neutral-700 rounded-lg p-4 bg-neutral-900/50">
+              <h4 className="font-semibold text-sm mb-3">Add New Document</h4>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder={`e.g., ${selectedCategoryLabel} 2025`}
+                  value={newDocLabel}
+                  onChange={(e) => setNewDocLabel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateDocument();
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleCreateDocument}
+                  disabled={isCreatingDoc || !newDocLabel.trim()}
+                >
+                  {isCreatingDoc ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Existing Documents */}
-            <div>
-              <h4 className="font-semibold mb-3">
-                Uploaded Documents ({selectedCategoryDocs.length})
-              </h4>
+          {/* Existing Documents */}
+          <div>
+            <h4 className="font-semibold mb-3">
+              Uploaded Documents ({selectedCategoryDocs.length})
+            </h4>
 
-              {selectedCategoryDocs.length === 0 ? (
-                <div className="bg-neutral-800/50 rounded-lg p-6 text-center">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-600" />
-                  <p className="text-sm text-neutral-400 mb-1">
-                    No {selectedCategoryLabel.toLowerCase()} documents yet
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {canUpload
-                      ? "Create a new document above to get started"
-                      : "Documents will appear here once uploaded in the Advancing section"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {selectedCategoryDocs.map((doc) => (
+            {selectedCategoryDocs.length === 0 ? (
+              <div className="bg-neutral-800/50 rounded-lg p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-600" />
+                <p className="text-sm text-neutral-400 mb-1">
+                  No {selectedCategoryLabel.toLowerCase()} documents yet
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {canUpload
+                    ? "Create a new document above to get started"
+                    : "Documents will appear here once uploaded in the Advancing section"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedCategoryDocs.map((doc) => {
+                  const files = doc.files || [];
+                  return (
                     <div
                       key={doc.id}
                       className="border border-neutral-700 rounded-lg p-4 bg-neutral-900/60"
@@ -415,15 +420,14 @@ export function DocumentsPanel({
                           </p>
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {doc.files.length}{" "}
-                          {doc.files.length === 1 ? "file" : "files"}
+                          {files.length} {files.length === 1 ? "file" : "files"}
                         </Badge>
                       </div>
 
                       {/* Files */}
-                      {doc.files.length > 0 && (
+                      {files.length > 0 && (
                         <div className="space-y-2 mb-3">
-                          {doc.files.map((file) => (
+                          {files.map((file) => (
                             <div
                               key={file.id}
                               className="flex items-center justify-between bg-neutral-800/50 border border-neutral-700 rounded-md p-3"
@@ -540,13 +544,13 @@ export function DocumentsPanel({
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Popup>
 
       {/* Preview Modal */}
       <FilePreviewModal

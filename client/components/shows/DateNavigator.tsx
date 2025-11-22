@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -46,102 +46,123 @@ export function DateNavigator({
     updateDate(newDate);
   };
 
-  const goToToday = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    updateDate(today);
-  };
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const isToday = currentDate.getTime() === today.getTime();
+  // Calculate which day this is in the schedule
+  const sortedDates = [...datesWithEvents].sort();
+  const currentDateStr = `${currentDate.getFullYear()}-${String(
+    currentDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+  const dayNumber = sortedDates.indexOf(currentDateStr) + 1;
 
   const displayDateStr = currentDate.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
     day: "numeric",
-    year: "numeric",
+    month: "short",
   });
 
   // Create a Set for quick lookup of dates with events
   const eventDatesSet = new Set(datesWithEvents);
 
   return (
-    <div className="flex items-center gap-2 flex-wrap justify-center">
-      <Popover>
-        <PopoverTrigger asChild>
+    <div className="space-y-3 w-full">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          {/* Day number - opens day selector */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-xs font-medium text-description-foreground hover:text-foreground transition-colors cursor-pointer">
+                Day {dayNumber > 0 ? dayNumber : "?"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-3" align="start">
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-description-foreground mb-2">
+                  Jump to day
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {sortedDates.map((dateStr, index) => {
+                    const isActive = dateStr === currentDateStr;
+                    const date = new Date(dateStr + "T00:00:00");
+                    const dateLabel = date.toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                    });
+                    return (
+                      <button
+                        key={dateStr}
+                        onClick={() => {
+                          updateDate(date);
+                        }}
+                        className={`px-3 py-2 rounded-md text-sm transition-colors cursor-pointer ${
+                          isActive
+                            ? "bg-foreground text-background font-medium"
+                            : "bg-card-cell text-neutral-400 hover:bg-neutral-700 hover:text-foreground"
+                        }`}
+                      >
+                        <div className="font-medium">Day {index + 1}</div>
+                        <div className="text-xs opacity-70">{dateLabel}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <span className="text-neutral-600">|</span>
+
+          {/* Date - opens calendar */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-xs font-medium text-description-foreground hover:text-foreground transition-colors cursor-pointer">
+                {displayDateStr}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={currentDate}
+                onSelect={(date) => {
+                  if (date) {
+                    updateDate(date);
+                  }
+                }}
+                initialFocus
+                modifiers={{
+                  hasEvents: (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    const dateStr = `${year}-${month}-${day}`;
+                    return eventDatesSet.has(dateStr);
+                  },
+                }}
+                modifiersClassNames={{
+                  hasEvents:
+                    "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-emerald-500 after:rounded-full",
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 gap-1.5 flex-1 justify-start hover:bg-neutral-800/50"
+            onClick={goToPreviousDay}
+            className="h-8 w-8 p-0 hover:bg-card-cell"
           >
-            <CalendarIcon className="w-3.5 h-3.5 flex-shrink-0 text-neutral-400" />
-            <span className="text-sm font-medium truncate">
-              {displayDateStr}
-            </span>
-            {isToday && (
-              <span className="text-[10px] text-emerald-400 font-medium ml-1">
-                • Today
-              </span>
-            )}
+            <ChevronLeft className="w-4 h-4" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={currentDate}
-            onSelect={(date) => {
-              if (date) {
-                updateDate(date);
-              }
-            }}
-            initialFocus
-            modifiers={{
-              hasEvents: (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, "0");
-                const day = String(date.getDate()).padStart(2, "0");
-                const dateStr = `${year}-${month}-${day}`;
-                return eventDatesSet.has(dateStr);
-              },
-            }}
-            modifiersClassNames={{
-              hasEvents:
-                "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-emerald-500 after:rounded-full",
-            }}
-          />
-        </PopoverContent>
-      </Popover>
 
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={goToPreviousDay}
-          className="h-8 w-8 p-0 hover:bg-neutral-800/50"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-        </Button>
-
-        {!isToday && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={goToToday}
-            className="h-8 px-2 text-[10px] hover:bg-neutral-800/50"
+            onClick={goToNextDay}
+            className="h-8 w-8 p-0 hover:bg-card-cell"
           >
-            Today
+            <ChevronRight className="w-4 h-4" />
           </Button>
-        )}
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={goToNextDay}
-          className="h-8 w-8 p-0 hover:bg-neutral-800/50"
-        >
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Button>
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,6 @@ import {
   Mail,
   Handshake,
   CalendarClock,
-  CalendarDays,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,12 +20,11 @@ import { queryKeys } from "@/lib/query-keys";
 
 interface SidebarProps {
   orgSlug: string;
-  userRole: string;
 }
 
 const STORAGE_KEY = "oncore_last_show";
 
-export function Sidebar({ orgSlug, userRole }: SidebarProps) {
+export function Sidebar({ orgSlug }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [lastShowId, setLastShowId] = useState<string | null>(null);
@@ -82,7 +80,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
   });
 
   const navigation = [
-    { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
+    // { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
     { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar },
     { name: "Network", href: `/${orgSlug}/venues`, icon: Globe },
     { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },
@@ -139,7 +137,7 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
       <aside
         className={`
           fixed top-0 left-0 z-40 h-screen w-64
-          border-r border-border bg-card
+          border-r border-sidebar-border bg-sidebar-bg
           transition-transform duration-200 ease-in-out
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
@@ -221,14 +219,6 @@ export function Sidebar({ orgSlug, userRole }: SidebarProps) {
               );
             })}
           </nav>
-
-          {/* Footer */}
-          <div className="border-t border-border p-4">
-            <div className="text-xs text-muted-foreground">
-              Role:{" "}
-              <span className="font-medium text-foreground">{userRole}</span>
-            </div>
-          </div>
         </div>
       </aside>
     </>

@@ -15,11 +15,13 @@ export function TopBar() {
   const orgSlug = params?.org as string;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center px-4 lg:px-8">
+    <header className="sticky top-0 z-40 w-full bg-background">
+      <div className="flex h-16 items-center px-4 lg:px-8">
         {/* Left spacing for mobile hamburger menu */}
         <div className="w-10 lg:w-0 shrink-0" />
-
+        <Button className="rounded-full font-header text-xs cursor-not-allowed">
+          Import Data
+        </Button>
         {/* Center search area */}
         <div className="flex-1 flex items-center justify-center px-2 sm:px-4">
           <div className="w-full max-w-md lg:max-w-lg">
@@ -30,6 +32,7 @@ export function TopBar() {
         {/* Right action buttons */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* <Notifications /> */}
+          {/* PUT THE DROPDOWN HERE */}
           <UserDropdownMenu />
           <Button variant="ghost" size="icon" asChild title="Settings">
             <Link href={`/${orgSlug}/settings`}>

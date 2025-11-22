@@ -5,18 +5,18 @@ import { ShowWithVenue } from "@/lib/actions/shows";
 import ShowsSearchbar from "./ShowsSearchbar";
 import ShowsTable from "./ShowsTable";
 import ShowsCalendar from "./ShowsCalendar";
-import ShowViewToggler from "./ShowViewToggler";
+import CreateShowButton from "./CreateShowButton";
 
 interface ShowsClientProps {
   shows: ShowWithVenue[];
   orgSlug: string;
-  view: string;
+  orgId: string;
 }
 
 export default function ShowsClient({
   shows,
   orgSlug,
-  view,
+  orgId,
 }: ShowsClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -51,18 +51,19 @@ export default function ShowsClient({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="flex-1">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+        <div className="">
           <ShowsSearchbar value={searchQuery} onChange={setSearchQuery} />
         </div>
-        <ShowViewToggler />
+        <CreateShowButton orgId={orgId} />
       </div>
 
-      {view === "calendar" ? (
-        <ShowsCalendar shows={filteredShows} orgSlug={orgSlug} />
-      ) : (
+      <div className="flex gap-10">
         <ShowsTable shows={filteredShows} orgSlug={orgSlug} />
-      )}
+        <div className="flex-1 hidden md:block">
+          <ShowsCalendar shows={filteredShows} orgSlug={orgSlug} />
+        </div>
+      </div>
     </>
   );
 }

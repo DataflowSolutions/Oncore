@@ -1,6 +1,9 @@
 "use client";
 
 import { Clock, MapPin } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Popup } from "@/components/ui/popup";
 
 interface TransportationPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
@@ -19,6 +22,7 @@ export function TransportationPanel({
   advancingFields,
   assignedPeople,
 }: TransportationPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
   // Check for promoter transfers (JSON array)
   const promoterTransfersField = advancingFields.find(
     (f) => f.field_name === "promoter_transfers"
@@ -34,7 +38,7 @@ export function TransportationPanel({
   if (promoterTransfersField) {
     try {
       // Value is already a JSON object from JSONB, no need to parse
-      if (typeof promoterTransfersField === 'string') {
+      if (typeof promoterTransfersField === "string") {
         promoterTransfers = JSON.parse(promoterTransfersField);
       } else if (Array.isArray(promoterTransfersField)) {
         promoterTransfers = promoterTransfersField as Array<{
@@ -85,13 +89,22 @@ export function TransportationPanel({
     })
     .filter(Boolean);
 
-  if (transportData.length === 0 && promoterTransfers.length === 0) {
-    return (
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
+  return (
+    <div className="bg-card border border-card-border rounded-[20px] p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-medium text-card-foreground font-header">
           Transportation
         </h3>
-        <div className="bg-neutral-800/50 rounded-lg p-4">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="text-button-bg hover:text-button-bg-hover cursor-pointer"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+      </div>
+
+      {transportData.length === 0 && promoterTransfers.length === 0 ? (
+        <div>
           <p className="text-sm text-neutral-400">
             No transportation scheduled
           </p>
@@ -99,84 +112,80 @@ export function TransportationPanel({
             Ground transportation will be shown here
           </p>
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <div className="space-y-3">
+          {/* Show promoter transfers */}
+          {promoterTransfers.map((transfer, idx) => (
+            <div
+              key={`promoter-${transfer.id}`}
+              className="bg-card-cell rounded-lg p-4"
+            >
+              <div className="font-medium text-sm mb-2">Transfer {idx + 1}</div>
+              <div className="space-y-1">
+                {(transfer.from || transfer.fromTime) && (
+                  <div className="flex items-center gap-2 text-xs text-neutral-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>From: {transfer.from || "TBD"}</span>
+                    {transfer.fromTime && (
+                      <>
+                        <Clock className="w-3 h-3 ml-2" />
+                        <span>{transfer.fromTime}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                {(transfer.to || transfer.toTime) && (
+                  <div className="flex items-center gap-2 text-xs text-neutral-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>To: {transfer.to || "TBD"}</span>
+                    {transfer.toTime && (
+                      <>
+                        <Clock className="w-3 h-3 ml-2" />
+                        <span>{transfer.toTime}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
 
-  return (
-    <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">
-        Transportation
-      </h3>
-      <div className="space-y-3">
-        {/* Show promoter transfers */}
-        {promoterTransfers.map((transfer, idx) => (
-          <div
-            key={`promoter-${transfer.id}`}
-            className="bg-neutral-800/50 rounded-lg p-4"
-          >
-            <div className="font-medium text-sm mb-2">Transfer {idx + 1}</div>
-            <div className="space-y-1">
-              {(transfer.from || transfer.fromTime) && (
-                <div className="flex items-center gap-2 text-xs text-neutral-400">
-                  <MapPin className="w-3 h-3" />
-                  <span>From: {transfer.from || "TBD"}</span>
-                  {transfer.fromTime && (
-                    <>
-                      <Clock className="w-3 h-3 ml-2" />
-                      <span>{transfer.fromTime}</span>
-                    </>
-                  )}
+          {/* Show per-person transport data */}
+          {transportData.map((transport, idx) => (
+            <div key={idx} className="bg-neutral-800/50 rounded-lg p-4">
+              <div className="font-medium text-sm mb-2">
+                {transport!.personName}
+              </div>
+              {transport!.time && (
+                <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{transport!.time}</span>
                 </div>
               )}
-              {(transfer.to || transfer.toTime) && (
-                <div className="flex items-center gap-2 text-xs text-neutral-400">
+              {(transport!.from || transport!.to) && (
+                <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
                   <MapPin className="w-3 h-3" />
-                  <span>To: {transfer.to || "TBD"}</span>
-                  {transfer.toTime && (
-                    <>
-                      <Clock className="w-3 h-3 ml-2" />
-                      <span>{transfer.toTime}</span>
-                    </>
-                  )}
+                  <span>
+                    {transport!.from && <span>{transport!.from}</span>}
+                    {transport!.from && transport!.to && (
+                      <span className="mx-1">→</span>
+                    )}
+                    {transport!.to && <span>{transport!.to}</span>}
+                  </span>
+                </div>
+              )}
+              {transport!.notes && (
+                <div className="text-xs text-neutral-500 mt-2 pt-2 border-t border-neutral-700">
+                  {transport!.notes}
                 </div>
               )}
             </div>
-          </div>
-        ))}
-
-        {/* Show per-person transport data */}
-        {transportData.map((transport, idx) => (
-          <div key={idx} className="bg-neutral-800/50 rounded-lg p-4">
-            <div className="font-medium text-sm mb-2">
-              {transport!.personName}
-            </div>
-            {transport!.time && (
-              <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-                <Clock className="w-3 h-3" />
-                <span>{transport!.time}</span>
-              </div>
-            )}
-            {(transport!.from || transport!.to) && (
-              <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-                <MapPin className="w-3 h-3" />
-                <span>
-                  {transport!.from && <span>{transport!.from}</span>}
-                  {transport!.from && transport!.to && (
-                    <span className="mx-1">→</span>
-                  )}
-                  {transport!.to && <span>{transport!.to}</span>}
-                </span>
-              </div>
-            )}
-            {transport!.notes && (
-              <div className="text-xs text-neutral-500 mt-2 pt-2 border-t border-neutral-700">
-                {transport!.notes}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+      <Popup title="Transportation" open={isOpen} onOpenChange={setIsOpen}>
+        <div>Placeholder content for Transportation</div>
+      </Popup>
     </div>
   );
 }

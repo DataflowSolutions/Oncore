@@ -1,13 +1,6 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,15 +25,6 @@ export function PersonScheduleSelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleAddPerson = (personId: string) => {
-    if (selectedPeopleIds.includes(personId)) return;
-
-    const newSelectedIds = [...selectedPeopleIds, personId];
-    const params = new URLSearchParams(searchParams);
-    params.set("people", newSelectedIds.join(","));
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
   const handleRemovePerson = (personId: string) => {
     const newSelectedIds = selectedPeopleIds.filter((id) => id !== personId);
     const params = new URLSearchParams(searchParams);
@@ -56,10 +40,6 @@ export function PersonScheduleSelector({
 
   const selectedPeople = availablePeople.filter((p) =>
     selectedPeopleIds.includes(p.id)
-  );
-
-  const availableToAdd = availablePeople.filter(
-    (p) => !selectedPeopleIds.includes(p.id)
   );
 
   return (
@@ -88,36 +68,6 @@ export function PersonScheduleSelector({
           ))}
         </div>
       )}
-
-      {/* Add person selector */}
-      {availableToAdd.length > 0 && (
-        <Select onValueChange={handleAddPerson}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder="+ Filter by person" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableToAdd.map((person) => (
-              <SelectItem key={person.id} value={person.id} className="text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{person.name}</span>
-                  {person.duty && (
-                    <span className="text-[10px] text-neutral-500">
-                      ({person.duty})
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {availableToAdd.length === 0 && availablePeople.length > 0 && (
-        <span className="text-[10px] text-neutral-600">
-          All team members selected
-        </span>
-      )}
-
       {availablePeople.length === 0 && (
         <span className="text-[10px] text-neutral-600">
           No team members available.{" "}

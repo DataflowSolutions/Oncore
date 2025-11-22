@@ -101,7 +101,7 @@ export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
         <Button
           variant="outline"
           className={cn(
-            "relative h-11 w-full justify-start text-sm text-muted-foreground sm:pr-12 transition-all",
+            "bg-search-bg! border border-search-border! rounded-full relative h-11 w-full justify-start text-sm text-muted-foreground sm:pr-12 transition-all",
             open ? "cursor-text" : "cursor-text"
           )}
           onClick={() => !open && onOpenChange(true)}
@@ -122,7 +122,7 @@ export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
               <span className="inline-flex lg:hidden">Search...</span>
             </>
           )}
-          <kbd className="pointer-events-none absolute right-1.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <kbd className="pointer-events-none absolute right-3 top-2.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-75 sm:flex">
             <span className="text-xs">⌘</span>K
           </kbd>
         </Button>
