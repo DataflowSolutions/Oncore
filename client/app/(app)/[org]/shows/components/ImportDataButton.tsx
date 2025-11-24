@@ -397,7 +397,7 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
                   </InfoTile>
                   <InfoTile title="Workflow">
                     <p className="text-xs text-muted-foreground">
-                      Extract -> dedupe by date/city/venue/artist -> structured fields -> review screen -> approve or discard.
+                      Extract → dedupe by date/city/venue/artist → structured fields → review screen → approve or discard.
                     </p>
                   </InfoTile>
                 </div>
