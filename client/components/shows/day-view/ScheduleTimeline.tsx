@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DateNavigator } from "../DateNavigator";
-import { PersonScheduleSelector } from "../PersonScheduleSelector";
+// import { PersonScheduleSelector } from "../PersonScheduleSelector";
 import { TimelineHoverPlaceholder } from "./TimelineHoverPlaceholder";
 import { TimelineDragPreview } from "./TimelineDragPreview";
 import { TimelineIntervals } from "./TimelineIntervals";
@@ -64,9 +64,9 @@ export function ScheduleTimeline({
   onDeleteItem,
   currentDate,
   datesWithEvents = [],
-  availablePeople = [],
-  selectedPeopleIds = [],
-}: ScheduleTimelineProps) {
+}: // availablePeople = [],
+// selectedPeopleIds = [],
+ScheduleTimelineProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [hoverPosition, setHoverPosition] = useState<number | null>(null);
@@ -81,39 +81,7 @@ export function ScheduleTimeline({
     notes: "",
   });
 
-  //   const getItemColor = (type: string) => {
-  //     switch (type) {
-  //       case "arrival":
-  //         return "bg-emerald-500/30 border-emerald-500/60 text-emerald-50";
-  //       case "departure":
-  //         return "bg-blue-500/30 border-blue-500/60 text-blue-50";
-  //       case "show":
-  //         return "bg-red-500/30 border-red-500/60 text-red-50";
-  //       case "venue":
-  //         return "bg-purple-500/30 border-purple-500/60 text-purple-50";
-  //       case "schedule":
-  //         return "bg-orange-500/30 border-orange-500/60 text-orange-50";
-  //       default:
-  //         return "bg-neutral-500/30 border-neutral-500/60 text-neutral-50";
-  //     }
-  //   };
-
-  //   const getItemIcon = (type: string) => {
-  //     switch (type) {
-  //       case "arrival":
-  //         return <PlaneLanding className="w-3.5 h-3.5" />;
-  //       case "departure":
-  //         return <Plane className="w-3.5 h-3.5" />;
-  //       case "venue":
-  //         return <MapPin className="w-3.5 h-3.5" />;
-  //       case "show":
-  //         return <Music className="w-3.5 h-3.5" />;
-  //       case "schedule":
-  //         return <MapPin className="w-3.5 h-3.5" />;
-  //       default:
-  //         return null;
-  //     }
-  //   };
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Parse time from ISO string to minutes since midnight
   const parseTime = (timeStr: string) => {
@@ -139,6 +107,29 @@ export function ScheduleTimeline({
   // This gives us 960px total height (24h * 40px) instead of 1800px
   const pixelsPerHour = 40;
   const pixelsPerMinute = pixelsPerHour / 60;
+
+  // Auto-scroll to first event on mount or when scheduleItems change
+  useEffect(() => {
+    if (scheduleItems.length > 0 && scrollContainerRef.current) {
+      // Find the earliest event
+      const earliestItem = scheduleItems.reduce((earliest, current) => {
+        return new Date(current.time) < new Date(earliest.time)
+          ? current
+          : earliest;
+      });
+
+      const earliestMinutes = parseTime(earliestItem.time);
+      const scrollPosition = (earliestMinutes - startTime) * pixelsPerMinute;
+
+      // Scroll with a small offset to show some context above the event
+      const offset = 100; // 100px above the event
+      scrollContainerRef.current.scrollTop = Math.max(
+        0,
+        scrollPosition - offset
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleItems.length, currentDateStr]); // Re-run when items change or date changes
 
   // Helper function to calculate snapped position from mouse event
   const calculateSnappedMinutes = (
@@ -320,7 +311,7 @@ export function ScheduleTimeline({
   };
 
   return (
-    <div className="space-y-4 select-none">
+    <div className="select-none h-full flex flex-col">
       {/* Person Selector - Outside card */}
       {/* {currentDate && availablePeople.length > 0 && (
         <PersonScheduleSelector
@@ -330,135 +321,142 @@ export function ScheduleTimeline({
       )} */}
 
       {/* Timeline Section - Inside card */}
-      <div className="bg-card border border-card-border rounded-[20px] p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-medium text-card-foreground font-header">
-            Schedule
-          </h3>
-          <ScheduleEventDialog
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-            editingItem={editingItem}
-            formData={formData}
-            onFormDataChange={setFormData}
-            onSubmit={async () => {
-              const startsAt = new Date(
-                `${formData.date}T${formData.starts_at}:00`
-              ).toISOString();
-              const endsAt = formData.ends_at
-                ? new Date(
-                    `${formData.date}T${formData.ends_at}:00`
-                  ).toISOString()
-                : null;
+      <div className="bg-card border border-card-border rounded-[20px] flex flex-col h-full overflow-hidden">
+        <div className="flex-shrink-0 p-5 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xl font-medium text-card-foreground font-header">
+              Schedule
+            </h3>
+            <ScheduleEventDialog
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              editingItem={editingItem}
+              formData={formData}
+              onFormDataChange={setFormData}
+              onSubmit={async () => {
+                const startsAt = new Date(
+                  `${formData.date}T${formData.starts_at}:00`
+                ).toISOString();
+                const endsAt = formData.ends_at
+                  ? new Date(
+                      `${formData.date}T${formData.ends_at}:00`
+                    ).toISOString()
+                  : null;
 
-              if (editingItem) {
-                await onDeleteItem(editingItem.id);
-              }
+                if (editingItem) {
+                  await onDeleteItem(editingItem.id);
+                }
 
-              await onCreateItem({
-                title: formData.title,
-                starts_at: startsAt,
-                ends_at: endsAt,
-                location: formData.location || null,
-                notes: formData.notes || null,
-              });
+                await onCreateItem({
+                  title: formData.title,
+                  starts_at: startsAt,
+                  ends_at: endsAt,
+                  location: formData.location || null,
+                  notes: formData.notes || null,
+                });
 
-              setFormData({
-                title: "",
-                date: currentDateStr,
-                starts_at: "",
-                ends_at: "",
-                location: "",
-                notes: "",
-              });
-              setEditingItem(null);
-              setIsDialogOpen(false);
-            }}
-            onDelete={async (itemId) => {
-              await onDeleteItem(itemId);
-              setIsDialogOpen(false);
-              setEditingItem(null);
-              setFormData({
-                title: "",
-                date: currentDateStr,
-                starts_at: "",
-                ends_at: "",
-                location: "",
-                notes: "",
-              });
-            }}
-          />
-        </div>
-
-        {/* Date Navigator */}
-        {currentDate && (
-          <div className="flex items-center justify-between">
-            <DateNavigator
-              currentDate={currentDate}
-              datesWithEvents={datesWithEvents}
+                setFormData({
+                  title: "",
+                  date: currentDateStr,
+                  starts_at: "",
+                  ends_at: "",
+                  location: "",
+                  notes: "",
+                });
+                setEditingItem(null);
+                setIsDialogOpen(false);
+              }}
+              onDelete={async (itemId) => {
+                await onDeleteItem(itemId);
+                setIsDialogOpen(false);
+                setEditingItem(null);
+                setFormData({
+                  title: "",
+                  date: currentDateStr,
+                  starts_at: "",
+                  ends_at: "",
+                  location: "",
+                  notes: "",
+                });
+              }}
             />
           </div>
-        )}
 
-        {/* Timeline View */}
-        <div
-          className="relative rounded-lg cursor-crosshair"
-          onClick={handleTimelineClick}
-          onMouseMove={handleTimelineMouseMove}
-          onMouseLeave={handleTimelineMouseLeave}
-          onMouseUp={handleTimelineMouseUp}
-          style={{
-            minHeight: `${(endTime - startTime) * pixelsPerMinute + 32}px`,
-          }}
-        >
-          {/* Hover placeholder */}
-          {hoverPosition !== null && !draggingItem && (
-            <TimelineHoverPlaceholder
-              hoverPosition={hoverPosition}
-              pixelsPerMinute={pixelsPerMinute}
-            />
-          )}
-
-          {/* Drag preview */}
-          {draggingItem && hoverPosition !== null && (
-            <TimelineDragPreview
-              draggingItem={draggingItem}
-              hoverPosition={hoverPosition}
-              pixelsPerMinute={pixelsPerMinute}
-              parseTime={parseTime}
-            />
-          )}
-          {/* Time intervals */}
-          <TimelineIntervals
-            intervals={intervals}
-            startTime={startTime}
-            pixelsPerMinute={pixelsPerMinute}
-          />
-
-          {/* Activity boxes */}
-          {scheduleItems.map((item) => {
-            const startMinutes = parseTime(item.time);
-            const endMinutes = item.endTime
-              ? parseTime(item.endTime)
-              : startMinutes + 30;
-            const duration = endMinutes - startMinutes;
-            const topPosition =
-              (startMinutes - startTime) * pixelsPerMinute + 32;
-            const height = duration * pixelsPerMinute;
-
-            return (
-              <ScheduleEventItem
-                key={item.id}
-                item={item}
-                topPosition={topPosition}
-                height={height}
-                isDragging={draggingItem?.id === item.id}
-                onMouseDown={handleItemMouseDown}
-                onClick={handleItemClick}
-                onDelete={onDeleteItem}
+          {/* Date Navigator */}
+          {currentDate && (
+            <div className="flex items-center justify-between">
+              <DateNavigator
+                currentDate={currentDate}
+                datesWithEvents={datesWithEvents}
               />
-            );
-          })}
+            </div>
+          )}
+        </div>
+
+        {/* Timeline View - Scrollable */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-5 pb-5"
+        >
+          <div
+            className="relative rounded-lg cursor-crosshair"
+            onClick={handleTimelineClick}
+            onMouseMove={handleTimelineMouseMove}
+            onMouseLeave={handleTimelineMouseLeave}
+            onMouseUp={handleTimelineMouseUp}
+            style={{
+              minHeight: `${(endTime - startTime) * pixelsPerMinute + 32}px`,
+            }}
+          >
+            {/* Hover placeholder */}
+            {hoverPosition !== null && !draggingItem && (
+              <TimelineHoverPlaceholder
+                hoverPosition={hoverPosition}
+                pixelsPerMinute={pixelsPerMinute}
+              />
+            )}
+
+            {/* Drag preview */}
+            {draggingItem && hoverPosition !== null && (
+              <TimelineDragPreview
+                draggingItem={draggingItem}
+                hoverPosition={hoverPosition}
+                pixelsPerMinute={pixelsPerMinute}
+                parseTime={parseTime}
+              />
+            )}
+            {/* Time intervals */}
+            <TimelineIntervals
+              intervals={intervals}
+              startTime={startTime}
+              pixelsPerMinute={pixelsPerMinute}
+            />
+
+            {/* Activity boxes */}
+            {scheduleItems.map((item) => {
+              const startMinutes = parseTime(item.time);
+              const endMinutes = item.endTime
+                ? parseTime(item.endTime)
+                : startMinutes + 30;
+              const duration = endMinutes - startMinutes;
+              const topPosition =
+                (startMinutes - startTime) * pixelsPerMinute + 32;
+              const height = duration * pixelsPerMinute;
+
+              return (
+                <ScheduleEventItem
+                  key={item.id}
+                  item={item}
+                  topPosition={topPosition}
+                  height={height}
+                  isDragging={draggingItem?.id === item.id}
+                  onMouseDown={handleItemMouseDown}
+                  onClick={handleItemClick}
+                  onDelete={onDeleteItem}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

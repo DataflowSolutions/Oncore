@@ -95,7 +95,7 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
               return (
                 <div
                   key={show.id}
-                  className="rounded-[20px] border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group w-[400px]"
+                  className="rounded-[20px] border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group w-[500px]"
                 >
                   <Link
                     href={`/${orgSlug}/shows/${show.id}/day`}

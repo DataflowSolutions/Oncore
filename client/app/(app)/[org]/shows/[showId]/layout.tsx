@@ -68,7 +68,7 @@ export default async function ShowLayout({
         </Link> */}
 
         {/* Shared Header */}
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex justify-between items-start gap-4 max-w-[1440px] mx-auto">
           <div className="space-y-2 flex-1">
             <div className="flex gap-4 items-center">
               <h1 className="text-3xl font-header">

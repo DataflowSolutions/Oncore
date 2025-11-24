@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Calendar,
-  Globe,
-  Menu,
-  X,
-  ClipboardList,
-  Mail,
-  Handshake,
-  CalendarClock,
-} from "lucide-react";
+import { Calendar, Globe, Menu, X, Play } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -81,11 +72,11 @@ export function Sidebar({ orgSlug }: SidebarProps) {
 
   const navigation = [
     // { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
-    { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar },
+    { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar, exact: true },
     { name: "Network", href: `/${orgSlug}/venues`, icon: Globe },
-    { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },
-    { name: "Partners", href: `/${orgSlug}/partners`, icon: Handshake },
-    { name: "Calendar", href: `/${orgSlug}/calendar`, icon: CalendarClock },
+    // { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },
+    // { name: "Partners", href: `/${orgSlug}/partners`, icon: Handshake },
+    // { name: "Calendar", href: `/${orgSlug}/calendar`, icon: CalendarClock },
   ];
 
   // Day view navigation - shown if we have a last visited show (even when not on show page)
@@ -94,7 +85,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
         {
           name: "Day Schedule",
           href: `/${orgSlug}/shows/${showId}/day`,
-          icon: ClipboardList,
+          icon: Play,
         },
       ]
     : [];
@@ -194,7 +185,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
 
             {/* Main Navigation */}
             {navigation.map((item) => {
-              const active = isActive(item.href);
+              const active = isActive(item.href, item.exact);
               const Icon = item.icon;
 
               return (

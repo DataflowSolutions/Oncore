@@ -296,7 +296,7 @@ export function DocumentsPanel({
 
   return (
     <>
-      <div className="bg-card border border-card-border rounded-[20px] p-8 w-full max-w-md mx-auto shadow-lg">
+      <div className="bg-card border border-card-border rounded-[20px] p-8 w-full shadow-lg">
         <h3 className="text-xl font-medium text-card-foreground font-header mb-6 tracking-wide">
           Documents
         </h3>
@@ -307,7 +307,7 @@ export function DocumentsPanel({
             return (
               <div
                 key={category.value}
-                className={`relative bg-card-cell hover:bg-card-cell/50 rounded-full transition-colors cursor-pointer flex items-center justify-center py-3 shadow group  ${
+                className={`relative bg-card-cell border-card-cell-border hover:bg-card-cell/50 rounded-full transition-colors cursor-pointer flex items-center justify-center py-3  ${
                   isOther ? "col-span-2" : ""
                 }`}
                 onClick={() => {
@@ -315,7 +315,7 @@ export function DocumentsPanel({
                   setIsModalOpen(true);
                 }}
               >
-                <span className="z-10 text-xs font-semibold group-hover:scale-105 transition-transform duration-150 font-header">
+                <span className="z-10 text-xs font-header">
                   {category.label}
                 </span>
                 {category.count > 0 ? (
