@@ -214,7 +214,7 @@ export default function VenuesClient({
                     </div>
 
                     {/* Right side: Role and invite button */}
-                    <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="flex flex-col items-center justify-center gap-3">
                       {person.member_type && (
                         <Badge
                           variant="outline"

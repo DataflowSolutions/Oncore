@@ -25,6 +25,14 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
     try {
       // Add orgId to formData
       formData.append("orgId", orgId);
+
+      // Get the city value and use it for both venue name and city
+      const city = formData.get("city") as string;
+      if (city) {
+        formData.append("venueCity", city);
+        formData.append("venueName", city);
+      }
+
       await createShow(formData);
       setSuccess(true);
 

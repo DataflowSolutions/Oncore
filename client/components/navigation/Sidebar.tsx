@@ -73,7 +73,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
   const navigation = [
     // { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
     { name: "Shows", href: `/${orgSlug}/shows`, icon: Calendar, exact: true },
-    { name: "Network", href: `/${orgSlug}/venues`, icon: Globe },
+    { name: "Network", href: `/${orgSlug}/venues?view=team`, icon: Globe },
     // { name: "Ingestion", href: `/${orgSlug}/ingestion`, icon: Mail },
     // { name: "Partners", href: `/${orgSlug}/partners`, icon: Handshake },
     // { name: "Calendar", href: `/${orgSlug}/calendar`, icon: CalendarClock },

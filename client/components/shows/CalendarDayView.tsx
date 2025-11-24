@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { ScheduleItemModal } from "./ScheduleItemModal";
 import { Database } from "@/lib/database.types";
 import {
@@ -274,7 +275,14 @@ export function CalendarDayView({
                 setIsModalOpen(true);
               }}
               onCreateItem={async (data) => {
-                await createScheduleItem(orgSlug, showId, data);
+                const result = await createScheduleItem(orgSlug, showId, data);
+                if (!result.success) {
+                  toast.error(result.error || "Failed to create schedule item");
+                  throw new Error(
+                    result.error || "Failed to create schedule item"
+                  );
+                }
+                toast.success("Schedule item created");
               }}
               onUpdateItem={async (
                 itemId,
@@ -284,10 +292,20 @@ export function CalendarDayView({
                 ends_at
               ) => {
                 // Update the schedule item
-                await updateScheduleItem(orgSlug, showId, itemId, {
-                  starts_at,
-                  ends_at,
-                });
+                const result = await updateScheduleItem(
+                  orgSlug,
+                  showId,
+                  itemId,
+                  {
+                    starts_at,
+                    ends_at,
+                  }
+                );
+
+                if (!result.success) {
+                  toast.error(result.error || "Failed to update schedule item");
+                  return;
+                }
 
                 // If it's an auto-generated hotel, catering, or flight item, sync back to advancing
                 if (
@@ -306,9 +324,20 @@ export function CalendarDayView({
                     ends_at
                   );
                 }
+
+                toast.success("Schedule item updated");
               }}
               onDeleteItem={async (itemId) => {
-                await deleteScheduleItem(orgSlug, showId, itemId);
+                const result = await deleteScheduleItem(
+                  orgSlug,
+                  showId,
+                  itemId
+                );
+                if (!result.success) {
+                  toast.error(result.error || "Failed to delete schedule item");
+                  return;
+                }
+                toast.success("Schedule item deleted");
               }}
               currentDate={currentDate}
               datesWithEvents={datesWithEvents}

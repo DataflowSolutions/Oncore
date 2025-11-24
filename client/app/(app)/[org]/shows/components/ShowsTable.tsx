@@ -124,7 +124,7 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
                           {show.venue && (
                             <div className="flex items-center gap-1.5 sm:ml-auto justify-end">
                               <span className="text-description-foreground font-medium hover:text-primary hover:underline">
-                                {show.venue.name}
+                                {show.venue.city}
                               </span>
                             </div>
                           )}

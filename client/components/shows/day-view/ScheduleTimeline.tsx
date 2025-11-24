@@ -334,37 +334,42 @@ ScheduleTimelineProps) {
               formData={formData}
               onFormDataChange={setFormData}
               onSubmit={async () => {
-                const startsAt = new Date(
-                  `${formData.date}T${formData.starts_at}:00`
-                ).toISOString();
-                const endsAt = formData.ends_at
-                  ? new Date(
-                      `${formData.date}T${formData.ends_at}:00`
-                    ).toISOString()
-                  : null;
+                try {
+                  const startsAt = new Date(
+                    `${formData.date}T${formData.starts_at}:00`
+                  ).toISOString();
+                  const endsAt = formData.ends_at
+                    ? new Date(
+                        `${formData.date}T${formData.ends_at}:00`
+                      ).toISOString()
+                    : null;
 
-                if (editingItem) {
-                  await onDeleteItem(editingItem.id);
+                  if (editingItem) {
+                    await onDeleteItem(editingItem.id);
+                  }
+
+                  await onCreateItem({
+                    title: formData.title,
+                    starts_at: startsAt,
+                    ends_at: endsAt,
+                    location: formData.location || null,
+                    notes: formData.notes || null,
+                  });
+
+                  setFormData({
+                    title: "",
+                    date: currentDateStr,
+                    starts_at: "",
+                    ends_at: "",
+                    location: "",
+                    notes: "",
+                  });
+                  setEditingItem(null);
+                  setIsDialogOpen(false);
+                } catch (error) {
+                  // Error is already shown by the parent component
+                  console.error("Failed to create schedule item:", error);
                 }
-
-                await onCreateItem({
-                  title: formData.title,
-                  starts_at: startsAt,
-                  ends_at: endsAt,
-                  location: formData.location || null,
-                  notes: formData.notes || null,
-                });
-
-                setFormData({
-                  title: "",
-                  date: currentDateStr,
-                  starts_at: "",
-                  ends_at: "",
-                  location: "",
-                  notes: "",
-                });
-                setEditingItem(null);
-                setIsDialogOpen(false);
               }}
               onDelete={async (itemId) => {
                 await onDeleteItem(itemId);
