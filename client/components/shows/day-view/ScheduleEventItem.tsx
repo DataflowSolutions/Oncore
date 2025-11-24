@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-
 interface ScheduleItem {
   id: string;
   time: string;
@@ -30,7 +27,6 @@ export function ScheduleEventItem({
   isDragging,
   onMouseDown,
   onClick,
-  onDelete,
 }: ScheduleEventItemProps) {
   const showFullDetails = height > 35;
   const showTimeDetails = height > 20;

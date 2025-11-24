@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Popup } from "@/components/ui/popup";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { createShow } from "@/lib/actions/shows";
-import VenueFormFields from "@/components/advancing/VenueFormFields";
 import { logger } from "@/lib/logger";
-import { Textarea } from "@/components/ui/textarea";
 
 interface CreateShowButtonProps {
   orgId: string;
@@ -19,12 +17,6 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedVenue, setSelectedVenue] = useState<{
-    id: string;
-    name: string;
-    city: string | null;
-  } | null>(null);
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -86,15 +78,8 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
         )}
 
         <form action={handleSubmit} className="space-y-4">
-          {/* Layout exactly as requested:
-                Row 1: Show Name, Venue Name
-                Row 2: City, Address  
-                Row 3: Performance Date, Performance Time
-                Row 4: Artist, Show Type
-                Row 5: Crew Requirements */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Row 1: Show Name, Venue Name */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Show Name */}
             <div>
               <label
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -110,12 +95,18 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
               />
             </div>
 
-            <VenueFormFields
-              orgId={orgId}
-              onVenueSelect={(venue) => setSelectedVenue(venue)}
-            />
+            {/* City */}
+            <div>
+              <label
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                htmlFor="city"
+              >
+                City *
+              </label>
+              <Input id="city" name="city" placeholder="Enter city" required />
+            </div>
 
-            {/* Row 3: Performance Date, Performance Time */}
+            {/* Performance Date */}
             <div>
               <label
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -126,22 +117,7 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
               <Input id="performance_date" name="date" type="date" required />
             </div>
 
-            <div>
-              <label
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                htmlFor="performance_time"
-              >
-                Performance Time *
-              </label>
-              <Input
-                id="performance_time"
-                name="setTime"
-                type="time"
-                required
-              />
-            </div>
-
-            {/* Row 4: Artist, Show Type */}
+            {/* Artist */}
             <div>
               <label
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -156,41 +132,6 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
                 required
               />
             </div>
-
-            <div>
-              <label
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                htmlFor="show_type"
-              >
-                Show Type
-              </label>
-              <select
-                id="show_type"
-                name="showType"
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="concert">Concert</option>
-                <option value="festival">Festival</option>
-                <option value="private">Private Event</option>
-                <option value="acoustic">Acoustic</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 5: Crew Requirements (full width) */}
-          <div>
-            <label
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              htmlFor="crew_requirements"
-            >
-              Crew Requirements
-            </label>
-            <Textarea
-              id="crew_requirements"
-              name="notes"
-              placeholder="Describe crew requirements and special notes..."
-              className="flex w-full rounded-md border border-input bg-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
-            />
           </div>
 
           <div className="flex justify-end space-x-3 pt-6">
