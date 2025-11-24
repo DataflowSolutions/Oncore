@@ -6,6 +6,7 @@ import ShowsSearchbar from "./ShowsSearchbar";
 import ShowsTable from "./ShowsTable";
 import ShowsCalendar from "./ShowsCalendar";
 import CreateShowButton from "./CreateShowButton";
+import ImportDataButton from "./ImportDataButton";
 
 interface ShowsClientProps {
   shows: ShowWithVenue[];
@@ -51,11 +52,12 @@ export default function ShowsClient({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-        <div className="">
-          <ShowsSearchbar value={searchQuery} onChange={setSearchQuery} />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <ShowsSearchbar value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex flex-wrap gap-3">
+          <ImportDataButton orgId={orgId} />
+          <CreateShowButton orgId={orgId} />
         </div>
-        <CreateShowButton orgId={orgId} />
       </div>
 
       <div className="flex gap-10">
