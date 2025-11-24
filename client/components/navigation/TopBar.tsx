@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { UserDropdownMenu } from "./UserDropdownMenu";
+import { ArtistFilterDropdown } from "./ArtistFilterDropdown";
 
 export function TopBar() {
   const [open, setOpen] = React.useState(false);
@@ -32,7 +33,7 @@ export function TopBar() {
         {/* Right action buttons */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* <Notifications /> */}
-          {/* PUT THE DROPDOWN HERE */}
+          <ArtistFilterDropdown />
           <UserDropdownMenu />
           <Button variant="ghost" size="icon" asChild title="Settings">
             <Link href={`/${orgSlug}/settings`}>
