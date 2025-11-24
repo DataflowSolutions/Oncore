@@ -49,7 +49,7 @@ export function Popup({
           )}
         >
           <DialogHeader>
-            <DialogTitle className="font-header text-xl">{title}</DialogTitle>
+            <DialogTitle className="font-header text-2xl">{title}</DialogTitle>
             {description && (
               <DialogDescription>{description}</DialogDescription>
             )}
