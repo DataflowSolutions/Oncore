@@ -67,7 +67,7 @@ export function FlightsPanel({
   const flights = (flightsField?.value as FlightData[] | undefined) || [];
 
   // Show first 3 flights in the panel
-  const visibleFlights = flights.slice(0, 3);
+
   const hasMoreFlights = flights.length > 3;
   const handleFlightClick = (index: number) => {
     setSelectedFlightIndex(index);
@@ -93,7 +93,10 @@ export function FlightsPanel({
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-medium text-card-foreground font-header">
+        <h3
+          onClick={() => setIsOverviewOpen(true)}
+          className="text-xl font-medium text-card-foreground font-header"
+        >
           Flights
         </h3>
         <button
@@ -115,7 +118,7 @@ export function FlightsPanel({
         </div>
       ) : (
         <div className="space-y-3">
-          {visibleFlights.map((flight, index) => (
+          {flights.map((flight, index) => (
             <div
               key={index}
               className="cursor-pointer hover:opacity-70 transition-opacity flex items-center gap-3 rounded-lg "
@@ -129,7 +132,7 @@ export function FlightsPanel({
               {/* Flight Details */}
               <div className="flex-1 flex flex-col gap-2 border-foreground/40 border py-3 px-4 rounded-[20px]">
                 {/* Top Row: Airline Name */}
-                <div className="font-header text-sm">
+                <div className="font-header text-xs md:text-sm">
                   {flight.airlineName || "AIRLINE"}
                 </div>
 
@@ -137,11 +140,11 @@ export function FlightsPanel({
                 <div className="flex items-center justify-between gap-3">
                   {/* Departure Airport Code and Time */}
                   <div className="text-center">
-                    <div className="font-header text-2xl">
+                    <div className="font-header text-sm md:text-2xl">
                       {flight.departureAirportCode || "DEP"}
                     </div>
                     {flight.departureDateTime && (
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         {new Date(flight.departureDateTime).toLocaleTimeString(
                           "en-GB",
                           {
@@ -156,12 +159,12 @@ export function FlightsPanel({
 
                   {/* Center: Flight Number, Line, and Duration */}
                   <div className="flex-1 flex flex-col items-center gap-1">
-                    <div className="text-xs text-description-foreground">
+                    <div className="text-xs md:text-xs text-description-foreground">
                       {flight.flightNumber || ""}
                     </div>
                     <div className="w-full h-[1px] bg-description-foreground" />
                     {flight.departureDateTime && flight.arrivalDateTime && (
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         {(() => {
                           const departure = new Date(flight.departureDateTime);
                           const arrival = new Date(flight.arrivalDateTime);
@@ -181,11 +184,11 @@ export function FlightsPanel({
 
                   {/* Arrival Airport Code and Time */}
                   <div className="text-center">
-                    <div className="font-header text-2xl">
+                    <div className="font-header text-sm md:text-2xl">
                       {flight.arrivalAirportCode || "ARR"}
                     </div>
                     {flight.arrivalDateTime && (
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         {new Date(flight.arrivalDateTime).toLocaleTimeString(
                           "en-GB",
                           {
@@ -201,15 +204,6 @@ export function FlightsPanel({
               </div>
             </div>
           ))}
-
-          {hasMoreFlights && (
-            <button
-              onClick={() => setIsOverviewOpen(true)}
-              className="w-full text-center text-sm text-button-bg hover:text-button-bg-hover py-2"
-            >
-              View all {flights.length} flights
-            </button>
-          )}
         </div>
       )}
       <Popup
@@ -526,13 +520,13 @@ export function FlightsPanel({
         <div className="space-y-4 max-h-[70vh] overflow-y-auto overflow-x-hidden">
           {flights.map((flight, index) => (
             <div className="flex items-center gap-3" key={index}>
-              <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center border border-card-border">
+              <div className="w-12 h-12 rounded-full bg-card hidden md:flex items-center justify-center border border-card-border">
                 <span className="font-header text-sm text-card-foreground">
                   {index + 1}
                 </span>
               </div>
               <div
-                className="relative cursor-pointer bg-card-cell hover:bg-card-cell/75 hover:scale-102 transition-all duration-300 rounded-[20px] p-6 border border-card-border w-full"
+                className="relative cursor-pointer bg-card-cell hover:bg-card-cell/75 hover:scale-102 transition-all duration-300 rounded-[20px] px-4 py-2 md:px-6 md:py-4 border border-card-border w-full"
                 onClick={() => {
                   setIsOverviewOpen(false);
                   setSelectedFlightIndex(index);
@@ -541,69 +535,74 @@ export function FlightsPanel({
                 {/* Circle on the right edge */}
 
                 {/* Airline Name Header */}
-                <div className="font-header text-lg mb-4">
-                  {flight.airlineName || "AIRLINE"}
+                <div className="flex justify-between pr-6">
+                  <div className="font-header text-sm md:text-lg mb-4">
+                    {flight.airlineName || "AIRLINE"}
+                  </div>
+                  <div className="text-xs md:text-sm text-description-foreground">
+                    <span className="font-bold">Flight</span>&nbsp;
+                    {flight.flightNumber || ""}
+                  </div>
                 </div>
-
                 {/* Main Content - Two Groups */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="flex justify-between items-center pr-6">
                   {/* Left Group */}
-                  <div className="grid grid-cols-2">
+                  <div className="grid grid-cols-2 justify-between w-[40%] gap-8">
                     {/* Booking Ref */}
                     <div className="flex flex-col ">
-                      <div className="text-sm font-header">
-                        {flight.bookingRef || "—"}
+                      <div className="text-xs md:text-sm font-header">
+                        {flight.bookingRef || "N/A"}
                       </div>
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         Booking Ref
                       </div>
                     </div>
 
                     {/* Ticket */}
                     <div className="flex flex-col ">
-                      <div className="text-sm font-header">
-                        {flight.ticketNumber || "—"}
+                      <div className="text-xs md:text-sm font-header">
+                        {flight.ticketNumber || "N/A"}
                       </div>
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         Ticket #
                       </div>
                     </div>
 
                     {/* Aircraft */}
                     <div className="flex flex-col ">
-                      <div className="text-sm font-header">
-                        {flight.aircraftModel || "—"}
+                      <div className="text-xs md:text-sm font-header">
+                        {flight.aircraftModel || "N/A"}
                       </div>
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         Aircraft
                       </div>
                     </div>
 
                     {/* Full Name */}
                     <div className="flex flex-col ">
-                      <div className="text-sm font-header">
-                        {flight.fullName || "—"}
+                      <div className="text-xs md:text-sm font-header">
+                        {flight.fullName || "N/A"}
                       </div>
-                      <div className="text-xs text-description-foreground">
+                      <div className="text-xs md:text-xs text-description-foreground">
                         Full Name
                       </div>
                     </div>
                   </div>
 
                   {/* Right Group */}
-                  <div className="gap-6 grid grid-cols-2">
+                  <div className="grid grid-cols-2 w-[40%] gap-8">
                     {/* Departure and Arrival - Takes up 2 grid columns */}
-                    <div className="col-span-2 grid grid-cols-2 gap-6 relative">
+                    <div className="flex col-span-2 justify-between relative gap-2">
                       {/* Departure */}
-                      <div className="flex flex-col">
-                        <div className="text-xs text-description-foreground">
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs md:text-xs text-description-foreground">
                           {flight.departureAirportCity || "Departure"}
                         </div>
-                        <div className="font-header text-2xl">
+                        <div className="font-header text-sm md:text-xl">
                           {flight.departureAirportCode || "DEP"}
                         </div>
                         {flight.departureDateTime && (
-                          <div className="text-xs text-description-foreground">
+                          <div className="text-xs md:text-xs text-description-foreground">
                             {new Date(
                               flight.departureDateTime
                             ).toLocaleTimeString("en-GB", {
@@ -616,13 +615,10 @@ export function FlightsPanel({
                       </div>
 
                       {/* Center Line and Duration */}
-                      <div className="absolute right-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-                        <div className="text-xs text-description-foreground">
-                          {flight.flightNumber || ""}
-                        </div>
+                      <div className="justify-center flex flex-col items-center gap-1 ">
                         <div className="w-12 h-[1px] bg-description-foreground" />
                         {flight.departureDateTime && flight.arrivalDateTime && (
-                          <div className="text-xs text-description-foreground whitespace-nowrap">
+                          <div className="text-xs md:text-xs text-description-foreground whitespace-nowrap">
                             {(() => {
                               const departure = new Date(
                                 flight.departureDateTime
@@ -636,22 +632,22 @@ export function FlightsPanel({
                               const minutes = Math.floor(
                                 (durationMs % (1000 * 60 * 60)) / (1000 * 60)
                               );
-                              return `${hours}h ${minutes}m`;
+                              return `${hours}h ${minutes}min`;
                             })()}
                           </div>
                         )}
                       </div>
 
                       {/* Arrival */}
-                      <div className="flex flex-col ">
-                        <div className="text-xs text-description-foreground ">
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs md:text-xs text-description-foreground ">
                           {flight.arrivalAirportCity || "Arrival"}
                         </div>
-                        <div className="font-header text-2xl">
+                        <div className="font-header text-sm md:text-xl">
                           {flight.arrivalAirportCode || "ARR"}
                         </div>
                         {flight.arrivalDateTime && (
-                          <div className="text-xs text-description-foreground">
+                          <div className="text-xs md:text-xs text-description-foreground">
                             {new Date(
                               flight.arrivalDateTime
                             ).toLocaleTimeString("en-GB", {
@@ -665,28 +661,29 @@ export function FlightsPanel({
                     </div>
 
                     {/* Seat - Takes up 1 grid column */}
-                    <div className="flex flex-col">
-                      <div className="text-sm font-header">
-                        {flight.seatNumber || "—"}
+                    <div className="col-span-2 flex justify-between">
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs md:text-sm font-header">
+                          {flight.seatNumber || "N/A"}
+                        </div>
+                        <div className="text-xs md:text-xs text-description-foreground ">
+                          Seat
+                        </div>
                       </div>
-                      <div className="text-xs text-description-foreground ">
-                        Seat
+
+                      {/* Class - Takes up 1 grid column */}
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs md:text-sm font-header">
+                          {flight.travelClass || "N/A"}
+                        </div>
+                        <div className="text-xs md:text-xs text-description-foreground ">
+                          Class
+                        </div>
                       </div>
                     </div>
-
-                    {/* Class - Takes up 1 grid column */}
-                    <div className="flex flex-col">
-                      <div className="text-sm font-header">
-                        {flight.travelClass || "—"}
-                      </div>
-                      <div className="text-xs text-description-foreground ">
-                        Class
-                      </div>
-                    </div>
-
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-card flex items-center justify-center border border-card-border" />
                   </div>
                 </div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-card flex items-center justify-center border border-card-border" />
               </div>
             </div>
           ))}

@@ -51,7 +51,7 @@ export function ScheduleEventDialog({
       onOpenChange={onOpenChange}
       className="sm:max-w-[720px]"
       trigger={
-        <Button className="h-6 rounded-full px-5 text-[10px] bg-button-bg font-bold">
+        <Button className="h-7 rounded-full px-5 text-xs bg-button-bg font-bold">
           Add
         </Button>
       }

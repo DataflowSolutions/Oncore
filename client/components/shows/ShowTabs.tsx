@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Users, Download, Share2 } from "lucide-react";
+import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { TeamMemberPopup } from "./TeamMemberPopup";
@@ -30,16 +30,6 @@ const tabs = [
     name: "Team",
     icon: Users,
     action: "team-popup" as const,
-  },
-  {
-    name: "Download",
-    icon: Download,
-    onClick: () => console.log("Download"),
-  },
-  {
-    name: "Share",
-    icon: Share2,
-    onClick: () => console.log("Share"),
   },
 ];
 
@@ -95,8 +85,6 @@ export function ShowTabs({ orgSlug, showId }: ShowTabsProps) {
   const handleTabClick = (tab: (typeof tabs)[number]) => {
     if (tab.action === "team-popup") {
       setShowTeamPopup(true);
-    } else if (tab.onClick) {
-      tab.onClick();
     }
   };
 

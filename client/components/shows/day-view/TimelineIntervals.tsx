@@ -21,10 +21,10 @@ export function TimelineIntervals({
         return (
           <div
             key={idx}
-            className="absolute left-0 right-0 flex items-center px-2"
+            className="absolute left-0 right-0 flex items-center px-2 gap-1"
             style={{ top: `${topPosition}px`, height: "1px" }}
           >
-            <span className="text-[10px] text-timestamp w-10 flex-shrink-0 font-mono">
+            <span className="text-xs text-timestamp w-10 flex-shrink-0 font-mono">
               {interval.label}
             </span>
             <div className="flex-1 border-t border-divider" />

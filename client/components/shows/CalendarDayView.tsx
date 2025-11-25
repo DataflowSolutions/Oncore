@@ -264,7 +264,7 @@ export function CalendarDayView({
         {/* Main Grid Layout - Left: Schedule, Right: Info Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 h-full">
           {/* LEFT COLUMN: Show Schedule Timeline */}
-          <div className="lg:col-span-1 min-w-0 h-full overflow-y-auto">
+          <div className="lg:col-span-1 min-w-0 h-full lg:overflow-y-auto">
             <ScheduleTimeline
               scheduleItems={scheduleItems}
               currentDateStr={currentDateStr}
@@ -353,7 +353,7 @@ export function CalendarDayView({
           </div>
 
           {/* RIGHT COLUMNS: Info Panels */}
-          <div className="lg:col-span-2 min-w-0 h-full overflow-y-auto">
+          <div className="lg:col-span-2 min-w-0 h-full lg:overflow-y-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 items-start h-full">
               {/* Left Column */}
               <div className="space-y-4 md:space-y-6 min-w-0">

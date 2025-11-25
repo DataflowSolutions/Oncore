@@ -69,7 +69,7 @@ export function PersonScheduleSelector({
         </div>
       )}
       {availablePeople.length === 0 && (
-        <span className="text-[10px] text-neutral-600">
+        <span className="text-xs text-neutral-600">
           No team members available.{" "}
           <Link
             href="./team"

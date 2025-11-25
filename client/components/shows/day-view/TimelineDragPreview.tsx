@@ -40,7 +40,7 @@ export function TimelineDragPreview({
         <div className="text-[11px] font-semibold text-green-200 truncate">
           {draggingItem.title}
         </div>
-        <div className="text-[10px] text-green-300/80 mt-0.5 truncate">
+        <div className="text-xs text-green-300/80 mt-0.5 truncate">
           {`${Math.floor(hoverPosition / 60)
             .toString()
             .padStart(2, "0")}:${(hoverPosition % 60)

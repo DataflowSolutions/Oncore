@@ -602,7 +602,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                               : "font-normal text-muted-foreground/40"
                           } ${
                             isTodayDate
-                              ? "bg-primary text-primary-foreground rounded-full w-5 h-5 sm:w-8 sm:h-8 flex items-center justify-center text-[10px] sm:text-base"
+                              ? "bg-primary text-primary-foreground rounded-full w-5 h-5 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-base"
                               : ""
                           }`}
                         >
@@ -651,7 +651,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                                 </div>
                               </div>
                               {/* Desktop view */}
-                              <div className="hidden sm:block text-[10px] leading-tight p-1.5 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
+                              <div className="hidden sm:block text-xs leading-tight p-1.5 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
                                 <div className="font-bold text-foreground line-clamp-1 break-words">
                                   {artistNames} •{" "}
                                   {show.venue?.city || "No city"}

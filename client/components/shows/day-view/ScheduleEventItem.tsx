@@ -65,7 +65,7 @@ export function ScheduleEventItem({
             <div className="text-[11px] font-semibold leading-none text-schedule-event-foreground flex-1 min-w-0 truncate">
               {item.title}
             </div>
-            <div className="text-[10px] text-schedule-event-foreground/80 whitespace-nowrap flex-shrink-0">
+            <div className="text-xs text-schedule-event-foreground/80 whitespace-nowrap flex-shrink-0">
               {new Date(item.time).toLocaleTimeString("en-US", {
                 hour: "numeric",
                 minute: "2-digit",
@@ -91,7 +91,7 @@ export function ScheduleEventItem({
                 {item.title}
               </div>
               {showTimeDetails && (
-                <div className="text-[10px] text-schedule-event-foreground mt-0.5 truncate">
+                <div className="text-xs text-schedule-event-foreground mt-0.5 truncate">
                   {new Date(item.time).toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "2-digit",
@@ -110,7 +110,7 @@ export function ScheduleEventItem({
                 </div>
               )}
               {showFullDetails && item.personName && (
-                <div className="text-[10px] text-neutral-500 mt-0.5 truncate">
+                <div className="text-xs text-neutral-500 mt-0.5 truncate">
                   {item.personName}
                 </div>
               )}

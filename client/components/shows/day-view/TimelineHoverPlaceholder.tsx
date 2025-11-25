@@ -16,7 +16,7 @@ export function TimelineHoverPlaceholder({
       }}
     >
       <div className="h-full px-2.5 py-1.5 rounded  bg-schedule-event-bg/90 flex items-center">
-        <div className="text-[10px] text-schedule-event-foreground">
+        <div className="text-xs text-schedule-event-foreground">
           {`${Math.floor(hoverPosition / 60)
             .toString()
             .padStart(2, "0")}:${(hoverPosition % 60)
