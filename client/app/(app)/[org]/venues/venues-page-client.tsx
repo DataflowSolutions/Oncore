@@ -8,7 +8,7 @@ import {
 } from "@/lib/hooks/use-people";
 import { useQuery } from "@tanstack/react-query";
 import VenuesClient from "./components/VenuesClient";
-import { Skeleton } from "@/components/ui/skeleton";
+import { VenueSkeleton } from "./components/VenueSkeleton";
 
 export function VenuesPageClient({
   orgSlug,
@@ -66,11 +66,11 @@ export function VenuesPageClient({
 
   // Show loading skeleton only on initial load without prefetch
   if (venuesLoading && !venues.length) {
-    return <VenuesPageSkeleton />;
+    return <VenueSkeleton />;
   }
 
   if (view === "team" && peopleLoading && !allPeople.length) {
-    return <VenuesPageSkeleton />;
+    return <VenueSkeleton />;
   }
 
   return (
@@ -85,22 +85,6 @@ export function VenuesPageClient({
         orgSlug={orgSlug}
         view={view}
       />
-    </div>
-  );
-}
-
-function VenuesPageSkeleton() {
-  return (
-    <div className="mb-16 mt-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-48 w-full" />
-        ))}
-      </div>
     </div>
   );
 }

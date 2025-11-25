@@ -2,7 +2,7 @@
 
 import { useShows } from "@/lib/hooks/use-shows";
 import ShowsClient from "./components/ShowsClient";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ShowsSkeleton } from "./components/ShowsSkeleton";
 
 export function ShowsPageClient({
   orgSlug,
@@ -36,7 +36,7 @@ export function ShowsPageClient({
 
   // Show loading skeleton only on initial load without prefetch
   if (isLoading && !data) {
-    return <ShowsListSkeleton />;
+    return <ShowsSkeleton />;
   }
 
   const shows = data || [];
@@ -44,29 +44,6 @@ export function ShowsPageClient({
   return (
     <div className="space-y-6">
       <ShowsClient shows={shows} orgSlug={orgSlug} orgId={orgId} />
-    </div>
-  );
-}
-
-function ShowsListSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-5 w-64" />
-        </div>
-        <div className="flex gap-3">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-      </div>
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
     </div>
   );
 }
