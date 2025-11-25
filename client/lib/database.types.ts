@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -22,9 +17,9 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
           query?: string
+          operationName?: string
+          extensions?: Json
           variables?: Json
         }
         Returns: Json
@@ -46,7 +41,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown
+          ip_address: unknown | null
           org_id: string
           resource_id: string | null
           resource_type: string
@@ -59,7 +54,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id: string
           resource_id?: string | null
           resource_type: string
@@ -72,7 +67,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id?: string
           resource_id?: string | null
           resource_type?: string
@@ -103,7 +98,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown
+          ip_address: unknown | null
           org_id: string
           resource_id: string | null
           resource_type: string
@@ -116,7 +111,7 @@ export type Database = {
           created_at: string
           details?: Json | null
           id: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id: string
           resource_id?: string | null
           resource_type: string
@@ -129,7 +124,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           org_id?: string
           resource_id?: string | null
           resource_type?: string
@@ -648,7 +643,7 @@ export type Database = {
           phone: string | null
           role: string | null
           status: string
-          tsv: unknown
+          tsv: unknown | null
           type: string
           updated_at: string
         }
@@ -667,7 +662,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           status?: string
-          tsv?: unknown
+          tsv?: unknown | null
           type: string
           updated_at?: string
         }
@@ -686,7 +681,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           status?: string
-          tsv?: unknown
+          tsv?: unknown | null
           type?: string
           updated_at?: string
         }
@@ -817,6 +812,75 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "advancing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_jobs: {
+        Row: {
+          confidence_map: Json | null
+          created_at: string | null
+          duplicate_matches: Json | null
+          errors: Json | null
+          extracted_artist: string | null
+          extraction_mode: string | null
+          id: string
+          normalized_text: string | null
+          org_id: string
+          parsed_json: Json | null
+          previous_attempts: Json | null
+          raw_text: string | null
+          source_file_metadata: Json | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_map?: Json | null
+          created_at?: string | null
+          duplicate_matches?: Json | null
+          errors?: Json | null
+          extracted_artist?: string | null
+          extraction_mode?: string | null
+          id?: string
+          normalized_text?: string | null
+          org_id: string
+          parsed_json?: Json | null
+          previous_attempts?: Json | null
+          raw_text?: string | null
+          source_file_metadata?: Json | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_map?: Json | null
+          created_at?: string | null
+          duplicate_matches?: Json | null
+          errors?: Json | null
+          extracted_artist?: string | null
+          extraction_mode?: string | null
+          id?: string
+          normalized_text?: string | null
+          org_id?: string
+          parsed_json?: Json | null
+          previous_attempts?: Json | null
+          raw_text?: string | null
+          source_file_metadata?: Json | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_seat_usage"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "import_jobs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1801,7 +1865,7 @@ export type Database = {
           id: string
           name: string
           org_id: string
-          tsv: unknown
+          tsv: unknown | null
           updated_at: string
         }
         Insert: {
@@ -1814,7 +1878,7 @@ export type Database = {
           id?: string
           name: string
           org_id: string
-          tsv?: unknown
+          tsv?: unknown | null
           updated_at?: string
         }
         Update: {
@@ -1827,7 +1891,7 @@ export type Database = {
           id?: string
           name?: string
           org_id?: string
-          tsv?: unknown
+          tsv?: unknown | null
           updated_at?: string
         }
         Relationships: [
@@ -1979,65 +2043,79 @@ export type Database = {
     }
     Functions: {
       accept_invitation: {
-        Args: { p_token: string; p_user_id: string }
+        Args: {
+          p_token: string
+          p_user_id: string
+        }
         Returns: Json
       }
       admin_set_feature_override: {
-        Args: { p_key: string; p_org_id: string; p_value: Json }
+        Args: {
+          p_org_id: string
+          p_key: string
+          p_value: Json
+        }
         Returns: undefined
       }
       admin_update_subscription: {
         Args: {
-          p_extend_days?: number
-          p_org_id: string
           p_plan_id?: string
           p_status?: string
+          p_extend_days?: number
+          p_org_id: string
         }
         Returns: undefined
       }
       app_add_show_collaborator: {
         Args: {
-          p_role?: Database["public"]["Enums"]["show_collab_role"]
           p_show_id: string
           p_user_id: string
+          p_role?: Database["public"]["Enums"]["show_collab_role"]
         }
         Returns: string
       }
       app_assign_plan_debug: {
-        Args: { p_org_id: string; p_plan_id: string; p_trial_days?: number }
+        Args: {
+          p_org_id: string
+          p_trial_days?: number
+          p_plan_id: string
+        }
         Returns: undefined
       }
       app_create_advancing_session: {
         Args: {
-          p_expires_at?: string
-          p_session_title: string
           p_show_id: string
+          p_session_title: string
+          p_expires_at?: string
         }
         Returns: string
       }
       app_create_organization_with_owner: {
-        Args: { org_name: string; org_slug: string }
+        Args: {
+          org_name: string
+          org_slug: string
+        }
         Returns: string
       }
       app_create_show: {
         Args: {
-          p_date: string
-          p_notes?: string
           p_org_id: string
-          p_set_time?: string
           p_title: string
-          p_venue_address?: string
+          p_date: string
           p_venue_city?: string
           p_venue_id?: string
+          p_venue_address?: string
+          p_set_time?: string
+          p_notes?: string
           p_venue_name?: string
         }
         Returns: Json
       }
       app_log_activity: {
         Args: {
+          p_org_id: string
           p_action: string
           p_details?: Json
-          p_org_id: string
           p_resource_id?: string
           p_resource_type: string
         }
@@ -2045,95 +2123,186 @@ export type Database = {
       }
       app_upload_file: {
         Args: {
+          p_party_type?: string
           bucket_name: string
           file_path: string
-          p_content_type?: string
+          p_org_id: string
+          p_show_id?: string
+          p_session_id?: string
           p_document_id?: string
           p_field_id?: string
-          p_org_id: string
           p_original_name?: string
-          p_party_type?: string
-          p_session_id?: string
-          p_show_id?: string
+          p_content_type?: string
           p_size_bytes?: number
         }
         Returns: Json
       }
       archive_old_activity_logs: {
-        Args: { batch_size?: number; days_to_keep?: number }
+        Args: {
+          days_to_keep?: number
+          batch_size?: number
+        }
         Returns: Json
       }
       assign_person_to_show: {
-        Args: { p_duty?: string; p_person_id: string; p_show_id: string }
+        Args: {
+          p_show_id: string
+          p_duty?: string
+          p_person_id: string
+        }
         Returns: Json
       }
       auto_downgrade_expired_orgs: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
-          action: string
-          org_id: string
           previous_plan: string
+          org_id: string
+          action: string
         }[]
       }
-      bulk_update_show_dates: { Args: { p_updates: Json }; Returns: Json }
-      can_person_get_user_access: {
-        Args: { p_person_id: string }
+      bulk_update_show_dates: {
+        Args: {
+          p_updates: Json
+        }
         Returns: Json
       }
-      check_available_seats: { Args: { p_org_id: string }; Returns: Json }
-      check_maintenance_needed: { Args: never; Returns: Json }
+      can_person_get_user_access: {
+        Args: {
+          p_person_id: string
+        }
+        Returns: Json
+      }
+      check_available_seats: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      check_maintenance_needed: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       check_org_limits_detailed: {
         Args: {
-          p_additional_count?: number
           p_check_type: string
           p_org_id: string
+          p_additional_count?: number
         }
         Returns: Json
       }
       check_org_membership: {
-        Args: { p_org_id: string; p_user_id: string }
+        Args: {
+          p_user_id: string
+          p_org_id: string
+        }
         Returns: boolean
       }
       check_slug_available: {
-        Args: { slug_to_check: string }
+        Args: {
+          slug_to_check: string
+        }
         Returns: boolean
       }
-      check_storage_org_access: { Args: { p_org_id: string }; Returns: boolean }
+      check_storage_org_access: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: boolean
+      }
+      citext:
+        | {
+            Args: {
+              "": boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              "": string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              "": unknown
+            }
+            Returns: string
+          }
+      citext_hash: {
+        Args: {
+          "": string
+        }
+        Returns: number
+      }
+      citextin: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      citextout: {
+        Args: {
+          "": string
+        }
+        Returns: unknown
+      }
+      citextrecv: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      citextsend: {
+        Args: {
+          "": string
+        }
+        Returns: string
+      }
       cleanup_unverified_files: {
-        Args: { hours_old?: number }
+        Args: {
+          hours_old?: number
+        }
         Returns: {
-          cleaned_file_id: string
-          reason: string
           storage_path: string
+          reason: string
+          cleaned_file_id: string
         }[]
       }
       create_advancing_document: {
-        Args: { p_label?: string; p_party_type: string; p_session_id: string }
+        Args: {
+          p_party_type: string
+          p_session_id: string
+          p_label?: string
+        }
         Returns: Json
       }
       create_advancing_field: {
         Args: {
+          p_section: string
+          p_session_id: string
           p_field_name: string
           p_field_type: string
           p_party_type: string
-          p_section: string
-          p_session_id: string
-          p_sort_order?: number
           p_value?: Json
+          p_sort_order?: number
         }
         Returns: Json
       }
       create_advancing_session: {
-        Args: { p_org_id: string; p_show_id: string; p_title?: string }
+        Args: {
+          p_org_id: string
+          p_show_id: string
+          p_title?: string
+        }
         Returns: Json
       }
       create_calendar_sync_run: {
         Args: {
-          p_events_processed?: number
-          p_message?: string
           p_org_id: string
-          p_source_id: string
           p_status: string
+          p_message?: string
+          p_events_processed?: number
+          p_source_id: string
         }
         Returns: string
       }
@@ -2141,338 +2310,592 @@ export type Database = {
         Args: {
           p_created_by: string
           p_org_id: string
+          p_sync_interval_minutes: number
           p_source_name?: string
           p_source_url: string
-          p_sync_interval_minutes: number
         }
         Returns: string
       }
       create_person: {
         Args: {
           p_email?: string
-          p_member_type?: Database["public"]["Enums"]["member_type"]
-          p_name: string
-          p_notes?: string
           p_org_id: string
+          p_name: string
           p_phone?: string
           p_role_title?: string
+          p_notes?: string
+          p_member_type?: Database["public"]["Enums"]["member_type"]
         }
         Returns: Json
       }
-      debug_auth_context: { Args: never; Returns: Json }
-      delete_advancing_document: {
-        Args: { p_document_id: string }
+      debug_auth_context: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
-      delete_advancing_file: { Args: { p_file_id: string }; Returns: Json }
-      delete_calendar_sync_source: {
-        Args: { p_org_id: string; p_source_id: string }
-        Returns: undefined
-      }
-      get_activity_log_stats: { Args: never; Returns: Json }
-      get_activity_logs: {
+      delete_advancing_document: {
         Args: {
-          p_include_archived?: boolean
-          p_limit?: number
-          p_offset?: number
+          p_document_id: string
+        }
+        Returns: Json
+      }
+      delete_advancing_file: {
+        Args: {
+          p_file_id: string
+        }
+        Returns: Json
+      }
+      delete_calendar_sync_source: {
+        Args: {
+          p_source_id: string
           p_org_id: string
         }
+        Returns: undefined
+      }
+      get_activity_log_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_activity_logs: {
+        Args: {
+          p_org_id: string
+          p_limit?: number
+          p_offset?: number
+          p_include_archived?: boolean
+        }
         Returns: {
-          action: string
-          created_at: string
-          details: Json
-          id: string
           ip_address: unknown
           is_archived: boolean
-          org_id: string
-          resource_id: string
-          resource_type: string
+          created_at: string
           user_agent: string
+          id: string
+          org_id: string
           user_id: string
+          action: string
+          resource_type: string
+          resource_id: string
+          details: Json
         }[]
       }
-      get_advancing_documents: { Args: { p_session_id: string }; Returns: Json }
+      get_advancing_documents: {
+        Args: {
+          p_session_id: string
+        }
+        Returns: Json
+      }
       get_advancing_fields: {
-        Args: { p_session_id: string }
+        Args: {
+          p_session_id: string
+        }
         Returns: {
           created_at: string
-          created_by: string
-          field_id: string
-          field_name: string
           field_type: string
-          org_id: string
           party_type: Database["public"]["Enums"]["party"]
-          section: string
-          session_id: string
-          sort_order: number
-          status: Database["public"]["Enums"]["field_status"]
           value: Json
+          status: Database["public"]["Enums"]["field_status"]
+          sort_order: number
+          created_by: string
+          org_id: string
+          field_id: string
+          session_id: string
+          section: string
+          field_name: string
         }[]
       }
-      get_advancing_session: { Args: { p_session_id: string }; Returns: Json }
+      get_advancing_session: {
+        Args: {
+          p_session_id: string
+        }
+        Returns: Json
+      }
       get_advancing_session_details: {
-        Args: { p_session_id: string }
+        Args: {
+          p_session_id: string
+        }
         Returns: Json
       }
       get_available_people: {
-        Args: { p_org_id: string; p_party_type?: string }
+        Args: {
+          p_org_id: string
+          p_party_type?: string
+        }
         Returns: {
-          email: string
           id: string
-          member_type: Database["public"]["Enums"]["member_type"]
           name: string
+          member_type: Database["public"]["Enums"]["member_type"]
+          email: string
           phone: string
         }[]
       }
       get_calendar_sync_runs: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
-          created_at: string
-          events_processed: number
           finished_at: string
           id: string
-          message: string
           source_id: string
+          status: string
+          started_at: string
+          message: string
+          events_processed: number
+          created_at: string
+          source_url: string
           source_name: string
           source_status: string
-          source_url: string
-          started_at: string
-          status: string
         }[]
       }
       get_calendar_sync_source: {
-        Args: { p_org_id: string; p_source_id: string }
+        Args: {
+          p_source_id: string
+          p_org_id: string
+        }
         Returns: {
-          created_at: string
-          created_by: string
           id: string
-          last_error: string
-          last_synced_at: string
           org_id: string
           source_url: string
-          status: string
           sync_interval_minutes: number
           updated_at: string
+          last_error: string
+          last_synced_at: string
+          status: string
+          created_by: string
+          created_at: string
         }[]
       }
       get_calendar_sync_sources: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
-          created_at: string
-          created_by: string
-          id: string
-          last_error: string
+          updated_at: string
           last_synced_at: string
-          org_id: string
-          source_url: string
           status: string
           sync_interval_minutes: number
-          updated_at: string
+          source_url: string
+          id: string
+          org_id: string
+          created_at: string
+          last_error: string
+          created_by: string
         }[]
       }
-      get_invitation_by_token: { Args: { p_token: string }; Returns: Json }
-      get_maintenance_stats: { Args: { days_back?: number }; Returns: Json }
-      get_org_advancing_sessions: { Args: { p_org_id: string }; Returns: Json }
-      get_org_by_id: { Args: { p_org_id: string }; Returns: Json }
-      get_org_by_slug: { Args: { p_slug: string }; Returns: Json }
-      get_org_invitations: { Args: { p_org_id: string }; Returns: Json }
-      get_org_membership: { Args: { p_org_id: string }; Returns: Json }
-      get_org_people: { Args: { p_org_id: string }; Returns: Json }
-      get_org_promoters: { Args: { p_org_id: string }; Returns: Json }
-      get_org_subscription: { Args: { p_org_id: string }; Returns: Json }
+      get_invitation_by_token: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
+      get_maintenance_stats: {
+        Args: {
+          days_back?: number
+        }
+        Returns: Json
+      }
+      get_org_advancing_sessions: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_by_id: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_by_slug: {
+        Args: {
+          p_slug: string
+        }
+        Returns: Json
+      }
+      get_org_invitations: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_membership: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_people: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_promoters: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      get_org_subscription: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
       get_org_venues_with_counts: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
-          address: string
-          capacity: number
-          city: string
-          country: string
-          created_at: string
           id: string
           name: string
-          org_id: string
-          shows_count: number
+          address: string
+          city: string
+          country: string
+          capacity: number
+          created_at: string
           updated_at: string
+          shows_count: number
+          org_id: string
         }[]
       }
       get_parsed_contracts: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
-          confidence: number
-          created_at: string
-          created_by: string
-          error: string
+          notes: string
+          id: string
+          org_id: string
           file_name: string
           file_url: string
-          id: string
-          notes: string
-          org_id: string
           parsed_data: Json
+          status: string
+          confidence: number
+          created_by: string
+          reviewed_by: string
+          reviewed_at: string
+          error: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_parsed_email_by_id: {
+        Args: {
+          p_email_id: string
+        }
+        Returns: {
+          created_by: string
+          show_id: string
+          id: string
+          from_email: string
+          raw_content: string
+          parsed_data: Json
+          status: string
+          confidence: number
+          org_id: string
+          subject: string
+          updated_at: string
+          error: string
+          created_at: string
           reviewed_at: string
           reviewed_by: string
-          status: string
-          updated_at: string
         }[]
       }
       get_parsed_emails: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
-          confidence: number
-          created_at: string
-          created_by: string
-          error: string
-          from_email: string
-          id: string
-          org_id: string
-          parsed_data: Json
-          raw_content: string
           reviewed_at: string
           reviewed_by: string
+          created_by: string
           show_id: string
+          error: string
+          confidence: number
           status: string
+          parsed_data: Json
+          raw_content: string
+          from_email: string
           subject: string
+          org_id: string
+          id: string
           updated_at: string
+          created_at: string
         }[]
       }
-      get_promoters_by_venue: { Args: { p_venue_id: string }; Returns: Json }
-      get_show_by_id: { Args: { p_show_id: string }; Returns: Json }
-      get_show_stats: { Args: { p_org_id: string }; Returns: Json }
+      get_promoters_by_venue: {
+        Args: {
+          p_venue_id: string
+        }
+        Returns: Json
+      }
+      get_show_by_id: {
+        Args: {
+          p_show_id: string
+        }
+        Returns: Json
+      }
+      get_show_stats: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
       get_show_team: {
-        Args: { p_party_type?: string; p_show_id: string }
+        Args: {
+          p_party_type?: string
+          p_show_id: string
+        }
         Returns: {
-          duty: string
           email: string
-          id: string
           member_type: Database["public"]["Enums"]["member_type"]
           name: string
+          id: string
+          duty: string
           phone: string
         }[]
       }
       get_shows_by_org: {
-        Args: { p_org_id: string }
+        Args: {
+          p_org_id: string
+        }
         Returns: {
           created_at: string
-          date: string
-          doors_at: string
           id: string
-          notes: string
           org_id: string
-          set_time: string
-          status: string
           title: string
-          updated_at: string
-          venue_address: string
-          venue_city: string
+          date: string
           venue_id: string
+          set_time: string
+          doors_at: string
+          notes: string
+          status: string
+          updated_at: string
           venue_name: string
+          venue_city: string
+          venue_address: string
         }[]
       }
       get_sync_run_items: {
-        Args: { p_sync_run_id: string }
+        Args: {
+          p_sync_run_id: string
+        }
         Returns: {
-          created_at: string
-          ends_at: string
-          external_calendar_id: string
+          starts_at: string
           id: string
+          title: string
+          ends_at: string
           location: string
           notes: string
-          starts_at: string
-          title: string
+          external_calendar_id: string
+          created_at: string
         }[]
       }
-      get_user_organizations: { Args: never; Returns: Json }
-      get_user_orgs: { Args: never; Returns: Json }
-      get_venue_details: { Args: { p_venue_id: string }; Returns: Json }
+      get_user_organizations: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_user_orgs: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_venue_details: {
+        Args: {
+          p_venue_id: string
+        }
+        Returns: Json
+      }
       has_show_access: {
-        Args: { min_role: string; p_show: string }
+        Args: {
+          p_show: string
+          min_role: string
+        }
         Returns: boolean
       }
       import_calendar_events: {
-        Args: { p_events: Json; p_org_id: string; p_sync_run_id?: string }
+        Args: {
+          p_sync_run_id?: string
+          p_org_id: string
+          p_events: Json
+        }
         Returns: {
-          inserted: number
           total: number
           updated: number
+          inserted: number
         }[]
       }
-      is_org_editor: { Args: { p_org: string }; Returns: boolean }
-      is_org_editor_and_active: { Args: { p_org: string }; Returns: boolean }
-      is_org_editor_for_contact: {
-        Args: { p_org_id: string }
-        Returns: boolean
-      }
-      is_org_member: { Args: { p_org: string }; Returns: boolean }
-      is_org_member_and_active: { Args: { p_org: string }; Returns: boolean }
-      is_org_member_for_contact: {
-        Args: { p_org_id: string }
-        Returns: boolean
-      }
-      is_supabase_admin: { Args: never; Returns: boolean }
-      log_billing_action: {
+      insert_parsed_email: {
         Args: {
-          p_action: string
-          p_details?: Json
+          p_confidence: number
+          p_created_by: string
+          p_error?: string
           p_org_id: string
-          p_user_id?: string
+          p_subject: string
+          p_from_email: string
+          p_raw_content: string
+          p_parsed_data: Json
+          p_status: string
         }
         Returns: string
       }
-      org_billing_dashboard: { Args: { p_org_id: string }; Returns: Json }
-      org_entitlements: { Args: { p_org: string }; Returns: Json }
-      org_is_active: { Args: { p_org: string }; Returns: boolean }
-      org_is_active_with_grace: {
-        Args: { p_grace_days?: number; p_org: string }
+      is_org_editor: {
+        Args: {
+          p_org: string
+        }
         Returns: boolean
       }
-      org_subscription_status: { Args: { p_org: string }; Returns: Json }
+      is_org_editor_and_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_editor_for_contact: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_member_and_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      is_org_member_for_contact: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: boolean
+      }
+      is_supabase_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_billing_action: {
+        Args: {
+          p_action: string
+          p_user_id?: string
+          p_details?: Json
+          p_org_id: string
+        }
+        Returns: string
+      }
+      org_billing_dashboard: {
+        Args: {
+          p_org_id: string
+        }
+        Returns: Json
+      }
+      org_entitlements: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
+      }
+      org_is_active: {
+        Args: {
+          p_org: string
+        }
+        Returns: boolean
+      }
+      org_is_active_with_grace: {
+        Args: {
+          p_org: string
+          p_grace_days?: number
+        }
+        Returns: boolean
+      }
+      org_subscription_status: {
+        Args: {
+          p_org: string
+        }
+        Returns: Json
+      }
       remove_person_from_show: {
-        Args: { p_person_id: string; p_show_id: string }
+        Args: {
+          p_person_id: string
+          p_show_id: string
+        }
         Returns: undefined
       }
       rename_advancing_file: {
-        Args: { p_file_id: string; p_new_name: string }
+        Args: {
+          p_file_id: string
+          p_new_name: string
+        }
         Returns: Json
       }
-      run_analyze_all_tables: { Args: never; Returns: Json }
+      run_analyze_all_tables: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       run_analyze_with_logging: {
-        Args: { triggered_by?: string }
+        Args: {
+          triggered_by?: string
+        }
         Returns: Json
       }
-      run_scheduled_log_archival: { Args: never; Returns: Json }
-      run_vacuum_all_tables: { Args: never; Returns: Json }
+      run_scheduled_log_archival: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      run_vacuum_all_tables: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       run_vacuum_with_logging: {
-        Args: { triggered_by?: string }
+        Args: {
+          triggered_by?: string
+        }
         Returns: Json
       }
       save_advancing_grid_data: {
         Args: {
           p_grid_data: Json
-          p_grid_type: string
+          p_session_id: string
           p_org_id: string
           p_party_type?: string
-          p_session_id: string
+          p_grid_type: string
         }
         Returns: Json
       }
       search_promoters: {
-        Args: { p_org_id: string; p_query?: string }
+        Args: {
+          p_query?: string
+          p_org_id: string
+        }
         Returns: Json
       }
-      test_auth_context: { Args: never; Returns: Json }
+      test_auth_context: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       update_advancing_document: {
-        Args: { p_document_id: string; p_label: string }
+        Args: {
+          p_document_id: string
+          p_label: string
+        }
         Returns: Json
       }
       update_advancing_field: {
-        Args: { p_field_id: string; p_session_id: string; p_value: Json }
+        Args: {
+          p_session_id: string
+          p_field_id: string
+          p_value: Json
+        }
         Returns: Json
       }
       update_calendar_source_sync_metadata: {
         Args: {
-          p_last_error?: string
           p_last_synced_at?: string
           p_org_id: string
           p_source_id: string
+          p_last_error?: string
         }
         Returns: undefined
       }
@@ -2480,66 +2903,109 @@ export type Database = {
         Args: {
           p_events_processed: number
           p_message: string
-          p_run_id: string
           p_status: string
+          p_run_id: string
         }
         Returns: undefined
       }
       update_calendar_sync_source:
         | {
             Args: {
-              p_org_id: string
-              p_source_id: string
               p_source_url?: string
               p_status?: string
               p_sync_interval_minutes?: number
+              p_org_id: string
+              p_source_id: string
             }
             Returns: undefined
           }
         | {
             Args: {
-              p_source_id: string
-              p_source_name?: string
-              p_source_url: string
               p_status: string
+              p_source_id: string
+              p_source_url: string
               p_sync_interval_minutes: number
+              p_source_name?: string
             }
             Returns: undefined
           }
+      update_parsed_email_status: {
+        Args: {
+          p_show_id?: string
+          p_error?: string
+          p_reviewed_by: string
+          p_status: string
+          p_email_id: string
+          p_org_id: string
+        }
+        Returns: boolean
+      }
       upload_advancing_file: {
         Args: {
-          p_content_type: string
           p_document_id: string
-          p_original_name: string
+          p_content_type: string
           p_size_bytes: number
+          p_original_name: string
           p_storage_path: string
         }
         Returns: Json
       }
-      uuid_generate_v1: { Args: never; Returns: string }
-      uuid_generate_v1mc: { Args: never; Returns: string }
+      uuid_generate_v1: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_generate_v1mc: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       uuid_generate_v3: {
-        Args: { name: string; namespace: string }
+        Args: {
+          namespace: string
+          name: string
+        }
         Returns: string
       }
-      uuid_generate_v4: { Args: never; Returns: string }
+      uuid_generate_v4: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       uuid_generate_v5: {
-        Args: { name: string; namespace: string }
+        Args: {
+          name: string
+          namespace: string
+        }
         Returns: string
       }
-      uuid_nil: { Args: never; Returns: string }
-      uuid_ns_dns: { Args: never; Returns: string }
-      uuid_ns_oid: { Args: never; Returns: string }
-      uuid_ns_url: { Args: never; Returns: string }
-      uuid_ns_x500: { Args: never; Returns: string }
+      uuid_nil: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_dns: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_oid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_url: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_x500: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       verify_storage_metadata: {
-        Args: { hours_back?: number }
+        Args: {
+          hours_back?: number
+        }
         Returns: {
-          expected_metadata: Json
           file_id: string
           requires_edge_function: boolean
-          storage_path: string
           verification_status: string
+          expected_metadata: Json
+          storage_path: string
         }[]
       }
     }
@@ -2622,6 +3088,104 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      buckets_vectors: {
+        Row: {
+          created_at: string
+          id: string
+          type: Database["storage"]["Enums"]["buckettype"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      iceberg_namespaces: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_namespaces_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iceberg_tables: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          namespace_id: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          id?: string
+          location: string
+          name: string
+          namespace_id: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          namespace_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_tables_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "iceberg_tables_namespace_id_fkey"
+            columns: ["namespace_id"]
+            isOneToOne: false
+            referencedRelation: "iceberg_namespaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       migrations: {
         Row: {
@@ -2830,160 +3394,254 @@ export type Database = {
           },
         ]
       }
+      vector_indexes: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          data_type: string
+          dimension: number
+          distance_metric: string
+          id: string
+          metadata_configuration: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          data_type: string
+          dimension: number
+          distance_metric: string
+          id?: string
+          metadata_configuration?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          data_type?: string
+          dimension?: number
+          distance_metric?: string
+          id?: string
+          metadata_configuration?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vector_indexes_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_vectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       add_prefixes: {
-        Args: { _bucket_id: string; _name: string }
+        Args: {
+          _name: string
+          _bucket_id: string
+        }
         Returns: undefined
       }
       can_insert_object: {
-        Args: { bucketid: string; metadata: Json; name: string; owner: string }
+        Args: {
+          bucketid: string
+          name: string
+          owner: string
+          metadata: Json
+        }
         Returns: undefined
       }
       delete_leaf_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
+        Args: {
+          bucket_ids: string[]
+          names: string[]
+        }
         Returns: undefined
       }
       delete_prefix: {
-        Args: { _bucket_id: string; _name: string }
+        Args: {
+          _name: string
+          _bucket_id: string
+        }
         Returns: boolean
       }
-      extension: { Args: { name: string }; Returns: string }
-      filename: { Args: { name: string }; Returns: string }
-      foldername: { Args: { name: string }; Returns: string[] }
-      get_level: { Args: { name: string }; Returns: number }
-      get_prefix: { Args: { name: string }; Returns: string }
-      get_prefixes: { Args: { name: string }; Returns: string[] }
+      extension: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      filename: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      foldername: {
+        Args: {
+          name: string
+        }
+        Returns: string[]
+      }
+      get_level: {
+        Args: {
+          name: string
+        }
+        Returns: number
+      }
+      get_prefix: {
+        Args: {
+          name: string
+        }
+        Returns: string
+      }
+      get_prefixes: {
+        Args: {
+          name: string
+        }
+        Returns: string[]
+      }
       get_size_by_bucket: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
-          bucket_id: string
           size: number
+          bucket_id: string
         }[]
       }
       list_multipart_uploads_with_delimiter: {
         Args: {
           bucket_id: string
+          prefix_param: string
           delimiter_param: string
           max_keys?: number
           next_key_token?: string
           next_upload_token?: string
-          prefix_param: string
         }
         Returns: {
-          created_at: string
           id: string
           key: string
+          created_at: string
         }[]
       }
       list_objects_with_delimiter: {
         Args: {
-          bucket_id: string
-          delimiter_param: string
-          max_keys?: number
           next_token?: string
-          prefix_param: string
           start_after?: string
+          max_keys?: number
+          delimiter_param: string
+          prefix_param: string
+          bucket_id: string
         }
         Returns: {
-          id: string
-          metadata: Json
-          name: string
           updated_at: string
+          metadata: Json
+          id: string
+          name: string
         }[]
       }
       lock_top_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
+        Args: {
+          bucket_ids: string[]
+          names: string[]
+        }
         Returns: undefined
       }
-      operation: { Args: never; Returns: string }
+      operation: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       search: {
         Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
           search?: string
           sortcolumn?: string
           sortorder?: string
+          levels?: number
+          offsets?: number
+          limits?: number
+          prefix: string
+          bucketname: string
         }
         Returns: {
           created_at: string
+          name: string
           id: string
           last_accessed_at: string
           metadata: Json
-          name: string
           updated_at: string
         }[]
       }
       search_legacy_v1: {
         Args: {
-          bucketname: string
-          levels?: number
           limits?: number
+          levels?: number
+          sortorder?: string
+          sortcolumn?: string
+          search?: string
           offsets?: number
           prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
+          bucketname: string
         }
         Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
           metadata: Json
-          name: string
+          last_accessed_at: string
+          created_at: string
           updated_at: string
+          id: string
+          name: string
         }[]
       }
       search_v1_optimised: {
         Args: {
           bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
           prefix: string
+          limits?: number
+          levels?: number
+          offsets?: number
           search?: string
           sortcolumn?: string
           sortorder?: string
         }
         Returns: {
-          created_at: string
+          name: string
           id: string
+          updated_at: string
+          created_at: string
           last_accessed_at: string
           metadata: Json
-          name: string
-          updated_at: string
         }[]
       }
       search_v2: {
         Args: {
-          bucket_name: string
-          levels?: number
-          limits?: number
-          prefix: string
-          sort_column?: string
           sort_column_after?: string
-          sort_order?: string
+          prefix: string
+          bucket_name: string
+          limits?: number
+          levels?: number
           start_after?: string
+          sort_order?: string
+          sort_column?: string
         }
         Returns: {
-          created_at: string
-          id: string
           key: string
+          name: string
+          id: string
+          updated_at: string
+          created_at: string
           last_accessed_at: string
           metadata: Json
-          name: string
-          updated_at: string
         }[]
       }
     }
     Enums: {
-      buckettype: "STANDARD" | "ANALYTICS"
+      buckettype: "STANDARD" | "ANALYTICS" | "VECTOR"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2991,33 +3649,27 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -3025,24 +3677,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -3050,24 +3698,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -3075,56 +3719,30 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {
-      field_status: ["pending", "confirmed"],
-      member_type: ["Artist", "Crew", "Agent", "Manager"],
-      org_role: ["owner", "admin", "editor", "viewer"],
-      party: ["from_us", "from_you"],
-      show_collab_role: ["promoter_editor", "promoter_viewer"],
-      show_status: ["draft", "confirmed", "cancelled"],
-    },
-  },
-  storage: {
-    Enums: {
-      buckettype: ["STANDARD", "ANALYTICS"],
-    },
-  },
-} as const

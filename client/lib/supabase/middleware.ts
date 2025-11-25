@@ -1,10 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "../database.types";
-import { getClientConfig, validateConfig } from "./config";
 import { logger } from "../logger";
 
 const IS_DEV = process.env.NODE_ENV === "development";
+
+// Canonical environment variables
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Lightweight logger for middleware
 const mwLogger = {
@@ -77,10 +80,7 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const config = getClientConfig();
-  validateConfig(config, "client");
-
-  const supabase = createServerClient<Database>(config.url, config.anonKey, {
+  const supabase = createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

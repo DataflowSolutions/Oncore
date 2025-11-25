@@ -77,20 +77,23 @@ export class TestDatabaseManager {
   }
 
   getConfig(): DatabaseConfig {
-    if (this.currentEnv === 'production') {
-      return {
-        url: process.env.NEXT_PUBLIC_PROD_SUPABASE_URL || '',
-        anonKey: process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY || '',
-        serviceRoleKey: process.env.NEXT_PUBLIC_PROD_SUPABASE_SERVICE_ROLE_KEY || '',
-        environment: 'production'
-      }
-    } else {
-      return {
-        url: process.env.NEXT_PUBLIC_LOCAL_SUPABASE_URL || 'http://127.0.0.1:54321',
-        anonKey: process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY || '',
-        serviceRoleKey: process.env.NEXT_PUBLIC_LOCAL_SUPABASE_SERVICE_ROLE_KEY || '',
-        environment: 'local'
-      }
+    // Use canonical environment variables
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!url || !anonKey || !serviceRoleKey) {
+      throw new Error(
+        'Missing required Supabase environment variables. ' +
+        'Ensure NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY are set.'
+      )
+    }
+
+    return {
+      url,
+      anonKey,
+      serviceRoleKey,
+      environment: this.currentEnv
     }
   }
 

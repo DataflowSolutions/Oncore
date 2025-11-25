@@ -4,7 +4,7 @@
  * 
  * This script runs before building the application to ensure:
  * 1. No secrets are exposed in NEXT_PUBLIC_ variables
- * 2. Required environment variables are present
+ * 2. Required CANONICAL environment variables are present
  * 3. Environment configuration is consistent
  */
 
@@ -44,8 +44,8 @@ function validateNoSecretsInPublicVars() {
   const dangerousPatterns = [
     'service_role',
     'SERVICE_ROLE',
+    'sb_secret_',
     'postgres://',
-    'DATABASE_URL',
   ]
 
   // Exclude Vercel's built-in environment variables
@@ -86,82 +86,45 @@ function validateNoSecretsInPublicVars() {
 }
 
 /**
- * Validate server environment variables
+ * Validate CANONICAL server environment variables
  */
 function validateServerEnv() {
-  const isProduction = process.env.PROD_DB === 'true'
+  const requiredVars = [
+    'SUPABASE_SERVICE_ROLE_KEY',
+  ]
 
-  if (isProduction) {
-    const requiredProdVars = [
-      'PROD_SUPABASE_URL',
-      'PROD_SUPABASE_SERVICE_ROLE_KEY',
-      'PROD_SUPABASE_ANON_KEY',
-    ]
+  const missing = requiredVars.filter(key => !process.env[key])
 
-    const missing = requiredProdVars.filter(key => !process.env[key])
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required production environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nCheck your .env.local file.`
-      )
-    }
-  } else {
-    const requiredLocalVars = [
-      'LOCAL_SUPABASE_URL',
-      'LOCAL_SUPABASE_SERVICE_ROLE_KEY',
-      'LOCAL_SUPABASE_ANON_KEY',
-    ]
-
-    const missing = requiredLocalVars.filter(key => !process.env[key])
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required local environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nMake sure your local Supabase instance is running.`
-      )
-    }
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required server environment variables:\n` +
+      missing.map(m => `  - ${m}`).join('\n') +
+      `\n\nCheck your .env.local file.\n` +
+      `For local dev: run 'supabase start' and copy the secret key.`
+    )
   }
 }
 
 /**
- * Validate client environment variables
+ * Validate CANONICAL client environment variables
  */
 function validateClientEnv() {
-  const isProduction = process.env.NEXT_PUBLIC_PROD_DB === 'true'
+  const requiredVars = [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  ]
 
-  if (isProduction) {
-    const requiredProdVars = [
-      'NEXT_PUBLIC_PROD_SUPABASE_URL',
-      'NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY',
-    ]
+  const missing = requiredVars.filter(key => !process.env[key])
 
-    const missing = requiredProdVars.filter(key => !process.env[key])
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required production client environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nCheck your .env.local file.`
-      )
-    }
-  } else {
-    const requiredLocalVars = [
-      'NEXT_PUBLIC_LOCAL_SUPABASE_URL',
-      'NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY',
-    ]
-
-    const missing = requiredLocalVars.filter(key => !process.env[key])
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required local client environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nMake sure your local Supabase instance is running.`
-      )
-    }
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required client environment variables:\n` +
+      missing.map(m => `  - ${m}`).join('\n') +
+      `\n\nCheck your .env.local file.\n` +
+      `For local dev:\n` +
+      `  NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\n` +
+      `  NEXT_PUBLIC_SUPABASE_ANON_KEY=<from 'supabase status'>`
+    )
   }
 }
 

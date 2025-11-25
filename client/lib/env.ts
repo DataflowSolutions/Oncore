@@ -1,28 +1,24 @@
 /**
  * Environment configuration utility
- * Handles switching between local and production database configurations
+ * 
+ * DEPRECATED: This dual-environment switcher pattern is being phased out.
+ * Use canonical environment variables instead (NEXT_PUBLIC_SUPABASE_URL, etc.)
+ * 
+ * For Supabase clients, use:
+ * - import { createClient } from '@/lib/supabase/client' (browser)
+ * - import { createClient } from '@/lib/supabase/server' (server with RLS)
+ * - import { getSupabaseAdmin } from '@/lib/supabase/admin.server' (admin only)
  */
 
 export const getEnvironmentConfig = () => {
-  const isProduction = process.env.PROD_DB === 'true'
-  
   return {
-    isProduction,
     supabase: {
-      url: isProduction 
-        ? process.env.PROD_SUPABASE_URL 
-        : process.env.LOCAL_SUPABASE_URL,
-      anonKey: isProduction
-        ? process.env.PROD_SUPABASE_ANON_KEY
-        : process.env.LOCAL_SUPABASE_ANON_KEY,
-      serviceRoleKey: isProduction
-        ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY
-        : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     },
     database: {
-      url: isProduction
-        ? process.env.PROD_DATABASE_URL
-        : process.env.LOCAL_DATABASE_URL,
+      url: process.env.DATABASE_URL,
     },
     project: {
       ref: process.env.SUPABASE_PROJECT_REF,
@@ -33,18 +29,22 @@ export const getEnvironmentConfig = () => {
 export const validateEnvironmentConfig = () => {
   const config = getEnvironmentConfig()
   const required = [
-    'SUPABASE_PROJECT_REF',
-    config.isProduction ? 'PROD_SUPABASE_URL' : 'LOCAL_SUPABASE_URL',
-    config.isProduction ? 'PROD_SUPABASE_ANON_KEY' : 'LOCAL_SUPABASE_ANON_KEY',
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   ]
 
-  const missing = required.filter(key => !process.env[key])
+  const missing = required.filter(key => {
+    const value = key === 'NEXT_PUBLIC_SUPABASE_URL' 
+      ? config.supabase.url 
+      : config.supabase.anonKey
+    return !value
+  })
   
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}\n` +
-      `Current environment: ${config.isProduction ? 'production' : 'local'}\n` +
-      `Check your .env.local file and ensure all required variables are set.`
+      `Check your .env.local file and ensure all required variables are set.\n` +
+      `For local dev, run 'supabase start' and copy the keys.`
     )
   }
 
@@ -55,7 +55,6 @@ export const validateEnvironmentConfig = () => {
 export const getClientConfig = () => {
   const config = getEnvironmentConfig()
   return {
-    isProduction: config.isProduction,
     supabaseUrl: config.supabase.url,
     supabaseAnonKey: config.supabase.anonKey,
   }

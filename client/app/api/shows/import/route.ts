@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import type { Database } from "@/lib/database.types";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
 
@@ -58,18 +59,50 @@ type DuplicateCandidate = {
   score: number;
 };
 
-type ImportJob = {
-  status: "processing" | "needs_review" | "completed";
-  rawText: string;
+type GigCandidate = {
+  candidateId: string;
+  title: string | null;
+  date: string | null;
+  city: string | null;
+  venueName: string | null;
+  setTime: string | null;
+  notes: string | null;
   structured: StructuredGig;
   duplicates: DuplicateCandidate[];
+  confidenceMap: Record<string, number>;
+};
+
+type ImportJobRecord = {
+  id: string;
+  org_id: string;
+  status: "processing" | "needs_review" | "completed";
+  raw_text: string | null;
+  normalized_text: string | null;
+  parsed_json: unknown | null;
+  confidence_map: Record<string, number> | null;
+  duplicate_matches: DuplicateCandidate[] | null;
+  source_file_metadata: Record<string, unknown> | null;
+  extracted_artist?: string | null;
+  extraction_mode?: "rule_based" | "ai_assisted";
+  errors?: string[] | null;
+  previous_attempts?: unknown[] | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type ImportJobResponse = {
+  id: string;
+  status: ImportJobRecord["status"];
+  rawText: string;
+  normalizedText: string;
+  candidates: GigCandidate[];
+  warnings?: string[];
   source: "file" | "text";
   metadata?: {
     name: string;
     type: string;
     size: number;
   };
-  warnings?: string[];
 };
 
 const SUPPORTED_EXTENSIONS = new Set([
@@ -85,11 +118,12 @@ const SUPPORTED_EXTENSIONS = new Set([
 const LOW_CONFIDENCE = 0.35;
 const MEDIUM_CONFIDENCE = 0.6;
 const HIGH_CONFIDENCE = 0.85;
+const USE_AI_EXTRACTION = process.env.USE_AI_EXTRACTION === "true";
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
 
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get("content-type") || "";
 
-  // JSON payloads are used to finalize an import (approve).
   if (contentType.includes("application/json")) {
     return handleCommit(request);
   }
@@ -120,10 +154,17 @@ async function handleAnalyze(request: NextRequest) {
 
     let warnings: string[] = [];
     let rawText = "";
-    let source: ImportJob["source"] = "text";
-    let metadata: ImportJob["metadata"] | undefined;
+    let source: ImportJobResponse["source"] = "text";
+    let metadata: ImportJobResponse["metadata"] | undefined;
 
     if (file) {
+      if (file.size > MAX_FILE_BYTES) {
+        return NextResponse.json(
+          { error: "File too large. Max 20MB supported for import." },
+          { status: 400 },
+        );
+      }
+
       const extension = getExtension(file.name);
       if (!SUPPORTED_EXTENSIONS.has(extension)) {
         return NextResponse.json(
@@ -169,25 +210,61 @@ async function handleAnalyze(request: NextRequest) {
       );
     }
 
-    const structured = extractStructuredGig(rawText);
-    const duplicates = await findDuplicates(supabase, orgId, structured);
+    const normalizedText = normalizeText(rawText);
+    const initialJobId = await createImportJob(supabase, {
+      orgId,
+      status: "processing",
+      rawText,
+      normalizedText,
+    parsedJson: { progress: "Extracting" },
+      confidenceMap: {},
+      duplicates: [],
+      metadata,
+      errors: [],
+      extractionMode: USE_AI_EXTRACTION ? "ai_assisted" : "rule_based",
+    });
+
+    const extractionResult = await buildCandidatesFromInput(
+      rawText,
+      normalizedText,
+      file,
+      source,
+    );
+
+    const candidatesWithDuplicates: GigCandidate[] = [];
+    for (const candidate of extractionResult.candidates) {
+      const duplicates = await findDuplicates(supabase, orgId, candidate.structured);
+      candidatesWithDuplicates.push({ ...candidate, duplicates });
+    }
+
+    const confidenceMap = buildConfidenceMap(candidatesWithDuplicates);
 
     if (rawText.length > 20000) {
       warnings.push("Large document truncated to first 20k characters for preview.");
       rawText = rawText.slice(0, 20000);
     }
 
-    const job: ImportJob = {
+    const jobRecord = await updateImportJob(supabase, initialJobId, {
       status: "needs_review",
+      parsedJson: { candidates: candidatesWithDuplicates, source },
+      confidenceMap,
+      duplicates: candidatesWithDuplicates.flatMap((c) => c.duplicates),
+      extractedArtist: candidatesWithDuplicates[0]?.structured.core.artist.value ?? null,
+      errors: extractionResult.errors,
+    });
+
+    const responseJob: ImportJobResponse = {
+      id: initialJobId,
+      status: jobRecord?.status ?? "needs_review",
       rawText,
-      structured,
-      duplicates,
+      normalizedText,
+      candidates: candidatesWithDuplicates,
+      warnings: warnings.length ? warnings : undefined,
       source,
       metadata,
-      warnings: warnings.length ? warnings : undefined,
     };
 
-    return NextResponse.json({ success: true, job });
+    return NextResponse.json({ success: true, job: responseJob });
   } catch (error) {
     logger.error("Import analyze error", error);
     return NextResponse.json(
@@ -205,9 +282,11 @@ async function handleCommit(request: NextRequest) {
     const body = await request.json();
     const {
       orgId,
+      jobId,
       payload,
     }: {
       orgId?: string;
+      jobId?: string;
       payload?: {
         title?: string;
         date?: string;
@@ -215,10 +294,12 @@ async function handleCommit(request: NextRequest) {
         venueName?: string;
         setTime?: string;
         notes?: string;
+        candidateId?: string;
+        artistName?: string;
       };
     } = body || {};
 
-    if (!orgId || !payload?.date || !payload?.title) {
+    if (!orgId || !payload?.date || !payload?.title || !jobId) {
       return NextResponse.json(
         { error: "Missing required fields to finalize import" },
         { status: 400 },
@@ -239,6 +320,13 @@ async function handleCommit(request: NextRequest) {
         { status: 403 },
       );
     }
+
+    const job = await fetchImportJob(supabase, jobId, orgId);
+    if (!job) {
+      return NextResponse.json({ error: "Import job not found" }, { status: 404 });
+    }
+    const parsedCandidates = (job.parsed_json as { candidates?: GigCandidate[] } | null)?.candidates ?? [];
+    const candidate = parsedCandidates.find((c) => c.candidateId === payload.candidateId);
 
     // Try to resolve an existing venue match to avoid accidental duplicates.
     const venueLookup = payload.venueName?.trim();
@@ -280,10 +368,42 @@ async function handleCommit(request: NextRequest) {
       );
     }
 
+    const showId = Array.isArray(data) ? data[0]?.id ?? null : data?.id ?? null;
+
+    // Artist attachment
+    let requiresArtistAssignment = false;
+    if (showId && (payload.artistName || candidate?.structured.core.artist.value)) {
+      const lookupName = (payload.artistName || candidate?.structured.core.artist.value || "").trim();
+      if (lookupName) {
+        const artistId = await findOrMatchArtist(supabase, orgId, lookupName);
+        if (artistId) {
+          const { error: assignError } = await supabase
+            .from("show_assignments")
+            .insert({
+              show_id: showId,
+              person_id: artistId,
+              duty: "Performer",
+            });
+          if (assignError) {
+            logger.warn("Failed to attach artist", assignError);
+            requiresArtistAssignment = true;
+          }
+        } else {
+          requiresArtistAssignment = true;
+        }
+      }
+    }
+
+    await updateImportJob(supabase, jobId, {
+      status: "completed",
+      parsedJson: appendShowId(job.parsed_json, payload.candidateId, showId, requiresArtistAssignment),
+    });
+
     return NextResponse.json({
       success: true,
       status: "completed",
-      showId: Array.isArray(data) ? data[0]?.id ?? null : data?.id ?? null,
+      showId,
+      requires_artist_assignment: requiresArtistAssignment,
     });
   } catch (error) {
     logger.error("Import commit error", error);
@@ -306,7 +426,8 @@ async function extractTextFromFile(file: File, extension: string): Promise<strin
       const pdfParse = pdfParseModule.default || pdfParseModule;
       const buffer = await file.arrayBuffer();
       const result = await pdfParse(Buffer.from(buffer));
-      return normalizeText(result.text || "");
+      const parsedText = normalizeText(result.text || "");
+      if (parsedText) return parsedText;
     }
 
     if (["doc", "docx", "xlsx", "xls"].includes(extension)) {
@@ -319,7 +440,14 @@ async function extractTextFromFile(file: File, extension: string): Promise<strin
     }
 
     const text = await file.text();
-    return normalizeText(text);
+    const normalized = normalizeText(text);
+    if (normalized.length > 10) {
+      return normalized;
+    }
+
+    // OCR fallback for image-heavy PDFs or unreadable docs
+    const ocrText = await performOCR(file);
+    return normalizeText(ocrText);
   } catch (error) {
     logger.warn("Primary text extraction failed, falling back to raw text", error);
     const fallback = await file.text();
@@ -444,7 +572,7 @@ function extractStructuredGig(rawText: string): StructuredGig {
   };
 }
 
-async function findDuplicates(
+export async function findDuplicates(
   supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
   orgId: string,
   structured: StructuredGig,
@@ -510,22 +638,21 @@ async function userHasOrgAccess(
   orgId: string,
   userId: string,
 ): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("org_members")
-    .select("id")
-    .eq("org_id", orgId)
-    .eq("user_id", userId)
-    .limit(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("check_org_membership", {
+    p_org_id: orgId,
+    p_user_id: userId,
+  });
 
   if (error) {
     logger.error("Org membership lookup failed", error);
     return false;
   }
 
-  return Boolean(data && data.length > 0);
+  return Boolean(data);
 }
 
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   const cleaned = text
     .replace(/\r\n/g, "\n")
     .replace(/\u0000/g, " ");
@@ -712,4 +839,433 @@ function monthNameToNumber(name: string): string | null {
 
 function pad(input: string): string {
   return input.padStart(2, "0");
+}
+
+export async function findOrMatchArtist(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  orgId: string,
+  name: string,
+): Promise<string | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+
+  const { data, error } = await supabase
+    .from("people")
+    .select("id,name")
+    .eq("org_id", orgId)
+    .eq("member_type", "Artist")
+    .ilike("name", trimmed)
+    .maybeSingle();
+
+  if (!error && data?.id) {
+    return data.id;
+  }
+
+  const { data: fuzzy } = await supabase
+    .from("people")
+    .select("id,name")
+    .eq("org_id", orgId)
+    .eq("member_type", "Artist")
+    .ilike("name", `%${trimmed}%`)
+    .limit(1);
+
+  return fuzzy && fuzzy.length > 0 ? fuzzy[0].id : null;
+}
+
+export async function ai_enhance_extraction(rawText: string): Promise<StructuredGig> {
+  return extractStructuredGig(rawText);
+}
+
+export async function performOCR(file: File): Promise<string> {
+  try {
+    // Lazy-load to keep cold paths light
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createWorker } = await import("tesseract.js");
+    const worker = await createWorker();
+    await worker.loadLanguage("eng");
+    await worker.initialize("eng");
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { data } = await worker.recognize(buffer);
+    await worker.terminate();
+    return data.text || "";
+  } catch (error) {
+    logger.warn("OCR fallback failed", error);
+    return "";
+  }
+}
+
+export async function createImportJob(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  params: {
+    orgId: string;
+    status: ImportJobRecord["status"];
+    rawText: string;
+    normalizedText: string;
+    parsedJson: unknown;
+    confidenceMap: Record<string, number>;
+    duplicates: DuplicateCandidate[];
+    metadata?: ImportJobResponse["metadata"];
+    errors?: string[];
+    extractionMode?: ImportJobRecord["extraction_mode"];
+  },
+): Promise<string> {
+  const payload = {
+    org_id: params.orgId,
+    status: params.status,
+    raw_text: params.rawText,
+    normalized_text: params.normalizedText,
+    parsed_json: params.parsedJson,
+    confidence_map: params.confidenceMap,
+    duplicate_matches: params.duplicates,
+    source_file_metadata: params.metadata ?? null,
+    errors: params.errors ?? [],
+    extraction_mode: params.extractionMode ?? "rule_based",
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("import_jobs")
+    .insert(payload)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Failed to create import job", error);
+    return crypto.randomUUID();
+  }
+
+  return data?.id ?? crypto.randomUUID();
+}
+
+export async function updateImportJob(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  jobId: string,
+  params: Partial<{
+    status: ImportJobRecord["status"];
+    parsedJson: unknown;
+    confidenceMap: Record<string, number>;
+    duplicates: DuplicateCandidate[];
+    extractedArtist: string | null;
+    errors: string[];
+    extractionMode?: ImportJobRecord["extraction_mode"];
+    previousAttempts?: unknown[];
+  }>,
+): Promise<ImportJobRecord | null> {
+  const updatePayload: Record<string, unknown> = {};
+  if (params.status) updatePayload.status = params.status;
+  if (params.parsedJson !== undefined) updatePayload.parsed_json = params.parsedJson;
+  if (params.confidenceMap !== undefined) updatePayload.confidence_map = params.confidenceMap;
+  if (params.duplicates !== undefined) updatePayload.duplicate_matches = params.duplicates;
+  if (params.extractedArtist !== undefined) updatePayload.extracted_artist = params.extractedArtist;
+  if (params.errors !== undefined) updatePayload.errors = params.errors;
+  if (params.extractionMode) updatePayload.extraction_mode = params.extractionMode;
+  if (params.previousAttempts) updatePayload.previous_attempts = params.previousAttempts;
+
+  if (Object.keys(updatePayload).length === 0) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("import_jobs")
+    .update(updatePayload)
+    .eq("id", jobId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Failed to update import job", error);
+    return null;
+  }
+
+  return data as ImportJobRecord;
+}
+
+export async function fetchImportJob(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  jobId: string,
+  orgId: string,
+): Promise<ImportJobRecord | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("import_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Failed to fetch import job", error);
+    return null;
+  }
+
+  return data as ImportJobRecord;
+}
+
+export function buildConfidenceMap(candidates: GigCandidate[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const candidate of candidates) {
+    Object.assign(map, buildSingleConfidenceMap(candidate.candidateId, candidate.structured));
+  }
+  return map;
+}
+
+export function buildSingleConfidenceMap(prefix: string, structured: StructuredGig): Record<string, number> {
+  const map: Record<string, number> = {};
+  map[`${prefix}.core.date`] = structured.core.date.confidence;
+  map[`${prefix}.core.city`] = structured.core.city.confidence;
+  map[`${prefix}.core.venue`] = structured.core.venue.confidence;
+  map[`${prefix}.core.event`] = structured.core.event.confidence;
+  map[`${prefix}.core.promoter`] = structured.core.promoter.confidence;
+  map[`${prefix}.core.artist`] = structured.core.artist.confidence;
+
+  map[`${prefix}.deal.fee`] = structured.deal.fee.confidence;
+  map[`${prefix}.deal.dealType`] = structured.deal.dealType.confidence;
+  map[`${prefix}.deal.currency`] = structured.deal.currency.confidence;
+  map[`${prefix}.deal.paymentTerms`] = structured.deal.paymentTerms.confidence;
+
+  map[`${prefix}.hospitalityLogistics.hotel`] = structured.hospitalityLogistics.hotel.confidence;
+  map[`${prefix}.hospitalityLogistics.transport`] = structured.hospitalityLogistics.transport.confidence;
+  map[`${prefix}.hospitalityLogistics.catering`] = structured.hospitalityLogistics.catering.confidence;
+  map[`${prefix}.hospitalityLogistics.soundcheck`] = structured.hospitalityLogistics.soundcheck.confidence;
+  map[`${prefix}.hospitalityLogistics.setTime`] = structured.hospitalityLogistics.setTime.confidence;
+
+  map[`${prefix}.tech.equipment`] = structured.tech.equipment.confidence;
+  map[`${prefix}.tech.backline`] = structured.tech.backline.confidence;
+  map[`${prefix}.tech.stage`] = structured.tech.stage.confidence;
+  map[`${prefix}.tech.light`] = structured.tech.light.confidence;
+  map[`${prefix}.tech.sound`] = structured.tech.sound.confidence;
+
+  map[`${prefix}.travel.flights`] = structured.travel.flights.confidence;
+  map[`${prefix}.travel.times`] = structured.travel.times.confidence;
+  map[`${prefix}.travel.airportCodes`] = structured.travel.airportCodes.confidence;
+  return map;
+}
+
+function appendShowId(parsedJson: unknown, candidateId: string | undefined, showId: string | null, requiresArtistAssignment?: boolean) {
+  if (!parsedJson || !candidateId) return parsedJson;
+  if (typeof parsedJson !== "object" || parsedJson === null) return parsedJson;
+
+  const asRecord = parsedJson as Record<string, unknown>;
+  const candidates = (asRecord.candidates as GigCandidate[] | undefined) ?? [];
+  const updated = candidates.map((c) =>
+    c.candidateId === candidateId ? { ...c, showId, requiresArtistAssignment } : c,
+  );
+
+  return { ...asRecord, candidates: updated };
+}
+
+export async function buildCandidatesFromInput(
+  rawText: string,
+  normalizedText: string,
+  file: File | null,
+  source: ImportJobResponse["source"],
+): Promise<{ candidates: GigCandidate[]; errors: string[] }> {
+  const candidates: GigCandidate[] = [];
+  const errors: string[] = [];
+  const fallbackStructured = extractStructuredGig(normalizedText);
+
+  // Multi-gig extraction for CSV/Excel
+  if (file) {
+    const extension = getExtension(file.name);
+    if (extension === "csv" || extension === "txt") {
+      const rows = parseCsv(normalizedText);
+      if (rows.length > 0) {
+        for (const row of rows) {
+          const structured = structuredFromRow(row);
+          if (
+            structured.core.event.value ||
+            structured.core.venue.value ||
+            structured.core.date.value
+          ) {
+            candidates.push(makeCandidate(structured));
+          }
+        }
+      }
+    } else if (extension === "xls" || extension === "xlsx") {
+      const rows = await parseExcel(file);
+      if (rows.length > 0) {
+        for (const row of rows) {
+          const structured = structuredFromRow(row);
+          if (
+            structured.core.event.value ||
+            structured.core.venue.value ||
+            structured.core.date.value
+          ) {
+            candidates.push(makeCandidate(structured));
+          }
+        }
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    candidates.push(makeCandidate(fallbackStructured));
+  }
+
+  // Chaos-document handling: split threads into multiple gigs if multiple dates found
+  if (candidates.length === 1) {
+    const dates = Array.from(
+      new Set(
+        normalizedText.match(/\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2}/g) ||
+        normalizedText.match(/\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4}/g) ||
+        [],
+      ),
+    );
+    if (dates.length > 1) {
+      candidates.length = 0;
+      for (const date of dates.slice(0, 10)) {
+        const structured = extractStructuredGig(`${normalizedText}\n${date}`);
+        structured.core.date.value = normalizeDateCandidate(date);
+        candidates.push(makeCandidate(structured));
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    errors.push("No candidates extracted");
+  }
+
+  return { candidates, errors };
+}
+
+function makeCandidate(structured: StructuredGig): GigCandidate {
+  const candidateId = crypto.randomUUID();
+  return {
+    candidateId,
+    title: structured.core.event.value ?? structured.core.venue.value ?? null,
+    date: structured.core.date.value,
+    city: structured.core.city.value,
+    venueName: structured.core.venue.value,
+    setTime: structured.hospitalityLogistics.setTime.value,
+    notes: null,
+    structured,
+    duplicates: [],
+    confidenceMap: buildSingleConfidenceMap(candidateId, structured),
+  };
+}
+
+export function structuredFromRow(row: Record<string, string>): StructuredGig {
+  const date = normalizeDateCandidate(
+    row.date ||
+      row["show date"] ||
+      row["performance date"] ||
+      row["performancedate"] ||
+      row["datum"],
+  );
+  const city = row.city || row["stad"] || row["venue city"] || null;
+  const venue = row.venue || row["venue name"] || row["location"] || null;
+  const artist = row.artist || row["artist name"] || row["performer"] || row["band"] || null;
+  const fee = row.fee || row.offer || row.guarantee || null;
+  const setTime = row["set time"] || row["performance time"] || row.time || null;
+
+  const field = (value: string | null, confidence: number): StructuredField => ({
+    value,
+    confidence: value ? confidence : LOW_CONFIDENCE,
+  });
+
+  return {
+    core: {
+      date: field(date, HIGH_CONFIDENCE),
+      city: field(city, MEDIUM_CONFIDENCE),
+      venue: field(venue, MEDIUM_CONFIDENCE),
+      event: field(row.show || row.title || row["show name"] || null, MEDIUM_CONFIDENCE),
+      promoter: field(row.promoter || null, LOW_CONFIDENCE),
+      artist: field(artist, MEDIUM_CONFIDENCE),
+    },
+    deal: {
+      fee: field(fee, MEDIUM_CONFIDENCE),
+      dealType: field(row.deal || null, LOW_CONFIDENCE),
+      currency: field(pickCurrency(fee), LOW_CONFIDENCE),
+      paymentTerms: field(row.paymentterms || row["payment terms"] || null, LOW_CONFIDENCE),
+    },
+    hospitalityLogistics: {
+      hotel: field(row.hotel || null, LOW_CONFIDENCE),
+      transport: field(row.transport || null, LOW_CONFIDENCE),
+      catering: field(row.catering || null, LOW_CONFIDENCE),
+      soundcheck: field(row.soundcheck || null, MEDIUM_CONFIDENCE),
+      setTime: field(setTime, MEDIUM_CONFIDENCE),
+    },
+    tech: {
+      equipment: field(row.equipment || null, LOW_CONFIDENCE),
+      backline: field(row.backline || null, LOW_CONFIDENCE),
+      stage: field(row.stage || null, LOW_CONFIDENCE),
+      light: field(row.light || null, LOW_CONFIDENCE),
+      sound: field(row.sound || null, LOW_CONFIDENCE),
+    },
+    travel: {
+      flights: field(row.flights || null, LOW_CONFIDENCE),
+      times: field(row.times || null, LOW_CONFIDENCE),
+      airportCodes: field(row.airports || null, LOW_CONFIDENCE),
+    },
+  };
+}
+
+export function parseCsv(text: string): Record<string, string>[] {
+  const lines = text.split("\n").filter((l) => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const separator = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(separator).map((h) => h.trim().toLowerCase());
+  const rows: Record<string, string>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(separator);
+    const row: Record<string, string> = {};
+    headers.forEach((header, idx) => {
+      row[header] = (values[idx] || "").trim();
+    });
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+export async function parseExcel(file: File): Promise<Record<string, string>[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const XLSX: any = await import("xlsx");
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: "" });
+    return json.map((row) => {
+      const normalizedRow: Record<string, string> = {};
+      Object.keys(row).forEach((key) => {
+        normalizedRow[key.toLowerCase()] = String(row[key] ?? "").trim();
+      });
+      return normalizedRow;
+    });
+  } catch (error) {
+    logger.warn("Excel parsing failed, falling back to text", error);
+    return [];
+  }
+}
+
+function normalizeDateCandidate(raw: string | null): string | null {
+  if (!raw) return null;
+  const cleaned = raw.trim();
+  const isoMatch = cleaned.match(/(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${year}-${pad(month)}-${pad(day)}`;
+  }
+
+  const euroMatch = cleaned.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (euroMatch) {
+    let [day, month, year] = euroMatch.slice(1);
+    if (year.length === 2) {
+      year = `20${year}`;
+    }
+    return `${year}-${pad(month)}-${pad(day)}`;
+  }
+
+  const longMatch = cleaned.match(/([A-Za-z]+)\s+(\d{1,2}),?\s+(20\d{2})/i);
+  if (longMatch) {
+    const [, monthName, day, year] = longMatch;
+    const month = monthNameToNumber(monthName);
+    if (month) {
+      return `${year}-${pad(month)}-${pad(day)}`;
+    }
+  }
+
+  return null;
 }

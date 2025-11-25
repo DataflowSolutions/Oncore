@@ -1,7 +1,7 @@
 /**
  * Runtime Environment Variable Validation
  * 
- * Validates required environment variables at application boot.
+ * Validates required CANONICAL environment variables at application boot.
  * Prevents deployment of misconfigured applications.
  */
 
@@ -12,22 +12,11 @@ import { z } from 'zod'
  * These are NOT exposed to the client
  */
 const serverEnvSchema = z.object({
-  // Environment switcher
-  PROD_DB: z.enum(['true', 'false']).optional().default('false'),
+  // Canonical server variables
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Service role key required for admin operations'),
+  DATABASE_URL: z.string().url().optional(),
 
-  // Production Supabase (server-side)
-  PROD_DATABASE_URL: z.string().url().optional(),
-  PROD_SUPABASE_URL: z.string().url().optional(),
-  PROD_SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-  PROD_SUPABASE_ANON_KEY: z.string().optional(),
-
-  // Local Supabase (server-side)
-  LOCAL_DATABASE_URL: z.string().url().optional(),
-  LOCAL_SUPABASE_URL: z.string().url().optional(),
-  LOCAL_SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-  LOCAL_SUPABASE_ANON_KEY: z.string().optional(),
-
-  // CI/CD
+  // Project configuration
   SUPABASE_PROJECT_REF: z.string().optional(),
   SUPABASE_ACCESS_TOKEN: z.string().optional(),
 
@@ -43,16 +32,9 @@ const serverEnvSchema = z.object({
  * These are safe to expose to the browser (NEXT_PUBLIC_* prefix)
  */
 const clientEnvSchema = z.object({
-  // Environment switcher (client)
-  NEXT_PUBLIC_PROD_DB: z.enum(['true', 'false']).optional().default('false'),
-
-  // Production Supabase (client-side)
-  NEXT_PUBLIC_PROD_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY: z.string().optional(),
-
-  // Local Supabase (client-side)
-  NEXT_PUBLIC_LOCAL_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY: z.string().optional(),
+  // Canonical client variables (ONLY these should be used)
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url('Valid Supabase URL required'),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Anon/publishable key required'),
 })
 
 /**
@@ -68,45 +50,15 @@ export function validateServerEnv() {
     throw new Error('Invalid server environment configuration')
   }
 
-  const isProduction = parsed.data.PROD_DB === 'true'
-
-  // Validate that required variables are present based on environment
-  if (isProduction) {
-    const requiredProdVars = [
-      'PROD_SUPABASE_URL',
-      'PROD_SUPABASE_SERVICE_ROLE_KEY',
-      'PROD_SUPABASE_ANON_KEY',
-    ] as const
-
-    const missing = requiredProdVars.filter(
-      (key) => !parsed.data[key]
+  // Check for canonical client vars on server too
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error(
+      `Missing canonical Supabase variables:\n` +
+      `  - NEXT_PUBLIC_SUPABASE_URL\n` +
+      `  - NEXT_PUBLIC_SUPABASE_ANON_KEY\n\n` +
+      `Check your .env.local file.\n` +
+      `For local dev: run 'supabase start' and copy keys from 'supabase status'`
     )
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required production environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nCheck your .env.local file.`
-      )
-    }
-  } else {
-    const requiredLocalVars = [
-      'LOCAL_SUPABASE_URL',
-      'LOCAL_SUPABASE_SERVICE_ROLE_KEY',
-      'LOCAL_SUPABASE_ANON_KEY',
-    ] as const
-
-    const missing = requiredLocalVars.filter(
-      (key) => !parsed.data[key]
-    )
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required local environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nMake sure your local Supabase instance is running.`
-      )
-    }
   }
 
   return parsed.data
@@ -122,53 +74,21 @@ export function validateClientEnv() {
   if (!parsed.success) {
     console.error('❌ Invalid client environment variables:')
     console.error(parsed.error.flatten().fieldErrors)
-    throw new Error('Invalid client environment configuration')
-  }
-
-  const isProduction = parsed.data.NEXT_PUBLIC_PROD_DB === 'true'
-
-  // Validate that required variables are present based on environment
-  if (isProduction) {
-    const requiredProdVars = [
-      'NEXT_PUBLIC_PROD_SUPABASE_URL',
-      'NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY',
-    ] as const
-
-    const missing = requiredProdVars.filter(
-      (key) => !parsed.data[key]
-    )
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required production client environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nCheck your .env.local file.`
-      )
-    }
-  } else {
-    const requiredLocalVars = [
-      'NEXT_PUBLIC_LOCAL_SUPABASE_URL',
-      'NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY',
-    ] as const
-
-    const missing = requiredLocalVars.filter(
-      (key) => !parsed.data[key]
-    )
-
-    if (missing.length > 0) {
-      // During development, just warn - the variables should be in .env.local
-      // but Next.js might not have loaded them yet
-      const errorMsg = `Missing required local client environment variables:\n` +
-        missing.map(m => `  - ${m}`).join('\n') +
-        `\n\nCheck your .env.local file. These should be set to:\n` +
-        `NEXT_PUBLIC_LOCAL_SUPABASE_URL=http://127.0.0.1:54321\n` +
-        `NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0`
-      
-      console.warn('⚠️', errorMsg)
-      // Only throw in production builds
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(errorMsg)
-      }
+    
+    const errorMsg = `Missing required client environment variables:\n` +
+      Object.entries(parsed.error.flatten().fieldErrors)
+        .map(([key, errors]) => `  - ${key}: ${errors?.join(', ')}`)
+        .join('\n') +
+      `\n\nCheck your .env.local file.\n` +
+      `For local dev, these should be:\n` +
+      `  NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\n` +
+      `  NEXT_PUBLIC_SUPABASE_ANON_KEY=<get from 'supabase status'>`
+    
+    console.warn('⚠️', errorMsg)
+    
+    // Only throw in production builds
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(errorMsg)
     }
   }
 
@@ -183,8 +103,8 @@ export function validateNoSecretsInPublicVars() {
   const dangerousPatterns = [
     'service_role',
     'SERVICE_ROLE',
+    'sb_secret_',
     'postgres://',
-    'DATABASE_URL',
   ]
 
   const publicVars = Object.entries(process.env)

@@ -1,8 +1,8 @@
 /**
  * Supabase Environment Configuration
  * 
- * Centralized configuration for all Supabase clients.
- * This ensures consistent environment variable usage across the app.
+ * Centralized configuration using CANONICAL environment variables.
+ * No more switching between PROD_* and LOCAL_* - just one set of variables.
  */
 
 /**
@@ -10,25 +10,14 @@
  * Uses non-public environment variables (server-only)
  */
 export function getServerConfig() {
-  const isProduction = process.env.PROD_DB === 'true'
-  
-  const url = isProduction
-    ? process.env.PROD_SUPABASE_URL!
-    : process.env.LOCAL_SUPABASE_URL!
-
-  const anonKey = isProduction
-    ? process.env.PROD_SUPABASE_ANON_KEY!
-    : process.env.LOCAL_SUPABASE_ANON_KEY!
-
-  const serviceRoleKey = isProduction
-    ? process.env.PROD_SUPABASE_SERVICE_ROLE_KEY!
-    : process.env.LOCAL_SUPABASE_SERVICE_ROLE_KEY!
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   return {
     url,
     anonKey,
     serviceRoleKey,
-    isProduction,
   }
 }
 
@@ -37,20 +26,12 @@ export function getServerConfig() {
  * Uses NEXT_PUBLIC_ environment variables (safe for browser)
  */
 export function getClientConfig() {
-  const isProduction = process.env.NEXT_PUBLIC_PROD_DB === 'true'
-
-  const url = isProduction
-    ? process.env.NEXT_PUBLIC_PROD_SUPABASE_URL!
-    : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_URL!
-
-  const anonKey = isProduction
-    ? process.env.NEXT_PUBLIC_PROD_SUPABASE_ANON_KEY!
-    : process.env.NEXT_PUBLIC_LOCAL_SUPABASE_ANON_KEY!
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   return {
     url,
     anonKey,
-    isProduction,
   }
 }
 
@@ -63,17 +44,18 @@ export function validateConfig(
 ) {
   const missing: string[] = []
 
-  if (!config.url) missing.push('Supabase URL')
-  if (!config.anonKey) missing.push('Supabase Anon Key')
+  if (!config.url) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+  if (!config.anonKey) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
   if (context === 'admin' && !config.serviceRoleKey) {
-    missing.push('Supabase Service Role Key')
+    missing.push('SUPABASE_SERVICE_ROLE_KEY')
   }
 
   if (missing.length > 0) {
     throw new Error(
       `Missing required Supabase configuration for ${context}:\n` +
       missing.map(m => `  - ${m}`).join('\n') +
-      `\n\nCheck your .env.local file and ensure all required variables are set.`
+      `\n\nCheck your .env.local file and ensure all required variables are set.\n` +
+      `For local dev, run 'supabase start' and copy the keys from 'supabase status'.`
     )
   }
 }

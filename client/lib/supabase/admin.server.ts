@@ -6,6 +6,18 @@
  * 
  * The service role key bypasses Row Level Security (RLS) and has full
  * database access. Use with extreme caution and only when necessary.
+ * 
+ * APPROVED USE CASES ONLY:
+ * - Admin scripts in /scripts folder
+ * - Cron jobs and background tasks
+ * - Database migrations
+ * - Data seeding
+ * 
+ * NEVER USE IN:
+ * - Route handlers (use createClient from server.ts)
+ * - Server actions (use createClient from server.ts)
+ * - Server components (use createClient from server.ts)
+ * - Client components (IMPOSSIBLE - server-only module)
  */
 
 import 'server-only'
@@ -26,15 +38,7 @@ if (typeof window !== 'undefined') {
  * Admin client with service role privileges (memoized singleton)
  * 
  * WARNING: This client bypasses all Row Level Security policies.
- * Only use for:
- * - Admin operations that require elevated privileges
- * - Background jobs and cron tasks
- * - Server-side only operations
- * 
- * NEVER:
- * - Import this in client components
- * - Export this to browser code
- * - Use for regular user operations
+ * Only use for approved admin operations listed above.
  */
 let adminClient: ReturnType<typeof createClient<Database>> | undefined
 
@@ -49,14 +53,13 @@ export function getSupabaseAdmin() {
     validateConfig(config, 'admin')
 
     logger.info('Creating admin client', { 
-      isProduction: config.isProduction,
-      keyPrefix: config.serviceRoleKey.substring(0, 15) + '...',
-      url: config.url
+      url: config.url,
+      keyPrefix: config.serviceRoleKey?.substring(0, 15) + '...'
     })
     
     adminClient = createClient<Database>(
-      config.url,
-      config.serviceRoleKey,
+      config.url!,
+      config.serviceRoleKey!,
       {
         auth: {
           autoRefreshToken: false,
@@ -65,17 +68,10 @@ export function getSupabaseAdmin() {
         db: {
           schema: 'public',
         },
-        global: {
-          headers: {
-            'apikey': config.serviceRoleKey,
-          }
-        }
       }
     )
     
     logger.info('Admin client created successfully')
-  } else {
-    logger.debug('Using cached admin client')
   }
 
   return adminClient

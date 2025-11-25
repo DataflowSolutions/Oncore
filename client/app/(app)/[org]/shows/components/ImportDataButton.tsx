@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -8,7 +8,6 @@ import {
   FileType2,
   AlertCircle,
   X,
-  Sparkles,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,11 +71,26 @@ type DuplicateCandidate = {
   score: number;
 };
 
-type ImportJob = {
-  status: "processing" | "needs_review" | "completed";
-  rawText: string;
+type GigCandidate = {
+  candidateId: string;
+  title: string | null;
+  date: string | null;
+  city: string | null;
+  venueName: string | null;
+  setTime: string | null;
+  notes: string | null;
   structured: StructuredGig;
   duplicates: DuplicateCandidate[];
+  confidenceMap: Record<string, number>;
+  showId?: string | null;
+};
+
+type ImportJob = {
+  id: string;
+  status: "processing" | "needs_review" | "completed";
+  rawText: string;
+  normalizedText: string;
+  candidates: GigCandidate[];
   source: "file" | "text";
   metadata?: {
     name: string;
@@ -93,6 +107,7 @@ type ReviewFormState = {
   venueName: string;
   setTime: string;
   notes: string;
+  artistName: string;
 };
 
 export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
@@ -101,18 +116,15 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
   const [file, setFile] = useState<File | null>(null);
   const [pastedText, setPastedText] = useState("");
   const [job, setJob] = useState<ImportJob | null>(null);
-  const [formValues, setFormValues] = useState<ReviewFormState>({
-    title: "",
-    date: "",
-    city: "",
-    venueName: "",
-    setTime: "",
-    notes: "",
-  });
+  const [formValues, setFormValues] = useState<Record<string, ReviewFormState>>({});
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
 
-  const hasDuplicates = job?.duplicates?.length ? job.duplicates.length > 0 : false;
+  const hasDuplicates = useMemo(() => {
+    if (!job) return false;
+    return job.candidates.some((c) => c.duplicates.length > 0);
+  }, [job]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -135,6 +147,12 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
 
     if (!isAllowed) {
       setError("Allowed types: .pdf, .doc, .docx, .xlsx, .xls, .csv, .txt");
+      setFile(null);
+      return;
+    }
+
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      setError("File too large. Max 20MB supported.");
       setFile(null);
       return;
     }
@@ -170,21 +188,28 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
       }
 
       const importJob: ImportJob = data.job;
-      const inferredNotes = buildNotes(importJob.structured);
       setJob(importJob);
 
-      setFormValues({
-        title:
-          importJob.structured.core.event.value ||
-          importJob.structured.core.venue.value ||
-          "Imported gig",
-        date: importJob.structured.core.date.value || "",
-        city: importJob.structured.core.city.value || "",
-        venueName: importJob.structured.core.venue.value || "",
+      const nextForms: Record<string, ReviewFormState> = {};
+      for (const candidate of importJob.candidates) {
+        nextForms[candidate.candidateId] = {
+          title:
+            candidate.title ||
+            candidate.structured.core.event.value ||
+            candidate.structured.core.venue.value ||
+            "Imported gig",
+          date: candidate.date || candidate.structured.core.date.value || "",
+        city: candidate.city || candidate.structured.core.city.value || "",
+        venueName: candidate.venueName || candidate.structured.core.venue.value || "",
         setTime:
-          importJob.structured.hospitalityLogistics.setTime.value || "",
-        notes: inferredNotes,
-      });
+          candidate.setTime ||
+          candidate.structured.hospitalityLogistics.setTime.value ||
+          "",
+        notes: buildNotes(candidate.structured),
+        artistName: candidate.structured.core.artist.value || "",
+      };
+    }
+      setFormValues(nextForms);
 
       toast.success("Data parsed", {
         description: "Review the extracted fields before approving.",
@@ -199,8 +224,11 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
     }
   };
 
-  const handleApprove = async () => {
-    if (!formValues.title.trim() || !formValues.date) {
+  const handleApprove = async (candidateId: string) => {
+    const candidate = job?.candidates.find((c) => c.candidateId === candidateId);
+    const form = formValues[candidateId];
+
+    if (!candidate || !form || !form.title.trim() || !form.date) {
       setError("Title and date are required before approval.");
       return;
     }
@@ -215,13 +243,15 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
         body: JSON.stringify({
           intent: "commit",
           orgId,
+          jobId: job?.id,
           payload: {
-            title: formValues.title.trim(),
-            date: formValues.date,
-            city: formValues.city.trim(),
-            venueName: formValues.venueName.trim(),
-            setTime: formValues.setTime.trim(),
-            notes: formValues.notes.trim(),
+            candidateId,
+            title: form.title.trim(),
+            date: form.date,
+            city: form.city.trim(),
+            venueName: form.venueName.trim(),
+            setTime: form.setTime.trim(),
+            notes: form.notes.trim(),
           },
         }),
       });
@@ -234,10 +264,16 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
       toast.success("Import saved", {
         description: "Gig created from imported data.",
       });
-      setOpen(false);
-      setJob(null);
-      setFile(null);
-      setPastedText("");
+      setJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              candidates: prev.candidates.map((c) =>
+                c.candidateId === candidateId ? { ...c, showId: data.showId } : c,
+              ),
+            }
+          : prev,
+      );
       router.refresh();
     } catch (err) {
       logger.error("Error finalizing import", err);
@@ -253,14 +289,7 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
     setJob(null);
     setFile(null);
     setPastedText("");
-    setFormValues({
-      title: "",
-      date: "",
-      city: "",
-      venueName: "",
-      setTime: "",
-      notes: "",
-    });
+    setFormValues({});
     setError(null);
     setIsLoading(false);
   };
@@ -292,19 +321,19 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div
             role="dialog"
-            className="fixed left-1/2 top-1/2 z-50 grid w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg"
+            className="relative z-50 flex flex-col w-full max-w-5xl max-h-[90vh] gap-4 border bg-background shadow-lg duration-200 sm:rounded-lg overflow-hidden"
             tabIndex={-1}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <h2 className="font-semibold tracking-tight flex items-center gap-2 text-xl">
+            <div className="flex items-start justify-between gap-4 border-b pb-4 px-6 pt-6 flex-shrink-0">
+              <div className="flex flex-col space-y-1">
+                <h2 className="font-semibold tracking-tight flex items-center gap-2 text-lg">
                   <FileType2 className="h-5 w-5" />
                   Import gigs from docs or text
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Upload PDF/Doc/Excel/CSV/TXT or paste raw text. Oncore normalizes the content and highlights low-confidence fields for review.
                 </p>
               </div>
@@ -320,6 +349,8 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+
+            <ScrollArea className="flex-1 px-6">
 
             {error ? (
               <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30 flex items-center gap-2">
@@ -397,7 +428,7 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
                   </InfoTile>
                   <InfoTile title="Workflow">
                     <p className="text-xs text-muted-foreground">
-                      Extract → dedupe by date/city/venue/artist → structured fields → review screen → approve or discard.
+                      Extract - dedupe by date/city/venue/artist - structured fields - review screen - approve or discard.
                     </p>
                   </InfoTile>
                 </div>
@@ -435,178 +466,307 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
                       {warn}
                     </Badge>
                   ))}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReset}
+                    disabled={isLoading}
+                    className="gap-1 ml-auto"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Start over
+                  </Button>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <h3 className="font-semibold text-base">
-                          Review & edit extracted fields
-                        </h3>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleReset}
-                        disabled={isLoading}
-                        className="gap-1"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                        Start over
-                      </Button>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Confidence threshold
                     </div>
+                    <select
+                      className="border rounded px-2 py-1 text-sm bg-background"
+                      value={confidenceThreshold}
+                      onChange={(e) => setConfidenceThreshold(Number(e.target.value))}
+                      disabled={isLoading}
+                    >
+                      <option value={0.5}>50%</option>
+                      <option value={0.6}>60%</option>
+                      <option value={0.7}>70%</option>
+                    </select>
+                  </div>
 
-                    <div className="space-y-3">
-                      {reviewFields.map((field) => (
-                        <div className="space-y-1" key={field.key}>
-                          <label className="text-sm font-medium">{field.label}</label>
-                          <Input
-                            type={field.type === "date" ? "date" : field.type === "time" ? "time" : "text"}
-                            value={formValues[field.key]}
-                            placeholder={field.placeholder}
-                            onChange={(event) =>
-                              setFormValues((prev) => ({
-                                ...prev,
-                                [field.key]: event.target.value,
-                              }))
-                            }
-                            disabled={isLoading}
-                          />
+                  {job.candidates.map((candidate) => {
+                    const form = formValues[candidate.candidateId] ?? {
+                      title: "",
+                      date: "",
+                      city: "",
+                      venueName: "",
+                      setTime: "",
+                      notes: "",
+                      artistName: "",
+                    };
+                    const lowConfidence = Object.entries(candidate.confidenceMap || {})
+                      .filter(([key, value]) => key.startsWith(candidate.candidateId) && value < confidenceThreshold)
+                      .map(([key]) => key.split(".").slice(1).join("."));
+
+                    return (
+                      <div key={candidate.candidateId} className="rounded-lg border border-border bg-muted/10 p-3 space-y-3">
+                        <div className="flex flex-wrap items-center gap-3 justify-between">
+                          <div>
+                            <p className="font-semibold text-lg">{form.title || candidate.title || "Untitled gig"}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {form.date || candidate.date || "Date TBD"}
+                              {candidate.venueName ? ` | ${candidate.venueName}` : ""}
+                              {candidate.city ? ` | ${candidate.city}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {candidate.showId ? (
+                              <Badge variant="secondary">Created</Badge>
+                            ) : (
+                              <Badge variant="outline">Needs review</Badge>
+                            )}
+                            {candidate.duplicates.length > 0 ? (
+                              <Badge variant="destructive">Possible duplicate</Badge>
+                            ) : null}
+                            {lowConfidence.length > 0 ? (
+                              <Badge variant="outline">Low confidence: {lowConfidence.length} fields</Badge>
+                            ) : null}
+                          </div>
                         </div>
-                      ))}
 
-                      <div className="space-y-1">
-                        <label className="text-sm font-medium">Notes</label>
-                        <Textarea
-                          value={formValues.notes}
-                          onChange={(event) =>
-                            setFormValues((prev) => ({ ...prev, notes: event.target.value }))
-                          }
-                          rows={4}
-                          placeholder="Payment terms, hospitality, tech, travel, or anything else."
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
+                        <div className="grid gap-6 lg:grid-cols-2">
+                          <div className="space-y-2">
+                            {reviewFields.map((field) => (
+                              <div className="space-y-1" key={`${candidate.candidateId}-${field.key}`}>
+                                <label className="text-sm font-medium">{field.label}</label>
+                                <Input
+                                  type={field.type === "date" ? "date" : field.type === "time" ? "time" : "text"}
+                                  value={form[field.key]}
+                                  placeholder={field.placeholder}
+                                  onChange={(event) =>
+                                    setFormValues((prev) => ({
+                                      ...prev,
+                                      [candidate.candidateId]: {
+                                        ...(prev[candidate.candidateId] ?? form),
+                                        [field.key]: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  disabled={isLoading}
+                                />
+                              </div>
+                            ))}
 
-                    <div className="flex flex-wrap gap-3 pt-1">
-                      <Button onClick={handleApprove} disabled={isLoading}>
-                        {isLoading ? "Saving..." : "Approve & save gig"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setJob(null);
-                          setError(null);
-                        }}
-                        disabled={isLoading}
-                      >
-                        Discard result
-                      </Button>
-                    </div>
+                            <div className="space-y-1">
+                              <label className="text-sm font-medium">Notes</label>
+                              <Textarea
+                                value={form.notes}
+                                onChange={(event) =>
+                                  setFormValues((prev) => ({
+                                    ...prev,
+                                    [candidate.candidateId]: {
+                                      ...(prev[candidate.candidateId] ?? form),
+                                      notes: event.target.value,
+                                    },
+                                  }))
+                                }
+                                rows={2}
+                                placeholder="Payment terms, hospitality, tech, travel, or anything else."
+                                disabled={isLoading}
+                              />
+                            </div>
 
-                    {hasDuplicates ? (
-                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="h-4 w-4 text-amber-600" />
-                          <p className="font-semibold text-sm text-amber-700">
-                            Possible duplicates detected (matched on date/city/venue/title)
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          {job.duplicates.map((dup) => (
-                            <div
-                              key={dup.id}
-                              className="rounded-md border border-amber-200 bg-white/50 p-3 text-sm"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <div>
-                                  <p className="font-medium">{dup.title || "Untitled show"}</p>
-                                  <p className="text-muted-foreground text-xs">
-                                    {dup.date || "Date unknown"}
-                                    {dup.venue ? ` | ${dup.venue}` : ""}
-                                    {dup.city ? ` | ${dup.city}` : ""}
+                            <div className="space-y-1">
+                              <label className="text-sm font-medium flex items-center gap-2">
+                                Artist
+                                {!form.artistName && (
+                                  <Badge variant="destructive">Missing</Badge>
+                                )}
+                              </label>
+                              <Input
+                                value={form.artistName}
+                                placeholder={candidate.structured.core.artist.value || "Select or type artist"}
+                                onChange={(event) =>
+                                  setFormValues((prev) => ({
+                                    ...prev,
+                                    [candidate.candidateId]: {
+                                      ...(prev[candidate.candidateId] ?? form),
+                                      artistName: event.target.value,
+                                    },
+                                  }))
+                                }
+                                disabled={isLoading}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Auto-attaches matching artist. If none found, show will be marked for assignment.
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3 pt-1">
+                              <Button onClick={() => handleApprove(candidate.candidateId)} disabled={isLoading || !!candidate.showId}>
+                                {candidate.showId ? "Already created" : isLoading ? "Saving..." : "Approve & save gig"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setJob((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          candidates: prev.candidates.filter((c) => c.candidateId !== candidate.candidateId),
+                                        }
+                                      : prev,
+                                  );
+                                }}
+                                disabled={isLoading}
+                              >
+                                Discard candidate
+                              </Button>
+                            </div>
+
+                            {candidate.duplicates.length > 0 ? (
+                              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                                  <p className="font-semibold text-sm text-amber-700">
+                                    Possible duplicates detected (matched on date/city/venue/title)
                                   </p>
                                 </div>
-                                <Badge variant="outline">Score {dup.score}</Badge>
+                                <div className="space-y-2">
+                                  {candidate.duplicates.map((dup) => (
+                                    <div
+                                      key={dup.id}
+                                      className="rounded-md border border-amber-200 bg-white/50 p-3 text-sm"
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div>
+                                          <p className="font-medium">{dup.title || "Untitled show"}</p>
+                                          <p className="text-muted-foreground text-xs">
+                                            {dup.date || "Date unknown"}
+                                            {dup.venue ? ` | ${dup.venue}` : ""}
+                                            {dup.city ? ` | ${dup.city}` : ""}
+                                          </p>
+                                        </div>
+                                        <Badge variant="outline">Score {dup.score}</Badge>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  We never auto-overwrite. Confirm details before creating a new gig.
+                                </p>
                               </div>
+                            ) : null}
+                          </div>
+
+                          <details className="group" open>
+                            <summary className="cursor-pointer list-none">
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                                <h3 className="font-semibold text-sm">AI-Extracted Fields</h3>
+                                <svg className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </summary>
+                            <div className="mt-3 space-y-3 max-h-96 overflow-y-auto pr-2">
+                              <FieldGroup
+                                title="Core"
+                                items={[
+                                  { label: "Date", field: candidate.structured.core.date },
+                                  { label: "City", field: candidate.structured.core.city },
+                                  { label: "Venue", field: candidate.structured.core.venue },
+                                  { label: "Event/Tour", field: candidate.structured.core.event },
+                                  { label: "Artist", field: candidate.structured.core.artist },
+                                  { label: "Promoter", field: candidate.structured.core.promoter },
+                                ]}
+                                threshold={confidenceThreshold}
+                              />
+                              <FieldGroup
+                                title="Deal"
+                                items={[
+                                  { label: "Fee", field: candidate.structured.deal.fee },
+                                  { label: "Deal type", field: candidate.structured.deal.dealType },
+                                  { label: "Currency", field: candidate.structured.deal.currency },
+                                  { label: "Payment terms", field: candidate.structured.deal.paymentTerms },
+                                ]}
+                                threshold={confidenceThreshold}
+                              />
+                              <FieldGroup
+                                title="Hospitality / Logistics"
+                                items={[
+                                  { label: "Hotel", field: candidate.structured.hospitalityLogistics.hotel },
+                                  { label: "Transport", field: candidate.structured.hospitalityLogistics.transport },
+                                  { label: "Catering", field: candidate.structured.hospitalityLogistics.catering },
+                                  { label: "Soundcheck", field: candidate.structured.hospitalityLogistics.soundcheck },
+                                  { label: "Set time", field: candidate.structured.hospitalityLogistics.setTime },
+                                ]}
+                                threshold={confidenceThreshold}
+                              />
+                              <FieldGroup
+                                title="Tech & Rider"
+                                items={[
+                                  { label: "Equipment", field: candidate.structured.tech.equipment },
+                                  { label: "Backline", field: candidate.structured.tech.backline },
+                                  { label: "Stage", field: candidate.structured.tech.stage },
+                                  { label: "Light", field: candidate.structured.tech.light },
+                                  { label: "Sound", field: candidate.structured.tech.sound },
+                                ]}
+                                threshold={confidenceThreshold}
+                              />
+                              <FieldGroup
+                                title="Travel"
+                                items={[
+                                  { label: "Flights", field: candidate.structured.travel.flights },
+                                  { label: "Times", field: candidate.structured.travel.times },
+                                  { label: "Airport codes", field: candidate.structured.travel.airportCodes },
+                                ]}
+                                threshold={confidenceThreshold}
+                              />
                             </div>
-                          ))}
+                          </details>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          We never auto-overwrite. Confirm details before creating a new gig.
-                        </p>
                       </div>
-                    ) : null}
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">Raw text preview</p>
-                      <ScrollArea className="h-40 rounded-md border bg-muted/30 p-3">
-                        <pre className="whitespace-pre-wrap break-words text-xs text-muted-foreground">
-                          {job.rawText || "No raw text captured"}
-                        </pre>
-                      </ScrollArea>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-base">Extracted fields</h3>
-                    <FieldGroup
-                      title="Core"
-                      items={[
-                        { label: "Date", field: job.structured.core.date },
-                        { label: "City", field: job.structured.core.city },
-                        { label: "Venue", field: job.structured.core.venue },
-                        { label: "Event/Tour", field: job.structured.core.event },
-                        { label: "Artist", field: job.structured.core.artist },
-                        { label: "Promoter", field: job.structured.core.promoter },
-                      ]}
-                    />
-                    <FieldGroup
-                      title="Deal"
-                      items={[
-                        { label: "Fee", field: job.structured.deal.fee },
-                        { label: "Deal type", field: job.structured.deal.dealType },
-                        { label: "Currency", field: job.structured.deal.currency },
-                        { label: "Payment terms", field: job.structured.deal.paymentTerms },
-                      ]}
-                    />
-                    <FieldGroup
-                      title="Hospitality / Logistics"
-                      items={[
-                        { label: "Hotel", field: job.structured.hospitalityLogistics.hotel },
-                        { label: "Transport", field: job.structured.hospitalityLogistics.transport },
-                        { label: "Catering", field: job.structured.hospitalityLogistics.catering },
-                        { label: "Soundcheck", field: job.structured.hospitalityLogistics.soundcheck },
-                        { label: "Set time", field: job.structured.hospitalityLogistics.setTime },
-                      ]}
-                    />
-                    <FieldGroup
-                      title="Tech & Rider"
-                      items={[
-                        { label: "Equipment", field: job.structured.tech.equipment },
-                        { label: "Backline", field: job.structured.tech.backline },
-                        { label: "Stage", field: job.structured.tech.stage },
-                        { label: "Light", field: job.structured.tech.light },
-                        { label: "Sound", field: job.structured.tech.sound },
-                      ]}
-                    />
-                    <FieldGroup
-                      title="Travel"
-                      items={[
-                        { label: "Flights", field: job.structured.travel.flights },
-                        { label: "Times", field: job.structured.travel.times },
-                        { label: "Airport codes", field: job.structured.travel.airportCodes },
-                      ]}
-                    />
-                  </div>
+                    );
+                  })}
                 </div>
+
+                <details className="group">
+                  <summary className="cursor-pointer list-none">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <p className="text-xs font-semibold">Raw text preview</p>
+                      <svg className="h-3 w-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </summary>
+                  <ScrollArea className="h-32 rounded-md border bg-muted/30 p-2 mt-2">
+                    <pre className="whitespace-pre-wrap break-words text-[10px] text-muted-foreground leading-tight">
+                      {job.rawText || "No raw text captured"}
+                    </pre>
+                  </ScrollArea>
+                </details>
+                <details className="group">
+                  <summary className="cursor-pointer list-none">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <p className="text-xs font-semibold">Normalized text</p>
+                      <svg className="h-3 w-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </summary>
+                  <ScrollArea className="h-32 rounded-md border bg-muted/30 p-2 mt-2">
+                    <pre className="whitespace-pre-wrap break-words text-[10px] text-muted-foreground leading-tight">
+                      {job.normalizedText || job.rawText || "No normalized text"}
+                    </pre>
+                  </ScrollArea>
+                </details>
               </div>
             )}
+            </ScrollArea>
+            <div className="h-6 flex-shrink-0" />
           </div>
         </div>
       ) : null}
@@ -617,38 +777,39 @@ export default function ImportDataButton({ orgId }: ImportDataButtonProps) {
 function FieldGroup({
   title,
   items,
+  threshold,
 }: {
   title: string;
   items: { label: string; field: StructuredField }[];
+  threshold: number;
 }) {
+  const fieldsWithValues = items.filter(item => item.field.value);
+  if (fieldsWithValues.length === 0) return null;
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <h4 className="text-sm font-semibold">{title}</h4>
-        <Badge variant="outline" className="text-[10px]">
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <h4 className="text-xs font-semibold text-muted-foreground">{title}</h4>
+        <Badge variant="outline" className="text-[9px] h-4">
           AI draft
         </Badge>
       </div>
-      <div className="grid gap-2">
-        {items.map(({ label, field }) => (
+      <div className="grid gap-1.5">
+        {fieldsWithValues.map(({ label, field }) => (
           <div
             key={label}
-            className={`rounded-md border px-3 py-2 text-sm ${
-              field.value
-                ? confidenceTone(field.confidence).bg
-                : "bg-muted/30 border-dashed"
-            }`}
+            className={`rounded border px-2 py-1.5 text-xs ${
+              confidenceTone(field.confidence).bg
+            } ${field.confidence < threshold ? "ring-1 ring-amber-300" : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">{label}</span>
-              {field.value ? (
-                <Badge variant="outline" className="text-[10px]">
-                  {confidenceTone(field.confidence).label}
-                </Badge>
-              ) : null}
+              <span className="font-medium text-[11px]">{label}</span>
+              <Badge variant="outline" className="text-[9px] h-4 px-1">
+                {confidenceTone(field.confidence).label}
+              </Badge>
             </div>
-            <p className="text-muted-foreground text-xs mt-1">
-              {field.value || "Not found"}
+            <p className="text-muted-foreground text-[11px] mt-0.5 leading-snug">
+              {field.value}
             </p>
           </div>
         ))}
