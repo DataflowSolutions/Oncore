@@ -8,6 +8,7 @@
 
   /* CARD */
   --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
   --color-card-border: var(--card-border);
 
   --color-card-cell: var(--card-cell);
@@ -155,6 +156,7 @@
 
   /* CARD */
   --card: rgb(30, 30, 30);
+  --card-hover: rgb(40, 40, 40);
   --card-border: rgba(255, 255, 255, 0.05);
 
   --card-cell: rgb(50, 50, 50);
