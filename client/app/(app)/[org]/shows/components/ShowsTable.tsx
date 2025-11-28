@@ -57,7 +57,7 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full md:w-auto">
       {Object.entries(showsByMonth).map(([monthYear, shows]) => (
         <div key={monthYear}>
           <div className="flex gap-2 mb-2">
@@ -95,13 +95,13 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
               return (
                 <div
                   key={show.id}
-                  className="rounded-[20px] border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group w-[500px]"
+                  className="rounded-[20px] border border-input bg-card text-foreground shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group md:w-[500px]"
                 >
                   <Link
                     href={`/${orgSlug}/shows/${show.id}/day`}
                     className="block p-3"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <div className="flex gap-2">
                       {/* Left side - Main content */}
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <h4 className="font-header text-sm  transition-colors">

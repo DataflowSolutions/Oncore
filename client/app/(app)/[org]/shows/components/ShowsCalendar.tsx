@@ -246,8 +246,8 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
       {/* Calendar Header */}
       <div className="flex flex-col gap-4 flex-shrink-0">
         {/* Title and Main Navigation */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-4 items-center">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex gap-4 items-center flex-wrap">
             <h2 className="text-xl font-header truncate">
               {dayViewDate
                 ? dayViewDate.toLocaleDateString("en-US", {
@@ -270,7 +270,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
               Today
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center w-full xl:w-auto">
             <Button
               variant="outline"
               size="sm"
