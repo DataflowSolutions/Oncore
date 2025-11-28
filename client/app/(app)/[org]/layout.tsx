@@ -66,23 +66,22 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
   // }
 
   return (
-    <div className="min-h-screen bg-background text-foreground ">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Show subscription banner for trials or issues */}
       {/* {billingStatus && <SubscriptionBanner billingStatus={billingStatus} />} */}
 
       {/* Simple Sidebar with prefetching */}
       <Sidebar orgSlug={resolvedParams.org} />
 
-      {/* Main Content Area */}
-      <div className="lg:ml-64 min-h-screen px-4 lg:px-8 ">
-        {/* Top Navigation Bar - Full Width */}
-        <TopBar />
+      {/* TopBar - handles its own left offset for sidebar */}
+      <TopBar />
 
-        {/* Content with responsive padding */}
+      {/* Main Content Area - offset for sidebar on desktop */}
+      <main className="lg:ml-64 min-h-[calc(100vh-4rem)] px-4 lg:px-8">
         <div className="max-w-[1440px] mx-auto">
-          <div className="py-6 pt-6 lg:pt-6">{children}</div>
+          <div className="py-6">{children}</div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

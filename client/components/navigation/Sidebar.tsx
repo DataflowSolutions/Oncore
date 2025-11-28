@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Calendar, Globe, Menu, X, Play } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { usePathname, useParams } from "next/navigation";
+import {
+  Calendar,
+  Globe,
+  X,
+  Play,
+  Settings,
+  Filter,
+  Upload,
+} from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { useSidebarStore } from "@/lib/stores/sidebar-store";
+import { toast } from "sonner";
 
 interface SidebarProps {
   orgSlug: string;
@@ -17,8 +27,13 @@ const STORAGE_KEY = "oncore_last_show";
 
 export function Sidebar({ orgSlug }: SidebarProps) {
   const pathname = usePathname();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [lastShowId, setLastShowId] = useState<string | null>(null);
+  const params = useParams();
+  const {
+    isOpen: isMobileOpen,
+    close: closeSidebar,
+    setLastShowId,
+    lastShowId,
+  } = useSidebarStore();
 
   // Extract showId from current URL
   const currentShowId = useMemo(() => {
@@ -39,7 +54,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
         // Ignore parse errors
       }
     }
-  }, [orgSlug]);
+  }, [orgSlug, setLastShowId]);
 
   // Update localStorage when navigating to a show page
   useEffect(() => {
@@ -53,7 +68,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
         })
       );
     }
-  }, [currentShowId, orgSlug]);
+  }, [currentShowId, orgSlug, setLastShowId]);
 
   // Use lastShowId for sub-nav (persists across navigation)
   const showId = lastShowId;
@@ -102,49 +117,44 @@ export function Sidebar({ orgSlug }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="lg:hidden fixed top-3 left-4 z-50"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-      >
-        {isMobileOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Menu className="h-6 w-6" />
-        )}
-      </Button>
-
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-40 h-screen w-64
+          fixed top-0 left-0 z-50 h-screen w-64
           border-r border-sidebar-border bg-sidebar-bg
           transition-transform duration-200 ease-in-out
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
-        <div className="flex h-full flex-col mt-[56px] lg:mt-0">
+        <div className="flex h-full flex-col">
           {/* Logo/Header */}
-          <div className="flex h-16 items-center px-6">
+          <div className="flex h-16 items-center justify-between px-6">
             <Link
               href={`/${orgSlug}`}
               prefetch={true}
               className="text-xl font-bold font-header text-foreground hover:text-primary transition-colors lowercase"
-              onClick={() => setIsMobileOpen(false)}
+              onClick={closeSidebar}
             >
               oncore
             </Link>
+            {/* Close button on mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={closeSidebar}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
 
           {/* Navigation */}
@@ -159,7 +169,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   prefetch={true}
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={closeSidebar}
                   className={`
                     flex items-center gap-3 rounded-lg px-3 py-2
                     text-base font-medium transition-colors
@@ -193,7 +203,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   prefetch={true}
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={closeSidebar}
                   className={`
                     flex items-center gap-3 rounded-lg px-3 py-2
                     text-base font-medium transition-colors
@@ -210,6 +220,42 @@ export function Sidebar({ orgSlug }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* Mobile-only actions (visible when TopBar actions are hidden) */}
+          <div className="lg:hidden border-t border-sidebar-border p-4 space-y-1">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 px-3 py-2 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => {
+                closeSidebar();
+                toast.warning(
+                  "Importing data is only available on desktop at this time!"
+                );
+              }}
+            >
+              <Upload className="h-5 w-5" />
+              Import Data
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 px-3 py-2 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => {
+                closeSidebar();
+                toast.warning("Artist filtering is only available on desktop!");
+              }}
+            >
+              <Filter className="h-5 w-5" />
+              Artist Filter
+            </Button>
+            <Link
+              href={`/${orgSlug}/settings`}
+              onClick={closeSidebar}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Settings className="h-5 w-5" />
+              Settings
+            </Link>
+          </div>
         </div>
       </aside>
     </>

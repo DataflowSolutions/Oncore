@@ -91,10 +91,6 @@ export function ArtistFilterDropdown() {
     return selectedArtists.map((a) => a.name).join(", ");
   };
 
-  if (isLoading || artists.length === 0) {
-    return null;
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -142,18 +138,28 @@ export function ArtistFilterDropdown() {
 
         {/* Individual Artists with visible checkboxes */}
         <div className="max-h-[300px] overflow-y-auto px-2 py-1">
-          {artists.map((artist) => (
-            <label
-              key={artist.id}
-              className="flex items-center gap-3 px-2 py-2 rounded-sm hover:bg-accent cursor-pointer"
-            >
-              <Checkbox
-                checked={selectedArtistIds.includes(artist.id)}
-                onCheckedChange={() => toggleArtist(artist.id)}
-              />
-              <span className="flex-1 text-sm break-words">{artist.name}</span>
-            </label>
-          ))}
+          {artists.length === 0 && !isLoading ? (
+            <div className="px-2 py-2">
+              <span className="text-xs text-muted-foreground">
+                No artists found
+              </span>
+            </div>
+          ) : (
+            artists.map((artist) => (
+              <label
+                key={artist.id}
+                className="flex items-center gap-3 px-2 py-2 rounded-sm hover:bg-accent cursor-pointer"
+              >
+                <Checkbox
+                  checked={selectedArtistIds.includes(artist.id)}
+                  onCheckedChange={() => toggleArtist(artist.id)}
+                />
+                <span className="flex-1 text-sm break-words">
+                  {artist.name}
+                </span>
+              </label>
+            ))
+          )}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
