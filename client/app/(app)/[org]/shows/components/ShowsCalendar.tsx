@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MarqueeText } from "@/components/ui/marquee-text";
 
 interface ShowsCalendarProps {
   shows: ShowWithVenue[];
@@ -583,7 +584,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                         openDayView(cellDate);
                       }
                     }}
-                    className={`h-full border-b border-input p-0.5 sm:p-2 transition-colors overflow-hidden outline-none hover:bg-accent/5 active:bg-accent/10 focus-visible:ring-2 focus-visible:ring-primary/60 ${
+                    className={`h-full border-b border-input py-0.5 sm:py-2 transition-colors overflow-hidden outline-none hover:bg-accent/5 active:bg-accent/10 focus-visible:ring-2 focus-visible:ring-primary/60 ${
                       index % 7 !== 6 ? "border-r" : ""
                     } ${
                       isSelectedDayInMonth
@@ -645,17 +646,22 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                             >
                               {/* Mobile-optimized view */}
                               <div className="sm:hidden text-[9px] leading-tight p-1 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
-                                <div className="font-bold text-foreground line-clamp-1 break-words">
-                                  {artistNames} •{" "}
-                                  {show.venue?.city || "No city"}
-                                </div>
+                                <MarqueeText>
+                                  {`${artistNames} • ${
+                                    show.venue?.city || "No city"
+                                  }`}
+                                </MarqueeText>
                               </div>
                               {/* Desktop view */}
-                              <div className="hidden sm:block text-xs leading-tight p-1.5 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
-                                <div className="font-bold text-foreground line-clamp-1 break-words">
-                                  {artistNames} •{" "}
-                                  {show.venue?.city || "No city"}
-                                </div>
+                              <div
+                                title={`${artistNames} - ${show.title}`}
+                                className="hidden sm:block text-xs leading-tight py-1.5 px-0.5 rounded-md bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer"
+                              >
+                                <MarqueeText>
+                                  {`${artistNames} • ${
+                                    show.venue?.city || "No city"
+                                  }`}
+                                </MarqueeText>
                               </div>
                             </Link>
                           );

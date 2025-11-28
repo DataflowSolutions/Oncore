@@ -4,23 +4,32 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popup } from "@/components/ui/popup";
-import { AlertCircle, CheckCircle } from "lucide-react";
 import { createShow } from "@/lib/actions/shows";
 import { logger } from "@/lib/logger";
+import { ArtistSelector } from "@/components/shows/ArtistSelector";
+import { toast } from "sonner";
 
 interface CreateShowButtonProps {
   orgId: string;
+  orgSlug: string;
 }
 
-export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
+export default function CreateShowButton({
+  orgId,
+  orgSlug,
+}: CreateShowButtonProps) {
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [selectedArtistId, setSelectedArtistId] = useState<string>("");
+  const [selectedArtistName, setSelectedArtistName] = useState<string>("");
+
+  const handleArtistChange = (artistId: string, artistName: string) => {
+    setSelectedArtistId(artistId);
+    setSelectedArtistName(artistName);
+  };
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
-    setError(null);
 
     try {
       // Add orgId to formData
@@ -33,17 +42,25 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
         formData.append("venueName", city);
       }
 
-      await createShow(formData);
-      setSuccess(true);
+      // Add selected artist ID if one was selected
+      if (selectedArtistId) {
+        formData.append("artistId", selectedArtistId);
+      }
 
-      // Close form after brief success message
+      await createShow(formData);
+      toast.success("Show created successfully!");
+
+      // Reset artist selection
+      setSelectedArtistId("");
+      setSelectedArtistName("");
+
+      // Close form after brief delay
       setTimeout(() => {
         setShowForm(false);
-        setSuccess(false);
-      }, 1500);
+      }, 500);
     } catch (error) {
       logger.error("Error creating show", error);
-      setError(
+      toast.error(
         error instanceof Error ? error.message : "Failed to create show"
       );
     } finally {
@@ -69,22 +86,6 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
         description="Add a new show to your schedule. Fill in the basic details below."
         className="sm:max-w-[600px]"
       >
-        {error && (
-          <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-destructive" />
-            <span className="text-sm text-destructive">{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-3 rounded-md bg-primary/10 border border-primary/20 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" />
-            <span className="text-sm text-foreground">
-              Show created successfully!
-            </span>
-          </div>
-        )}
-
         <form action={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             {/* Show Name */}
@@ -133,12 +134,19 @@ export default function CreateShowButton({ orgId }: CreateShowButtonProps) {
               >
                 Artist *
               </label>
-              <Input
-                id="artist"
-                name="artist"
-                placeholder="Enter artist name"
-                required
+              <ArtistSelector
+                orgSlug={orgSlug}
+                orgId={orgId}
+                value={selectedArtistId}
+                onValueChange={handleArtistChange}
+                placeholder="Search or create an artist..."
+                disabled={isLoading}
               />
+              {selectedArtistId && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selected: {selectedArtistName}
+                </p>
+              )}
             </div>
           </div>
 

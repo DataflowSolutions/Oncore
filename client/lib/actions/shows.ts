@@ -34,9 +34,12 @@ export async function getShowsByOrg(orgId: string): Promise<ShowWithVenue[]> {
 
   // Use RPC function to bypass RLS issues
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: shows, error } = await (supabase as any).rpc('get_shows_by_org', {
-    p_org_id: orgId
-  });
+  const { data: shows, error } = await (supabase as any).rpc(
+    "get_shows_by_org",
+    {
+      p_org_id: orgId,
+    }
+  );
 
   if (error) {
     logger.error("Error fetching shows", error);
@@ -57,15 +60,17 @@ export async function getShowsByOrg(orgId: string): Promise<ShowWithVenue[]> {
     status: show.status,
     created_at: show.created_at,
     updated_at: show.updated_at,
-    venue: show.venue_id ? {
-      id: show.venue_id,
-      name: show.venue_name,
-      city: show.venue_city,
-      address: show.venue_address,
-      org_id: show.org_id,
-      created_at: show.created_at,
-      updated_at: show.updated_at,
-    } : null,
+    venue: show.venue_id
+      ? {
+          id: show.venue_id,
+          name: show.venue_name,
+          city: show.venue_city,
+          address: show.venue_address,
+          org_id: show.org_id,
+          created_at: show.created_at,
+          updated_at: show.updated_at,
+        }
+      : null,
     show_assignments: null, // TODO: Add show assignments to RPC if needed
   }));
 }
@@ -86,12 +91,17 @@ export async function createShow(formData: FormData) {
   const venueCity = formData.get("venueCity") as string;
   const venueAddress = formData.get("venueAddress") as string;
 
+  // Artist ID for assignment
+  const artistId = formData.get("artistId") as string;
+
   if (!orgId || !title || !date) {
     throw new Error("Missing required fields");
   }
 
   // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("Unauthorized");
   }
@@ -105,7 +115,7 @@ export async function createShow(formData: FormData) {
 
   // Use RPC function to create show (bypasses RLS issues with PostgREST)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc('app_create_show', {
+  const { data, error } = await (supabase as any).rpc("app_create_show", {
     p_org_id: orgId,
     p_title: title,
     p_date: date,
@@ -120,6 +130,39 @@ export async function createShow(formData: FormData) {
   if (error) {
     logger.error("Error creating show", error);
     throw new Error(error.message || "Failed to create show");
+  }
+
+  logger.info("Show created successfully", { showId: data?.id });
+
+  // If an artist was selected, assign them to the show via show_assignments
+  if (artistId && data?.id) {
+    logger.info("Assigning artist to show", { showId: data.id, artistId });
+
+    // Use RPC to bypass RLS policies
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: assignData, error: assignError } = await (
+      supabase as any
+    ).rpc("assign_person_to_show", {
+      p_show_id: data.id,
+      p_person_id: artistId,
+      p_duty: null,
+    });
+
+    if (assignError) {
+      logger.error("Error assigning artist to show", {
+        error: assignError,
+        showId: data.id,
+        artistId,
+      });
+    } else {
+      logger.info("Artist assigned successfully", {
+        result: assignData,
+        showId: data.id,
+        artistId,
+      });
+    }
+  } else {
+    logger.info("No artist to assign", { artistId, showId: data?.id });
   }
 
   revalidatePath(`/shows`);
@@ -162,16 +205,20 @@ export async function deleteShow(showId: string) {
 }
 
 // Cache venues by org to prevent redundant queries
-export const getVenuesByOrg = cache(async (orgId: string): Promise<VenueWithCount[]> => {
-  const supabase = await getSupabaseServer();
+export const getVenuesByOrg = cache(
+  async (orgId: string): Promise<VenueWithCount[]> => {
+    const supabase = await getSupabaseServer();
 
-  const { data: venues, error } = await supabase
-    .rpc('get_org_venues_with_counts', { p_org_id: orgId });
+    const { data: venues, error } = await supabase.rpc(
+      "get_org_venues_with_counts",
+      { p_org_id: orgId }
+    );
 
-  if (error) {
-    logger.error("Error fetching venues", error);
-    return [];
+    if (error) {
+      logger.error("Error fetching venues", error);
+      return [];
+    }
+
+    return venues || [];
   }
-
-  return venues || [];
-})
+);

@@ -56,7 +56,7 @@ export default function ShowsClient({
         <ShowsSearchbar value={searchQuery} onChange={setSearchQuery} />
         <div className="flex flex-wrap gap-3">
           <ImportDataButton orgId={orgId} />
-          <CreateShowButton orgId={orgId} />
+          <CreateShowButton orgId={orgId} orgSlug={orgSlug} />
         </div>
       </div>
 

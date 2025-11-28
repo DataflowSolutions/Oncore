@@ -339,8 +339,9 @@ export default function SettingsPage() {
                     toast.error("Support message sending will be coming soon!");
                   }}
                   className="rounded-full font-header"
+                  size="lg"
                 >
-                  Send Message
+                  Submit
                 </Button>
               </div>
             </CardContent>
