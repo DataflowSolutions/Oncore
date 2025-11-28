@@ -24,24 +24,24 @@ export default async function BillingDebugPage({
     redirect("/sign-in");
   }
 
-  // Load the organization by slug
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", resolvedParams.org)
-    .single();
+  // Load the organization by slug using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org, error: orgError } = await (supabase as any).rpc(
+    "get_org_by_slug",
+    {
+      p_slug: resolvedParams.org,
+    }
+  );
 
   if (orgError || !org) {
     notFound();
   }
 
-  // Check if user is an owner of this org
-  const { data: membership } = await supabase
-    .from("org_members")
-    .select("role")
-    .eq("org_id", org.id)
-    .eq("user_id", user.id)
-    .single();
+  // Check if user is an owner of this org using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc("get_org_membership", {
+    p_org_id: org.id,
+  });
 
   if (!membership || membership.role !== "owner") {
     // Only owners can access billing debug

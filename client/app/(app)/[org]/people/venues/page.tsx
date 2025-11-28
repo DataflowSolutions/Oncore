@@ -12,11 +12,10 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
   const { org: orgSlug } = await params;
 
   const supabase = await getSupabaseServer();
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id, name, slug")
-    .eq("slug", orgSlug)
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc("get_org_by_slug", {
+    p_slug: orgSlug,
+  });
 
   if (!org) {
     return <div>Organization not found</div>;

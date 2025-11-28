@@ -106,14 +106,13 @@ export default function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get current org ID
+  // Get current org ID using RPC
   useEffect(() => {
     async function fetchCurrentOrg() {
-      const { data: orgData } = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("slug", orgSlug)
-        .single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: orgData } = await (supabase as any).rpc("get_org_by_slug", {
+        p_slug: orgSlug,
+      });
 
       if (orgData) {
         setCurrentOrgId(orgData.id);

@@ -11,11 +11,10 @@ export default async function CrewPage({ params }: CrewPageProps) {
   const { org: orgSlug } = await params
   
   const supabase = await getSupabaseServer()
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('slug', orgSlug)
-    .single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_slug', {
+    p_slug: orgSlug
+  })
 
   if (!org) {
     return <div>Organization not found</div>
@@ -30,9 +29,8 @@ export default async function CrewPage({ params }: CrewPageProps) {
 
   // Filter for crew
   const crewPeople = allPeople.filter(person => 
-    person.member_type === 'Crew' || 
-    person.member_type === 'Agent' || 
-    person.member_type === 'Manager'
+    person.member_type === 'crew' || 
+    person.member_type === 'management'
   )
 
   return (

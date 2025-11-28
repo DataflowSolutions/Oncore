@@ -16,7 +16,7 @@ interface Organization {
 interface UserOrganization {
   role: string;
   created_at: string;
-  organizations: Organization;
+  organizations: Organization | null;
 }
 
 interface OrganizationsListProps {
@@ -69,7 +69,9 @@ export function OrganizationsList({ organizations }: OrganizationsListProps) {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {organizations.map(({ organizations: org, role }) => (
+          {organizations
+            .filter(({ organizations: org }) => org !== null && org !== undefined)
+            .map(({ organizations: org, role }) => (
             <Card key={org.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

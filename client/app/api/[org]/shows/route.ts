@@ -40,14 +40,15 @@ export async function GET(
 
     logger.info("Fetched shows", { count: shows?.length || 0 });
 
-    // Fetch show assignments with people (for artist display)
+    // Fetch show assignments with people using RPC to bypass RLS issues
     const showIds = (shows || []).map((s: { id: string }) => s.id);
 
     if (showIds.length > 0) {
+      // Use RPC function to avoid RLS recursion issues
       const { data: assignments, error: assignmentsError } = await supabase
-        .from("show_assignments")
-        .select("show_id, people(id, name, member_type)")
-        .in("show_id", showIds);
+        .rpc("get_show_assignments_for_shows", {
+          p_show_ids: showIds,
+        });
 
       logger.info("Fetched show_assignments", {
         count: assignments?.length || 0,
@@ -75,11 +76,11 @@ export async function GET(
           assignmentsByShow[assignment.show_id] = [];
         }
         assignmentsByShow[assignment.show_id].push({
-          people: assignment.people as {
-            id: string;
-            name: string;
-            member_type: string | null;
-          } | null,
+          people: {
+            id: assignment.person_id,
+            name: assignment.person_name,
+            member_type: assignment.member_type,
+          },
         });
       }
 

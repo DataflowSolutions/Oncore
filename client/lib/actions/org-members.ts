@@ -153,12 +153,11 @@ export async function updateMemberRole(
     return { success: false, error: 'Failed to update role' }
   }
 
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', orgId)
-    .single()
+  // Get org slug for revalidation using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: orgId
+  })
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/settings`)
@@ -239,12 +238,11 @@ export async function removeMember(
     return { success: false, error: 'Failed to remove member' }
   }
 
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', orgId)
-    .single()
+  // Get org slug for revalidation using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: orgId
+  })
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/settings`)

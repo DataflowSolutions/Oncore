@@ -6,7 +6,7 @@ import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MarqueeText } from "@/components/ui/marquee-text";
-import { createAdvancingField } from "@/lib/actions/advancing";
+import { saveFlight } from "@/lib/actions/advancing";
 import {
   createScheduleItem,
   deleteScheduleItem,
@@ -35,12 +35,36 @@ interface FlightsPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
   orgSlug: string;
   showId: string;
+  flightsData?: Array<{
+    id: string;
+    show_id: string;
+    person_id: string | null;
+    direction: string;
+    airline: string | null;
+    flight_number: string | null;
+    booking_ref: string | null;
+    depart_airport_code: string | null;
+    depart_city: string | null;
+    depart_at: string | null;
+    arrival_airport_code: string | null;
+    arrival_city: string | null;
+    arrival_at: string | null;
+    notes: string | null;
+    source: string;
+    created_at: string;
+    ticket_number?: string | null;
+    aircraft_model?: string | null;
+    passenger_name?: string | null;
+    seat_number?: string | null;
+    travel_class?: string | null;
+  }>;
 }
 
 export function FlightsPanel({
   advancingFields,
   orgSlug,
   showId,
+  flightsData = [],
 }: FlightsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -63,9 +87,23 @@ export function FlightsPanel({
   const [travelClass, setTravelClass] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Extract flights array from JSON field
-  const flightsField = advancingFields.find((f) => f.field_name === "flights");
-  const flights = (flightsField?.value as FlightData[] | undefined) || [];
+  // Convert flightsData from database format to UI format
+  const flights: FlightData[] = flightsData.map(f => ({
+    airlineName: f.airline || undefined,
+    flightNumber: f.flight_number || undefined,
+    bookingRef: f.booking_ref || undefined,
+    ticketNumber: f.ticket_number || undefined,
+    aircraftModel: f.aircraft_model || undefined,
+    fullName: f.passenger_name || undefined,
+    departureAirportCode: f.depart_airport_code || undefined,
+    departureAirportCity: f.depart_city || undefined,
+    departureDateTime: f.depart_at || undefined,
+    arrivalAirportCode: f.arrival_airport_code || undefined,
+    arrivalAirportCity: f.arrival_city || undefined,
+    arrivalDateTime: f.arrival_at || undefined,
+    seatNumber: f.seat_number || undefined,
+    travelClass: f.travel_class || undefined,
+  }));
 
   // Show first 3 flights in the panel
 
@@ -253,16 +291,27 @@ export function FlightsPanel({
                   travelClass,
                 };
 
-                // Add to existing flights array
+                // Add to existing flights array for local state
                 const updatedFlights = [...flights, newFlight];
 
-                // Save all flights as a single JSON array
-                const result = await createAdvancingField(orgSlug, showId, {
-                  section: "flight",
-                  fieldName: "flights",
-                  fieldType: "json",
-                  partyType: "from_you",
-                  value: updatedFlights as unknown as never,
+                // Save the new flight using the new saveFlight function
+                const result = await saveFlight(orgSlug, showId, {
+                  direction: "departure", // Default to departure, can be updated later
+                  airline: airlineName,
+                  flightNumber,
+                  bookingRef,
+                  ticketNumber,
+                  aircraftModel,
+                  passengerName: fullName,
+                  departAirportCode: departureAirportCode,
+                  departCity: departureAirportCity,
+                  departAt: departureISO,
+                  arrivalAirportCode,
+                  arrivalCity: arrivalAirportCity,
+                  arrivalAt: arrivalISO,
+                  seatNumber,
+                  travelClass,
+                  autoSchedule: true,
                 });
 
                 if (!result.success) {
@@ -272,7 +321,7 @@ export function FlightsPanel({
                   throw new Error(result.error || "Failed to save flight data");
                 }
 
-                const advancingFieldId = result.data?.id;
+                const flightId = result.data?.id;
 
                 // Delete existing auto-generated flight schedule items first
                 const existingItems = await getScheduleItemsForShow(showId);
@@ -287,47 +336,41 @@ export function FlightsPanel({
                   await deleteScheduleItem(orgSlug, showId, item.id);
                 }
 
-                // Create schedule items for all flights
-                for (let i = 0; i < updatedFlights.length; i++) {
-                  const flight = updatedFlights[i];
-                  if (flight.departureDateTime && flight.arrivalDateTime) {
-                    const cityNotes = `${
-                      flight.departureAirportCity
-                        ? `From ${flight.departureAirportCity}`
-                        : ""
-                    } ${
-                      flight.arrivalAirportCity
-                        ? `to ${flight.arrivalAirportCity}`
-                        : ""
-                    }`.trim();
-                    const notesWithIndex = `[FLIGHT_INDEX:${i}]${
-                      cityNotes ? ` ${cityNotes}` : ""
-                    }`;
+                // Create schedule item for the new flight
+                if (departureISO && arrivalISO) {
+                  const cityNotes = `${
+                    departureAirportCity
+                      ? `From ${departureAirportCity}`
+                      : ""
+                  } ${
+                    arrivalAirportCity
+                      ? `to ${arrivalAirportCity}`
+                      : ""
+                  }`.trim();
 
-                    const flightResult = await createScheduleItem(
-                      orgSlug,
-                      showId,
-                      {
-                        title: `Flight ${flight.flightNumber || i + 1} - ${
-                          flight.airlineName || "Flight"
-                        }`,
-                        starts_at: flight.departureDateTime,
-                        ends_at: flight.arrivalDateTime,
-                        location: `${flight.departureAirportCode || "DEP"} → ${
-                          flight.arrivalAirportCode || "ARR"
-                        }`,
-                        notes: notesWithIndex,
-                        item_type: "departure",
-                        auto_generated: true,
-                        source_field_id: advancingFieldId,
-                      }
-                    );
-
-                    if (!flightResult.success) {
-                      logger.error("Failed to create flight schedule item", {
-                        error: flightResult.error,
-                      });
+                  const flightResult = await createScheduleItem(
+                    orgSlug,
+                    showId,
+                    {
+                      title: `Flight ${flightNumber || ""} - ${
+                        airlineName || "Flight"
+                      }`,
+                      starts_at: departureISO,
+                      ends_at: arrivalISO,
+                      location: `${departureAirportCode || "DEP"} → ${
+                        arrivalAirportCode || "ARR"
+                      }`,
+                      notes: cityNotes,
+                      item_type: "departure",
+                      auto_generated: true,
+                      source_field_id: flightId,
                     }
+                  );
+
+                  if (!flightResult.success) {
+                    logger.error("Failed to create flight schedule item", {
+                      error: flightResult.error,
+                    });
                   }
                 }
 

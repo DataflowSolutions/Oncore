@@ -38,7 +38,7 @@ type Invitation = Database["public"]["Tables"]["invitations"]["Row"] & {
     name: string;
     email: string | null;
     role_title: string | null;
-    member_type: "Artist" | "Crew" | "Agent" | "Manager" | null;
+    member_type: "artist" | "crew" | "management" | "vendor" | "other" | null;
   };
 };
 

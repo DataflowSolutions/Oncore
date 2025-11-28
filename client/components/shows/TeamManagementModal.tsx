@@ -38,12 +38,13 @@ interface TeamManagementModalProps {
 
 const getRoleIcon = (memberType: string | null) => {
   switch (memberType) {
-    case "Artist":
+    case "artist":
       return Music;
-    case "Agent":
-    case "Manager":
+    case "management":
       return Building;
-    case "Crew":
+    case "crew":
+      return Wrench;
+    case "vendor":
       return Wrench;
     default:
       return Users;
@@ -123,10 +124,10 @@ export function TeamManagementModal({
   };
 
   // Group assigned team by member type
-  const artistTeam = assignedTeam.filter((p) => p.member_type === "Artist");
-  const crewTeam = assignedTeam.filter((p) => p.member_type === "Crew");
+  const artistTeam = assignedTeam.filter((p) => p.member_type === "artist");
+  const crewTeam = assignedTeam.filter((p) => p.member_type === "crew");
   const promoterTeam = assignedTeam.filter(
-    (p) => p.member_type === "Agent" || p.member_type === "Manager"
+    (p) => p.member_type === "management"
   );
 
   return (

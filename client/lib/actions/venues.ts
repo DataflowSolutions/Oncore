@@ -121,12 +121,11 @@ export async function createVenue(formData: FormData) {
       throw new Error(`Failed to create venue: ${error.message}`);
     }
 
-    // Get org slug for revalidation
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("slug")
-      .eq("id", rawData.org_id)
-      .single();
+    // Get org slug for revalidation using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc("get_org_by_id", {
+      p_org_id: rawData.org_id,
+    });
 
     if (org?.slug) {
       revalidatePath(`/${org.slug}/venues`);
@@ -175,12 +174,11 @@ export async function updateVenue(venueId: string, formData: FormData) {
       throw new Error(`Failed to update venue: ${error.message}`);
     }
 
-    // Get org slug for revalidation
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("slug")
-      .eq("id", data.org_id)
-      .single();
+    // Get org slug for revalidation using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc("get_org_by_id", {
+      p_org_id: data.org_id,
+    });
 
     if (org?.slug) {
       revalidatePath(`/${org.slug}/venues`);
@@ -237,12 +235,11 @@ export async function deleteVenue(venueId: string) {
       throw new Error(`Failed to delete venue: ${error.message}`);
     }
 
-    // Get org slug for revalidation
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("slug")
-      .eq("id", venue.org_id)
-      .single();
+    // Get org slug for revalidation using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc("get_org_by_id", {
+      p_org_id: venue.org_id,
+    });
 
     if (org?.slug) {
       revalidatePath(`/${org.slug}/venues`);

@@ -54,7 +54,7 @@ export function ArtistSelector({
   // Filter for artists only
   const artists = useMemo(() => {
     return (allPeople || []).filter(
-      (person) => person.member_type === "Artist"
+      (person) => person.member_type === "artist"
     ) as Artist[];
   }, [allPeople]);
 

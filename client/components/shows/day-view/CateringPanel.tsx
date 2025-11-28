@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createAdvancingField } from "@/lib/actions/advancing";
+import { saveCatering } from "@/lib/actions/advancing";
 import {
   createScheduleItem,
   deleteScheduleItem,
@@ -15,15 +15,22 @@ import {
 import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
+import { Database } from "@/lib/database.types";
+
+type AdvancingCatering = Database["public"]["Tables"]["advancing_catering"]["Row"];
 
 interface CateringPanelProps {
-  advancingFields: Array<{ field_name: string; value: unknown }>;
+  /** New format: catering data from advancing_catering table */
+  cateringData?: AdvancingCatering[];
+  /** Legacy format: advancing fields (for backward compatibility) */
+  advancingFields?: Array<{ field_name: string; value: unknown }>;
   orgSlug: string;
   showId: string;
 }
 
 export function CateringPanel({
-  advancingFields,
+  cateringData = [],
+  advancingFields = [],
   orgSlug,
   showId,
 }: CateringPanelProps) {
@@ -54,12 +61,22 @@ export function CateringPanel({
       setBookingRefs(bookingRefs.filter((_, i) => i !== index));
     }
   };
-  // Extract catering information from single JSON field
-  const cateringField = advancingFields.find(
-    (f) => f.field_name === "catering"
-  );
 
-  const cateringInfo = cateringField?.value as
+  // Use new format first (from advancing_catering table), fall back to legacy format
+  const firstCatering = cateringData[0];
+  
+  // Map new table format to display format
+  const cateringInfo = firstCatering ? {
+    name: firstCatering.provider_name || undefined,
+    address: firstCatering.address || undefined,
+    city: firstCatering.city || undefined,
+    serviceDateTime: firstCatering.service_at || undefined,
+    bookingRefs: firstCatering.booking_refs || undefined,
+    notes: firstCatering.notes || undefined,
+    phone: firstCatering.phone || undefined,
+    email: firstCatering.email || undefined,
+    guestCount: firstCatering.guest_count || undefined,
+  } : (advancingFields.find((f) => f.field_name === "catering")?.value as
     | {
         name?: string;
         address?: string;
@@ -70,7 +87,7 @@ export function CateringPanel({
         phone?: string;
         email?: string;
       }
-    | undefined;
+    | undefined);
 
   // Check for old field format (fallback)
   const company =
@@ -173,7 +190,7 @@ export function CateringPanel({
                   ? `${serviceDate}T${serviceTimeForm}:00`
                   : "";
 
-              // Save all catering data as a single JSON object
+              // Save catering data using the new saveCatering function
               const cateringData = {
                 name: companyName,
                 address,
@@ -185,13 +202,7 @@ export function CateringPanel({
                 email,
               };
 
-              const result = await createAdvancingField(orgSlug, showId, {
-                section: "catering",
-                fieldName: "catering",
-                fieldType: "json",
-                partyType: "from_you",
-                value: cateringData,
-              });
+              const result = await saveCatering(orgSlug, showId, cateringData);
 
               if (!result.success) {
                 logger.error("Failed to save catering data", {
@@ -200,7 +211,7 @@ export function CateringPanel({
                 throw new Error(result.error || "Failed to save catering data");
               }
 
-              const advancingFieldId = result.data?.id;
+              const cateringId = result.data?.id;
 
               // Delete existing auto-generated catering schedule items first
               const existingItems = await getScheduleItemsForShow(showId);
@@ -232,7 +243,7 @@ export function CateringPanel({
                     notes: `Service at ${companyName}`,
                     item_type: "catering",
                     auto_generated: true,
-                    source_field_id: advancingFieldId,
+                    source_field_id: cateringId,
                   }
                 );
 

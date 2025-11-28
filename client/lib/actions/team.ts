@@ -105,12 +105,15 @@ const createPersonSchema = z.object({
   experience: z.string().nullable().optional().or(z.literal('')),
   memberType: z.string().optional().transform(val => {
     if (!val || val === '') return null
-    // Convert to proper case for database enum
+    // Convert to lowercase for database enum: 'artist', 'crew', 'management', 'vendor', 'other'
     const typeMap: Record<string, string> = {
-      'artist': 'Artist',
-      'crew': 'Crew', 
-      'agent': 'Agent',
-      'manager': 'Manager'
+      'artist': 'artist',
+      'crew': 'crew', 
+      'agent': 'management',
+      'manager': 'management',
+      'management': 'management',
+      'vendor': 'vendor',
+      'other': 'other'
     }
     const convertedVal = typeMap[val.toLowerCase()]
     if (convertedVal) return convertedVal
@@ -226,13 +229,11 @@ export async function updatePerson(personId: string, updates: PersonUpdate) {
     throw new Error('Person not found')
   }
 
-  // Verify user has access to this organization
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', person.org_id)
-    .eq('user_id', user.id)
-    .single()
+  // Verify user has access to this organization using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: person.org_id
+  })
 
   if (!membership) {
     throw new Error('You do not have permission to update this person')
@@ -250,12 +251,11 @@ export async function updatePerson(personId: string, updates: PersonUpdate) {
     throw new Error(`Failed to update person: ${error.message}`)
   }
 
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', person.org_id)
-    .single()
+  // Get org slug for revalidation using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: person.org_id
+  })
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`, 'page')
@@ -276,13 +276,11 @@ export async function deletePerson(personId: string, orgId: string) {
     throw new Error('User not authenticated')
   }
 
-  // Verify user has access to this organization
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', orgId)
-    .eq('user_id', user.id)
-    .single()
+  // Verify user has access to this organization using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: orgId
+  })
 
   if (!membership) {
     throw new Error('You do not have permission to delete people from this organization')
@@ -299,12 +297,11 @@ export async function deletePerson(personId: string, orgId: string) {
     throw new Error(`Failed to delete person: ${error.message}`)
   }
 
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', orgId)
-    .single()
+  // Get org slug for revalidation using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: orgId
+  })
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`, 'page')
@@ -337,13 +334,11 @@ export async function inviteOrgMember(formData: FormData) {
 
   const validatedData = inviteMemberSchema.parse(rawData)
 
-  // Verify user has admin access to this organization
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', validatedData.orgId)
-    .eq('user_id', user.id)
-    .single()
+  // Verify user has admin access to this organization using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: validatedData.orgId
+  })
 
   if (!membership || membership.role !== 'admin') {
     throw new Error('You must be an admin to invite new members')
@@ -361,12 +356,11 @@ export async function inviteOrgMember(formData: FormData) {
   // 2. Sending an email with a signup link
   // 3. The signup flow would then add them to org_members
   
-  // Get org slug for revalidation
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', validatedData.orgId)
-    .single()
+  // Get org slug for revalidation using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: validatedData.orgId
+  })
   
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`, 'page')

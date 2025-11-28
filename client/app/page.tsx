@@ -4,17 +4,13 @@ import { HomePageClient } from "@/components/home/HomePageClient";
 import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 
-interface Organization {
-  id: string;
+// Shape returned by the RPC function
+interface OrganizationFromRPC {
+  org_id: string;
   name: string;
   slug: string;
-  created_at: string;
-}
-
-interface UserOrganization {
   role: string;
-  created_at: string;
-  organizations: Organization;
+  status: string;
 }
 
 // Server component - prefetches data on the server for instant load
@@ -32,26 +28,15 @@ export default async function Home() {
   // User is logged in - prefetch their organizations
   const queryClient = new QueryClient()
   
-  // Prefetch user organizations on the server
+  // Prefetch user organizations on the server using RPC
   await queryClient.prefetchQuery({
     queryKey: queryKeys.userOrganizations(user.id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('org_members')
-        .select(`
-          role,
-          created_at,
-          organizations (
-            id,
-            name,
-            slug,
-            created_at
-          )
-        `)
-        .eq('user_id', user.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc('get_user_organizations');
 
       if (error) throw error;
-      return (data || []) as UserOrganization[];
+      return (data || []) as OrganizationFromRPC[];
     },
   })
 

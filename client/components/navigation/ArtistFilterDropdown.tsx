@@ -27,7 +27,7 @@ export function ArtistFilterDropdown() {
   // Filter for artists only
   const artists = React.useMemo(() => {
     return (allPeople || []).filter(
-      (person) => person.member_type === "Artist"
+      (person) => person.member_type === "artist"
     );
   }, [allPeople]);
 

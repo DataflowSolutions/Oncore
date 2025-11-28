@@ -57,11 +57,10 @@ async function fetchOrgSlug(
   supabase: Awaited<ReturnType<typeof createClient>>,
   orgId: string,
 ) {
-  const { data } = await supabase
-    .from("organizations")
-    .select("slug")
-    .eq("id", orgId)
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any).rpc("get_org_by_id", {
+    p_org_id: orgId,
+  });
 
   return data?.slug ?? null;
 }

@@ -55,14 +55,13 @@ export interface VenuePromoterLink {
 // =====================================
 
 /**
- * Helper: Get org slug from org ID for revalidation
+ * Helper: Get org slug from org ID for revalidation using RPC
  */
 async function getOrgSlug(supabase: Awaited<ReturnType<typeof createClient>>, orgId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', orgId)
-    .single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: orgId
+  })
   
   return data?.slug || null
 }
@@ -268,13 +267,11 @@ export async function createPromoter(data: z.infer<typeof createPromoterSchema>)
 
   const { orgId, ...promoterData } = validation.data
 
-  // Verify user has access to this org
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', orgId)
-    .eq('user_id', session.user.id)
-    .single()
+  // Verify user has access to this org using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: orgId
+  })
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return { success: false, error: 'Insufficient permissions' }
@@ -349,12 +346,11 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
     return { success: false, error: 'Venue not found' }
   }
 
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', venue.org_id)
-    .eq('user_id', session.user.id)
-    .single()
+  // Verify user has access using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: venue.org_id
+  })
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return { success: false, error: 'Insufficient permissions' }
@@ -452,12 +448,11 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
     return { success: false, error: 'Promoter not found' }
   }
 
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', promoter.org_id)
-    .eq('user_id', session.user.id)
-    .single()
+  // Verify user has access using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: promoter.org_id
+  })
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return { success: false, error: 'Insufficient permissions' }
@@ -522,12 +517,11 @@ export async function deletePromoter(promoterId: string) {
     return { success: false, error: 'Promoter not found' }
   }
 
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', promoter.org_id)
-    .eq('user_id', session.user.id)
-    .single()
+  // Verify user has access using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: promoter.org_id
+  })
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return { success: false, error: 'Insufficient permissions' }
@@ -583,12 +577,11 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
     return { success: false, error: 'Venue not found' }
   }
 
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', venue.org_id)
-    .eq('user_id', session.user.id)
-    .single()
+  // Verify user has access using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
+    p_org_id: venue.org_id
+  })
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return { success: false, error: 'Insufficient permissions' }

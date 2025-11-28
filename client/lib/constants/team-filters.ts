@@ -1,9 +1,10 @@
 export const TEAM_MEMBER_FILTERS = [
   { value: "all", label: "All" },
-  { value: "Artist", label: "Artists" },
-  { value: "Agent", label: "Agents" },
-  { value: "Manager", label: "Managers" },
-  { value: "Crew", label: "Crew" },
+  { value: "artist", label: "Artists" },
+  { value: "management", label: "Management" },
+  { value: "crew", label: "Crew" },
+  { value: "vendor", label: "Vendors" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export type TeamMemberFilterValue =

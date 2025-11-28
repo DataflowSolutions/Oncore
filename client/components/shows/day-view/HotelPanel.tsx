@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createAdvancingField } from "@/lib/actions/advancing";
+import { saveLodging } from "@/lib/actions/advancing";
 import {
   createScheduleItem,
   deleteScheduleItem,
@@ -29,6 +29,22 @@ interface HotelPanelProps {
   }>;
   orgSlug: string;
   showId: string;
+  lodgingData?: Array<{
+    id: string;
+    show_id: string;
+    person_id: string | null;
+    hotel_name: string | null;
+    address: string | null;
+    city: string | null;
+    check_in_at: string | null;
+    check_out_at: string | null;
+    booking_refs: string[] | null;
+    phone: string | null;
+    email: string | null;
+    notes: string | null;
+    source: string;
+    created_at: string;
+  }>;
 }
 
 export function HotelPanel({
@@ -36,6 +52,7 @@ export function HotelPanel({
   assignedPeople,
   orgSlug,
   showId,
+  lodgingData = [],
 }: HotelPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hotelName, setHotelName] = useState("");
@@ -65,55 +82,41 @@ export function HotelPanel({
       setBookingRefs(bookingRefs.filter((_, i) => i !== index));
     }
   };
-  // Check for promoter accommodation general info
+
+  // Get the first lodging record (general hotel info for the show)
+  const primaryLodging = lodgingData.find(l => !l.person_id) || lodgingData[0];
+  
+  // Convert lodging data to the format expected by the UI
+  const hotelInfo = primaryLodging ? {
+    name: primaryLodging.hotel_name || undefined,
+    address: primaryLodging.address || undefined,
+    city: primaryLodging.city || undefined,
+    checkIn: primaryLodging.check_in_at || undefined,
+    checkOut: primaryLodging.check_out_at || undefined,
+    bookingRefs: primaryLodging.booking_refs || undefined,
+    notes: primaryLodging.notes || undefined,
+    phone: primaryLodging.phone || undefined,
+    email: primaryLodging.email || undefined,
+  } : undefined;
+
+  // Check for promoter accommodation general info (legacy fallback)
   const promoterAccommodation = advancingFields.find(
     (f) => f.field_name === "promoter_accommodation"
   )?.value as string | undefined;
 
-  // Extract general hotel information from single JSON field
-  const hotelField = advancingFields.find((f) => f.field_name === "hotel");
-
-  const hotelInfo = hotelField?.value as
-    | {
-        name?: string;
-        address?: string;
-        city?: string;
-        checkIn?: string;
-        checkOut?: string;
-        bookingRefs?: string[];
-        notes?: string;
-        phone?: string;
-        email?: string;
-      }
-    | undefined;
-
-  // Extract hotel information for assigned people (artist-specific)
-  const hotelData = assignedPeople
-    .map((person) => {
-      if (!person.people) return null;
-
-      const personId = person.person_id;
-      const name = advancingFields.find(
-        (f) => f.field_name === `hotel_${personId}_name`
-      )?.value as string | undefined;
-      const checkIn = advancingFields.find(
-        (f) => f.field_name === `hotel_${personId}_checkIn`
-      )?.value as string | undefined;
-      const checkOut = advancingFields.find(
-        (f) => f.field_name === `hotel_${personId}_checkOut`
-      )?.value as string | undefined;
-      const address = advancingFields.find(
-        (f) => f.field_name === `hotel_${personId}_address`
-      )?.value as string | undefined;
-
-      if (!name && !checkIn && !checkOut) return null;
+  // Extract hotel information for assigned people (from lodgingData)
+  const hotelData = lodgingData
+    .filter(l => l.person_id)
+    .map((lodging) => {
+      const person = assignedPeople.find(p => p.person_id === lodging.person_id);
+      if (!person?.people) return null;
 
       return {
         personName: person.people.name,
-        hotelName: name,
-        checkIn,
-        checkOut,
-        address,
+        hotelName: lodging.hotel_name,
+        checkIn: lodging.check_in_at,
+        checkOut: lodging.check_out_at,
+        address: lodging.address,
       };
     })
     .filter(Boolean);
@@ -299,7 +302,7 @@ export function HotelPanel({
             setIsSaving(true);
 
             try {
-              // Save all hotel data as a single JSON object
+              // Save all hotel data using the new lodging table
               const hotelData = {
                 name: hotelName,
                 address,
@@ -312,13 +315,7 @@ export function HotelPanel({
                 email,
               };
 
-              const result = await createAdvancingField(orgSlug, showId, {
-                section: "hotel",
-                fieldName: "hotel",
-                fieldType: "json",
-                partyType: "from_you",
-                value: hotelData,
-              });
+              const result = await saveLodging(orgSlug, showId, hotelData);
 
               if (!result.success) {
                 logger.error("Failed to save hotel data", {
@@ -327,7 +324,7 @@ export function HotelPanel({
                 throw new Error(result.error || "Failed to save hotel data");
               }
 
-              const advancingFieldId = result.data?.id;
+              const lodgingId = result.data?.id;
 
               // Delete existing auto-generated hotel schedule items first
               const existingItems = await getScheduleItemsForShow(showId);
@@ -359,7 +356,7 @@ export function HotelPanel({
                     notes: `Check-in at ${hotelName}`,
                     item_type: "hotel",
                     auto_generated: true,
-                    source_field_id: advancingFieldId,
+                    source_field_id: lodgingId,
                   }
                 );
 
@@ -389,7 +386,7 @@ export function HotelPanel({
                     notes: `Check-out from ${hotelName}`,
                     item_type: "hotel",
                     auto_generated: true,
-                    source_field_id: advancingFieldId,
+                    source_field_id: lodgingId,
                   }
                 );
 

@@ -853,7 +853,7 @@ export async function findOrMatchArtist(
     .from("people")
     .select("id,name")
     .eq("org_id", orgId)
-    .eq("member_type", "Artist")
+    .eq("member_type", "artist")
     .ilike("name", trimmed)
     .maybeSingle();
 
@@ -865,7 +865,7 @@ export async function findOrMatchArtist(
     .from("people")
     .select("id,name")
     .eq("org_id", orgId)
-    .eq("member_type", "Artist")
+    .eq("member_type", "artist")
     .ilike("name", `%${trimmed}%`)
     .limit(1);
 

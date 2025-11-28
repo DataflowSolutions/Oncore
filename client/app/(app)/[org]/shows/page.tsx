@@ -39,14 +39,15 @@ export default async function ShowsPage({
       const { data: shows } = await getCachedOrgShows(org.id);
       if (!shows || shows.length === 0) return shows || [];
 
-      // Also fetch show_assignments with people
+      // Also fetch show_assignments with people using RPC
       const supabase = await getSupabaseServer();
       const showIds = shows.map((s: { id: string }) => s.id);
 
-      const { data: assignments } = await supabase
-        .from("show_assignments")
-        .select("show_id, people(id, name, member_type)")
-        .in("show_id", showIds);
+      // Use RPC function to avoid RLS recursion issues
+      const { data: assignments } = await supabase.rpc(
+        "get_show_assignments_for_shows",
+        { p_show_ids: showIds }
+      );
 
       // Group assignments by show_id
       const assignmentsByShow: Record<
@@ -64,11 +65,11 @@ export default async function ShowsPage({
           assignmentsByShow[assignment.show_id] = [];
         }
         assignmentsByShow[assignment.show_id].push({
-          people: assignment.people as {
-            id: string;
-            name: string;
-            member_type: string | null;
-          } | null,
+          people: {
+            id: assignment.person_id,
+            name: assignment.person_name,
+            member_type: assignment.member_type,
+          },
         });
       }
 

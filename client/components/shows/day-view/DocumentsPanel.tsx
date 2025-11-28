@@ -20,8 +20,8 @@ import {
   getAdvancingFileUrl,
   uploadAdvancingFile,
   deleteAdvancingFile,
-} from "@/lib/actions/advancing-files";
-import { createAdvancingDocument } from "@/lib/actions/advancing";
+  createAdvancingDocument,
+} from "@/lib/actions/advancing/documents";
 import { FilePreviewModal } from "@/components/advancing/FilePreviewModal";
 
 type PartyType = "from_us" | "from_you";
@@ -141,7 +141,7 @@ export function DocumentsPanel({
       const result = await createAdvancingDocument(
         orgSlug!,
         showId!,
-        "from_us", // Default to "from_us", could be made configurable
+        "artist", // Default to "artist" (our documents)
         newDocLabel
       );
 

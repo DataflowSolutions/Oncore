@@ -4,7 +4,6 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { Database } from "@/lib/database.types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
-import { syncScheduleToAdvancingField } from "./advancing";
 
 type ScheduleItem = Database["public"]["Tables"]["schedule_items"]["Row"];
 type ScheduleItemInsert =
@@ -45,12 +44,12 @@ export async function getScheduleItemsForShow(
 ): Promise<ScheduleItem[]> {
   const supabase = await getSupabaseServer();
 
-  const { data, error } = await supabase
-    .from("schedule_items")
-    .select("*")
-    .eq("show_id", showId)
-    .order("priority", { ascending: true })
-    .order("starts_at", { ascending: true });
+  // Use RPC to get schedule items to avoid RLS recursion
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc(
+    "get_schedule_items_for_show",
+    { p_show_id: showId }
+  );
 
   if (error) {
     logger.error("Error fetching schedule items", error);
@@ -125,26 +124,36 @@ export async function createScheduleItem(
 ): Promise<{ success: boolean; error?: string; data?: ScheduleItem }> {
   const supabase = await getSupabaseServer();
 
-  // Get org_id from org slug
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("slug", orgSlug)
-    .single();
+  // Get org_id from org slug using RPC to bypass RLS
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org, error: orgError } = await (supabase as any).rpc(
+    "get_org_by_slug",
+    { p_slug: orgSlug }
+  );
 
   if (orgError || !org) {
+    logger.error("Error fetching org for schedule item", { orgError, orgSlug });
     return { success: false, error: "Organization not found" };
   }
 
-  const { data, error } = await supabase
-    .from("schedule_items")
-    .insert({
-      ...scheduleItem,
-      org_id: org.id,
-      show_id: showId,
-    })
-    .select()
-    .single();
+  // Use RPC to create schedule item to bypass RLS recursion
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("create_schedule_item", {
+    p_org_id: org.id,
+    p_show_id: showId,
+    p_title: scheduleItem.title,
+    p_starts_at: scheduleItem.starts_at,
+    p_ends_at: scheduleItem.ends_at || null,
+    p_location: scheduleItem.location || null,
+    p_item_type: scheduleItem.item_type || "custom",
+    p_visibility: scheduleItem.visibility || "all",
+    p_person_id: scheduleItem.person_id || null,
+    p_notes: scheduleItem.notes || null,
+    p_auto_generated: scheduleItem.auto_generated || false,
+    p_source: scheduleItem.source || null,
+    p_source_ref: scheduleItem.source_ref || null,
+    p_priority: scheduleItem.priority || 0,
+  });
 
   if (error) {
     logger.error("Error creating schedule item", error);
@@ -163,33 +172,24 @@ export async function updateScheduleItem(
 ): Promise<{ success: boolean; error?: string; data?: ScheduleItem }> {
   const supabase = await getSupabaseServer();
 
-  // Get the item first to check if it has a source_field_id
-  const { data: existingItem } = await supabase
-    .from("schedule_items")
-    .select("*")
-    .eq("id", itemId)
-    .single();
-
-  const { data, error } = await supabase
-    .from("schedule_items")
-    .update(updates)
-    .eq("id", itemId)
-    .select()
-    .single();
+  // Use RPC to update schedule item to bypass RLS recursion
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("update_schedule_item", {
+    p_item_id: itemId,
+    p_title: updates.title || null,
+    p_starts_at: updates.starts_at || null,
+    p_ends_at: updates.ends_at || null,
+    p_location: updates.location || null,
+    p_item_type: updates.item_type || null,
+    p_visibility: updates.visibility || null,
+    p_person_id: updates.person_id || null,
+    p_notes: updates.notes || null,
+    p_priority: updates.priority || null,
+  });
 
   if (error) {
     logger.error("Error updating schedule item", error);
     return { success: false, error: error.message };
-  }
-
-  // If this schedule item is linked to an advancing field, sync the update back
-  if (existingItem?.source_field_id && (updates.starts_at || updates.ends_at)) {
-    await syncScheduleToAdvancingField(
-      existingItem.source_field_id,
-      itemId,
-      updates.starts_at || existingItem.starts_at,
-      updates.ends_at !== undefined ? updates.ends_at : existingItem.ends_at
-    );
   }
 
   revalidatePath(`/${orgSlug}/shows/${showId}`);
@@ -204,10 +204,11 @@ export async function deleteScheduleItem(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await getSupabaseServer();
 
-  const { error } = await supabase
-    .from("schedule_items")
-    .delete()
-    .eq("id", itemId);
+  // Use RPC to delete schedule item to bypass RLS recursion
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("delete_schedule_item", {
+    p_item_id: itemId,
+  });
 
   if (error) {
     logger.error("Error deleting schedule item", error);
@@ -242,12 +243,11 @@ export async function generateScheduleFromAdvancing(
     return { success: true, created: 0 };
   }
 
-  // Get org_id
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("slug", orgSlug)
-    .single();
+  // Get org_id using RPC to bypass RLS
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc("get_org_by_slug", {
+    p_slug: orgSlug,
+  });
 
   if (!org) {
     return { success: false, error: "Organization not found" };
@@ -352,12 +352,12 @@ export async function getScheduleItemsForOrg(
 ): Promise<ScheduleItem[]> {
   const supabase = await getSupabaseServer();
 
-  // Get org_id from org slug
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("slug", orgSlug)
-    .single();
+  // Get org_id from org slug using RPC to bypass RLS
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org, error: orgError } = await (supabase as any).rpc(
+    "get_org_by_slug",
+    { p_slug: orgSlug }
+  );
 
   if (orgError || !org) {
     return [];

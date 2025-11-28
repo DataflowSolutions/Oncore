@@ -77,7 +77,7 @@ const ShowsTable = ({ shows, orgSlug }: ShowsTableProps) => {
               const artists =
                 show.show_assignments
                   ?.map((assignment) => assignment.people)
-                  .filter((person) => person?.member_type === "Artist")
+                  .filter((person) => person?.member_type === "artist")
                   .map((person) => person?.name)
                   .filter(Boolean) || [];
 

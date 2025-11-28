@@ -6,6 +6,16 @@ import { UserHeader } from './UserHeader'
 import { OrganizationsList } from './OrganizationsList'
 import { Loader2 } from 'lucide-react'
 
+// Shape returned by the RPC function
+interface OrganizationFromRPC {
+  org_id: string
+  name: string
+  slug: string
+  role: string
+  status: string
+}
+
+// Shape expected by OrganizationsList
 interface Organization {
   id: string
   name: string
@@ -16,7 +26,7 @@ interface Organization {
 interface UserOrganization {
   role: string
   created_at: string
-  organizations: Organization
+  organizations: Organization | null
 }
 
 interface HomePageClientProps {
@@ -27,7 +37,7 @@ interface HomePageClientProps {
 export function HomePageClient({ userEmail, userId }: HomePageClientProps) {
   // This will use the server-prefetched data on initial load (no spinner!)
   // Then automatically refetch in background after staleTime
-  const { data: organizations = [], isLoading } = useQuery<UserOrganization[]>({
+  const { data: rawData = [], isLoading } = useQuery<OrganizationFromRPC[]>({
     queryKey: queryKeys.userOrganizations(userId),
     queryFn: async () => {
       const response = await fetch(`/api/user/organizations`)
@@ -36,8 +46,20 @@ export function HomePageClient({ userEmail, userId }: HomePageClientProps) {
     },
   })
 
+  // Transform RPC data shape to expected shape
+  const organizations: UserOrganization[] = rawData.map((org) => ({
+    role: org.role,
+    created_at: new Date().toISOString(), // RPC doesn't return created_at
+    organizations: {
+      id: org.org_id,
+      name: org.name,
+      slug: org.slug,
+      created_at: new Date().toISOString(), // RPC doesn't return created_at
+    },
+  }))
+
   // Show loading only if we don't have initial data (shouldn't happen due to prefetch)
-  if (isLoading && !organizations.length) {
+  if (isLoading && !rawData.length) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

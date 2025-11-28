@@ -55,7 +55,7 @@ type Invitation = Database["public"]["Tables"]["invitations"]["Row"] & {
     name: string;
     email: string | null;
     role_title: string | null;
-    member_type: "Artist" | "Crew" | "Agent" | "Manager" | null;
+    member_type: "artist" | "crew" | "management" | "vendor" | "other" | null;
   };
 };
 
@@ -67,12 +67,13 @@ interface PeoplePageClientProps {
 
 const getRoleIcon = (memberType: string | null) => {
   switch (memberType) {
-    case "Artist":
+    case "artist":
       return Music;
-    case "Agent":
-    case "Manager":
+    case "management":
       return Building;
-    case "Crew":
+    case "crew":
+      return Wrench;
+    case "vendor":
       return Wrench;
     default:
       return Users;
@@ -200,15 +201,14 @@ export default function PeoplePageClient({
 
   // Group by member type for display
   const artistTeam = allPeople.filter(
-    (person) => person.member_type === "Artist"
+    (person) => person.member_type === "artist"
   );
 
   const promoterTeam = allPeople.filter(
-    (person) =>
-      person.member_type === "Agent" || person.member_type === "Manager"
+    (person) => person.member_type === "management"
   );
 
-  const crewTeam = allPeople.filter((person) => person.member_type === "Crew");
+  const crewTeam = allPeople.filter((person) => person.member_type === "crew");
 
   return (
     <>

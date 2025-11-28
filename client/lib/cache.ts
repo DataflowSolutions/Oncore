@@ -136,13 +136,13 @@ export const getCachedOrgPeople = cache(async (orgId: string) => {
 })
 
 /**
- * Cache advancing session with show details
- * Used in advancing pages
+ * Cache advancing data for a show
+ * Uses show_advancing table (new schema - one per show)
  */
-export const getCachedAdvancingSession = cache(async (sessionId: string) => {
+export const getCachedShowAdvancing = cache(async (showId: string) => {
   const supabase = await getSupabaseServer()
   const { data, error } = await supabase
-    .from('advancing_sessions')
+    .from('show_advancing')
     .select(`
       *,
       shows (
@@ -153,13 +153,10 @@ export const getCachedAdvancingSession = cache(async (sessionId: string) => {
           name,
           city,
           address
-        ),
-        artists (
-          name
         )
       )
     `)
-    .eq('id', sessionId)
+    .eq('show_id', showId)
     .single()
   
   return { data, error }
@@ -171,17 +168,12 @@ export const getCachedAdvancingSession = cache(async (sessionId: string) => {
  */
 export const getCachedShowSchedule = cache(async (showId: string) => {
   const supabase = await getSupabaseServer()
-  const { data, error } = await supabase
-    .from('schedule_items')
-    .select(`
-      *,
-      people (
-        id,
-        name
-      )
-    `)
-    .eq('show_id', showId)
-    .order('starts_at', { ascending: true })
+  
+  // Use RPC to bypass RLS recursion issues
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('get_schedule_items_for_show', {
+    p_show_id: showId
+  })
   
   return { data, error }
 })

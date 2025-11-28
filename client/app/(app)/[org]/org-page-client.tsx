@@ -149,7 +149,7 @@ export function OrgPageClient({
                     (
                       person: ShowAssignment["people"]
                     ): person is NonNullable<typeof person> =>
-                      person?.member_type === "Artist"
+                      person?.member_type === "artist"
                   )
                   .map(
                     (person: NonNullable<ShowAssignment["people"]>) =>

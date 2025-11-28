@@ -19,12 +19,13 @@ interface ShowTeamPageProps {
 
 const getRoleIcon = (memberType: string | null) => {
   switch (memberType) {
-    case "Artist":
+    case "artist":
       return Music;
-    case "Agent":
-    case "Manager":
+    case "management":
       return Building;
-    case "Crew":
+    case "crew":
+      return Wrench;
+    case "vendor":
       return Wrench;
     default:
       return Users;
@@ -63,14 +64,13 @@ export default async function ShowTeamPage({ params }: ShowTeamPageProps) {
 
   // Group assigned team by member type
   const artistTeam = assignedTeam.filter(
-    (person) => person.member_type === "Artist"
+    (person) => person.member_type === "artist"
   );
   const crewTeam = assignedTeam.filter(
-    (person) => person.member_type === "Crew"
+    (person) => person.member_type === "crew"
   );
   const promoterTeam = assignedTeam.filter(
-    (person) =>
-      person.member_type === "Agent" || person.member_type === "Manager"
+    (person) => person.member_type === "management"
   );
 
   return (

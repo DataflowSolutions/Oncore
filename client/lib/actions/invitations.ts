@@ -188,12 +188,11 @@ export async function invitePerson(personId: string) {
     return { success: false, error: 'Failed to create invitation' }
   }
 
-  // Fetch org name/slug so we can include it in the email and revalidate paths
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug')
-    .eq('id', person.org_id)
-    .single()
+  // Fetch org name/slug so we can include it in the email and revalidate paths using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: person.org_id
+  })
 
   // Send invitation email (best-effort: log errors but don't fail the flow)
   try {
@@ -287,12 +286,11 @@ export async function acceptInvitation(token: string) {
       return { success: false, error: data?.message || 'Failed to accept invitation' }
     }
 
-    // Revalidate relevant paths
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('slug')
-      .eq('id', data.org_id)
-      .single()
+    // Revalidate relevant paths using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+      p_org_id: data.org_id
+    })
 
     if (org?.slug) {
       revalidatePath(`/${org.slug}`)
@@ -366,12 +364,11 @@ export async function resendInvitation(invitationId: string) {
   const inviterName = ((user.user_metadata as { full_name?: string } | undefined)?.full_name) || user.email || 'Someone'
     const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${newToken}`
 
-    // Get org name for email content
-    const { data: orgInfo } = await supabase
-      .from('organizations')
-      .select('id, name, slug')
-      .eq('id', invitation.people.org_id)
-      .single()
+    // Get org name for email content using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: orgInfo } = await (supabase as any).rpc('get_org_by_id', {
+      p_org_id: invitation.people.org_id
+    })
 
     if (invitation.people.email) {
       const emailResult = await sendInvitationEmail({
@@ -391,12 +388,11 @@ export async function resendInvitation(invitationId: string) {
     logger.error('Unexpected error resending invitation email', err)
   }
 
-  // Revalidate people page
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug')
-    .eq('id', person.org_id)
-    .single()
+  // Revalidate people page using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+    p_org_id: person.org_id
+  })
 
   if (org?.slug) {
     revalidatePath(`/${org.slug}/people`)
@@ -439,13 +435,12 @@ export async function cancelInvitation(invitationId: string) {
     return { success: false, error: 'Failed to cancel invitation' }
   }
 
-  // Revalidate people page
+  // Revalidate people page using RPC
   if (invitation) {
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('slug')
-      .eq('id', invitation.org_id)
-      .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc('get_org_by_id', {
+      p_org_id: invitation.org_id
+    })
 
     if (org?.slug) {
       revalidatePath(`/${org.slug}/people`)

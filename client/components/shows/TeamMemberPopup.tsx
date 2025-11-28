@@ -14,7 +14,7 @@ interface TeamMember {
   name: string;
   phone: string | null;
   email: string | null;
-  member_type: "Artist" | "Crew" | "Agent" | "Manager" | null;
+  member_type: "artist" | "crew" | "management" | "vendor" | "other" | null;
   user_id?: string | null;
   duty?: string;
 }

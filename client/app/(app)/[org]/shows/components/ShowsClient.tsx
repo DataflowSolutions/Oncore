@@ -41,7 +41,7 @@ export default function ShowsClient({
       const artistMatch = show.show_assignments?.some((assignment) => {
         const person = assignment.people;
         return (
-          person?.member_type === "Artist" &&
+          person?.member_type === "artist" &&
           person?.name?.toLowerCase().includes(query)
         );
       });

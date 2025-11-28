@@ -112,7 +112,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
     shows.forEach((show) => {
       show.show_assignments?.forEach((assignment) => {
         if (
-          assignment.people?.member_type === "Artist" &&
+          assignment.people?.member_type === "artist" &&
           assignment.people?.name
         ) {
           artistSet.add(assignment.people.name);
@@ -137,7 +137,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
         const showArtists =
           show.show_assignments
             ?.map((a) => a.people)
-            .filter((p) => p?.member_type === "Artist")
+            .filter((p) => p?.member_type === "artist")
             .map((p) => p?.name) || [];
         if (!showArtists.includes(selectedArtist)) {
           return false;
@@ -627,7 +627,7 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                             show.show_assignments
                               ?.map((assignment) => assignment.people)
                               .filter(
-                                (person) => person?.member_type === "Artist"
+                                (person) => person?.member_type === "artist"
                               )
                               .map((person) => person?.name)
                               .filter(Boolean) || [];

@@ -84,6 +84,55 @@ interface CalendarDayViewProps {
   showId: string;
   documents?: AdvancingDocumentWithFiles[];
   advancingFields?: Array<{ field_name: string; value: unknown }>;
+  lodgingData?: Array<{
+    id: string;
+    show_id: string;
+    person_id: string | null;
+    hotel_name: string | null;
+    address: string | null;
+    city: string | null;
+    check_in_at: string | null;
+    check_out_at: string | null;
+    booking_refs: string[] | null;
+    phone: string | null;
+    email: string | null;
+    notes: string | null;
+    source: string;
+    created_at: string;
+  }>;
+  flightsData?: Array<{
+    id: string;
+    show_id: string;
+    person_id: string | null;
+    direction: string;
+    airline: string | null;
+    flight_number: string | null;
+    booking_ref: string | null;
+    depart_airport_code: string | null;
+    depart_city: string | null;
+    depart_at: string | null;
+    arrival_airport_code: string | null;
+    arrival_city: string | null;
+    arrival_at: string | null;
+    notes: string | null;
+    source: string;
+    created_at: string;
+  }>;
+  cateringData?: Array<{
+    id: string;
+    show_id: string;
+    provider_name: string | null;
+    address: string | null;
+    city: string | null;
+    service_at: string | null;
+    guest_count: number | null;
+    booking_refs: string[] | null;
+    phone: string | null;
+    email: string | null;
+    notes: string | null;
+    source: string;
+    created_at: string;
+  }>;
 }
 
 export function CalendarDayView({
@@ -99,6 +148,9 @@ export function CalendarDayView({
   showId,
   documents = [],
   advancingFields = [],
+  lodgingData = [],
+  flightsData = [],
+  cateringData = [],
 }: CalendarDayViewProps) {
   const [selectedItem, setSelectedItem] = useState<ScheduleItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -362,16 +414,19 @@ export function CalendarDayView({
                   assignedPeople={assignedPeople}
                   orgSlug={orgSlug}
                   showId={showId}
+                  lodgingData={lodgingData}
                 />
                 <CateringPanel
                   advancingFields={advancingFields}
                   orgSlug={orgSlug}
                   showId={showId}
+                  cateringData={cateringData}
                 />
                 <FlightsPanel
                   advancingFields={advancingFields}
                   orgSlug={orgSlug}
                   showId={showId}
+                  flightsData={flightsData}
                 />
               </div>
 

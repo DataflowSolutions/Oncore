@@ -1,4 +1,7 @@
 import { getAdvancingDocuments } from "@/lib/actions/advancing";
+import { getShowLodging } from "@/lib/actions/advancing/lodging";
+import { getShowFlights } from "@/lib/actions/advancing/flights";
+import { getShowCatering } from "@/lib/actions/advancing/catering";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { CalendarDayView } from "@/components/shows/CalendarDayView";
 
@@ -80,124 +83,60 @@ export default async function ShowDayPage({
   }
 
   // Fetch advancing data (flight times, hotel, etc) for the calendar
-  // Session is automatically created with the show, so we can fetch the session first
+  // The new schema stores flights directly in advancing_flights table
   let advancingData = undefined;
-  let advancingFields: Array<{ field_name: string; value: unknown }> = [];
+  const advancingFields: Array<{ field_name: string; value: unknown }> = [];
   let advancingDocuments = [] as Awaited<
     ReturnType<typeof getAdvancingDocuments>
   >;
 
-  if (assignedPeople) {
-    // Get the session ID for this show
-    const { data: sessionData } = await supabase
-      .from("advancing_sessions")
-      .select("id")
-      .eq("show_id", showId)
-      .single();
+  // Fetch lodging, flights, and catering data using RPCs
+  const [lodgingData, flightsData, cateringData, documentsData] = await Promise.all([
+    getShowLodging(showId),
+    getShowFlights(showId),
+    getShowCatering(showId),
+    getAdvancingDocuments(showId),
+  ]);
 
-    if (sessionData?.id) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: fields } = await (supabase as any).rpc(
-        "get_advancing_fields",
-        {
-          p_session_id: sessionData.id,
-        }
-      );
+  advancingDocuments = documentsData;
 
-      if (fields && Array.isArray(fields)) {
-        advancingFields = fields as Array<{
-          field_name: string;
-          value: unknown;
-        }>;
-        const arrivalFlights: Array<{
-          personId: string;
-          time: string;
-          flightNumber: string;
-          from: string;
-          to: string;
-        }> = [];
-        const departureFlights: Array<{
-          personId: string;
-          time: string;
-          flightNumber: string;
-          from: string;
-          to: string;
-        }> = [];
+  if (flightsData && flightsData.length > 0) {
+    const arrivalFlights: Array<{
+      personId: string;
+      time: string;
+      flightNumber: string;
+      from: string;
+      to: string;
+    }> = [];
+    const departureFlights: Array<{
+      personId: string;
+      time: string;
+      flightNumber: string;
+      from: string;
+      to: string;
+    }> = [];
 
-        assignedPeople.forEach((person) => {
-          // Extract arrival flight data
-          const arrivalTime = advancingFields.find(
-            (f) =>
-              f.field_name === `arrival_flight_${person.person_id}_arrivalTime`
-          );
-          const arrivalDate = advancingFields.find(
-            (f) =>
-              f.field_name === `arrival_flight_${person.person_id}_arrivalDate`
-          );
-          const flightNumber = advancingFields.find(
-            (f) =>
-              f.field_name === `arrival_flight_${person.person_id}_flightNumber`
-          );
-          const fromCity = advancingFields.find(
-            (f) =>
-              f.field_name === `arrival_flight_${person.person_id}_fromCity`
-          );
-          const toCity = advancingFields.find(
-            (f) => f.field_name === `arrival_flight_${person.person_id}_toCity`
-          );
-
-          if (arrivalTime?.value && arrivalDate?.value) {
-            arrivalFlights.push({
-              personId: person.person_id,
-              time: `${arrivalDate.value}T${arrivalTime.value}`,
-              flightNumber: String(flightNumber?.value || ""),
-              from: String(fromCity?.value || ""),
-              to: String(toCity?.value || ""),
-            });
-          }
-
-          // Extract departure flight data
-          const departureTime = advancingFields.find(
-            (f) =>
-              f.field_name ===
-              `departure_flight_${person.person_id}_departureTime`
-          );
-          const departureDate = advancingFields.find(
-            (f) =>
-              f.field_name ===
-              `departure_flight_${person.person_id}_departureDate`
-          );
-          const deptFlightNumber = advancingFields.find(
-            (f) =>
-              f.field_name ===
-              `departure_flight_${person.person_id}_flightNumber`
-          );
-          const deptFromCity = advancingFields.find(
-            (f) =>
-              f.field_name === `departure_flight_${person.person_id}_fromCity`
-          );
-          const deptToCity = advancingFields.find(
-            (f) =>
-              f.field_name === `departure_flight_${person.person_id}_toCity`
-          );
-
-          if (departureTime?.value && departureDate?.value) {
-            departureFlights.push({
-              personId: person.person_id,
-              time: `${departureDate.value}T${departureTime.value}`,
-              flightNumber: String(deptFlightNumber?.value || ""),
-              from: String(deptFromCity?.value || ""),
-              to: String(deptToCity?.value || ""),
-            });
-          }
+    flightsData.forEach((flight) => {
+      if (flight.direction === "arrival" && flight.arrival_at) {
+        arrivalFlights.push({
+          personId: flight.person_id || "",
+          time: flight.arrival_at,
+          flightNumber: flight.flight_number || "",
+          from: flight.depart_city || flight.depart_airport_code || "",
+          to: flight.arrival_city || flight.arrival_airport_code || "",
         });
-
-        advancingData = { arrivalFlights, departureFlights };
+      } else if (flight.direction === "departure" && flight.depart_at) {
+        departureFlights.push({
+          personId: flight.person_id || "",
+          time: flight.depart_at,
+          flightNumber: flight.flight_number || "",
+          from: flight.depart_city || flight.depart_airport_code || "",
+          to: flight.arrival_city || flight.arrival_airport_code || "",
+        });
       }
+    });
 
-      // Fetch documents using show_id
-      advancingDocuments = await getAdvancingDocuments(showId);
-    }
+    advancingData = { arrivalFlights, departureFlights };
   }
 
   // Helper function to get date string in local timezone (YYYY-MM-DD)
@@ -298,6 +237,9 @@ export default async function ShowDayPage({
         showId={showId}
         documents={advancingDocuments || []}
         advancingFields={advancingFields}
+        lodgingData={lodgingData}
+        flightsData={flightsData}
+        cateringData={cateringData}
       />
     </div>
   );

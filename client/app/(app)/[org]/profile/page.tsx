@@ -48,12 +48,11 @@ export default async function ProfileSettingsPage({
   const supabase = await getSupabaseServer();
   const resolvedParams = await params;
 
-  // Get org ID from slug
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("slug", resolvedParams.org)
-    .single();
+  // Get org ID from slug using RPC
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org } = await (supabase as any).rpc("get_org_by_slug", {
+    p_slug: resolvedParams.org,
+  });
 
   let userRole: OrgRole | null = null;
 
