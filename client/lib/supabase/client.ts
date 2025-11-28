@@ -1,28 +1,27 @@
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '../database.types'
-import { getClientConfig, validateConfig } from './config'
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "../database.types";
+import { getClientConfig, validateConfig } from "./config";
 
 // Memoized client instance (singleton pattern)
-let client: ReturnType<typeof createBrowserClient<Database>> | undefined
+let client: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 /**
  * Create or return the singleton browser Supabase client
- * 
+ *
  * This client is safe to use in client components and uses
  * NEXT_PUBLIC_ environment variables only.
  */
-export function createClient() {
+export function createClient(): ReturnType<
+  typeof createBrowserClient<Database>
+> {
   if (client) {
-    return client
+    return client;
   }
 
-  const config = getClientConfig()
-  validateConfig(config, 'client')
+  const config = getClientConfig();
+  validateConfig(config, "client");
 
-  client = createBrowserClient<Database>(
-    config.url,
-    config.anonKey
-  )
+  client = createBrowserClient<Database>(config.url!, config.anonKey!);
 
-  return client
+  return client;
 }

@@ -12,8 +12,12 @@
   --color-card-border: var(--card-border);
 
   --color-card-cell: var(--card-cell);
+  --color-card-cell-hover: var(--card-cell-hover);
   --color-card-cell-border: var(--card-cell-border);
   --color-card-foreground: var(--card-foreground);
+
+  --color-current-org-bg: var(--current-org-bg);
+  --color-current-org-bg-hover: var(--current-org-bg-hover);
 
   /* SIDEBAR */
   --color-sidebar-bg: var(--sidebar-bg);
@@ -160,8 +164,12 @@
   --card-border: rgba(255, 255, 255, 0.05);
 
   --card-cell: rgb(50, 50, 50);
+  --card-cell-hover: rgb(60, 60, 60);
   --card-cell-border: rgba(255, 255, 255, 0.07);
   --card-foreground: #f2f2f2;
+
+  --current-org-bg: #0400ff;
+  --current-org-bg-hover: #211eff;
 
   /* SIDEBAR */
   --sidebar-bg: rgb(10, 10, 10);

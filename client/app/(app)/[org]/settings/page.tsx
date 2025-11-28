@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Card,
@@ -18,6 +18,8 @@ import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
+import { CircleQuestionMark, Settings } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -43,6 +45,7 @@ interface UserOrganization {
 
 export default function SettingsPage() {
   const params = useParams();
+  const router = useRouter();
   const orgSlug = params.org as string;
   const supabase = createClient();
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -50,6 +53,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [supportMessage, setSupportMessage] = useState("");
@@ -57,10 +61,6 @@ export default function SettingsPage() {
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [passwordChanging, setPasswordChanging] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -125,7 +125,6 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     setSaving(true);
-    setMessage(null);
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -137,80 +136,69 @@ export default function SettingsPage() {
 
       if (error) throw error;
 
-      setMessage({ type: "success", text: "Profile updated successfully!" });
+      toast.success("Profile updated successfully!");
     } catch (error) {
       logger.error("Error updating profile", error);
-      setMessage({ type: "error", text: "Failed to update profile" });
+      toast.error("Failed to update profile");
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast.error("Current password is required");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "Passwords do not match" });
+      toast.error("Passwords do not match");
       return;
     }
 
     if (newPassword.length < 6) {
-      setMessage({
-        type: "error",
-        text: "Password must be at least 6 characters",
-      });
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     setPasswordChanging(true);
-    setMessage(null);
 
     try {
+      // Verify current password by attempting to sign in
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+
+      if (verifyError) {
+        toast.error("Current password is incorrect");
+        setPasswordChanging(false);
+        return;
+      }
+
+      // If verification succeeds, update the password
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (error) throw error;
 
-      setMessage({ type: "success", text: "Password changed successfully!" });
+      toast.success("Password changed successfully!");
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       logger.error("Error changing password", error);
-      setMessage({ type: "error", text: "Failed to change password" });
+      toast.error("Failed to change password");
     } finally {
       setPasswordChanging(false);
     }
   };
 
-  // const handleDeleteOrg = async (orgId: string) => {
-  //   if (!confirm("Are you sure you want to delete this organization?")) {
-  //     return;
-  //   }
-
-  //   try {
-  //     const { error } = await supabase
-  //       .from("organizations")
-  //       .delete()
-  //       .eq("id", orgId);
-
-  //     if (error) throw error;
-
-  //     setOrganizations(
-  //       organizations.filter((org) => org.organizations.id !== orgId)
-  //     );
-  //     setMessage({
-  //       type: "success",
-  //       text: "Organization deleted successfully",
-  //     });
-
-  //     // If we deleted the current org, redirect to home
-  //     if (orgId === currentOrgId) {
-  //       router.push("/");
-  //     }
-  //   } catch (error) {
-  //     logger.error("Error deleting organization", error);
-  //     setMessage({ type: "error", text: "Failed to delete organization" });
-  //   }
-  // };
+  // Check if current user is owner of current org
+  const isCurrentOrgOwner =
+    organizations.find((o) => o.organizations.id === currentOrgId)?.role ===
+    "owner";
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -231,22 +219,10 @@ export default function SettingsPage() {
 
   return (
     <div className=" mt-4">
-      {message && (
-        <div
-          className={`mb-6 p-4 rounded-lg ${
-            message.type === "success"
-              ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-              : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-6 w-full">
+      <div className="grid md:grid-cols-2 grid-cols-1 gap-6 w-full">
         {/* Account Settings */}
-        <Card className="bg-card border-card-border">
-          <CardHeader>
+        <Card className="bg-card border-card-border space-y-4">
+          <CardHeader className="m-0">
             <CardTitle className="font-header text-xl">
               Account Settings
             </CardTitle>
@@ -281,13 +257,14 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex pt-2">
               <Button
                 className="rounded-full font-header"
                 onClick={handleSaveProfile}
                 disabled={saving}
+                size="lg"
               >
-                {saving ? "Saving..." : "Save Changes"}
+                {saving ? "Saving..." : "Save"}
               </Button>
             </div>
           </CardContent>
@@ -296,6 +273,16 @@ export default function SettingsPage() {
               <CardTitle className="font-header text-xl">Password</CardTitle>
               <CardDescription>Update your account password</CardDescription>
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Current Password</label>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+              />
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">New Password</label>
               <Input
@@ -316,13 +303,14 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex pt-2">
               <Button
                 onClick={handleChangePassword}
                 className="rounded-full font-header"
                 disabled={passwordChanging}
+                size="lg"
               >
-                {passwordChanging ? "Changing..." : "Change Password"}
+                {passwordChanging ? "Saving..." : "Save"}
               </Button>
             </div>
           </CardContent>
@@ -332,7 +320,10 @@ export default function SettingsPage() {
           {/* Support */}
           <Card className="bg-card border-card-border">
             <CardHeader>
-              <CardTitle className="font-header text-xl">Support</CardTitle>
+              <div className="flex gap-3 items-center">
+                <CardTitle className="font-header text-xl">Support</CardTitle>
+                <CircleQuestionMark size={20} />
+              </div>
               <CardDescription>Send us a message</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -343,7 +334,12 @@ export default function SettingsPage() {
                 className="min-h-[120px]"
               />
               <div className="flex justify-end">
-                <Button className="rounded-full font-header">
+                <Button
+                  onClick={() => {
+                    toast.error("Support message sending will be coming soon!");
+                  }}
+                  className="rounded-full font-header"
+                >
                   Send Message
                 </Button>
               </div>
@@ -353,11 +349,8 @@ export default function SettingsPage() {
           {/* Organizations */}
           <Card className="bg-card border-card-border">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between ">
+              <CardTitle>
                 <span className="font-header text-xl">Organizations</span>
-                <Button asChild size="sm" className="rounded-full font-header">
-                  <Link href="/create-org">Add New</Link>
-                </Button>
               </CardTitle>
               <CardDescription>
                 Switch between organizations or create a new one
@@ -380,46 +373,56 @@ export default function SettingsPage() {
                   {organizations.map(({ organizations: org, role }) => (
                     <div
                       key={org.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      onClick={() => {
+                        if (org.id !== currentOrgId) {
+                          router.push(`/${org.slug}/settings`);
+                          toast.success(
+                            `Switched to organization: ${org.name}`
+                          );
+                        } else {
+                          toast.info(
+                            "You already have this organization selected."
+                          );
+                        }
+                      }}
+                      className={`flex items-center justify-between p-4 rounded-lg transition-colors border-card-cell-border cursor-pointer ${
                         org.id === currentOrgId
-                          ? "border-primary bg-primary/5"
-                          : "hover:bg-accent/50"
+                          ? "bg-current-org-bg hover:bg-current-org-bg-hover"
+                          : "bg-card-cell hover:bg-card-cell-hover"
                       }`}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{org.name}</h3>
-                          <Badge className={getRoleBadgeColor(role)}>
-                            {role}
-                          </Badge>
-                          {org.id === currentOrgId && (
-                            <Badge variant="outline">Current</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          /{org.slug}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {org.id !== currentOrgId && (
-                          <Button asChild size="sm">
-                            <Link href={`/${org.slug}`}>Switch</Link>
-                          </Button>
-                        )}
-                        {role === "owner" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            // onClick={() => handleDeleteOrg(org.id)}
-                            className="bg-red-600! cursor-not-allowed opacity-50"
-                            title="Coming soon!"
-                          >
-                            Delete
-                          </Button>
+                      <div className="flex items-center gap-2 font-header justify-between w-full">
+                        <h3>{org.name}</h3>
+                        {org.id === currentOrgId && (
+                          <span className="text-xs">Selected</span>
                         )}
                       </div>
                     </div>
                   ))}
+
+                  <div className="flex gap-4">
+                    {isCurrentOrgOwner && (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() =>
+                          toast.error(
+                            "Deleting organization will be coming soon!"
+                          )
+                        }
+                        className="bg-red-600! hover:bg-red-700! text-white rounded-full font-header"
+                      >
+                        Delete
+                      </Button>
+                    )}
+                    <Button
+                      asChild
+                      size="lg"
+                      className="rounded-full font-header"
+                    >
+                      <Link href="/create-org">Add New</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -428,7 +431,10 @@ export default function SettingsPage() {
           {/* Notifications */}
           <Card className="bg-card border-card-border">
             <CardHeader>
-              <CardTitle className="font-header text-xl">Settings</CardTitle>
+              <div className="flex gap-3 items-center">
+                <CardTitle className="font-header text-xl">Settings</CardTitle>
+                <Settings size={20} />
+              </div>
               <CardDescription>Manage your preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -463,6 +469,9 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <Switch
+                  onClick={() => {
+                    toast.warning("This does nothing at the moment.");
+                  }}
                   checked={emailNotifications}
                   onCheckedChange={setEmailNotifications}
                 />
