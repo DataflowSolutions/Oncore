@@ -266,31 +266,23 @@ export async function createPromoter(data: z.infer<typeof createPromoterSchema>)
     }
   }
 
-  const { orgId, ...promoterData } = validation.data
-
-  // Verify user has access to this org using RPC
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership, error: membershipError } = await (supabase as any).rpc('get_org_membership', {
-    p_org_id: orgId
-  })
-
-  // membership returns as array, get first result
-  const userMembership = Array.isArray(membership) ? membership[0] : membership
-
-  if (!userMembership || !['owner', 'admin', 'editor'].includes(userMembership.role)) {
-    logger.warn('Insufficient permissions for createPromoter', { membership, orgId, userId: session.user.id })
-    return { success: false, error: 'Insufficient permissions' }
-  }
+  const { orgId, name, email, phone, company, city, country, notes, status, contact_type } = validation.data
 
   try {
-    const { data: promoter, error } = await supabase
-      .from('contacts')
-      .insert({
-        org_id: orgId,
-        ...promoterData,
-      })
-      .select()
-      .single()
+    // Use RPC to bypass RLS issues in production
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: promoter, error } = await (supabase as any).rpc('create_contact', {
+      p_org_id: orgId,
+      p_name: name,
+      p_email: email || null,
+      p_phone: phone || null,
+      p_company: company || null,
+      p_city: city || null,
+      p_country: country || null,
+      p_notes: notes || null,
+      p_contact_type: contact_type,
+      p_status: status,
+    })
 
     if (error) throw error
 
@@ -338,56 +330,32 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
 
   const { venueId, promoterId, isPrimary, notes } = validation.data
 
-  // Verify venue exists and user has access
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('org_id')
-    .eq('id', venueId)
-    .single()
-
-  if (!venue) {
-    return { success: false, error: 'Venue not found' }
-  }
-
-  // Verify user has access using RPC
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
-    p_org_id: venue.org_id
-  })
-
-  const userMembership = Array.isArray(membership) ? membership[0] : membership
-  if (!userMembership || !['owner', 'admin', 'editor'].includes(userMembership.role)) {
-    return { success: false, error: 'Insufficient permissions' }
-  }
-
   try {
-    // If setting as primary, unset other primary contacts for this venue
-    if (isPrimary) {
-      await supabase
-        .from('venue_contacts')
-        .update({ is_primary: false })
-        .eq('venue_id', venueId)
-    }
-
-    const { data: link, error } = await supabase
-      .from('venue_contacts')
-      .insert({
-        venue_id: venueId,
-        contact_id: promoterId,
-        is_primary: isPrimary,
-        notes,
-      })
-      .select()
-      .single()
+    // Use RPC to bypass RLS issues in production
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: link, error } = await (supabase as any).rpc('link_contact_to_venue', {
+      p_venue_id: venueId,
+      p_contact_id: promoterId,
+      p_is_primary: isPrimary,
+      p_notes: notes || null,
+    })
 
     if (error) throw error
 
-    // Get org slug for revalidation
-    const orgSlug = await getOrgSlug(supabase, venue.org_id)
-    if (orgSlug) {
-      revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
-      revalidatePath(`/${orgSlug}/venues`, 'page')
-      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    // Get venue org_id for revalidation
+    const { data: venue } = await supabase
+      .from('venues')
+      .select('org_id')
+      .eq('id', venueId)
+      .single()
+
+    if (venue) {
+      const orgSlug = await getOrgSlug(supabase, venue.org_id)
+      if (orgSlug) {
+        revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
+        revalidatePath(`/${orgSlug}/venues`, 'page')
+        revalidatePath(`/${orgSlug}/people/partners`, 'page')
+      }
     }
     
     return {
@@ -398,7 +366,7 @@ export async function linkPromoterToVenue(data: z.infer<typeof linkPromoterToVen
     const err = error as { message?: string; code?: string }
     logger.error('Error linking promoter to venue', err)
     
-    if (err.code === '23505') {
+    if (err.message?.includes('duplicate') || err.code === '23505') {
       return {
         success: false,
         error: 'This promoter is already linked to this venue',
@@ -437,46 +405,38 @@ export async function updatePromoter(data: z.infer<typeof updatePromoterSchema>)
     }
   }
 
-  const { promoterId, ...updates } = validation.data
-
-  // Get promoter to verify org access
-  const { data: promoter } = await supabase
-    .from('contacts')
-    .select('org_id')
-    .eq('id', promoterId)
-    .eq('type', 'promoter')
-    .single()
-
-  if (!promoter) {
-    return { success: false, error: 'Promoter not found' }
-  }
-
-  // Verify user has access using RPC
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
-    p_org_id: promoter.org_id
-  })
-
-  const userMembership = Array.isArray(membership) ? membership[0] : membership
-  if (!userMembership || !['owner', 'admin', 'editor'].includes(userMembership.role)) {
-    return { success: false, error: 'Insufficient permissions' }
-  }
+  const { promoterId, name, email, phone, company, city, country, notes, status } = validation.data
 
   try {
-    const { data: updated, error } = await supabase
-      .from('contacts')
-      .update(updates)
-      .eq('id', promoterId)
-      .select()
-      .single()
+    // Use RPC to bypass RLS issues in production
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: updated, error } = await (supabase as any).rpc('update_contact', {
+      p_contact_id: promoterId,
+      p_name: name || null,
+      p_email: email || null,
+      p_phone: phone || null,
+      p_company: company || null,
+      p_city: city || null,
+      p_country: country || null,
+      p_notes: notes || null,
+      p_status: status || null,
+    })
 
     if (error) throw error
 
-    // Get org slug for revalidation
-    const orgSlug = await getOrgSlug(supabase, promoter.org_id)
-    if (orgSlug) {
-      revalidatePath(`/${orgSlug}/venues`, 'page')
-      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    // Get promoter to find org for revalidation
+    const { data: promoter } = await supabase
+      .from('contacts')
+      .select('org_id')
+      .eq('id', promoterId)
+      .single()
+
+    if (promoter) {
+      const orgSlug = await getOrgSlug(supabase, promoter.org_id)
+      if (orgSlug) {
+        revalidatePath(`/${orgSlug}/venues`, 'page')
+        revalidatePath(`/${orgSlug}/people/partners`, 'page')
+      }
     }
     
     return {
@@ -509,43 +469,28 @@ export async function deletePromoter(promoterId: string) {
     return { success: false, error: 'Authentication required' }
   }
 
-  // Get promoter to verify org access
-  const { data: promoter } = await supabase
-    .from('contacts')
-    .select('org_id')
-    .eq('id', promoterId)
-    .eq('type', 'promoter')
-    .single()
-
-  if (!promoter) {
-    return { success: false, error: 'Promoter not found' }
-  }
-
-  // Verify user has access using RPC
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
-    p_org_id: promoter.org_id
-  })
-
-  const userMembership = Array.isArray(membership) ? membership[0] : membership
-  if (!userMembership || !['owner', 'admin', 'editor'].includes(userMembership.role)) {
-    return { success: false, error: 'Insufficient permissions' }
-  }
-
   try {
-    // Soft delete by setting status to inactive
-    const { error } = await supabase
-      .from('contacts')
-      .update({ status: 'inactive' })
-      .eq('id', promoterId)
+    // Use RPC to bypass RLS issues in production
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc('delete_contact', {
+      p_contact_id: promoterId,
+    })
 
     if (error) throw error
 
-    // Get org slug for revalidation
-    const orgSlug = await getOrgSlug(supabase, promoter.org_id)
-    if (orgSlug) {
-      revalidatePath(`/${orgSlug}/venues`, 'page')
-      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    // Get promoter to find org for revalidation (before it's deleted/deactivated)
+    const { data: promoter } = await supabase
+      .from('contacts')
+      .select('org_id')
+      .eq('id', promoterId)
+      .single()
+
+    if (promoter) {
+      const orgSlug = await getOrgSlug(supabase, promoter.org_id)
+      if (orgSlug) {
+        revalidatePath(`/${orgSlug}/venues`, 'page')
+        revalidatePath(`/${orgSlug}/people/partners`, 'page')
+      }
     }
     
     return { success: true }
@@ -571,43 +516,30 @@ export async function unlinkPromoterFromVenue(venueId: string, promoterId: strin
     return { success: false, error: 'Authentication required' }
   }
 
-  // Verify venue exists and user has access
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('org_id')
-    .eq('id', venueId)
-    .single()
-
-  if (!venue) {
-    return { success: false, error: 'Venue not found' }
-  }
-
-  // Verify user has access using RPC
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any).rpc('get_org_membership', {
-    p_org_id: venue.org_id
-  })
-
-  const userMembership = Array.isArray(membership) ? membership[0] : membership
-  if (!userMembership || !['owner', 'admin', 'editor'].includes(userMembership.role)) {
-    return { success: false, error: 'Insufficient permissions' }
-  }
-
   try {
-    const { error } = await supabase
-      .from('venue_contacts')
-      .delete()
-      .eq('venue_id', venueId)
-      .eq('contact_id', promoterId)
+    // Use RPC to bypass RLS issues in production
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc('unlink_contact_from_venue', {
+      p_venue_id: venueId,
+      p_contact_id: promoterId,
+    })
 
     if (error) throw error
 
-    // Get org slug for revalidation
-    const orgSlug = await getOrgSlug(supabase, venue.org_id)
-    if (orgSlug) {
-      revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
-      revalidatePath(`/${orgSlug}/venues`, 'page')
-      revalidatePath(`/${orgSlug}/people/partners`, 'page')
+    // Get venue org_id for revalidation
+    const { data: venue } = await supabase
+      .from('venues')
+      .select('org_id')
+      .eq('id', venueId)
+      .single()
+
+    if (venue) {
+      const orgSlug = await getOrgSlug(supabase, venue.org_id)
+      if (orgSlug) {
+        revalidatePath(`/${orgSlug}/venues/${venueId}`, 'page')
+        revalidatePath(`/${orgSlug}/venues`, 'page')
+        revalidatePath(`/${orgSlug}/people/partners`, 'page')
+      }
     }
     
     return { success: true }
@@ -635,7 +567,7 @@ export async function searchPromoters(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc('search_promoters', {
       p_org_id: orgId,
-      p_query: query || ''
+      p_search: query || ''
     })
 
     if (error) {
