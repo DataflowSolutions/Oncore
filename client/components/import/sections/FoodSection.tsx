@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import type { ImportedFood } from "../types";
 import { createEmptyFood } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface FoodSectionProps {
   data: ImportedFood[];
   onChange: (data: ImportedFood[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -18,7 +21,7 @@ interface FoodSectionProps {
  * Multi-item section with navigation arrows
  * Fields: Name, Address, City, Country, Booking reference, Phone, Email, Notes
  */
-export function FoodSection({ data, onChange }: FoodSectionProps) {
+export function FoodSection({ data, onChange, confidenceForField }: FoodSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Auto-add first item if empty
@@ -85,18 +88,21 @@ export function FoodSection({ data, onChange }: FoodSectionProps) {
           value={currentFood.name}
           onChange={(v) => updateField("name", v)}
           placeholder="Provider name"
+          confidence={confidenceForField?.(`food[${currentIndex}].name`)}
         />
         <FormField
           label="Address"
           value={currentFood.address}
           onChange={(v) => updateField("address", v)}
           placeholder="Street address"
+          confidence={confidenceForField?.(`food[${currentIndex}].address`)}
         />
         <FormField
           label="City"
           value={currentFood.city}
           onChange={(v) => updateField("city", v)}
           placeholder="City"
+          confidence={confidenceForField?.(`food[${currentIndex}].city`)}
         />
 
         {/* Row 2: Booking reference, Phone, Country */}
@@ -105,6 +111,7 @@ export function FoodSection({ data, onChange }: FoodSectionProps) {
           value={currentFood.bookingReference}
           onChange={(v) => updateField("bookingReference", v)}
           placeholder="Booking reference"
+          confidence={confidenceForField?.(`food[${currentIndex}].bookingReference`)}
         />
         <FormField
           label="Phone"
@@ -112,12 +119,14 @@ export function FoodSection({ data, onChange }: FoodSectionProps) {
           onChange={(v) => updateField("phone", v)}
           type="tel"
           placeholder="Phone number"
+          confidence={confidenceForField?.(`food[${currentIndex}].phone`)}
         />
         <FormField
           label="Country"
           value={currentFood.country}
           onChange={(v) => updateField("country", v)}
           placeholder="Country"
+          confidence={confidenceForField?.(`food[${currentIndex}].country`)}
         />
 
         {/* Row 3: Notes, Email, Actions */}
@@ -126,6 +135,7 @@ export function FoodSection({ data, onChange }: FoodSectionProps) {
           value={currentFood.notes}
           onChange={(v) => updateField("notes", v)}
           placeholder="Additional notes"
+          confidence={confidenceForField?.(`food[${currentIndex}].notes`)}
         />
         <FormField
           label="Email"
@@ -133,6 +143,7 @@ export function FoodSection({ data, onChange }: FoodSectionProps) {
           onChange={(v) => updateField("email", v)}
           type="email"
           placeholder="Email address"
+          confidence={confidenceForField?.(`food[${currentIndex}].email`)}
         />
 
         {/* Actions */}

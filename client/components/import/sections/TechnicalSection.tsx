@@ -4,9 +4,12 @@ import { FormTextarea } from "../FormTextarea";
 import { SectionContainer } from "../SectionContainer";
 import type { ImportedTechnical } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface TechnicalSectionProps {
   data: ImportedTechnical;
   onChange: (data: ImportedTechnical) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -14,7 +17,7 @@ interface TechnicalSectionProps {
  * Fields: Equipment, Backline, Stage Setup, Lighting requirements, Soundcheck, Other
  * All fields are textarea for longer text content
  */
-export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
+export function TechnicalSection({ data, onChange, confidenceForField }: TechnicalSectionProps) {
   const updateField = <K extends keyof ImportedTechnical>(
     field: K,
     value: ImportedTechnical[K]
@@ -32,6 +35,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("equipment", v)}
           placeholder="Required equipment..."
           rows={4}
+          confidence={confidenceForField?.("technical.equipment")}
         />
         <FormTextarea
           label="Backline"
@@ -39,6 +43,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("backline", v)}
           placeholder="Backline requirements..."
           rows={4}
+          confidence={confidenceForField?.("technical.backline")}
         />
         <FormTextarea
           label="Stage Setup"
@@ -46,6 +51,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("stageSetup", v)}
           placeholder="Stage setup details..."
           rows={4}
+          confidence={confidenceForField?.("technical.stageSetup")}
         />
 
         {/* Row 2: Lighting requirements, Soundcheck, Other */}
@@ -55,6 +61,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("lightingRequirements", v)}
           placeholder="Lighting requirements..."
           rows={4}
+          confidence={confidenceForField?.("technical.lightingRequirements")}
         />
         <FormTextarea
           label="Soundcheck"
@@ -62,6 +69,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("soundcheck", v)}
           placeholder="Soundcheck details..."
           rows={4}
+          confidence={confidenceForField?.("technical.soundcheck")}
         />
         <FormTextarea
           label="Other"
@@ -69,6 +77,7 @@ export function TechnicalSection({ data, onChange }: TechnicalSectionProps) {
           onChange={(v) => updateField("other", v)}
           placeholder="Other technical notes..."
           rows={4}
+          confidence={confidenceForField?.("technical.other")}
         />
       </div>
     </SectionContainer>

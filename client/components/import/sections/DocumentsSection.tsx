@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { X, Plus, Upload } from "lucide-react";
 import { SectionContainer } from "../SectionContainer";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -14,9 +15,12 @@ import {
 import type { ImportedDocument, DocumentCategory } from "../types";
 import { DOCUMENT_CATEGORIES } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface DocumentsSectionProps {
   data: ImportedDocument[];
   onChange: (data: ImportedDocument[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -34,7 +38,7 @@ function formatFileSize(bytes: number): string {
  * Documents section of the import confirmation form
  * Lists uploaded documents with category dropdown and remove button
  */
-export function DocumentsSection({ data, onChange }: DocumentsSectionProps) {
+export function DocumentsSection({ data, onChange, confidenceForField }: DocumentsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateCategory = (index: number, category: DocumentCategory) => {
@@ -80,49 +84,61 @@ export function DocumentsSection({ data, onChange }: DocumentsSectionProps) {
             No documents added yet
           </p>
         ) : (
-          data.map((doc, index) => (
-            <div
-              key={doc.id || index}
-              className="flex items-center justify-between gap-4 p-4 bg-card-cell rounded-lg border border-card-cell-border"
-            >
-              {/* File info */}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{doc.fileName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(doc.fileSize)}
-                </p>
-              </div>
+          data.map((doc, index) => {
+            const fileConfidence = confidenceForField?.(`documents[${index}].fileName`);
+            const categoryConfidence = confidenceForField?.(`documents[${index}].category`);
+            const isLowConfidence =
+              (fileConfidence !== undefined && fileConfidence < 0.75) ||
+              (categoryConfidence !== undefined && categoryConfidence < 0.75);
 
-              {/* Category dropdown */}
-              <div className="flex items-center gap-3">
-                <Select
-                  value={doc.category}
-                  onValueChange={(value) => updateCategory(index, value as DocumentCategory)}
-                >
-                  <SelectTrigger className="w-32 bg-card-cell border-card-cell-border">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            return (
+              <div
+                key={doc.id || index}
+                className={cn(
+                  "flex items-center justify-between gap-4 p-4 bg-card-cell rounded-lg border border-card-cell-border",
+                  isLowConfidence && "border-amber-400/80 bg-amber-50/60"
+                )}
+                data-low-confidence={isLowConfidence ? "true" : undefined}
+              >
+                {/* File info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{doc.fileName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(doc.fileSize)}
+                  </p>
+                </div>
 
-                {/* Remove button */}
-                <button
-                  type="button"
-                  onClick={() => removeDocument(index)}
-                  className="p-1 hover:bg-destructive/10 rounded-md transition-colors text-muted-foreground hover:text-destructive"
-                  aria-label="Remove document"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                {/* Category dropdown */}
+                <div className="flex items-center gap-3">
+                  <Select
+                    value={doc.category}
+                    onValueChange={(value) => updateCategory(index, value as DocumentCategory)}
+                  >
+                    <SelectTrigger className="w-32 bg-card-cell border-card-cell-border">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DOCUMENT_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={() => removeDocument(index)}
+                    className="p-1 hover:bg-destructive/10 rounded-md transition-colors text-muted-foreground hover:text-destructive"
+                    aria-label="Remove document"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Hidden file input */}

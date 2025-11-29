@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import type { ImportedContact } from "../types";
 import { createEmptyContact } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface ContactsSectionProps {
   data: ImportedContact[];
   onChange: (data: ImportedContact[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -17,7 +20,7 @@ interface ContactsSectionProps {
  * Shows a grid of contacts with Name, Phone, Email, Role fields
  * Supports adding/removing contacts
  */
-export function ContactsSection({ data, onChange }: ContactsSectionProps) {
+export function ContactsSection({ data, onChange, confidenceForField }: ContactsSectionProps) {
   const updateContact = <K extends keyof ImportedContact>(
     index: number,
     field: K,
@@ -55,6 +58,7 @@ export function ContactsSection({ data, onChange }: ContactsSectionProps) {
                 value={contact.name}
                 onChange={(v) => updateContact(index, "name", v)}
                 placeholder="Contact name"
+                confidence={confidenceForField?.(`contacts[${index}].name`)}
               />
               <FormField
                 label="Phone"
@@ -62,6 +66,7 @@ export function ContactsSection({ data, onChange }: ContactsSectionProps) {
                 onChange={(v) => updateContact(index, "phone", v)}
                 type="tel"
                 placeholder="Phone number"
+                confidence={confidenceForField?.(`contacts[${index}].phone`)}
               />
               <FormField
                 label="Email"
@@ -69,12 +74,14 @@ export function ContactsSection({ data, onChange }: ContactsSectionProps) {
                 onChange={(v) => updateContact(index, "email", v)}
                 type="email"
                 placeholder="Email address"
+                confidence={confidenceForField?.(`contacts[${index}].email`)}
               />
               <FormField
                 label="Role"
                 value={contact.role}
                 onChange={(v) => updateContact(index, "role", v)}
                 placeholder="e.g., Tour Manager"
+                confidence={confidenceForField?.(`contacts[${index}].role`)}
               />
               <div className="flex justify-end pb-2">
                 <Button

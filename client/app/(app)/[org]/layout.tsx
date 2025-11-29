@@ -74,7 +74,7 @@ export default async function TourLayout({ children, params }: OrgLayoutProps) {
       <Sidebar orgSlug={resolvedParams.org} />
 
       {/* TopBar - handles its own left offset for sidebar */}
-      <TopBar />
+      <TopBar orgSlug={resolvedParams.org} orgId={org.id} />
 
       {/* Main Content Area - offset for sidebar on desktop */}
       <main className="lg:ml-64 min-h-[calc(100vh-4rem)] px-4 lg:px-8">

@@ -10,11 +10,18 @@ import Link from "next/link";
 import { UserDropdownMenu } from "./UserDropdownMenu";
 import { ArtistFilterDropdown } from "./ArtistFilterDropdown";
 import { useSidebarStore } from "@/lib/stores/sidebar-store";
+import { ImportDataButton } from "./ImportDataButton";
+import { ImportJobStatusBadge } from "./ImportJobStatusBadge";
 
-export function TopBar() {
+interface TopBarProps {
+  orgSlug?: string;
+  orgId?: string;
+}
+
+export function TopBar({ orgSlug: providedSlug, orgId }: TopBarProps) {
   const [open, setOpen] = React.useState(false);
   const params = useParams();
-  const orgSlug = params?.org as string;
+  const orgSlug = providedSlug || (params?.org as string);
   const { toggle } = useSidebarStore();
 
   return (
@@ -31,9 +38,8 @@ export function TopBar() {
         </Button>
 
         {/* Import Data button - hidden on mobile */}
-        <Button className="hidden sm:flex rounded-full font-header text-xs cursor-not-allowed shrink-0">
-          Import Data
-        </Button>
+        <ImportDataButton orgSlug={orgSlug} orgId={orgId} className="hidden sm:flex" />
+        <ImportJobStatusBadge />
 
         {/* Center search area */}
         <div className="flex-1 flex items-center justify-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,14 +21,20 @@ import {
 
 import type { ImportData } from "./types";
 import { createEmptyImportData } from "./types";
+import type { ImportJobStatus } from "@/lib/import/jobs";
 
 interface ImportConfirmationPageProps {
   orgId: string;
   orgSlug: string;
   initialData?: Partial<ImportData>;
   jobId?: string;
+  confidenceMap?: Record<string, import("@/lib/import/ai").ConfidenceEntry>;
+  initialJobStatus?: ImportJobStatus;
   onCancel?: () => void;
+  rawSources?: Array<{ id: string; fileName: string }>;
 }
+
+type ConfidenceLookup = (path: string) => number | undefined;
 
 /**
  * Import Confirmation Page Component
@@ -52,16 +58,93 @@ export function ImportConfirmationPage({
   orgSlug,
   initialData,
   jobId,
+  confidenceMap,
+  initialJobStatus,
   onCancel,
+  rawSources,
 }: ImportConfirmationPageProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confidenceByField, setConfidenceByField] = useState<
+    Record<string, import("@/lib/import/ai").ConfidenceEntry>
+  >(confidenceMap ?? {});
+  const [jobStatus, setJobStatus] = useState<ImportJobStatus | undefined>(initialJobStatus);
+  const [progressData, setProgressData] = useState<{
+    current_section?: string;
+    current_source?: string;
+    current_chunk?: number;
+    total_chunks?: number;
+    sections_completed?: number;
+    total_sections?: number;
+  }>({});
   
   // Initialize state with provided data or empty defaults
   const [data, setData] = useState<ImportData>(() => ({
     ...createEmptyImportData(),
     ...initialData,
   }));
+
+  const confidenceLookup: ConfidenceLookup = (path) => {
+    const entry = confidenceByField?.[path];
+    if (entry === undefined || entry === null) return undefined;
+    if (typeof entry === "number") return entry;
+    if (typeof entry === "object" && typeof entry.score === "number") return entry.score;
+    return undefined;
+  };
+
+  useEffect(() => {
+    if (!confidenceMap) return;
+    const firstLowConfidence = document.querySelector('[data-low-confidence="true"]');
+    if (firstLowConfidence) {
+      firstLowConfidence.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [confidenceMap]);
+
+  useEffect(() => {
+    if (!jobId) return;
+    if (jobStatus === "completed" || jobStatus === "failed") return;
+
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/import-jobs/${jobId}`);
+        if (!res.ok) return;
+        const job = await res.json();
+        if (cancelled || !job) return;
+
+        if (job.confidence_map) {
+          setConfidenceByField(job.confidence_map);
+        }
+
+        if (job.progress_data) {
+          setProgressData(job.progress_data);
+        }
+
+        if (job.status && job.status !== jobStatus) {
+          console.log(`[import-ui] Job ${jobId} status: ${job.status}`);
+          setJobStatus(job.status);
+        }
+
+        if (job.status === "completed" && job.extracted) {
+          console.log(`[import-ui] Job ${jobId} completed; hydrating extracted data`);
+          setData((prev) => (prev && prev.general?.artist ? prev : job.extracted));
+          clearInterval(interval);
+        }
+
+        if (job.status === "failed") {
+          console.warn(`[import-ui] Job ${jobId} failed`, job.error);
+          clearInterval(interval);
+        }
+      } catch {
+        // ignore transient errors
+      }
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [jobId, jobStatus]);
 
   // Update handlers for each section
   const updateGeneral = (general: ImportData["general"]) => {
@@ -181,39 +264,120 @@ export function ImportConfirmationPage({
       {/* Scrollable content area */}
       <ScrollArea className="flex-1">
         <div className="max-w-5xl mx-auto px-4 py-8 space-y-12">
-          <GeneralSection data={data.general} onChange={updateGeneral} />
+          {(jobStatus === "pending" || jobStatus === "processing") && (
+            <div className="p-4 rounded-lg border border-border bg-muted/40 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="text-sm">
+                  <p className="font-medium">Processing import...</p>
+                  {rawSources && rawSources.length > 0 ? (
+                    <div className="text-muted-foreground text-xs space-y-1">
+                      <p>Sources: {rawSources.map((s) => s.fileName).join(", ")}</p>
+                      {progressData.current_section && (
+                        <div className="space-y-0.5">
+                          <p>
+                            Processing <span className="font-semibold">{progressData.current_section}</span>
+                            {progressData.sections_completed !== undefined && progressData.total_sections && (
+                              <span className="ml-2 text-[11px] opacity-70">
+                                (section {progressData.sections_completed + 1}/{progressData.total_sections})
+                              </span>
+                            )}
+                          </p>
+                          {progressData.current_source && (
+                            <p className="text-primary text-[11px]">
+                              → {progressData.current_source}
+                              {progressData.current_chunk && progressData.total_chunks && progressData.total_chunks > 1 && (
+                                <span className="ml-2 opacity-70">
+                                  (chunk {progressData.current_chunk}/{progressData.total_chunks})
+                                </span>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">
+                      You can keep editing or exit. We'll load extracted data once it's ready.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleCancel}>
+                Exit
+              </Button>
+            </div>
+          )}
+
+          <GeneralSection
+            data={data.general}
+            onChange={updateGeneral}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <DealSection data={data.deal} onChange={updateDeal} />
+          <DealSection
+            data={data.deal}
+            onChange={updateDeal}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <HotelSection data={data.hotels} onChange={updateHotels} />
+          <HotelSection
+            data={data.hotels}
+            onChange={updateHotels}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <FoodSection data={data.food} onChange={updateFood} />
+          <FoodSection
+            data={data.food}
+            onChange={updateFood}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <FlightsSection data={data.flights} onChange={updateFlights} />
+          <FlightsSection
+            data={data.flights}
+            onChange={updateFlights}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <ActivitiesSection data={data.activities} onChange={updateActivities} />
+          <ActivitiesSection
+            data={data.activities}
+            onChange={updateActivities}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <DocumentsSection data={data.documents} onChange={updateDocuments} />
+          <DocumentsSection
+            data={data.documents}
+            onChange={updateDocuments}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <ContactsSection data={data.contacts} onChange={updateContacts} />
+          <ContactsSection
+            data={data.contacts}
+            onChange={updateContacts}
+            confidenceForField={confidenceLookup}
+          />
           
           <div className="h-px bg-border" />
           
-          <TechnicalSection data={data.technical} onChange={updateTechnical} />
+          <TechnicalSection
+            data={data.technical}
+            onChange={updateTechnical}
+            confidenceForField={confidenceLookup}
+          />
         </div>
       </ScrollArea>
 

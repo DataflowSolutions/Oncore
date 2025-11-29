@@ -38,10 +38,15 @@ export function Sidebar({ orgSlug }: SidebarProps) {
   // Track if we've checked localStorage
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
 
-  // Extract showId from current URL
+  // Helper: basic UUID validator
+  const isUuid = (value: string | null | undefined) =>
+    !!value && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(value);
+
+  // Extract showId from current URL (ignore non-show routes like import-confirmation)
   const currentShowId = useMemo(() => {
     const showMatch = pathname?.match(new RegExp(`/${orgSlug}/shows/([^/]+)`));
-    return showMatch ? showMatch[1] : null;
+    const candidate = showMatch ? showMatch[1] : null;
+    return isUuid(candidate) ? candidate : null;
   }, [pathname, orgSlug]);
 
   // Load last show from localStorage on mount
@@ -68,7 +73,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
 
   // Update localStorage when navigating to a show page
   useEffect(() => {
-    if (currentShowId) {
+    if (currentShowId && isUuid(currentShowId)) {
       setLastShowId(currentShowId);
       localStorage.setItem(
         STORAGE_KEY,
@@ -97,12 +102,16 @@ export function Sidebar({ orgSlug }: SidebarProps) {
   // Set latest show from shows list if we don't have one stored
   useEffect(() => {
     if (hasCheckedStorage && !lastShowId && showsList && showsList.length > 0) {
-      // Sort by show_date descending to get the most recent show
-      const sortedShows = [...showsList].sort((a: { show_date: string }, b: { show_date: string }) => {
-        return new Date(b.show_date).getTime() - new Date(a.show_date).getTime();
-      });
+      // Sort by date descending (fallback to show_date if present)
+      const sortedShows = [...showsList].sort(
+        (a: { date?: string; show_date?: string }, b: { date?: string; show_date?: string }) => {
+          const ad = a.date || a.show_date || "1970-01-01";
+          const bd = b.date || b.show_date || "1970-01-01";
+          return new Date(bd).getTime() - new Date(ad).getTime();
+        }
+      );
       const latestShow = sortedShows[0];
-      if (latestShow?.id) {
+      if (latestShow?.id && isUuid(latestShow.id)) {
         setLastShowId(latestShow.id);
         localStorage.setItem(
           STORAGE_KEY,
@@ -133,7 +142,7 @@ export function Sidebar({ orgSlug }: SidebarProps) {
       }
       return response.json();
     },
-    enabled: !!showId, // Only run if we have a showId
+    enabled: !!showId && isUuid(showId), // Only run if we have a valid showId
     staleTime: 5 * 60 * 1000, // 5 minutes - show metadata rarely changes
     retry: false, // Don't retry on 404
   });

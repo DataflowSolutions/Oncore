@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
   
+  // External packages for serverless (Vercel, AWS Lambda, etc.)
+  // Required for pdf-parse to work in Next.js API routes
+  serverExternalPackages: ["pdf-parse", "@napi-rs/canvas"],
+  
   // REMOVED: Environment variables are no longer exposed via env object
   // Server-side code can access process.env directly
   // Client-side code should only use NEXT_PUBLIC_* prefixed variables

@@ -25,16 +25,45 @@ export const getCachedOrg = cache(async (slug: string) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .rpc('get_org_by_slug', { p_slug: slug })
-  
+
+  // Fallback if RPC is missing in the current DB (PGRST202) or other lookup issues
   if (error) {
     logger.warn('Org lookup failed', { 
       slug,
       errorMessage: error?.message,
       errorCode: error?.code
     })
+
+    try {
+      const { data: orgs, error: tableError } = await supabase
+        .from('organizations')
+        .select('id, slug, name')
+        .eq('slug', slug)
+        .limit(1)
+        .maybeSingle()
+
+      if (tableError) {
+        logger.warn('Org table fallback failed', {
+          slug,
+          errorMessage: tableError?.message,
+          errorCode: tableError?.code,
+        })
+        return { data: null, error }
+      }
+
+      if (!orgs) {
+        return { data: null, error }
+      }
+
+      logger.info('Org table fallback succeeded', { slug })
+      return { data: orgs, error: null }
+    } catch (e) {
+      logger.warn('Org table fallback threw', { slug, e })
+      return { data: null, error }
+    }
   }
   
-  return { data, error }
+  return { data, error: null }
 })
 
 /**

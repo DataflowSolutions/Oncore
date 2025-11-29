@@ -123,16 +123,19 @@ export interface ImportData {
 }
 
 // Section navigation helpers
-export type ImportSectionKey = 
+export type ImportSection =
   | "general"
   | "deal"
   | "hotels"
   | "food"
   | "flights"
   | "activities"
-  | "documents"
   | "contacts"
-  | "technical";
+  | "technical"
+  | "documents";
+
+// Backward compatibility alias for navigation helpers
+export type ImportSectionKey = ImportSection;
 
 export const IMPORT_SECTIONS: { key: ImportSectionKey; label: string }[] = [
   { key: "general", label: "General" },

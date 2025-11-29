@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import type { ImportedFlight } from "../types";
 import { createEmptyFlight } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface FlightsSectionProps {
   data: ImportedFlight[];
   onChange: (data: ImportedFlight[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -20,7 +23,7 @@ interface FlightsSectionProps {
  *         From city/airport, Departure time, To city/airport, Arrival time,
  *         Seat, Class, Flight time
  */
-export function FlightsSection({ data, onChange }: FlightsSectionProps) {
+export function FlightsSection({ data, onChange, confidenceForField }: FlightsSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Auto-add first item if empty
@@ -87,18 +90,21 @@ export function FlightsSection({ data, onChange }: FlightsSectionProps) {
           value={currentFlight.airline}
           onChange={(v) => updateField("airline", v)}
           placeholder="Airline name"
+          confidence={confidenceForField?.(`flights[${currentIndex}].airline`)}
         />
         <FormField
           label="Flight number"
           value={currentFlight.flightNumber}
           onChange={(v) => updateField("flightNumber", v)}
           placeholder="e.g., SK1234"
+          confidence={confidenceForField?.(`flights[${currentIndex}].flightNumber`)}
         />
         <FormField
           label="Aircraft"
           value={currentFlight.aircraft}
           onChange={(v) => updateField("aircraft", v)}
           placeholder="Aircraft model"
+          confidence={confidenceForField?.(`flights[${currentIndex}].aircraft`)}
         />
 
         {/* Row 2: Full Name, Booking reference, Ticket number */}
@@ -107,18 +113,21 @@ export function FlightsSection({ data, onChange }: FlightsSectionProps) {
           value={currentFlight.fullName}
           onChange={(v) => updateField("fullName", v)}
           placeholder="Passenger name"
+          confidence={confidenceForField?.(`flights[${currentIndex}].fullName`)}
         />
         <FormField
           label="Booking reference"
           value={currentFlight.bookingReference}
           onChange={(v) => updateField("bookingReference", v)}
           placeholder="Booking reference"
+          confidence={confidenceForField?.(`flights[${currentIndex}].bookingReference`)}
         />
         <FormField
           label="Ticket number"
           value={currentFlight.ticketNumber}
           onChange={(v) => updateField("ticketNumber", v)}
           placeholder="Ticket number"
+          confidence={confidenceForField?.(`flights[${currentIndex}].ticketNumber`)}
         />
 
         {/* Row 3: From city, From Airport, Departure time */}
@@ -127,18 +136,21 @@ export function FlightsSection({ data, onChange }: FlightsSectionProps) {
           value={currentFlight.fromCity}
           onChange={(v) => updateField("fromCity", v)}
           placeholder="Departure city"
+          confidence={confidenceForField?.(`flights[${currentIndex}].fromCity`)}
         />
         <FormField
           label="From Airport"
           value={currentFlight.fromAirport}
           onChange={(v) => updateField("fromAirport", v)}
           placeholder="e.g., LAX"
+          confidence={confidenceForField?.(`flights[${currentIndex}].fromAirport`)}
         />
         <FormField
           label="Departure time"
           value={currentFlight.departureTime}
           onChange={(v) => updateField("departureTime", v)}
           placeholder="e.g., 14:30"
+          confidence={confidenceForField?.(`flights[${currentIndex}].departureTime`)}
         />
 
         {/* Row 4: To city, To Airport, Arrival time */}
@@ -147,18 +159,21 @@ export function FlightsSection({ data, onChange }: FlightsSectionProps) {
           value={currentFlight.toCity}
           onChange={(v) => updateField("toCity", v)}
           placeholder="Arrival city"
+          confidence={confidenceForField?.(`flights[${currentIndex}].toCity`)}
         />
         <FormField
           label="To Airport"
           value={currentFlight.toAirport}
           onChange={(v) => updateField("toAirport", v)}
           placeholder="e.g., JFK"
+          confidence={confidenceForField?.(`flights[${currentIndex}].toAirport`)}
         />
         <FormField
           label="Arrival time"
           value={currentFlight.arrivalTime}
           onChange={(v) => updateField("arrivalTime", v)}
           placeholder="e.g., 22:15"
+          confidence={confidenceForField?.(`flights[${currentIndex}].arrivalTime`)}
         />
 
         {/* Row 5: Seat, Class, Flight time */}
@@ -167,18 +182,21 @@ export function FlightsSection({ data, onChange }: FlightsSectionProps) {
           value={currentFlight.seat}
           onChange={(v) => updateField("seat", v)}
           placeholder="e.g., 12A"
+          confidence={confidenceForField?.(`flights[${currentIndex}].seat`)}
         />
         <FormField
           label="Class"
           value={currentFlight.travelClass}
           onChange={(v) => updateField("travelClass", v)}
           placeholder="e.g., Economy, Business"
+          confidence={confidenceForField?.(`flights[${currentIndex}].travelClass`)}
         />
         <FormField
           label="Flight time"
           value={currentFlight.flightTime}
           onChange={(v) => updateField("flightTime", v)}
           placeholder="e.g., 5h 30m"
+          confidence={confidenceForField?.(`flights[${currentIndex}].flightTime`)}
         />
 
         {/* Actions */}

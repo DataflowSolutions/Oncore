@@ -5,16 +5,19 @@ import { FormTextarea } from "../FormTextarea";
 import { SectionContainer } from "../SectionContainer";
 import type { ImportedDeal } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface DealSectionProps {
   data: ImportedDeal;
   onChange: (data: ImportedDeal) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
  * Deal section of the import confirmation form
  * Fields: Fee, Payment Terms, Deal Type, Currency, Notes
  */
-export function DealSection({ data, onChange }: DealSectionProps) {
+export function DealSection({ data, onChange, confidenceForField }: DealSectionProps) {
   const updateField = <K extends keyof ImportedDeal>(
     field: K,
     value: ImportedDeal[K]
@@ -31,12 +34,14 @@ export function DealSection({ data, onChange }: DealSectionProps) {
           value={data.fee}
           onChange={(v) => updateField("fee", v)}
           placeholder="Enter fee amount"
+          confidence={confidenceForField?.("deal.fee")}
         />
         <FormField
           label="Payment terms"
           value={data.paymentTerms}
           onChange={(v) => updateField("paymentTerms", v)}
           placeholder="e.g., 50% upfront"
+          confidence={confidenceForField?.("deal.paymentTerms")}
         />
         <FormTextarea
           label="Notes"
@@ -45,6 +50,7 @@ export function DealSection({ data, onChange }: DealSectionProps) {
           placeholder="Additional deal notes..."
           rows={3}
           className="md:row-span-2"
+          confidence={confidenceForField?.("deal.notes")}
         />
 
         {/* Row 2: Deal type, Currency */}
@@ -53,12 +59,14 @@ export function DealSection({ data, onChange }: DealSectionProps) {
           value={data.dealType}
           onChange={(v) => updateField("dealType", v)}
           placeholder="e.g., Flat fee, Guarantee"
+          confidence={confidenceForField?.("deal.dealType")}
         />
         <FormField
           label="Currency"
           value={data.currency}
           onChange={(v) => updateField("currency", v)}
           placeholder="e.g., USD, EUR"
+          confidence={confidenceForField?.("deal.currency")}
         />
       </div>
     </SectionContainer>

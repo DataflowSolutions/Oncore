@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import type { ImportedActivity } from "../types";
 import { createEmptyActivity } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface ActivitiesSectionProps {
   data: ImportedActivity[];
   onChange: (data: ImportedActivity[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -21,7 +24,7 @@ interface ActivitiesSectionProps {
  * Fields: Name, Location, Start Time, End Time, Notes
  *         + Optional destination: Name, Location
  */
-export function ActivitiesSection({ data, onChange }: ActivitiesSectionProps) {
+export function ActivitiesSection({ data, onChange, confidenceForField }: ActivitiesSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Auto-add first item if empty
@@ -100,18 +103,21 @@ export function ActivitiesSection({ data, onChange }: ActivitiesSectionProps) {
           value={currentActivity.name}
           onChange={(v) => updateField("name", v)}
           placeholder="Activity name"
+          confidence={confidenceForField?.(`activities[${currentIndex}].name`)}
         />
         <FormField
           label="Location"
           value={currentActivity.location}
           onChange={(v) => updateField("location", v)}
           placeholder="Location/address"
+          confidence={confidenceForField?.(`activities[${currentIndex}].location`)}
         />
         <FormField
           label="Start Time"
           value={currentActivity.startTime}
           onChange={(v) => updateField("startTime", v)}
           type="time"
+          confidence={confidenceForField?.(`activities[${currentIndex}].startTime`)}
         />
         <FormTextarea
           label="Notes"
@@ -120,6 +126,7 @@ export function ActivitiesSection({ data, onChange }: ActivitiesSectionProps) {
           placeholder="Additional notes..."
           rows={3}
           className="md:row-span-2"
+          confidence={confidenceForField?.(`activities[${currentIndex}].notes`)}
         />
 
         {/* Row 2: Destination toggle and fields */}
@@ -144,18 +151,21 @@ export function ActivitiesSection({ data, onChange }: ActivitiesSectionProps) {
               value={currentActivity.destinationName || ""}
               onChange={(v) => updateField("destinationName", v)}
               placeholder="Destination name"
+              confidence={confidenceForField?.(`activities[${currentIndex}].destinationName`)}
             />
             <FormField
               label="Location"
               value={currentActivity.destinationLocation || ""}
               onChange={(v) => updateField("destinationLocation", v)}
               placeholder="Destination address"
+              confidence={confidenceForField?.(`activities[${currentIndex}].destinationLocation`)}
             />
             <FormField
               label="End Time"
               value={currentActivity.endTime}
               onChange={(v) => updateField("endTime", v)}
               type="time"
+              confidence={confidenceForField?.(`activities[${currentIndex}].endTime`)}
             />
           </>
         )}

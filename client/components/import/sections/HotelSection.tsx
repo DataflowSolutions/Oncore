@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import type { ImportedHotel } from "../types";
 import { createEmptyHotel } from "../types";
 
+type ConfidenceLookup = (path: string) => number | undefined;
+
 interface HotelSectionProps {
   data: ImportedHotel[];
   onChange: (data: ImportedHotel[]) => void;
+  confidenceForField?: ConfidenceLookup;
 }
 
 /**
@@ -20,7 +23,7 @@ interface HotelSectionProps {
  * Fields: Name, Address, City, Country, Check-in date/time, Check-out date/time, 
  *         Booking reference, Phone, Email, Notes
  */
-export function HotelSection({ data, onChange }: HotelSectionProps) {
+export function HotelSection({ data, onChange, confidenceForField }: HotelSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Auto-add first item if empty
@@ -87,18 +90,21 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           value={currentHotel.name}
           onChange={(v) => updateField("name", v)}
           placeholder="Hotel name"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].name`)}
         />
         <FormField
           label="Address"
           value={currentHotel.address}
           onChange={(v) => updateField("address", v)}
           placeholder="Street address"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].address`)}
         />
         <FormField
           label="City"
           value={currentHotel.city}
           onChange={(v) => updateField("city", v)}
           placeholder="City"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].city`)}
         />
 
         {/* Row 2: Check-in date/time, Check-out date/time, Country */}
@@ -109,6 +115,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
             onChange={(v) => updateField("checkInDate", v)}
             type="date"
             className="flex-1"
+            confidence={confidenceForField?.(`hotels[${currentIndex}].checkInDate`)}
           />
           <FormField
             label="Time"
@@ -116,6 +123,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
             onChange={(v) => updateField("checkInTime", v)}
             type="time"
             className="w-24"
+            confidence={confidenceForField?.(`hotels[${currentIndex}].checkInTime`)}
           />
         </div>
         <div className="flex gap-4">
@@ -125,6 +133,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
             onChange={(v) => updateField("checkOutDate", v)}
             type="date"
             className="flex-1"
+            confidence={confidenceForField?.(`hotels[${currentIndex}].checkOutDate`)}
           />
           <FormField
             label="Time"
@@ -132,6 +141,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
             onChange={(v) => updateField("checkOutTime", v)}
             type="time"
             className="w-24"
+            confidence={confidenceForField?.(`hotels[${currentIndex}].checkOutTime`)}
           />
         </div>
         <FormField
@@ -139,6 +149,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           value={currentHotel.country}
           onChange={(v) => updateField("country", v)}
           placeholder="Country"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].country`)}
         />
 
         {/* Row 3: Booking reference, Phone, Email */}
@@ -147,6 +158,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           value={currentHotel.bookingReference}
           onChange={(v) => updateField("bookingReference", v)}
           placeholder="Booking reference"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].bookingReference`)}
         />
         <FormField
           label="Phone"
@@ -154,6 +166,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           onChange={(v) => updateField("phone", v)}
           type="tel"
           placeholder="Phone number"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].phone`)}
         />
         <FormField
           label="Email"
@@ -161,6 +174,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           onChange={(v) => updateField("email", v)}
           type="email"
           placeholder="Email address"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].email`)}
         />
 
         {/* Row 4: Notes (full width) */}
@@ -171,6 +185,7 @@ export function HotelSection({ data, onChange }: HotelSectionProps) {
           placeholder="Additional notes..."
           rows={3}
           className="md:col-span-2"
+          confidence={confidenceForField?.(`hotels[${currentIndex}].notes`)}
         />
 
         {/* Actions */}

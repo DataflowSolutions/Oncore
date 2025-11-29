@@ -30,6 +30,7 @@ export type {
   ImportedContact,
   ImportedTechnical,
   DocumentCategory,
+  ImportSection,
   ImportSectionKey,
 } from "./types";
 

@@ -11,6 +11,8 @@ interface FormTextareaProps {
   className?: string;
   rows?: number;
   disabled?: boolean;
+  confidence?: number;
+  confidenceThreshold?: number;
 }
 
 /**
@@ -25,9 +27,17 @@ export function FormTextarea({
   className,
   rows = 4,
   disabled = false,
+  confidence,
+  confidenceThreshold,
 }: FormTextareaProps) {
+  const threshold = confidenceThreshold ?? 0.75;
+  const isLowConfidence = confidence !== undefined && confidence < threshold;
+
   return (
-    <div className={cn("space-y-2", className)}>
+    <div
+      className={cn("space-y-2", className)}
+      data-low-confidence={isLowConfidence ? "true" : undefined}
+    >
       <label className="text-sm font-medium text-muted-foreground">
         {label}
       </label>
@@ -37,7 +47,10 @@ export function FormTextarea({
         placeholder={placeholder}
         disabled={disabled}
         rows={rows}
-        className="bg-card-cell border-card-cell-border resize-none"
+        className={cn(
+          "bg-card-cell border-card-cell-border resize-none",
+          isLowConfidence && "border-amber-400/80 bg-amber-50/60 text-foreground"
+        )}
       />
     </div>
   );

@@ -11,6 +11,8 @@ interface FormFieldProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  confidence?: number;
+  confidenceThreshold?: number;
 }
 
 /**
@@ -25,9 +27,17 @@ export function FormField({
   placeholder,
   className,
   disabled = false,
+  confidence,
+  confidenceThreshold,
 }: FormFieldProps) {
+  const threshold = confidenceThreshold ?? 0.75;
+  const isLowConfidence = confidence !== undefined && confidence < threshold;
+
   return (
-    <div className={cn("space-y-2", className)}>
+    <div
+      className={cn("space-y-2", className)}
+      data-low-confidence={isLowConfidence ? "true" : undefined}
+    >
       <label className="text-sm font-medium text-muted-foreground">
         {label}
       </label>
@@ -37,7 +47,10 @@ export function FormField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="bg-card-cell border-card-cell-border"
+        className={cn(
+          "bg-card-cell border-card-cell-border",
+          isLowConfidence && "border-amber-400/80 bg-amber-50/60 text-foreground"
+        )}
       />
     </div>
   );
