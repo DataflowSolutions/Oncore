@@ -13,6 +13,7 @@ import {
   getScheduleItemsForShow,
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
+import { formatDate, formatTime } from "@/lib/utils";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -167,27 +168,13 @@ export function HotelPanel({
                         <div className="text-base text-description-foreground">
                           <span>
                             {" "}
-                            {new Date(hotelInfo.checkIn).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
+                            {formatDate(hotelInfo.checkIn, { format: "date" })}
                           </span>
                         </div>
                         <div className="text-base text-description-foreground">
                           <span>
                             {" "}
-                            {new Date(hotelInfo.checkIn).toLocaleTimeString(
-                              "en-GB",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              }
-                            )}
+                            {formatTime(hotelInfo.checkIn)}
                           </span>
                         </div>
                       </>
@@ -208,26 +195,12 @@ export function HotelPanel({
                       <>
                         <div className="text-base text-description-foreground">
                           <span>
-                            {new Date(hotelInfo.checkOut).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
+                            {formatDate(hotelInfo.checkOut, { format: "date" })}
                           </span>
                         </div>
                         <div className="text-base text-description-foreground">
                           <span>
-                            {new Date(hotelInfo.checkOut).toLocaleTimeString(
-                              "en-GB",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              }
-                            )}
+                            {formatTime(hotelInfo.checkOut)}
                           </span>
                         </div>
                       </>
@@ -268,7 +241,7 @@ export function HotelPanel({
                   <Calendar className="w-3 h-3" />
                   {hotel!.checkIn && (
                     <span>
-                      Check-in: {new Date(hotel!.checkIn).toLocaleDateString()}
+                      Check-in: {formatDate(hotel!.checkIn, { format: "short-date" })}
                     </span>
                   )}
                   {hotel!.checkIn && hotel!.checkOut && (
@@ -277,7 +250,7 @@ export function HotelPanel({
                   {hotel!.checkOut && (
                     <span>
                       Check-out:{" "}
-                      {new Date(hotel!.checkOut).toLocaleDateString()}
+                      {formatDate(hotel!.checkOut, { format: "short-date" })}
                     </span>
                   )}
                 </div>
@@ -604,24 +577,10 @@ export function HotelPanel({
                     {hotelInfo.checkIn && (
                       <>
                         <div className="text-base text-card-foreground">
-                          {new Date(hotelInfo.checkIn).toLocaleDateString(
-                            "en-GB",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            }
-                          )}
+                          {formatDate(hotelInfo.checkIn, { format: "date" })}
                         </div>
                         <div className="text-base text-card-foreground">
-                          {new Date(hotelInfo.checkIn).toLocaleTimeString(
-                            "en-GB",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            }
-                          )}
+                          {formatTime(hotelInfo.checkIn)}
                         </div>
                       </>
                     )}
@@ -643,24 +602,10 @@ export function HotelPanel({
                     {hotelInfo.checkOut && (
                       <>
                         <div className="text-base text-card-foreground text-end">
-                          {new Date(hotelInfo.checkOut).toLocaleDateString(
-                            "en-GB",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            }
-                          )}
+                          {formatDate(hotelInfo.checkOut, { format: "date" })}
                         </div>
                         <div className="text-base text-card-foreground text-end">
-                          {new Date(hotelInfo.checkOut).toLocaleTimeString(
-                            "en-GB",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            }
-                          )}
+                          {formatTime(hotelInfo.checkOut)}
                         </div>
                       </>
                     )}

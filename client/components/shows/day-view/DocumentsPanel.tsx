@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popup } from "@/components/ui/popup";
 import { Input } from "@/components/ui/input";
 import { logger } from "@/lib/logger";
+import { formatDate } from "@/lib/utils";
 import {
   getAdvancingFileUrl,
   uploadAdvancingFile,
@@ -138,11 +139,20 @@ export function DocumentsPanel({
 
     setIsCreatingDoc(true);
     try {
+      // Get the category label to prefix the document name
+      const categoryLabel = documentCategories.find(c => c.value === selectedCategory)?.label || "";
+      
+      // For "other" category, just use the label as-is
+      // For specific categories, prefix with category name so it gets categorized correctly
+      const finalLabel = selectedCategory === "other" 
+        ? newDocLabel 
+        : `${categoryLabel}: ${newDocLabel}`;
+
       const result = await createAdvancingDocument(
         orgSlug!,
         showId!,
         "artist", // Default to "artist" (our documents)
-        newDocLabel
+        finalLabel
       );
 
       if (result.success) {
@@ -409,14 +419,7 @@ export function DocumentsPanel({
                             {doc.label || "Untitled Document"}
                           </h5>
                           <p className="text-xs text-neutral-500">
-                            {new Date(doc.created_at).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              }
-                            )}
+                            {formatDate(doc.created_at, { format: "date" })}
                           </p>
                         </div>
                         <Badge variant="outline" className="text-xs">
@@ -442,9 +445,7 @@ export function DocumentsPanel({
                                   </p>
                                   <p className="text-xs text-neutral-500">
                                     {formatFileSize(file.size_bytes)} •{" "}
-                                    {new Date(
-                                      file.created_at
-                                    ).toLocaleDateString("en-US")}
+                                    {formatDate(file.created_at, { format: "short-date" })}
                                   </p>
                                 </div>
                               </div>

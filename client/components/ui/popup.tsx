@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,8 +51,12 @@ export function Popup({
         >
           <DialogHeader>
             <DialogTitle className="font-header text-2xl">{title}</DialogTitle>
-            {description && (
+            {description ? (
               <DialogDescription>{description}</DialogDescription>
+            ) : (
+              <VisuallyHidden.Root>
+                <DialogDescription>{title}</DialogDescription>
+              </VisuallyHidden.Root>
             )}
           </DialogHeader>
           {children}

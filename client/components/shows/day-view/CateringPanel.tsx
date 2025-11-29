@@ -13,6 +13,7 @@ import {
   getScheduleItemsForShow,
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
+import { formatDate, formatTime } from "@/lib/utils";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Database } from "@/lib/database.types";
@@ -152,14 +153,7 @@ export function CateringPanel({
             >
               {cateringInfo.serviceDateTime && (
                 <div className="font-header text-xl text-center">
-                  {new Date(cateringInfo.serviceDateTime).toLocaleTimeString(
-                    "en-GB",
-                    {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    }
-                  )}
+                  {formatTime(cateringInfo.serviceDateTime)}
                 </div>
               )}
               {cateringInfo.name && (
@@ -454,24 +448,10 @@ export function CateringPanel({
               {cateringInfo?.serviceDateTime && (
                 <div className="text-center">
                   <p className="text-sm text-description-foreground text-end">
-                    {new Date(cateringInfo.serviceDateTime).toLocaleDateString(
-                      "en-GB",
-                      {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      }
-                    )}
+                    {formatDate(cateringInfo.serviceDateTime, { format: "date" })}
                   </p>
                   <p className="text-sm text-description-foreground text-end">
-                    {new Date(cateringInfo.serviceDateTime).toLocaleTimeString(
-                      "en-GB",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      }
-                    )}
+                    {formatTime(cateringInfo.serviceDateTime)}
                   </p>
                 </div>
               )}

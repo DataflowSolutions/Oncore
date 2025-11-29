@@ -13,6 +13,7 @@ import {
   getScheduleItemsForShow,
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
+import { formatTime } from "@/lib/utils";
 
 interface FlightData {
   airlineName?: string;
@@ -190,14 +191,7 @@ export function FlightsPanel({
                     </MarqueeText>
                     {flight.departureDateTime && (
                       <div className="text-xs text-description-foreground">
-                        {new Date(flight.departureDateTime).toLocaleTimeString(
-                          "en-GB",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          }
-                        )}
+                        {formatTime(flight.departureDateTime)}
                       </div>
                     )}
                   </div>
@@ -234,14 +228,7 @@ export function FlightsPanel({
                     </MarqueeText>
                     {flight.arrivalDateTime && (
                       <div className="text-xs text-description-foreground">
-                        {new Date(flight.arrivalDateTime).toLocaleTimeString(
-                          "en-GB",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          }
-                        )}
+                        {formatTime(flight.arrivalDateTime)}
                       </div>
                     )}
                   </div>
@@ -657,13 +644,7 @@ export function FlightsPanel({
                           </div>
                           {flight.departureDateTime && (
                             <div className="text-xs md:text-xs text-description-foreground">
-                              {new Date(
-                                flight.departureDateTime
-                              ).toLocaleTimeString("en-GB", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              })}
+                              {formatTime(flight.departureDateTime)}
                             </div>
                           )}
                         </div>
@@ -706,13 +687,7 @@ export function FlightsPanel({
                           </div>
                           {flight.arrivalDateTime && (
                             <div className="text-xs md:text-xs text-description-foreground">
-                              {new Date(
-                                flight.arrivalDateTime
-                              ).toLocaleTimeString("en-GB", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              })}
+                              {formatTime(flight.arrivalDateTime)}
                             </div>
                           )}
                         </div>
@@ -836,13 +811,7 @@ export function FlightsPanel({
                               </div>
                               {flight.departureDateTime && (
                                 <div className="text-xs md:text-xs text-description-foreground">
-                                  {new Date(
-                                    flight.departureDateTime
-                                  ).toLocaleTimeString("en-GB", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                  })}
+                                  {formatTime(flight.departureDateTime)}
                                 </div>
                               )}
                             </div>
@@ -885,13 +854,7 @@ export function FlightsPanel({
                               </div>
                               {flight.arrivalDateTime && (
                                 <div className="text-xs md:text-xs text-description-foreground">
-                                  {new Date(
-                                    flight.arrivalDateTime
-                                  ).toLocaleTimeString("en-GB", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                  })}
+                                  {formatTime(flight.arrivalDateTime)}
                                 </div>
                               )}
                             </div>

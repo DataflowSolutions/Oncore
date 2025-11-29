@@ -1,3 +1,5 @@
+import { formatTime } from "@/lib/utils";
+
 interface ScheduleItem {
   id: string;
   time: string;
@@ -66,19 +68,11 @@ export function ScheduleEventItem({
               {item.title}
             </div>
             <div className="text-xs text-schedule-event-foreground/80 whitespace-nowrap flex-shrink-0">
-              {new Date(item.time).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: false,
-              })}
+              {formatTime(item.time)}
               {item.endTime && (
                 <>
                   {" - "}
-                  {new Date(item.endTime).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: false,
-                  })}
+                  {formatTime(item.endTime)}
                 </>
               )}
             </div>
@@ -92,19 +86,11 @@ export function ScheduleEventItem({
               </div>
               {showTimeDetails && (
                 <div className="text-xs text-schedule-event-foreground mt-0.5 truncate">
-                  {new Date(item.time).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: false,
-                  })}
+                  {formatTime(item.time)}
                   {item.endTime && (
                     <>
                       {" - "}
-                      {new Date(item.endTime).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: false,
-                      })}
+                      {formatTime(item.endTime)}
                     </>
                   )}
                 </div>
