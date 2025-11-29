@@ -71,7 +71,9 @@ export function OrganizationsList({ organizations }: OrganizationsListProps) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {organizations
             .filter(({ organizations: org }) => org !== null && org !== undefined)
-            .map(({ organizations: org, role }) => (
+            .map(({ organizations: org, role }) => {
+              if (!org) return null;
+              return (
             <Card key={org.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -111,7 +113,8 @@ export function OrganizationsList({ organizations }: OrganizationsListProps) {
                 </Button>
               </CardContent>
             </Card>
-          ))}
+              );
+            })}
         </div>
       )}
     </div>

@@ -11,7 +11,7 @@ import {
   Filter,
   Upload,
 } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +35,9 @@ export function Sidebar({ orgSlug }: SidebarProps) {
     lastShowId,
   } = useSidebarStore();
 
+  // Track if we've checked localStorage
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
+
   // Extract showId from current URL
   const currentShowId = useMemo(() => {
     const showMatch = pathname?.match(new RegExp(`/${orgSlug}/shows/([^/]+)`));
@@ -49,11 +52,18 @@ export function Sidebar({ orgSlug }: SidebarProps) {
         const parsed = JSON.parse(stored);
         if (parsed.orgSlug === orgSlug && parsed.showId) {
           setLastShowId(parsed.showId);
+        } else {
+          // Different org or no showId, clear it
+          setLastShowId(null);
         }
       } catch {
         // Ignore parse errors
+        setLastShowId(null);
       }
+    } else {
+      setLastShowId(null);
     }
+    setHasCheckedStorage(true);
   }, [orgSlug, setLastShowId]);
 
   // Update localStorage when navigating to a show page
@@ -70,20 +80,71 @@ export function Sidebar({ orgSlug }: SidebarProps) {
     }
   }, [currentShowId, orgSlug, setLastShowId]);
 
+  // Fetch shows list to get latest show when no show is stored
+  const { data: showsList } = useQuery({
+    queryKey: queryKeys.shows(orgSlug),
+    queryFn: async () => {
+      const response = await fetch(`/api/${orgSlug}/shows`);
+      if (!response.ok) {
+        return [];
+      }
+      return response.json();
+    },
+    enabled: hasCheckedStorage && !lastShowId, // Only fetch if we've checked storage and have no show
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  // Set latest show from shows list if we don't have one stored
+  useEffect(() => {
+    if (hasCheckedStorage && !lastShowId && showsList && showsList.length > 0) {
+      // Sort by show_date descending to get the most recent show
+      const sortedShows = [...showsList].sort((a: { show_date: string }, b: { show_date: string }) => {
+        return new Date(b.show_date).getTime() - new Date(a.show_date).getTime();
+      });
+      const latestShow = sortedShows[0];
+      if (latestShow?.id) {
+        setLastShowId(latestShow.id);
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            orgSlug,
+            showId: latestShow.id,
+          })
+        );
+      }
+    }
+  }, [hasCheckedStorage, lastShowId, showsList, orgSlug, setLastShowId]);
+
   // Use lastShowId for sub-nav (persists across navigation)
   const showId = lastShowId;
 
   // Fetch show data - will use prefetched/cached data when available
-  const { data: show } = useQuery({
+  const { data: show, isError } = useQuery({
     queryKey: queryKeys.show(showId!),
     queryFn: async () => {
       const response = await fetch(`/api/${orgSlug}/shows/${showId}`);
-      if (!response.ok) return null;
+      if (!response.ok) {
+        // If show doesn't exist (404), clear it from localStorage
+        if (response.status === 404) {
+          localStorage.removeItem(STORAGE_KEY);
+          setLastShowId(null);
+        }
+        return null;
+      }
       return response.json();
     },
     enabled: !!showId, // Only run if we have a showId
     staleTime: 5 * 60 * 1000, // 5 minutes - show metadata rarely changes
+    retry: false, // Don't retry on 404
   });
+
+  // Clear lastShowId if fetch failed (show was deleted or doesn't exist)
+  useEffect(() => {
+    if (isError && showId) {
+      localStorage.removeItem(STORAGE_KEY);
+      setLastShowId(null);
+    }
+  }, [isError, showId, setLastShowId]);
 
   const navigation = [
     // { name: "Today", href: `/${orgSlug}/day`, icon: CalendarDays },
@@ -94,8 +155,8 @@ export function Sidebar({ orgSlug }: SidebarProps) {
     // { name: "Calendar", href: `/${orgSlug}/calendar`, icon: CalendarClock },
   ];
 
-  // Day view navigation - shown if we have a last visited show (even when not on show page)
-  const dayViewNav = showId
+  // Day view navigation - shown only if we have a valid show that exists
+  const dayViewNav = showId && show
     ? [
         {
           name: "Day Schedule",

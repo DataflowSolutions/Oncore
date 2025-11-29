@@ -1,6 +1,5 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPeopleByOrg } from '@/lib/actions/team'
-import { checkAvailableSeats, getOrgInvitations } from '@/lib/actions/invitations'
 import PeoplePageClient from '@/components/team/PeoplePageClient'
 
 interface ArtistPageProps {
@@ -20,12 +19,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
     return <div>Organization not found</div>
   }
 
-  // Get all people, seat info, and invitations in parallel
-  const [allPeople, seatInfo, invitations] = await Promise.all([
-    getPeopleByOrg(org.id),
-    checkAvailableSeats(org.id),
-    getOrgInvitations(org.id)
-  ])
+  const allPeople = await getPeopleByOrg(org.id)
 
   // Filter for artists (lowercase enum value)
   const artistPeople = allPeople.filter(person => 
@@ -35,8 +29,6 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
   return (
     <PeoplePageClient 
       allPeople={artistPeople}
-      seatInfo={seatInfo}
-      invitations={invitations ?? []}
     />
   )
 }

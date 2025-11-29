@@ -3,8 +3,6 @@
 import { useVenuesWithCounts } from "@/lib/hooks/use-venues";
 import {
   usePeople,
-  useInvitations,
-  useAvailableSeats,
 } from "@/lib/hooks/use-people";
 import { useQuery } from "@tanstack/react-query";
 import VenuesClient from "./components/VenuesClient";
@@ -41,8 +39,6 @@ export function VenuesPageClient({
     isLoading: peopleLoading,
     error: peopleError,
   } = usePeople(orgSlug);
-  const { data: invitations = [] } = useInvitations(orgSlug);
-  const { data: seatInfo } = useAvailableSeats(orgSlug);
 
   if (venuesError) {
     return (
@@ -79,8 +75,6 @@ export function VenuesPageClient({
         venues={venues}
         promoters={promoters}
         people={allPeople}
-        invitations={invitations}
-        seatInfo={seatInfo ?? null}
         orgId={orgId}
         orgSlug={orgSlug}
         view={view}

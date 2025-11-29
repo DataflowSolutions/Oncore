@@ -49,7 +49,7 @@ export default function PersonDetailModal({ personId, isOpen, onClose }: PersonD
     
     try {
       const data = await getPersonDetails(personId)
-      setDetails(data)
+      setDetails(data as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load person details')
     } finally {

@@ -5,16 +5,16 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 
 
-export async function assignPlanDebug(orgId: string, planId: string, trialDays: number = 7) {
+export async function assignPlanDebug(orgId: string, planId: string) {
   try {
     const supabase = await getSupabaseServer()
-    
+
     // Call the RPC function we created
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .rpc('app_assign_plan_debug', {
         p_org_id: orgId,
-        p_plan_id: planId,
-        p_trial_days: trialDays
+        p_plan: planId
       })
 
     if (error) {
@@ -24,9 +24,9 @@ export async function assignPlanDebug(orgId: string, planId: string, trialDays: 
 
     // Revalidate the billing debug page to show updated data
     revalidatePath(`/billing-debug`)
-    
+
     return { success: true }
-    
+
   } catch (error) {
     logger.error('Error assigning plan', error)
     throw error

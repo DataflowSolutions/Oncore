@@ -1,20 +1,14 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building } from "lucide-react";
 import Link from "next/link";
 import ViewHeader from "./ViewHeader";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
 import type { Database } from "@/lib/database.types";
-import type { SeatCheckResult } from "@/lib/actions/invitations";
 import AddPersonButton from "../../people/components/AddPersonButton";
 import { AddPromoterModal } from "@/components/promoters/AddPromoterModal";
-import { invitePerson } from "@/lib/actions/invitations";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { useTransition } from "react";
 import TeamFilters from "./TeamFilters";
 import type { TeamMemberFilterValue } from "@/lib/constants/team-filters";
 import { AddVenueModal } from "@/components/venues/AddVenueModal";
@@ -32,22 +26,11 @@ interface Venue {
 }
 
 type Person = Database["public"]["Tables"]["people"]["Row"];
-type Invitation = Database["public"]["Tables"]["invitations"]["Row"] & {
-  people: {
-    id: string;
-    name: string;
-    email: string | null;
-    role_title: string | null;
-    member_type: "artist" | "crew" | "management" | "vendor" | "other" | null;
-  };
-};
 
 interface VenuesClientProps {
   venues: Venue[];
   promoters: PromoterWithVenues[];
   people: Person[];
-  invitations: Invitation[];
-  seatInfo: SeatCheckResult | null;
   orgId: string;
   orgSlug: string;
   view: string;
@@ -57,18 +40,12 @@ export default function VenuesClient({
   venues,
   promoters,
   people,
-  invitations,
-  seatInfo,
   orgId,
   orgSlug,
   view,
 }: VenuesClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] =
-    useState<TeamMemberFilterValue>("all");
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-  const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<TeamMemberFilterValue>("all");
 
   // Filter venues based on search query
   const filteredVenues = useMemo(() => {
@@ -133,42 +110,16 @@ export default function VenuesClient({
     return filtered;
   }, [people, searchQuery, activeFilter]);
 
-  // Create a map of person_id to invitation for quick lookup
-  const invitationMap = new Map(invitations.map((inv) => [inv.person_id, inv]));
-
-  const handleInvite = async (
-    personId: string,
-    personName: string,
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (!seatInfo?.can_invite) {
-      toast.error("No available seats", {
-        description: "Upgrade your plan to invite more team members",
-      });
-      return;
+  const getPersonStatus = (person: Person) => {
+    if (person.user_id) {
+      return { label: "Active", variant: "default" as const };
     }
 
-    setInvitingPersonId(personId);
+    if (person.email) {
+      return { label: "Contact Only", variant: "secondary" as const };
+    }
 
-    startTransition(async () => {
-      const result = await invitePerson(personId);
-
-      if (result.success) {
-        toast.success("Invitation sent!", {
-          description: `${personName} will receive an email to join the team`,
-        });
-        router.refresh();
-      } else {
-        toast.error("Failed to send invitation", {
-          description: result.error || "Please try again",
-        });
-      }
-
-      setInvitingPersonId(null);
-    });
+    return { label: "No Email", variant: "destructive" as const };
   };
 
   return (
@@ -190,6 +141,7 @@ export default function VenuesClient({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredPeople.map((person) => {
+              const status = getPersonStatus(person);
               return (
                 <div
                   key={person.id}
@@ -213,7 +165,7 @@ export default function VenuesClient({
                       )}
                     </div>
 
-                    {/* Right side: Role and invite button */}
+                    {/* Right side: Role and status */}
                     <div className="flex flex-col items-center justify-center gap-3">
                       {person.member_type && (
                         <Badge
@@ -223,41 +175,12 @@ export default function VenuesClient({
                           {person.member_type}
                         </Badge>
                       )}
-                      {!person.user_id &&
-                        person.email &&
-                        !invitationMap.has(person.id) && (
-                          <Button
-                            size="sm"
-                            disabled={
-                              !seatInfo?.can_invite ||
-                              invitingPersonId === person.id
-                            }
-                            onClick={(e) =>
-                              handleInvite(person.id, person.name, e)
-                            }
-                            className="rounded-full text-xs w-[84px] h-[24px] flex items-center justify-center"
-                          >
-                            {invitingPersonId === person.id
-                              ? "Sending..."
-                              : "Invite"}
-                          </Button>
-                        )}
-                      {invitationMap.has(person.id) && (
                         <Badge
-                          variant="secondary"
-                          className="text-xs w-[84px] h-[24px] flex items-center justify-center"
-                        >
-                          Invited
-                        </Badge>
-                      )}
-                      {person.user_id && (
-                        <Badge
-                          variant="default"
-                          className="text-xs w-[84px] h-[24px] flex items-center justify-center"
-                        >
-                          Active
-                        </Badge>
-                      )}
+                        variant={status.variant}
+                        className="text-xs w-[96px] h-[24px] flex items-center justify-center"
+                      >
+                        {status.label}
+                      </Badge>
                     </div>
                   </div>
                 </div>

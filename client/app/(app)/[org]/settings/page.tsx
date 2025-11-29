@@ -20,6 +20,7 @@ import { logger } from "@/lib/logger";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { CircleQuestionMark, Settings } from "lucide-react";
+import { useSidebarStore } from "@/lib/stores/sidebar-store";
 
 interface UserProfile {
   id: string;
@@ -30,17 +31,12 @@ interface UserProfile {
   };
 }
 
-interface Organization {
-  id: string;
+interface UserOrganization {
+  org_id: string;
   name: string;
   slug: string;
-  created_at: string;
-}
-
-interface UserOrganization {
   role: string;
-  created_at: string;
-  organizations: Organization;
+  status: string;
 }
 
 export default function SettingsPage() {
@@ -80,22 +76,9 @@ export default function SettingsPage() {
         setFullName(authUser.user_metadata?.full_name || "");
         setPhone(authUser.user_metadata?.phone || "");
 
-        // Fetch user's organizations
-        const { data: orgsData } = await supabase
-          .from("org_members")
-          .select(
-            `
-            role,
-            created_at,
-            organizations (
-              id,
-              name,
-              slug,
-              created_at
-            )
-          `
-          )
-          .eq("user_id", authUser.id);
+        // Fetch user's organizations using RPC
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: orgsData } = await (supabase as any).rpc("get_user_organizations");
 
         if (orgsData) {
           setOrganizations(orgsData as UserOrganization[]);
@@ -196,7 +179,7 @@ export default function SettingsPage() {
 
   // Check if current user is owner of current org
   const isCurrentOrgOwner =
-    organizations.find((o) => o.organizations.id === currentOrgId)?.role ===
+    organizations.find((o) => o.org_id === currentOrgId)?.role ===
     "owner";
 
   const getRoleBadgeColor = (role: string) => {
@@ -370,11 +353,15 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {organizations.map(({ organizations: org, role }) => (
+                  {organizations.map((org) => (
                     <div
-                      key={org.id}
+                      key={org.org_id}
                       onClick={() => {
-                        if (org.id !== currentOrgId) {
+                        if (org.org_id !== currentOrgId) {
+                          // Clear selected show when switching orgs
+                          // to prevent showing Day Schedule for a show from a different org
+                          localStorage.removeItem("oncore_last_show");
+                          useSidebarStore.getState().setLastShowId(null);
                           router.push(`/${org.slug}/settings`);
                           toast.success(
                             `Switched to organization: ${org.name}`
@@ -386,14 +373,14 @@ export default function SettingsPage() {
                         }
                       }}
                       className={`flex items-center justify-between p-4 rounded-lg transition-colors border-card-cell-border cursor-pointer ${
-                        org.id === currentOrgId
+                        org.org_id === currentOrgId
                           ? "bg-current-org-bg hover:bg-current-org-bg-hover"
                           : "bg-card-cell hover:bg-card-cell-hover"
                       }`}
                     >
                       <div className="flex items-center gap-2 font-header justify-between w-full">
                         <h3>{org.name}</h3>
-                        {org.id === currentOrgId && (
+                        {org.org_id === currentOrgId && (
                           <span className="text-xs">Selected</span>
                         )}
                       </div>

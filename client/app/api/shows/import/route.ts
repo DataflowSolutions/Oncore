@@ -216,7 +216,7 @@ async function handleAnalyze(request: NextRequest) {
       status: "processing",
       rawText,
       normalizedText,
-    parsedJson: { progress: "Extracting" },
+      parsedJson: { progress: "Extracting" },
       confidenceMap: {},
       duplicates: [],
       metadata,
@@ -332,7 +332,8 @@ async function handleCommit(request: NextRequest) {
     const venueLookup = payload.venueName?.trim();
     let venueId: string | null = null;
     if (venueLookup) {
-      const { data: venueMatch, error: venueError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: venueMatch, error: venueError } = await (supabase as any)
         .from("venues")
         .select("id,name,city")
         .eq("org_id", orgId)
@@ -377,7 +378,7 @@ async function handleCommit(request: NextRequest) {
       if (lookupName) {
         const artistId = await findOrMatchArtist(supabase, orgId, lookupName);
         if (artistId) {
-          const { error: assignError } = await supabase
+          const { error: assignError } = await (supabase as any)
             .from("show_assignments")
             .insert({
               show_id: showId,
@@ -471,7 +472,7 @@ function extractStructuredGig(rawText: string): StructuredGig {
 
   const fee = pickFee(rawText);
   const dealType = pickDealType(lowered);
-  const currency = pickCurrency(fee?.value ?? null);
+  const currency = pickCurrency(fee ?? null);
   const paymentTerms = pickField(
     rawText,
     /(payment terms|payable|due|nett?|betalning)\s*[:\-]\s*([^\n]+)/i,
@@ -849,7 +850,8 @@ export async function findOrMatchArtist(
   const trimmed = name.trim();
   if (!trimmed) return null;
 
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from("people")
     .select("id,name")
     .eq("org_id", orgId)
@@ -861,7 +863,8 @@ export async function findOrMatchArtist(
     return data.id;
   }
 
-  const { data: fuzzy } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: fuzzy } = await (supabase as any)
     .from("people")
     .select("id,name")
     .eq("org_id", orgId)
@@ -881,7 +884,8 @@ export async function performOCR(file: File): Promise<string> {
     // Lazy-load to keep cold paths light
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { createWorker } = await import("tesseract.js");
-    const worker = await createWorker();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const worker: any = await createWorker();
     await worker.loadLanguage("eng");
     await worker.initialize("eng");
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -1146,10 +1150,10 @@ function makeCandidate(structured: StructuredGig): GigCandidate {
 export function structuredFromRow(row: Record<string, string>): StructuredGig {
   const date = normalizeDateCandidate(
     row.date ||
-      row["show date"] ||
-      row["performance date"] ||
-      row["performancedate"] ||
-      row["datum"],
+    row["show date"] ||
+    row["performance date"] ||
+    row["performancedate"] ||
+    row["datum"],
   );
   const city = row.city || row["stad"] || row["venue city"] || null;
   const venue = row.venue || row["venue name"] || row["location"] || null;
@@ -1226,8 +1230,8 @@ export async function parseExcel(file: File): Promise<Record<string, string>[]> 
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const json = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: "" });
-    return json.map((row) => {
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    return json.map((row: Record<string, string>) => {
       const normalizedRow: Record<string, string> = {};
       Object.keys(row).forEach((key) => {
         normalizedRow[key.toLowerCase()] = String(row[key] ?? "").trim();

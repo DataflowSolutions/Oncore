@@ -45,7 +45,8 @@ export async function GET(
 
     if (showIds.length > 0) {
       // Use RPC function to avoid RLS recursion issues
-      const { data: assignments, error: assignmentsError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: assignments, error: assignmentsError } = await (supabase as any)
         .rpc("get_show_assignments_for_shows", {
           p_show_ids: showIds,
         });

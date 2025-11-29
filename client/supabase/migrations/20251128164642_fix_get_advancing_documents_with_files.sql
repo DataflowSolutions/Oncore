@@ -3,8 +3,14 @@
 -- Drop the old function first (can't change return type with create or replace)
 drop function if exists get_advancing_documents(uuid);
 
--- Create a type for the document with files response
-drop type if exists advancing_document_with_files cascade;
+-- Create a type for the document with files response (drop if exists first)
+do $$ 
+begin
+  if exists (select 1 from pg_type where typname = 'advancing_document_with_files') then
+    drop type advancing_document_with_files cascade;
+  end if;
+end $$;
+
 create type advancing_document_with_files as (
   id uuid,
   show_id uuid,

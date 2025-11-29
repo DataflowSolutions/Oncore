@@ -5,8 +5,9 @@ import { buildCandidatesFromInput, buildConfidenceMap, findDuplicates, normalize
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const orgId = request.nextUrl.searchParams.get("orgId");
   if (!orgId) {
     return NextResponse.json({ error: "orgId is required" }, { status: 400 });
@@ -18,7 +19,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const job = await fetchImportJob(supabase, params.id, orgId);
+  const job = await fetchImportJob(supabase, id, orgId);
   if (!job) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -44,7 +45,7 @@ export async function POST(
   }
   const confidenceMap = buildConfidenceMap(candidatesWithDuplicates);
 
-  const updated = await updateImportJob(supabase, params.id, {
+  const updated = await updateImportJob(supabase, id, {
     status: "needs_review",
     parsedJson: { candidates: candidatesWithDuplicates, source: "text" },
     confidenceMap,

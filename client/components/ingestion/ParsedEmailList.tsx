@@ -36,10 +36,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const statusLabels: Record<ParsedEmailRow["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending_review: { label: "Pending review", variant: "secondary" },
-  confirmed: { label: "Confirmed", variant: "default" },
+  pending: { label: "Pending review", variant: "secondary" },
+  accepted: { label: "Accepted", variant: "default" },
   rejected: { label: "Rejected", variant: "destructive" },
-  failed: { label: "Failed", variant: "destructive" },
+  error: { label: "Error", variant: "destructive" },
 };
 
 type ParsedEmailRow = Database["public"]["Tables"]["parsed_emails"]["Row"];
@@ -61,11 +61,11 @@ interface ParsedEmailListProps {
 
 export function ParsedEmailList({ orgId, orgSlug, emails, venues }: ParsedEmailListProps) {
   const pending = useMemo(
-    () => emails.filter((email) => email.status === "pending_review"),
+    () => emails.filter((email) => email.status === "pending"),
     [emails],
   );
   const processed = useMemo(
-    () => emails.filter((email) => email.status !== "pending_review"),
+    () => emails.filter((email) => email.status !== "pending"),
     [emails],
   );
 
@@ -156,9 +156,7 @@ function ReviewedEmailCard({
         </Badge>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        {email.status === "failed" && email.error ? (
-          <p className="text-destructive">{email.error}</p>
-        ) : null}
+
         {show?.title ? (
           <div>
             <p className="font-medium">{show.title}</p>
@@ -168,9 +166,9 @@ function ReviewedEmailCard({
             </p>
           </div>
         ) : null}
-        {email.show_id ? (
+        {email.linked_show_id ? (
           <Button asChild size="sm" variant="outline">
-            <a href={`/${orgSlug}/shows/${email.show_id}`}>View show</a>
+            <a href={`/${orgSlug}/shows/${email.linked_show_id}`}>View show</a>
           </Button>
         ) : null}
       </CardContent>
@@ -301,9 +299,7 @@ function ParsedEmailItem({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {email.error ? (
-          <p className="text-sm text-destructive">{email.error}</p>
-        ) : null}
+
 
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="parsed-details">

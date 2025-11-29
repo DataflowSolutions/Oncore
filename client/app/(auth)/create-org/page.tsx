@@ -122,6 +122,10 @@ export default function CreateOrgPage() {
       }
       // If no error, the server action will redirect
     } catch (err) {
+      // NEXT_REDIRECT is thrown by redirect() and should not be treated as an error
+      if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
+        throw err; // Re-throw to let Next.js handle the redirect
+      }
       logger.error("Form submission error", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {

@@ -49,7 +49,8 @@ export default async function BillingDebugPage({
   }
 
   // Get current subscription
-  const { data: subscription } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: subscription } = await (supabase as any)
     .from("org_subscriptions")
     .select(
       `
@@ -70,13 +71,15 @@ export default async function BillingDebugPage({
     .single();
 
   // Get all available plans
-  const { data: plans } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: plans } = await (supabase as any)
     .from("billing_plans")
     .select("*")
     .order("price_cents");
 
   // Get seat usage
-  const { data: seatUsage } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: seatUsage } = await (supabase as any)
     .from("org_seat_usage")
     .select("*")
     .eq("org_id", org.id)

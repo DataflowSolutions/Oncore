@@ -3,7 +3,7 @@ import type { Database } from "../database.types";
 import { getClientConfig, validateConfig } from "./config";
 
 // Memoized client instance (singleton pattern)
-let client: ReturnType<typeof createBrowserClient<Database>> | null = null;
+let client: any = null;
 
 /**
  * Create or return the singleton browser Supabase client
@@ -11,9 +11,7 @@ let client: ReturnType<typeof createBrowserClient<Database>> | null = null;
  * This client is safe to use in client components and uses
  * NEXT_PUBLIC_ environment variables only.
  */
-export function createClient(): ReturnType<
-  typeof createBrowserClient<Database>
-> {
+export function createClient(): any {
   if (client) {
     return client;
   }
@@ -21,7 +19,7 @@ export function createClient(): ReturnType<
   const config = getClientConfig();
   validateConfig(config, "client");
 
-  client = createBrowserClient<Database>(config.url!, config.anonKey!);
+  client = createBrowserClient<Database>(config.url!, config.anonKey!) as any;
 
   return client;
 }

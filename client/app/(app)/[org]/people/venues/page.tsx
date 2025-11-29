@@ -8,6 +8,19 @@ interface VenuesPageProps {
   params: Promise<{ org: string }>;
 }
 
+interface Venue {
+  id: string;
+  name: string;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  capacity: number | null;
+  contacts: any | null;
+  created_at: string;
+  org_id: string;
+  shows?: { count: number }[];
+}
+
 export default async function VenuesPage({ params }: VenuesPageProps) {
   const { org: orgSlug } = await params;
 
@@ -22,7 +35,8 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
   }
 
   // Get venues from the venues table
-  const { data: venues } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rawVenues } = await (supabase as any)
     .from("venues")
     .select(
       `
@@ -33,7 +47,8 @@ export default async function VenuesPage({ params }: VenuesPageProps) {
     .eq("org_id", org.id)
     .order("name");
 
-  const allVenues = venues || [];
+  const venues = (rawVenues || []) as Venue[];
+  const allVenues = venues;
 
   // Get show counts
   const totalShows = allVenues.reduce(

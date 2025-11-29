@@ -1,8 +1,6 @@
 import { logger } from '@/lib/logger'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/lib/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
 type CalendarEvent = {
   id: string
@@ -26,7 +24,8 @@ type CalendarEvent = {
 }
 
 export class CalendarService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  // Use a loose type for Supabase to avoid RPC type conflicts while we stabilize the schema.
+  constructor(private supabase: any) {}
 
   /**
    * Sync calendar events to schedule_items

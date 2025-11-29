@@ -9,8 +9,6 @@ import {
   getCachedOrgVenuesWithCounts,
   getCachedPromoters,
   getCachedOrgPeopleFull,
-  getCachedAvailableSeats,
-  getCachedOrgInvitations,
 } from "@/lib/cache";
 import { notFound } from "next/navigation";
 import { VenuesPageClient } from "./venues-page-client";
@@ -64,19 +62,6 @@ export default async function VenuesPage({
         queryFn: async () => {
           const { data: people } = await getCachedOrgPeopleFull(org.id);
           return people || [];
-        },
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.invitations(orgSlug),
-        queryFn: async () => {
-          const { data: invitations } = await getCachedOrgInvitations(org.id);
-          return invitations || [];
-        },
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.seats(orgSlug),
-        queryFn: async () => {
-          return await getCachedAvailableSeats(org.id);
         },
       })
     );

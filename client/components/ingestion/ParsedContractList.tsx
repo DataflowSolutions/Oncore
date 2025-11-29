@@ -21,10 +21,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const statusLabels: Record<ParsedContractRow["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending_review: { label: "Pending review", variant: "secondary" },
-  reviewed: { label: "Reviewed", variant: "default" },
+  pending: { label: "Pending review", variant: "secondary" },
+  accepted: { label: "Accepted", variant: "default" },
   rejected: { label: "Rejected", variant: "destructive" },
-  failed: { label: "Failed", variant: "destructive" },
+  error: { label: "Error", variant: "destructive" },
 };
 
 type ParsedContractRow = Database["public"]["Tables"]["parsed_contracts"]["Row"];
@@ -36,11 +36,11 @@ interface ParsedContractListProps {
 
 export function ParsedContractList({ orgId, contracts }: ParsedContractListProps) {
   const pending = useMemo(
-    () => contracts.filter((contract) => contract.status === "pending_review"),
+    () => contracts.filter((contract) => contract.status === "pending"),
     [contracts],
   );
   const processed = useMemo(
-    () => contracts.filter((contract) => contract.status !== "pending_review"),
+    () => contracts.filter((contract) => contract.status !== "pending"),
     [contracts],
   );
 
@@ -109,7 +109,7 @@ function PendingContractCard({
   const parsed = (contract.parsed_data as ParsedContract | null) ?? undefined;
   const [notes, setNotes] = useState(contract.notes ?? "");
 
-  const updateStatus = (status: "reviewed" | "rejected") => {
+  const updateStatus = (status: "accepted" | "rejected") => {
     startTransition(async () => {
       const result = await updateParsedContractStatus({
         orgId,
@@ -123,7 +123,7 @@ function PendingContractCard({
         return;
       }
 
-      toast.success(status === "reviewed" ? "Contract approved" : "Contract rejected");
+      toast.success(status === "accepted" ? "Contract approved" : "Contract rejected");
       router.refresh();
     });
   };
@@ -155,9 +155,7 @@ function PendingContractCard({
           </Button>
         ) : null}
 
-        {contract.error ? (
-          <p className="text-destructive">{contract.error}</p>
-        ) : null}
+
 
         <ContractDetails parsed={parsed} />
 
@@ -173,7 +171,7 @@ function PendingContractCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={() => updateStatus("reviewed")} disabled={isPending}>
+          <Button onClick={() => updateStatus("accepted")} disabled={isPending}>
             {isPending ? "Saving…" : "Mark as reviewed"}
           </Button>
           <Button

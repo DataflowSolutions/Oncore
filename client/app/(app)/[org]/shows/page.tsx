@@ -44,7 +44,8 @@ export default async function ShowsPage({
       const showIds = shows.map((s: { id: string }) => s.id);
 
       // Use RPC function to avoid RLS recursion issues
-      const { data: assignments } = await supabase.rpc(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: assignments } = await (supabase as any).rpc(
         "get_show_assignments_for_shows",
         { p_show_ids: showIds }
       );

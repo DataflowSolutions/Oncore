@@ -4,8 +4,9 @@ import { logger } from "@/lib/logger";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const orgId = request.nextUrl.searchParams.get("orgId");
   if (!orgId) {
     return NextResponse.json({ error: "orgId is required" }, { status: 400 });
@@ -31,7 +32,7 @@ export async function GET(
   const { data, error } = await (supabase as any)
     .from("import_jobs")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("org_id", orgId)
     .maybeSingle();
 

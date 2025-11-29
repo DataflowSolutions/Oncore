@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
-import { getCachedOrg, getCachedOrgPeopleFull, getCachedAvailableSeats, getCachedOrgInvitations } from '@/lib/cache'
+import { getCachedOrg, getCachedOrgPeopleFull } from '@/lib/cache'
 import { notFound } from 'next/navigation'
 import { PeoplePageClient } from './people-page-client'
 import { logger } from '@/lib/logger'
@@ -45,28 +45,7 @@ export default async function TeamPage({ params, searchParams }: TeamPageProps) 
           logger.info('Got people:', people?.length || 0)
           return people || []
         },
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.invitations(orgSlug),
-        queryFn: async () => {
-          logger.info('Fetching invitations for org:', org.id)
-          const { data: invitations, error } = await getCachedOrgInvitations(org.id)
-          if (error) {
-            logger.error('Error fetching invitations:', error)
-          }
-          logger.info('Got invitations:', invitations?.length || 0)
-          return invitations || []
-        },
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.seats(orgSlug),
-        queryFn: async () => {
-          logger.info('Fetching seats for org:', org.id)
-          const seatInfo = await getCachedAvailableSeats(org.id)
-          logger.info('Got seat info:', seatInfo)
-          return seatInfo
-        },
-      }),
+      })
     ])
     logger.info('Prefetch complete, rendering page')
   } catch (error) {

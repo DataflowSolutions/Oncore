@@ -363,7 +363,6 @@ export function FlightsPanel({
                       notes: cityNotes,
                       item_type: "departure",
                       auto_generated: true,
-                      source_field_id: flightId,
                     }
                   );
 

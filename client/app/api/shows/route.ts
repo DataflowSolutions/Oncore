@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     const supabase = await getSupabaseServer();
 
     // Get recent shows (sorted by date, with recent first)
-    const { data: shows, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: shows, error } = await (supabase as any)
       .from("shows")
       .select(`
         id,

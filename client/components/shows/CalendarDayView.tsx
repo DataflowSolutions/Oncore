@@ -420,7 +420,7 @@ export function CalendarDayView({
                   advancingFields={advancingFields}
                   orgSlug={orgSlug}
                   showId={showId}
-                  cateringData={cateringData}
+                  cateringData={cateringData as any}
                 />
                 <FlightsPanel
                   advancingFields={advancingFields}

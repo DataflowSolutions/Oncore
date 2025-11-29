@@ -82,7 +82,7 @@ export function UserDropdownMenu() {
 
   const currentOrg = organizations.find(
     (org) =>
-      (org.organizations?.slug || org.slug) === currentOrgSlug
+      org.organizations?.slug === currentOrgSlug
   );
 
   return (
@@ -102,7 +102,7 @@ export function UserDropdownMenu() {
           {currentOrg ? (
             <div className="flex flex-col gap-1">
               <span className="font-semibold">
-                {currentOrg.organizations?.name || currentOrg.slug || "Organization"}
+                {currentOrg.organizations?.name || "Organization"}
               </span>
               <span className="text-xs font-normal text-muted-foreground">
                 {currentOrg.role}
@@ -134,14 +134,14 @@ export function UserDropdownMenu() {
                   </DropdownMenuItem>
                 ) : (
                   organizations.map((org, index) => (
-                    <Fragment key={org.organizations?.id || org.id}>
+                    <Fragment key={org.organizations?.id}>
                       <DropdownMenuItem
-                        onClick={() => handleOrgSwitch(org.organizations?.slug || org.slug)}
+                        onClick={() => handleOrgSwitch(org.organizations?.slug!)}
                         className="flex items-center justify-between cursor-pointer"
                       >
                         <div className="flex flex-col gap-1 flex-1 min-w-0">
                           <span className="truncate">
-                            {org.organizations?.name || org.slug || "Organization"}
+                            {org.organizations?.name || "Organization"}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             <Badge
@@ -152,7 +152,7 @@ export function UserDropdownMenu() {
                             </Badge>
                           </span>
                         </div>
-                        {(org.organizations?.slug || org.slug) === currentOrgSlug && (
+                        {org.organizations?.slug === currentOrgSlug && (
                           <Check className="h-4 w-4 ml-2 flex-shrink-0" />
                         )}
                       </DropdownMenuItem>

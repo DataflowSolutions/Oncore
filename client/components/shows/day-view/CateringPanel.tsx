@@ -243,7 +243,6 @@ export function CateringPanel({
                     notes: `Service at ${companyName}`,
                     item_type: "catering",
                     auto_generated: true,
-                    source_field_id: cateringId,
                   }
                 );
 

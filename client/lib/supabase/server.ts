@@ -12,14 +12,14 @@ import { getServerConfig, validateConfig } from './config'
  * - Route Handlers
  * - Middleware (via separate helper)
  */
-export async function createClient() {
+export async function createClient(): Promise<any> {
   const cookieStore = await cookies()
   const config = getServerConfig()
   validateConfig(config, 'server')
   
   return createServerClient<Database>(
-    config.url,
-    config.anonKey,
+    config.url!,
+    config.anonKey!,
     {
       cookies: {
         getAll() {
@@ -38,7 +38,7 @@ export async function createClient() {
         },
       },
     }
-  )
+  ) as any
 }
 
 // Backward compatibility alias

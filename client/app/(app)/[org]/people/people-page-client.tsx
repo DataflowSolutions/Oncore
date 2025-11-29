@@ -1,6 +1,6 @@
 'use client'
 
-import { usePeople, useInvitations, useAvailableSeats } from '@/lib/hooks/use-people'
+import { usePeople } from '@/lib/hooks/use-people'
 import PeoplePageContent from '@/components/team/PeoplePageClient'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -14,14 +14,8 @@ export function PeoplePageClient({
   orgSlug: string
   filter?: string
 }) {
-  console.log('PeoplePageClient rendering with:', { orgSlug, filter })
-  
   // Use prefetched data - instant load!
   const { data: allPeople = [], isLoading: peopleLoading, error: peopleError } = usePeople(orgSlug)
-  const { data: invitations = [] } = useInvitations(orgSlug)
-  const { data: seatInfo } = useAvailableSeats(orgSlug)
-  
-  console.log('PeoplePageClient data:', { allPeople, invitations, seatInfo, peopleError })
   
   // Filter people based on URL parameter (client-side)
   const filteredPeople = useMemo(() => {
@@ -34,10 +28,10 @@ export function PeoplePageClient({
   // Count by type for filters
   const counts = useMemo(() => ({
     all: allPeople.length,
-    artist: allPeople.filter(p => p.member_type === 'Artist').length,
-    crew: allPeople.filter(p => p.member_type === 'Crew').length,
-    agent: allPeople.filter(p => p.member_type === 'Agent').length,
-    manager: allPeople.filter(p => p.member_type === 'Manager').length,
+    artist: allPeople.filter(p => p.member_type === 'artist').length,
+    crew: allPeople.filter(p => p.member_type === 'crew').length,
+    agent: allPeople.filter(p => (p.member_type as string) === 'agent').length,
+    manager: allPeople.filter(p => p.member_type === 'management').length,
   }), [allPeople])
   
   if (peopleError) {
@@ -107,9 +101,7 @@ export function PeoplePageClient({
       </div>
       
       <PeoplePageContent 
-        allPeople={filteredPeople} 
-        seatInfo={seatInfo ?? null}
-        invitations={invitations}
+        allPeople={filteredPeople}
       />
     </div>
   )

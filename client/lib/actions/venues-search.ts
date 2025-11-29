@@ -17,7 +17,8 @@ export async function searchVenues(orgId: string, searchTerm: string) {
 
   // Filter results client-side
   const searchLower = searchTerm.toLowerCase()
-  const filtered = (data || []).filter(v => 
+  const venues = (data || []) as Array<{ name?: string | null; city?: string | null }>
+  const filtered = venues.filter((v) => 
     v.name?.toLowerCase().includes(searchLower) || 
     v.city?.toLowerCase().includes(searchLower)
   )

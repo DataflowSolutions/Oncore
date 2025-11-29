@@ -21,7 +21,8 @@ export async function GET(
     }
 
     // Get org by slug
-    const { data: org, error: orgError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org, error: orgError } = await (supabase as any)
       .rpc('get_org_by_slug', { p_slug: orgSlug })
 
     if (orgError || !org) {
@@ -37,7 +38,8 @@ export async function GET(
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
 
     // Fetch today's shows with venue info
-    const { data: shows, error: showsError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: shows, error: showsError } = await (supabase as any)
       .from('shows')
       .select(`
         id,
@@ -64,7 +66,8 @@ export async function GET(
     }
 
     // Fetch today's schedule items across all shows
-    const { data: scheduleItems, error: scheduleError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: scheduleItems, error: scheduleError } = await (supabase as any)
       .from('schedule_items')
       .select(`
         id,
@@ -101,7 +104,7 @@ export async function GET(
     }
 
     // Fetch team members assigned to today's shows
-    const showIds = shows?.map(s => s.id) || []
+    const showIds = shows?.map((s: { id: string }) => s.id) || []
     let teamAssignments: Array<{
       show_id: string
       duty: string | null
@@ -113,9 +116,10 @@ export async function GET(
         phone: string | null
       }
     }> = []
-    
+
     if (showIds.length > 0) {
-      const { data: assignments, error: assignmentsError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: assignments, error: assignmentsError } = await (supabase as any)
         .from('show_assignments')
         .select(`
           show_id,

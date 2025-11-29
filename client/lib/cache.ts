@@ -62,7 +62,10 @@ export const getCachedOrgMembership = cache(async (orgId: string) => {
   const { data, error } = await (supabase as any)
     .rpc('get_org_membership', { p_org_id: orgId })
   
-  return { data, error }
+  // get_org_membership returns an array, extract the first result
+  const membership = Array.isArray(data) ? data[0] : data
+  
+  return { data: membership, error }
 })
 
 /**

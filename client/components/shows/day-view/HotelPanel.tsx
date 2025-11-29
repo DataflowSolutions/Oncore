@@ -356,7 +356,6 @@ export function HotelPanel({
                     notes: `Check-in at ${hotelName}`,
                     item_type: "hotel",
                     auto_generated: true,
-                    source_field_id: lodgingId,
                   }
                 );
 
@@ -386,7 +385,6 @@ export function HotelPanel({
                     notes: `Check-out from ${hotelName}`,
                     item_type: "hotel",
                     auto_generated: true,
-                    source_field_id: lodgingId,
                   }
                 );
 

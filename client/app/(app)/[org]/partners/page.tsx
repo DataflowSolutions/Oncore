@@ -12,7 +12,8 @@ export default async function PartnersPage({ params }: PartnersPageProps) {
   const { org: orgSlug } = await params
   
   const supabase = await getSupabaseServer()
-  const { data: orgData, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: orgData, error } = await (supabase as any)
     .rpc('get_org_by_slug', { p_slug: orgSlug })
 
   if (error || !orgData) {

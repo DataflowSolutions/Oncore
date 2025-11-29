@@ -22,7 +22,6 @@ interface BillingDebugFormProps {
 
 export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
   const [selectedPlan, setSelectedPlan] = useState("");
-  const [trialDays, setTrialDays] = useState(7);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -34,7 +33,7 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
     setMessage("");
 
     try {
-      await assignPlanDebug(orgId, selectedPlan, trialDays);
+      await assignPlanDebug(orgId, selectedPlan);
       setMessage(
         "Plan assigned successfully! Refresh the page to see changes."
       );
@@ -82,19 +81,7 @@ export function BillingDebugForm({ orgId, plans }: BillingDebugFormProps) {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground/80 mb-2">
-            Trial Days
-          </label>
-          <Input
-            type="number"
-            value={trialDays}
-            onChange={(e) => setTrialDays(parseInt(e.target.value) || 7)}
-            min="1"
-            max="365"
-            className="w-32"
-          />
-        </div>
+
 
         <Button
           type="submit"

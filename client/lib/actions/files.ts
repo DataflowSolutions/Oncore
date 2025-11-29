@@ -28,7 +28,7 @@ const parseContractSchema = z.object({
 const updateContractStatusSchema = z.object({
   orgId: z.string().uuid(),
   contractId: z.string().uuid(),
-  status: z.enum(["reviewed", "rejected"]),
+  status: z.enum(["accepted", "rejected"]),
   notes: z.string().optional(),
 });
 
@@ -168,17 +168,16 @@ export async function parseContract(params: z.infer<typeof parseContractSchema>)
   }
 
   try {
-    const { data: record, error: insertError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: record, error: insertError } = await (supabase as any)
       .from("parsed_contracts")
       .insert({
         org_id: orgId,
         file_name: fileName,
         file_url: fileUrl,
         parsed_data: parsed ?? null,
-        status: parseError ? "failed" : "pending_review",
+        status: parseError ? "error" : "pending",
         confidence: parsed?.confidence ?? null,
-        created_by: session.user.id,
-        error: parseError,
       })
       .select("id")
       .single();
@@ -233,7 +232,8 @@ export async function updateParsedContractStatus(
     return { success: false, error: err.message };
   }
 
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .from("parsed_contracts")
     .update({
       status,

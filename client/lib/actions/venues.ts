@@ -105,9 +105,6 @@ export async function createVenue(formData: FormData) {
         ? parseInt(formData.get("capacity") as string)
         : null,
       org_id: formData.get("org_id") as string,
-      contacts: formData.get("contacts")
-        ? JSON.parse(formData.get("contacts") as string)
-        : null,
     };
 
     const { data, error } = await supabase
@@ -155,9 +152,6 @@ export async function updateVenue(venueId: string, formData: FormData) {
       country: formData.get("country") as string,
       capacity: formData.get("capacity")
         ? parseInt(formData.get("capacity") as string)
-        : null,
-      contacts: formData.get("contacts")
-        ? JSON.parse(formData.get("contacts") as string)
         : null,
       updated_at: new Date().toISOString(),
     };

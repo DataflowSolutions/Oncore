@@ -200,20 +200,22 @@ export async function uploadAdvancingFile(
       return { success: false, error: "No file provided" };
     }
 
-    // Get show org_id via RPC (bypasses RLS)
-    const { data: orgId, error: orgError } = await supabase.rpc("get_show_org_id", {
-      p_show_id: showId,
-    });
+    // Get show org_id via direct query
+    const { data: show, error: showError } = await (supabase as any)
+      .from("shows")
+      .select("org_id")
+      .eq("id", showId)
+      .single();
 
-    if (orgError || !orgId) {
-      logger.error("Error getting show org_id", orgError);
+    if (showError || !show) {
+      logger.error("Error getting show org_id", showError);
       return { success: false, error: "Show not found" };
     }
 
     // Generate unique file path
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${orgId}/shows/${showId}/advancing/${advancing.id}/${fileName}`;
+    const filePath = `${show.org_id}/shows/${showId}/advancing/${advancing.id}/${fileName}`;
 
     // Upload file to storage
     const { error: uploadError } = await supabase.storage
@@ -222,7 +224,7 @@ export async function uploadAdvancingFile(
         contentType: file.type,
         upsert: false,
         metadata: {
-          org_id: orgId,
+          org_id: show.org_id,
           show_id: showId,
           session_id: advancing.id,
           document_id: documentId,
@@ -239,7 +241,7 @@ export async function uploadAdvancingFile(
     const { data: rpcData, error: rpcError } = await (supabase as any).rpc(
       "upload_advancing_file",
       {
-        p_org_id: orgId,
+        p_org_id: show.org_id,
         p_document_id: documentId,
         p_storage_path: filePath,
         p_original_name: file.name,

@@ -39,14 +39,15 @@ export async function createOrganization(formData: FormData) {
 
   try {
     const supabase = await getSupabaseServer()
-    
+
     logger.info('Creating organization', {
       name: validatedData.name,
       slug: validatedData.slug
     })
-    
+
     // Call the RPC function - let the DB unique constraint handle race conditions
-    const { data: orgId, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: orgId, error } = await (supabase as any)
       .rpc('app_create_organization_with_owner', {
         org_name: validatedData.name,
         org_slug: validatedData.slug
@@ -61,24 +62,24 @@ export async function createOrganization(formData: FormData) {
 
     if (error) {
       logger.error('Failed to create organization', error)
-      
+
       // PostgreSQL unique violation error code
       if (error.code === '23505' || error.message.includes('duplicate key') || error.message.includes('unique')) {
         return {
           error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
         }
       }
-      
+
       return {
         error: 'Failed to create organization. Please try again.'
       }
     }
 
     logger.info('Organization created successfully with trial subscription', { orgId })
-    
+
   } catch (error) {
     logger.error('Error creating organization', error)
-    
+
     // Catch any PostgreSQL errors that might bubble up
     const pgError = error as { code?: string; message?: string }
     if (pgError.code === '23505' || pgError.message?.includes('duplicate key') || pgError.message?.includes('unique')) {
@@ -86,7 +87,7 @@ export async function createOrganization(formData: FormData) {
         error: `The slug "${validatedData.slug}" is already taken. Please choose a different one.`
       }
     }
-    
+
     return {
       error: 'An unexpected error occurred. Please try again.'
     }

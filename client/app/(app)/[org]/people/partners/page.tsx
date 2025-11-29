@@ -15,6 +15,17 @@ interface PartnersPageProps {
   params: Promise<{ org: string }>;
 }
 
+interface Partner {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  member_type: string | null;
+  created_at: string;
+  org_id: string;
+}
+
 export default async function PartnersPage({ params }: PartnersPageProps) {
   const { org: orgSlug } = await params;
 
@@ -30,14 +41,16 @@ export default async function PartnersPage({ params }: PartnersPageProps) {
 
   // For now, we'll get external partners from the people table
   // We'll use notes or a future partner-specific table to distinguish them
-  const { data: partners } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rawPartners } = await (supabase as any)
     .from("people")
     .select("*")
     .eq("org_id", org.id)
     .or("notes.ilike.%partner%,notes.ilike.%vendor%,notes.ilike.%external%")
     .order("name");
 
-  const allPartners = partners || [];
+  const partners = (rawPartners || []) as Partner[];
+  const allPartners = partners;
 
   // For now, we'll categorize based on notes content until we have proper partner types
   const externalPartners = allPartners.filter(

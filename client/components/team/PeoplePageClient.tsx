@@ -1,41 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSectionContainer } from "@/components/ui/CardSectionContainer";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Popup } from "@/components/ui/popup";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Users,
-  Mail,
-  Phone,
-  FileText,
-  Music,
-  Building,
-  Wrench,
-  UserPlus,
-  Send,
-  Ghost,
-  CheckCircle2,
-  AlertCircle,
-  Crown,
-  Eye,
-  Edit,
-  Shield,
-} from "lucide-react";
+import { Users, Mail, Phone, Music, Building, Wrench, CheckCircle2, AlertCircle } from "lucide-react";
 import PersonDetailModal from "@/components/team/PersonDetailModal";
-import { invitePerson, type SeatCheckResult } from "@/lib/actions/invitations";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import type { Database } from "@/lib/database.types";
 
 interface Person {
   id: string;
@@ -49,20 +19,8 @@ interface Person {
   role_title?: string | null;
 }
 
-type Invitation = Database["public"]["Tables"]["invitations"]["Row"] & {
-  people: {
-    id: string;
-    name: string;
-    email: string | null;
-    role_title: string | null;
-    member_type: "artist" | "crew" | "management" | "vendor" | "other" | null;
-  };
-};
-
 interface PeoplePageClientProps {
   allPeople: Person[];
-  seatInfo: SeatCheckResult | null;
-  invitations: Invitation[];
 }
 
 const getRoleIcon = (memberType: string | null) => {
@@ -80,24 +38,38 @@ const getRoleIcon = (memberType: string | null) => {
   }
 };
 
+const getPersonStatus = (person: Person) => {
+  if (person.user_id) {
+    return {
+      type: "active" as const,
+      label: "Active",
+      icon: CheckCircle2,
+      variant: "default" as const,
+    };
+  }
+
+  if (person.email) {
+    return {
+      type: "contact_only" as const,
+      label: "Contact Only",
+      icon: Mail,
+      variant: "secondary" as const,
+    };
+  }
+
+  return {
+    type: "no_email" as const,
+    label: "No Email",
+    icon: AlertCircle,
+    variant: "destructive" as const,
+  };
+};
+
 export default function PeoplePageClient({
-  allPeople,
-  seatInfo,
-  invitations = [], // Default to empty array
+  allPeople
 }: PeoplePageClientProps) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [, startTransition] = useTransition();
-  const [invitingPersonId, setInvitingPersonId] = useState<string | null>(null);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [selectedInvitePerson, setSelectedInvitePerson] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [selectedRole, setSelectedRole] = useState<
-    "viewer" | "editor" | "admin" | "owner"
-  >("viewer");
-  const router = useRouter();
 
   const handlePersonClick = (personId: string) => {
     setSelectedPersonId(personId);
@@ -107,86 +79,6 @@ export default function PeoplePageClient({
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedPersonId(null);
-  };
-
-  const openInviteDialog = (
-    personId: string,
-    personName: string,
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation(); // Prevent card click
-
-    if (!seatInfo?.can_invite) {
-      toast.error("No available seats", {
-        description: "Upgrade your plan to invite more team members",
-      });
-      return;
-    }
-
-    setSelectedInvitePerson({ id: personId, name: personName });
-    setSelectedRole("viewer"); // Reset to default
-    setInviteDialogOpen(true);
-  };
-
-  const handleInvite = async () => {
-    if (!selectedInvitePerson) return;
-
-    setInvitingPersonId(selectedInvitePerson.id);
-    setInviteDialogOpen(false);
-
-    startTransition(async () => {
-      const result = await invitePerson(selectedInvitePerson.id);
-
-      if (result.success) {
-        toast.success("Invitation sent!", {
-          description: `${selectedInvitePerson.name} will receive an email to join the team`,
-        });
-        router.refresh();
-      } else {
-        toast.error("Failed to send invitation", {
-          description: result.error || "Please try again",
-        });
-      }
-
-      setInvitingPersonId(null);
-      setSelectedInvitePerson(null);
-    });
-  };
-
-  // Create a map of person_id to invitation for quick lookup
-  const invitationMap = new Map(invitations.map((inv) => [inv.person_id, inv]));
-
-  const getPersonStatus = (person: Person) => {
-    if (person.user_id) {
-      return {
-        type: "active" as const,
-        label: "Active",
-        icon: CheckCircle2,
-        variant: "default" as const,
-      };
-    }
-    if (invitationMap.has(person.id)) {
-      return {
-        type: "invited" as const,
-        label: "Invited",
-        icon: Send,
-        variant: "secondary" as const,
-      };
-    }
-    if (person.email) {
-      return {
-        type: "not_invited" as const,
-        label: "Not Invited",
-        icon: Ghost,
-        variant: "outline" as const,
-      };
-    }
-    return {
-      type: "no_email" as const,
-      label: "No Email",
-      icon: AlertCircle,
-      variant: "destructive" as const,
-    };
   };
 
   const formatDate = (dateString: string) => {
@@ -319,47 +211,6 @@ export default function PeoplePageClient({
                               </Badge>
                             </div>
                           </div>
-
-                          {/* Actions - desktop */}
-                          <div className="hidden sm:flex gap-2 items-center">
-                            {!person.user_id &&
-                              person.email &&
-                              !invitationMap.has(person.id) && (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  disabled={
-                                    !seatInfo?.can_invite ||
-                                    invitingPersonId === person.id
-                                  }
-                                  onClick={(e) =>
-                                    openInviteDialog(person.id, person.name, e)
-                                  }
-                                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                                >
-                                  {invitingPersonId === person.id ? (
-                                    <>
-                                      <FileText className="w-3 h-3 mr-2 animate-pulse" />
-                                      Sending...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserPlus className="w-3 h-3 mr-2" />
-                                      Invite
-                                    </>
-                                  )}
-                                </Button>
-                              )}
-                            {!person.email && !person.user_id && (
-                              <Badge
-                                variant="destructive"
-                                className="text-xs w-fit"
-                              >
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                No Email
-                              </Badge>
-                            )}
-                          </div>
                         </div>
 
                         {/* Contact information and dates */}
@@ -383,48 +234,11 @@ export default function PeoplePageClient({
 
                           <div className="flex items-center gap-3">
                             <span>Added {formatDate(person.created_at)}</span>
-                            {invitationMap.has(person.id) &&
-                              invitationMap.get(person.id)!.created_at && (
-                                <span>
-                                  Invited{" "}
-                                  {formatDate(
-                                    invitationMap.get(person.id)!.created_at!
-                                  )}
-                                </span>
-                              )}
                           </div>
                         </div>
 
                         {/* Actions - mobile */}
                         <div className="flex sm:hidden flex-col gap-2">
-                          {!person.user_id &&
-                            person.email &&
-                            !invitationMap.has(person.id) && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                disabled={
-                                  !seatInfo?.can_invite ||
-                                  invitingPersonId === person.id
-                                }
-                                onClick={(e) =>
-                                  openInviteDialog(person.id, person.name, e)
-                                }
-                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                              >
-                                {invitingPersonId === person.id ? (
-                                  <>
-                                    <FileText className="w-3 h-3 mr-2 animate-pulse" />
-                                    Sending...
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserPlus className="w-3 h-3 mr-2" />
-                                    Invite
-                                  </>
-                                )}
-                              </Button>
-                            )}
                           {!person.email && !person.user_id && (
                             <Badge
                               variant="destructive"
@@ -450,93 +264,6 @@ export default function PeoplePageClient({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
-
-      {/* Invite Role Selection Dialog */}
-      <Popup
-        open={inviteDialogOpen}
-        onOpenChange={setInviteDialogOpen}
-        title="Invite Team Member"
-        description={`Choose the role for ${selectedInvitePerson?.name}. They will receive an email invitation to join your organization.`}
-        className="sm:max-w-[425px]"
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setInviteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleInvite}>
-              <Send className="w-4 h-4 mr-2" />
-              Send Invitation
-            </Button>
-          </>
-        }
-      >
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="role" className="text-sm font-medium">
-              Role
-            </label>
-            <Select
-              value={selectedRole}
-              onValueChange={(value: "viewer" | "editor" | "admin" | "owner") =>
-                setSelectedRole(value)
-              }
-            >
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="viewer">
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Viewer</div>
-                      <div className="text-xs text-muted-foreground">
-                        Can view all data but cannot make changes
-                      </div>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="editor">
-                  <div className="flex items-center gap-2">
-                    <Edit className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Editor</div>
-                      <div className="text-xs text-muted-foreground">
-                        Can create and edit content
-                      </div>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="admin">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Admin</div>
-                      <div className="text-xs text-muted-foreground">
-                        Can manage team members and settings
-                      </div>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="owner">
-                  <div className="flex items-center gap-2">
-                    <Crown className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Owner</div>
-                      <div className="text-xs text-muted-foreground">
-                        Full control (use with caution)
-                      </div>
-                    </div>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </Popup>
     </>
   );
 }
