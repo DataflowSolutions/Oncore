@@ -52,6 +52,10 @@ export type ImportFactType =
   | 'deal_type'
   | 'technical_requirement'
   | 'catering_detail'
+  | 'catering_summary'
+  | 'transfer_summary'
+  | 'ground_transport_summary'
+  | 'technical_equipment_summary'
   | 'activity_detail'
   | 'general_note'
   | 'other';
@@ -304,12 +308,12 @@ export interface ResolutionResult {
  */
 export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   artist_fee: ['deal.fee'],
-  venue_cost: ['deal.notes'], // Venue cost goes to notes as separate line item
-  production_cost: ['deal.notes'],
-  catering_cost: ['deal.notes'],
-  accommodation_cost: ['deal.notes'],
-  travel_cost: ['deal.notes'],
-  other_cost: ['deal.notes'],
+  venue_cost: [],
+  production_cost: [],
+  catering_cost: [],
+  accommodation_cost: [],
+  travel_cost: [],
+  other_cost: [],
   event_date: ['general.date'],
   event_time: ['general.setTime'],
   set_time: ['general.setTime'],
@@ -345,9 +349,13 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   deal_type: ['deal.dealType'],
   technical_requirement: ['technical.equipment', 'technical.other'],
   catering_detail: ['food[].notes'],
+  catering_summary: ['food[].notes'],
+  transfer_summary: ['activities[].notes'],
+  ground_transport_summary: ['activities[].notes'],
+  technical_equipment_summary: ['technical.equipment'],
   activity_detail: ['activities[].notes'],
   general_note: ['deal.notes'],
-  other: ['deal.notes'],
+  other: [],
 };
 
 // =============================================================================

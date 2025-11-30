@@ -249,6 +249,9 @@ async function runFactResolution(
   };
 }
 
+// Export for diagnostic/test usage
+export { applyResolutionsToImportData };
+
 // =============================================================================
 // Apply Resolved Facts to ImportData
 // =============================================================================
@@ -318,7 +321,27 @@ function applyResolutionsToImportData(
     applyFactToImportData(data, fact, resolution);
   }
 
+  normalizeGeneralLocation(data);
   return data;
+}
+
+function normalizeGeneralLocation(data: ImportData): void {
+  const city = (data.general.city || '').toLowerCase();
+  const venue = (data.general.venue || '').toLowerCase();
+  const country = (data.general.country || '').toLowerCase();
+
+  const mentionsDubai = city.includes('dubai') || venue.includes('dubai') || venue.includes('uae');
+  if (mentionsDubai && !country.includes('uae')) {
+    data.general.country = 'UAE';
+  }
+
+  if (!data.general.eventName) {
+    const artist = data.general.artist || '';
+    const primaryLocation = data.general.venue || data.general.city || '';
+    if (artist && primaryLocation) {
+      data.general.eventName = `${artist} @ ${primaryLocation}`;
+    }
+  }
 }
 
 /**
@@ -329,17 +352,44 @@ function applyFactToImportData(
   fact: ImportFact | undefined,
   resolution: FactResolution
 ): void {
-  // If no fact (LLM omitted selected_fact_id) use resolution values only
-  const value = resolution.final_value_text 
-    || String(resolution.final_value_number ?? '') 
-    || resolution.final_value_date
-    || fact?.value_text
-    || (fact?.value_number !== undefined ? String(fact.value_number) : '');
+  const factType = fact?.fact_type ?? resolution.fact_type;
+  const resolvedNumber = resolution.final_value_number ?? fact?.value_number;
+  const resolvedDate = resolution.final_value_date ?? fact?.value_date;
+  const resolvedText = resolution.final_value_text ?? fact?.value_text;
+
+  let value: string | undefined;
+  if (factType === 'event_date') {
+    value =
+      resolvedDate ||
+      resolvedText ||
+      (resolvedNumber !== undefined ? String(resolvedNumber) : undefined) ||
+      fact?.value_date ||
+      fact?.value_text ||
+      (fact?.value_number !== undefined ? String(fact.value_number) : undefined);
+  } else {
+    value =
+      resolvedText ||
+      (resolvedNumber !== undefined ? String(resolvedNumber) : undefined) ||
+      resolvedDate ||
+      fact?.value_text ||
+      (fact?.value_number !== undefined ? String(fact.value_number) : undefined) ||
+      fact?.value_date;
+  }
+
+  // Handle datetime fields for flights (flight_departure_datetime, flight_arrival_datetime)
+  // The LLM may put datetime values into value_datetime instead of value_text
+  if (
+    !value &&
+    (factType === 'flight_departure_datetime' || factType === 'flight_arrival_datetime')
+  ) {
+    if (fact?.value_datetime) {
+      value = fact.value_datetime;
+    }
+  }
 
   if (!value) return;
 
-  const factType = fact?.fact_type ?? resolution.fact_type;
-  const factDomain = fact?.fact_domain ?? resolution.fact_domain ?? null;
+  const factDomain = resolution.fact_domain ?? fact?.fact_domain ?? null;
   const factSourceScope = (fact?.source_scope as ImportSourceScope | undefined) ?? 'unknown';
 
   const fields = FACT_TYPE_TO_IMPORT_FIELD[factType] || [];
@@ -370,22 +420,19 @@ function applyValueToField(
   if (fieldPath.includes('[]')) {
     const [arrayKey, property] = fieldPath.split('[].');
     const array = (data as any)[arrayKey] as any[];
-    
+
     // Normalize domain per section
     const normalizedDomain = normalizeDomain(arrayKey, factDomain);
-    const targetIndex = normalizedDomain ? domainToIndex(arrayKey, normalizedDomain) : 0;
+    const targetIndex = resolveArrayIndex(arrayKey, normalizedDomain, factType, value, array);
 
-    // Find or create item by domain
-    let item = array.find((i: any) => i._domain === normalizedDomain);
-    
+    // Find or create item by domain/index
+    let item = array.find((i: any, idx: number) => i._domain === normalizedDomain || idx === targetIndex);
     if (!item) {
-      // Create a properly initialized item based on the array type
       item = createEmptyArrayItem(arrayKey);
-      // Track domain for future fact associations
       if (normalizedDomain) {
-        item._domain = normalizedDomain;
+        (item as any)._domain = normalizedDomain;
       }
-      if (targetIndex !== undefined && targetIndex <= array.length) {
+      if (targetIndex !== undefined && targetIndex >= 0) {
         array[targetIndex] = item;
       } else {
         array.push(item);
@@ -489,6 +536,36 @@ function domainToIndex(arrayKey: string, domain: string | null): number {
     if (domain in map) return map[domain];
     const suffix = Number(domain.replace('contact_', ''));
     return Number.isFinite(suffix) && suffix >= 1 ? suffix - 1 : 0;
+  }
+  return 0;
+}
+
+function resolveArrayIndex(
+  arrayKey: string,
+  domain: string | null,
+  factType: ImportFactType,
+  value: string,
+  array: any[]
+): number {
+  if (arrayKey === 'flights') {
+    if (domain) {
+      const existing = array.findIndex((i: any) => i._domain === domain);
+      if (existing >= 0) return existing;
+      if (domain.startsWith('flight_leg_')) return domainToIndex(arrayKey, domain);
+      return array.length;
+    }
+    // No domain: if this is a flight number, try to place by unique number
+    if (factType === 'flight_number' && value) {
+      const existingIdx = array.findIndex((f: any) => (f.flightNumber || '').toLowerCase() === value.toLowerCase());
+      if (existingIdx >= 0) return existingIdx;
+      return array.length; // new flight leg
+    }
+    // For other flight fields without domain, attach to the most recent leg
+    if (array.length > 0) return array.length - 1;
+    return 0;
+  }
+  if (arrayKey === 'hotels' || arrayKey === 'contacts') {
+    if (domain) return domainToIndex(arrayKey, domain);
   }
   return 0;
 }

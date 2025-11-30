@@ -90,9 +90,12 @@ FACT TYPES - be precise:
 - travel_cost: Flights, ground transport
 - other_cost: Anything else
 - hotel_name, hotel_address, hotel_checkin, hotel_checkout: Hotel details (use fact_domain = hotel_main, hotel_alt1, ...)
-- event_date, event_time, set_time: Show timing
+- event_date, event_time, set_time, event_name: Show timing/identification
 - venue_name, venue_city, venue_country, venue_capacity: Venue info
 - artist_name, event_name: Show identification
+- catering_summary: One per show; short summary of catering/food/drink requirements
+- transfer_summary or ground_transport_summary: One per show; summary of transfers/ground transport plan
+- technical_equipment_summary: One per show; key technical/backline requirements (CDJs, mixers, monitors, etc.)
 - contact_name, contact_email, contact_phone, contact_role: People (use fact_domain = contact_promoter, contact_agent, contact_tour_manager, etc.)
 
 OUTPUT FORMAT (respond with JSON only):
@@ -149,6 +152,12 @@ GRANULAR FLIGHT FIELDS (emit when available):
 - flight_airline, flight_passenger_name, flight_booking_reference
 - flight_number, flight_departure (legacy), flight_arrival (legacy)
 
+LOGISTICS / RIDER SUMMARIES (emit once if present):
+- catering_summary: concise summary of catering/food/drink requirements (dinner, drinks, brand requests)
+- transfer_summary or ground_transport_summary: summary of transfers/ground transport plan (airport -> hotel -> venue etc.)
+- technical_equipment_summary: summary of technical/backline needs (CDJs, mixers, monitors, PA, stage requirements)
+- event_name: if the document names the show (e.g., "Son of Son @ Soho, Dubai")
+
 Previous facts for context (to detect counter-offers):
 {previous_facts}
 
@@ -186,16 +195,21 @@ const FACT_TYPE_KEYWORDS: Record<string, ImportFactType[]> = {
   
   // Production cost indicators
   'production': ['production_cost'],
-  'sound': ['production_cost', 'technical_requirement'],
+  'sound': ['production_cost', 'technical_requirement', 'technical_equipment_summary'],
   'lighting': ['production_cost', 'technical_requirement'],
-  'backline': ['production_cost', 'technical_requirement'],
+  'backline': ['production_cost', 'technical_requirement', 'technical_equipment_summary'],
   'staging': ['production_cost', 'technical_requirement'],
+  'technical': ['technical_requirement', 'technical_equipment_summary'],
+  'technical rider': ['technical_requirement', 'technical_equipment_summary'],
+  'cdj': ['technical_equipment_summary', 'technical_requirement'],
+  'mixer': ['technical_equipment_summary', 'technical_requirement'],
   
   // Catering indicators
-  'catering': ['catering_cost', 'catering_detail'],
-  'food': ['catering_cost', 'catering_detail'],
-  'meal': ['catering_cost', 'catering_detail'],
+  'catering': ['catering_cost', 'catering_detail', 'catering_summary'],
+  'food': ['catering_cost', 'catering_detail', 'catering_summary'],
+  'meal': ['catering_cost', 'catering_detail', 'catering_summary'],
   'buyout': ['catering_cost'],
+  'hospitality': ['catering_summary', 'catering_detail'],
   
   // Accommodation indicators
   'hotel': ['accommodation_cost', 'hotel_name'],
@@ -209,7 +223,11 @@ const FACT_TYPE_KEYWORDS: Record<string, ImportFactType[]> = {
   'flight': ['travel_cost', 'flight_number'],
   'travel': ['travel_cost'],
   'transport': ['travel_cost'],
-  'ground': ['travel_cost'],
+  'ground': ['travel_cost', 'transfer_summary'],
+  'transfer': ['transfer_summary', 'activity_detail'],
+  'shuttle': ['transfer_summary', 'activity_detail'],
+  'pickup': ['transfer_summary', 'activity_detail'],
+  'driver': ['transfer_summary', 'activity_detail'],
   
   // Date/time indicators
   'date': ['event_date'],
@@ -217,6 +235,9 @@ const FACT_TYPE_KEYWORDS: Record<string, ImportFactType[]> = {
   'set time': ['set_time'],
   'showtime': ['set_time'],
   'doors': ['event_time'],
+  'event': ['event_name'],
+  'show': ['event_name'],
+  'lineup': ['event_name'],
   
   // Contact indicators
   'contact': ['contact_name'],
@@ -398,7 +419,9 @@ function normalizeFactType(raw?: string): ImportFactType {
     'flight_airline', 'flight_passenger_name', 'flight_booking_reference',
     'flight_departure', 'flight_arrival', 'contact_name', 'contact_email',
     'contact_phone', 'contact_role', 'currency', 'payment_terms',
-    'deal_type', 'technical_requirement', 'catering_detail',
+    'deal_type', 'technical_requirement', 'technical_equipment_summary',
+    'catering_detail', 'catering_summary',
+    'transfer_summary', 'ground_transport_summary',
     'activity_detail', 'general_note', 'other',
   ];
   
