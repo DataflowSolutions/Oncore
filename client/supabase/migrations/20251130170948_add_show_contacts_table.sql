@@ -65,7 +65,7 @@ create policy "Users can delete show contacts for their org"
     )
   );
 
--- RPC to get show contacts
+-- RPC to get show contacts with venues for promoters
 create or replace function get_show_contacts(p_show_id uuid)
 returns table (
   id uuid,
@@ -79,28 +79,50 @@ returns table (
   contact_id uuid,
   notes text,
   created_at timestamptz,
-  updated_at timestamptz
+  updated_at timestamptz,
+  venues jsonb
 )
 language sql
 security definer
 set search_path = public
 as $$
   select
-    id,
-    org_id,
-    show_id,
-    name,
-    role,
-    phone,
-    email,
-    is_promoter,
-    contact_id,
-    notes,
-    created_at,
-    updated_at
-  from show_contacts
-  where show_contacts.show_id = p_show_id
-  order by created_at asc;
+    sc.id,
+    sc.org_id,
+    sc.show_id,
+    sc.name,
+    sc.role,
+    sc.phone,
+    sc.email,
+    sc.is_promoter,
+    sc.contact_id,
+    sc.notes,
+    sc.created_at,
+    sc.updated_at,
+    case 
+      when sc.is_promoter and sc.contact_id is not null then
+        coalesce(
+          (
+            select jsonb_agg(
+              jsonb_build_object(
+                'id', v.id,
+                'name', v.name,
+                'city', v.city,
+                'country', v.country,
+                'is_primary', vc.is_primary
+              )
+            )
+            from venue_contacts vc
+            join venues v on v.id = vc.venue_id
+            where vc.contact_id = sc.contact_id
+          ),
+          '[]'::jsonb
+        )
+      else '[]'::jsonb
+    end as venues
+  from show_contacts sc
+  where sc.show_id = p_show_id
+  order by sc.created_at asc;
 $$;
 
 -- RPC to save a show contact
@@ -124,10 +146,11 @@ declare
   v_show_contact_id uuid;
   v_contact_id uuid;
   v_city text;
+  v_venue_id uuid;
 begin
-  -- Get org_id and city from the show
-  select s.org_id, v.city
-  into v_org_id, v_city
+  -- Get org_id, city, and venue_id from the show
+  select s.org_id, v.city, s.venue_id
+  into v_org_id, v_city, v_venue_id
   from shows s
   left join venues v on v.id = s.venue_id
   where s.id = p_show_id;
@@ -191,6 +214,13 @@ begin
         p_notes
       )
       returning id into v_contact_id;
+    end if;
+
+    -- Link promoter to venue if venue exists and not already linked
+    if v_venue_id is not null and v_contact_id is not null then
+      insert into venue_contacts (venue_id, contact_id, is_primary)
+      values (v_venue_id, v_contact_id, false)
+      on conflict (venue_id, contact_id) do nothing;
     end if;
   end if;
 

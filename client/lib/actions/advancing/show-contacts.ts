@@ -27,6 +27,13 @@ export interface ShowContactRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  venues?: Array<{
+    id: string;
+    name: string;
+    city: string | null;
+    country: string | null;
+    is_primary: boolean;
+  }>;
 }
 
 /**

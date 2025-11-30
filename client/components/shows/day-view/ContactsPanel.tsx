@@ -13,6 +13,8 @@ import {
   ShowContactRow,
 } from "@/lib/actions/advancing/show-contacts";
 import { toast } from "sonner";
+import { ContactDetailPopup } from "@/components/contacts/ContactDetailPopup";
+import { PromoterDetailPopup } from "@/components/contacts/PromoterDetailPopup";
 
 interface ContactsPanelProps {
   orgSlug: string;
@@ -27,6 +29,9 @@ export function ContactsPanel({
 }: ContactsPanelProps) {
   const [contacts, setContacts] = useState<ShowContactRow[]>(contactsData);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<ShowContactRow | null>(
+    null
+  );
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [phone, setPhone] = useState("");
@@ -93,7 +98,8 @@ export function ContactsPanel({
         {contacts.map((contact) => (
           <div
             key={contact.id}
-            className="bg-card-cell rounded-full px-4 py-3 flex justify-between items-center"
+            className="bg-card-cell rounded-full px-4 py-3 flex justify-between items-center cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setSelectedContact(contact)}
           >
             <div>
               <div
@@ -111,7 +117,7 @@ export function ContactsPanel({
                 {contact.is_promoter ? "Promoter" : contact.role || ""}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
               {contact.email && (
                 <Link
                   href={`mailto:${contact.email}`}
@@ -206,6 +212,37 @@ export function ContactsPanel({
           </div>
         </div>
       </Popup>
+
+      {/* Detail Popups */}
+      {selectedContact && !selectedContact.is_promoter && (
+        <ContactDetailPopup
+          open={!!selectedContact}
+          onOpenChange={(open) => !open && setSelectedContact(null)}
+          contact={{
+            name: selectedContact.name,
+            role: selectedContact.role,
+            phone: selectedContact.phone,
+            email: selectedContact.email,
+            notes: selectedContact.notes,
+            created_at: selectedContact.created_at,
+          }}
+        />
+      )}
+      {selectedContact && selectedContact.is_promoter && (
+        <PromoterDetailPopup
+          open={!!selectedContact}
+          onOpenChange={(open) => !open && setSelectedContact(null)}
+          promoter={{
+            name: selectedContact.name,
+            role: selectedContact.role,
+            phone: selectedContact.phone,
+            email: selectedContact.email,
+            notes: selectedContact.notes,
+            created_at: selectedContact.created_at,
+            venues: selectedContact.venues || [],
+          }}
+        />
+      )}
     </div>
   );
 }

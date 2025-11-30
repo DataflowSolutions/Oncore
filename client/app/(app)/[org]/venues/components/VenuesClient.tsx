@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Building } from "lucide-react";
-import Link from "next/link";
 import ViewHeader from "./ViewHeader";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
+import { getPromotersByVenue } from "@/lib/actions/promoters";
 import type { Database } from "@/lib/database.types";
 import AddPersonButton from "../../people/components/AddPersonButton";
 import { AddPromoterModal } from "@/components/promoters/AddPromoterModal";
 import TeamFilters from "./TeamFilters";
 import type { TeamMemberFilterValue } from "@/lib/constants/team-filters";
 import { AddVenueModal } from "@/components/venues/AddVenueModal";
+import { PromoterDetailPopup } from "@/components/contacts/PromoterDetailPopup";
+import { VenueDetailPopup } from "@/components/venues/VenueDetailPopup";
 
 interface Venue {
   id: string;
@@ -45,7 +47,33 @@ export default function VenuesClient({
   view,
 }: VenuesClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<TeamMemberFilterValue>("all");
+  const [activeFilter, setActiveFilter] =
+    useState<TeamMemberFilterValue>("all");
+  const [selectedPromoter, setSelectedPromoter] =
+    useState<PromoterWithVenues | null>(null);
+  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [venuePromoters, setVenuePromoters] = useState<
+    Array<{
+      id: string;
+      name: string;
+      email: string | null;
+      phone: string | null;
+      is_primary?: boolean;
+    }>
+  >([]);
+
+  // Fetch promoters when a venue is selected
+  useEffect(() => {
+    if (selectedVenue) {
+      getPromotersByVenue(selectedVenue.id).then((response) => {
+        if (response.success && response.data) {
+          setVenuePromoters(response.data);
+        }
+      });
+    } else {
+      setVenuePromoters([]);
+    }
+  }, [selectedVenue]);
 
   // Filter venues based on search query
   const filteredVenues = useMemo(() => {
@@ -175,7 +203,7 @@ export default function VenuesClient({
                           {person.member_type}
                         </Badge>
                       )}
-                        <Badge
+                      <Badge
                         variant={status.variant}
                         className="text-xs w-[96px] h-[24px] flex items-center justify-center"
                       >
@@ -204,7 +232,8 @@ export default function VenuesClient({
               return (
                 <div
                   key={promoter.id}
-                  className="rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                  className="rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer"
+                  onClick={() => setSelectedPromoter(promoter)}
                 >
                   <div className="flex items-center justify-between">
                     {/* Left side: Name, location, company */}
@@ -266,10 +295,10 @@ export default function VenuesClient({
               const showCount = venue.shows?.[0]?.count || 0;
 
               return (
-                <Link
+                <div
                   key={venue.id}
-                  href={`/${orgSlug}/venues/${venue.id}`}
-                  className="block rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                  className="block rounded-2xl border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer"
+                  onClick={() => setSelectedVenue(venue)}
                 >
                   <div className="flex items-center justify-between">
                     {/* Left side: Name, location */}
@@ -307,11 +336,49 @@ export default function VenuesClient({
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
         </>
+      )}
+
+      {/* Promoter Detail Popup */}
+      {selectedPromoter && (
+        <PromoterDetailPopup
+          open={!!selectedPromoter}
+          onOpenChange={(open) => !open && setSelectedPromoter(null)}
+          promoter={{
+            name: selectedPromoter.name,
+            email: selectedPromoter.email,
+            phone: selectedPromoter.phone,
+            company: selectedPromoter.company,
+            city: selectedPromoter.city,
+            country: selectedPromoter.country,
+            role: selectedPromoter.role,
+            notes: selectedPromoter.notes,
+            status: selectedPromoter.status,
+            created_at: selectedPromoter.created_at,
+            venues: selectedPromoter.venues,
+          }}
+        />
+      )}
+
+      {/* Venue Detail Popup */}
+      {selectedVenue && (
+        <VenueDetailPopup
+          open={!!selectedVenue}
+          onOpenChange={(open) => !open && setSelectedVenue(null)}
+          venue={{
+            name: selectedVenue.name,
+            address: selectedVenue.address,
+            city: selectedVenue.city,
+            country: selectedVenue.country,
+            capacity: selectedVenue.capacity,
+            created_at: selectedVenue.created_at,
+            promoters: venuePromoters,
+          }}
+        />
       )}
     </>
   );

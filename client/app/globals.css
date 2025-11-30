@@ -60,6 +60,9 @@
   --color-badge-pending-bg: var(--badge-pending-bg);
   --color-badge-pending-text: var(--badge-pending-text);
 
+  --color-badge-secondary-bg: var(--badge-secondary-bg);
+  --color-badge-secondary-text: var(--badge-secondary-text);
+
   /* INPUT */
   --color-input: var(--input);
   --color-input-border: var(--input-border);
@@ -212,6 +215,9 @@
 
   --badge-pending-bg: rgba(255, 255, 255, 0.5);
   --badge-pending-text: #171717;
+
+  --badge-secondary-bg: #f0f0f0;
+  --badge-secondary-text: #141414;
 
   /* INPUT */
   --input: rgb(50, 50, 50);

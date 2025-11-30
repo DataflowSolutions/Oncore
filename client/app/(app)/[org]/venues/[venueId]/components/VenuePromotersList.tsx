@@ -1,55 +1,67 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Users, Mail, Phone, Building, MapPin, Trash2, Star } from 'lucide-react'
-import { LinkPromoterToVenueModal } from './LinkPromoterToVenueModal'
-import { unlinkPromoterFromVenue } from '@/lib/actions/promoters'
-import { toast } from 'sonner'
-import type { Promoter } from '@/lib/actions/promoters'
-import { logger } from '@/lib/logger'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Users,
+  Mail,
+  Phone,
+  Building,
+  MapPin,
+  Trash2,
+  Star,
+} from "lucide-react";
+import { LinkPromoterToVenueModal } from "./LinkPromoterToVenueModal";
+import { unlinkPromoterFromVenue } from "@/lib/actions/promoters";
+import { toast } from "sonner";
+import type { Promoter } from "@/lib/actions/promoters";
+import { logger } from "@/lib/logger";
+import { PromoterDetailPopup } from "@/components/contacts/PromoterDetailPopup";
 
 interface VenuePromotersListProps {
-  venueId: string
-  venueName: string
-  promoters: (Promoter & { is_primary?: boolean })[]
-  orgId: string
+  venueId: string;
+  venueName: string;
+  promoters: (Promoter & { is_primary?: boolean })[];
+  orgId: string;
 }
 
-export function VenuePromotersList({ 
-  venueId, 
+export function VenuePromotersList({
+  venueId,
   venueName,
-  promoters, 
-  orgId 
+  promoters,
+  orgId,
 }: VenuePromotersListProps) {
-  const router = useRouter()
-  const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
+  const router = useRouter();
+  const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
+  const [selectedPromoter, setSelectedPromoter] = useState<
+    (Promoter & { is_primary?: boolean }) | null
+  >(null);
 
   const handleUnlink = async (promoterId: string, promoterName: string) => {
     if (!confirm(`Remove ${promoterName} from this venue?`)) {
-      return
+      return;
     }
 
-    setUnlinkingId(promoterId)
+    setUnlinkingId(promoterId);
     try {
-      const result = await unlinkPromoterFromVenue(venueId, promoterId)
-      
+      const result = await unlinkPromoterFromVenue(venueId, promoterId);
+
       if (result.success) {
-        toast.success('Promoter removed from venue')
-        router.refresh()
+        toast.success("Promoter removed from venue");
+        router.refresh();
       } else {
-        toast.error(result.error || 'Failed to remove promoter')
+        toast.error(result.error || "Failed to remove promoter");
       }
     } catch (error) {
-      logger.error('Error unlinking promoter', error)
-      toast.error('Failed to remove promoter')
+      logger.error("Error unlinking promoter", error);
+      toast.error("Failed to remove promoter");
     } finally {
-      setUnlinkingId(null)
+      setUnlinkingId(null);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -62,11 +74,11 @@ export function VenuePromotersList({
                 Promoters for {venueName} ({promoters.length})
               </CardTitle>
             </div>
-            <LinkPromoterToVenueModal 
-              venueId={venueId} 
+            <LinkPromoterToVenueModal
+              venueId={venueId}
               venueName={venueName}
               orgId={orgId}
-              linkedPromoterIds={promoters.map(p => p.id)}
+              linkedPromoterIds={promoters.map((p) => p.id)}
             />
           </div>
         </CardHeader>
@@ -78,7 +90,8 @@ export function VenuePromotersList({
                 No promoters linked to this venue yet
               </p>
               <p className="text-sm text-muted-foreground">
-                Click &quot;Link Promoter&quot; above to add promoters who work with this venue
+                Click &quot;Link Promoter&quot; above to add promoters who work
+                with this venue
               </p>
             </div>
           ) : (
@@ -86,7 +99,8 @@ export function VenuePromotersList({
               {promoters.map((promoter) => (
                 <div
                   key={promoter.id}
-                  className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md transition-all duration-200"
+                  className="rounded-lg border border-input bg-card text-foreground shadow-sm p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  onClick={() => setSelectedPromoter(promoter)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex-1 space-y-3">
@@ -119,7 +133,7 @@ export function VenuePromotersList({
                           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                           <span>
                             {promoter.city}
-                            {promoter.city && promoter.country && ', '}
+                            {promoter.city && promoter.country && ", "}
                             {promoter.country}
                           </span>
                         </div>
@@ -162,7 +176,10 @@ export function VenuePromotersList({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex sm:flex-col gap-2">
+                    <div
+                      className="flex sm:flex-col gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         variant="destructive"
                         size="sm"
@@ -180,6 +197,26 @@ export function VenuePromotersList({
           )}
         </CardContent>
       </Card>
+
+      {/* Promoter Detail Popup */}
+      {selectedPromoter && (
+        <PromoterDetailPopup
+          open={!!selectedPromoter}
+          onOpenChange={(open) => !open && setSelectedPromoter(null)}
+          promoter={{
+            name: selectedPromoter.name,
+            email: selectedPromoter.email,
+            phone: selectedPromoter.phone,
+            company: selectedPromoter.company,
+            city: selectedPromoter.city,
+            country: selectedPromoter.country,
+            role: selectedPromoter.role,
+            notes: selectedPromoter.notes,
+            status: selectedPromoter.status,
+            created_at: selectedPromoter.created_at,
+          }}
+        />
+      )}
     </div>
-  )
+  );
 }
