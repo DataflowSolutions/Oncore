@@ -44,6 +44,10 @@ export interface ImportedFood {
   phone: string;
   email: string;
   notes: string;
+  // Extended fields for full persistence
+  serviceDate?: string;
+  serviceTime?: string;
+  guestCount?: number;
 }
 
 export interface ImportedFlight {
@@ -63,6 +67,9 @@ export interface ImportedFlight {
   seat: string;
   travelClass: string;
   flightTime: string;
+  // Extended fields for full persistence
+  direction?: "arrival" | "departure";
+  notes?: string;
 }
 
 export interface ImportedActivity {

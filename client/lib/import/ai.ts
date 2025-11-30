@@ -320,9 +320,16 @@ function mapFood(input: unknown): ImportedFood[] {
   if (!Array.isArray(input)) return [];
   return input.map((item) => {
     const i = (item as Record<string, unknown>) || {};
+    // Parse guest count as number
+    const guestCountRaw = i.guest_count || i.guestCount || i.guests || i.pax;
+    const guestCount = typeof guestCountRaw === "number" 
+      ? guestCountRaw 
+      : typeof guestCountRaw === "string" 
+        ? parseInt(guestCountRaw, 10) || undefined
+        : undefined;
     return {
       id: toOptionalString(i.id),
-      name: toString(i.name),
+      name: toString(i.name || i.provider_name || i.providerName),
       address: toString(i.address),
       city: toString(i.city),
       country: toString(i.country),
@@ -330,6 +337,9 @@ function mapFood(input: unknown): ImportedFood[] {
       phone: toString(i.phone),
       email: toString(i.email),
       notes: toString(i.notes),
+      serviceDate: toString(i.service_date || i.serviceDate || i.date),
+      serviceTime: toString(i.service_time || i.serviceTime || i.time),
+      guestCount: guestCount,
     };
   });
 }
@@ -338,23 +348,30 @@ function mapFlights(input: unknown): ImportedFlight[] {
   if (!Array.isArray(input)) return [];
   return input.map((item) => {
     const i = (item as Record<string, unknown>) || {};
+    // Map direction from AI output - can be "arrival", "departure", "inbound", "outbound"
+    const rawDirection = toString(i.direction).toLowerCase();
+    const direction = rawDirection === "departure" || rawDirection === "outbound" 
+      ? "departure" as const 
+      : "arrival" as const;
     return {
       id: toOptionalString(i.id),
       airline: toString(i.airline),
       flightNumber: toString(i.flight_number || i.flightNumber),
       aircraft: toString(i.aircraft),
-      fullName: toString(i.full_name || i.fullName),
-      bookingReference: toString(i.booking_reference || i.bookingReference),
+      fullName: toString(i.full_name || i.fullName || i.passenger_name || i.passengerName),
+      bookingReference: toString(i.booking_reference || i.bookingReference || i.booking_ref || i.bookingRef),
       ticketNumber: toString(i.ticket_number || i.ticketNumber),
       fromCity: toString(i.from_city || i.fromCity),
       fromAirport: toString(i.from_airport || i.fromAirport),
-      departureTime: toString(i.departure_time || i.departureTime),
+      departureTime: toString(i.departure_time || i.departureTime || i.depart_at || i.departAt),
       toCity: toString(i.to_city || i.toCity),
       toAirport: toString(i.to_airport || i.toAirport),
-      arrivalTime: toString(i.arrival_time || i.arrivalTime),
-      seat: toString(i.seat),
+      arrivalTime: toString(i.arrival_time || i.arrivalTime || i.arrival_at || i.arrivalAt),
+      seat: toString(i.seat || i.seat_number || i.seatNumber),
       travelClass: toString(i.travel_class || i.travelClass),
       flightTime: toString(i.flight_time || i.flightTime),
+      direction: rawDirection ? direction : undefined,
+      notes: toString(i.notes),
     };
   });
 }

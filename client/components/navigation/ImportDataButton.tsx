@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { setActiveImportJob } from "./ImportJobStatusBadge";
 
 interface ImportDataButtonProps {
   orgId?: string;
@@ -24,17 +25,15 @@ interface ImportDataButtonProps {
 
 /**
  * CTA button for launching an import. Opens a modal to paste raw text and
- * kicks off the import-start API. Navigates to import confirmation on success.
+ * kicks off the import-start API. Immediately closes modal and shows status in topbar.
  */
 export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [progress, setProgress] = useState<string[]>([]);
   const [fileName, setFileName] = useState("import.txt");
   const [rawText, setRawText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [progressTimer, setProgressTimer] = useState<number | null>(null);
 
   const disabled = !orgId || !orgSlug;
 
@@ -45,9 +44,9 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      setProgress(["Initializing import job…"]);
       // Prepare sources: user paste (if present) + any attached files
       const sources = await buildSources(files, rawText, fileName);
 
@@ -65,8 +64,7 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
           description: "Background worker is offline. Please try again later.",
           duration: 10000,
         });
-        setOpen(false);
-        setProgress([]);
+        setIsSubmitting(false);
         return;
       }
       
@@ -74,58 +72,37 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
         throw new Error(result.error || "Failed to start import");
       }
 
-      // Now that import started successfully, show simulated progress
-      const sections = [
-        "general",
-        "deal",
-        "hotels",
-        "flights",
-        "food",
-        "activities",
-        "contacts",
-        "technical",
-        "documents",
-      ];
-      const names = sources.map((s) => s.fileName);
-      const planned = names.flatMap((n) => sections.map((sec) => ({ sec, n })));
-      if (planned.length) {
-        let idx = 0;
-        const timer = window.setInterval(() => {
-          if (idx >= planned.length) return;
-          const step = planned[idx++];
-          const line = `Processing ${step.sec} for ${step.n}…`;
-          console.log(`[import-ui] ${line}`);
-          setProgress((p) => (p.includes(line) ? p : [...p, line]));
-        }, 400);
-        setProgressTimer(timer as unknown as number);
-      }
+      console.log("[ImportDataButton] Job created:", result.jobId);
 
-      setProgress((p) => [...p, "Queued import and began processing…"]);
-      if (result.documentsOnly) {
-        const note = "No extractable text found; attached documents prepared.";
-        console.log(`[import-ui] ${note}`);
-        setProgress((p) => [...p, note]);
-      }
+      // Store job ID in localStorage for persistent topbar indicator
+      setActiveImportJob(orgSlug, result.jobId);
+      console.log("[ImportDataButton] Job stored in localStorage");
+
+      // Show success toast
       toast.success("Import started", {
-        description: "Processing and preparing confirmation view…",
+        description: "Processing in background. Check the topbar for status.",
+        duration: 4000,
       });
-      // Keep dialog open briefly to show progress, then navigate
+
+      // Reset state and close modal
+      setRawText("");
+      setFiles([]);
+      setFileName("import.txt");
+      setIsSubmitting(false);
+      
+      // Close modal after a brief delay to ensure state updates are processed
       setTimeout(() => {
-        setProgress((p) => [...p, "Opening confirmation page…"]);
-        setRawText("");
-        setFiles([]);
+        setOpen(false);
+        console.log("[ImportDataButton] Modal closed, navigating...");
+        // Navigate to confirmation page
         router.push(`/${orgSlug}/shows/import-confirmation?jobId=${result.jobId}`);
-      }, 300);
-      router.push(`/${orgSlug}/shows/import-confirmation?jobId=${result.jobId}`);
+      }, 100);
+
     } catch (err) {
+      console.error("[ImportDataButton] Import failed:", err);
       const message = err instanceof Error ? err.message : "Failed to start import";
       toast.error("Could not start import", { description: message });
-    } finally {
       setIsSubmitting(false);
-      if (progressTimer) {
-        window.clearInterval(progressTimer);
-        setProgressTimer(null);
-      }
     }
   };
 
@@ -279,21 +256,16 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
                 className="resize-none"
               />
               <p className="text-[11px] text-muted-foreground">
-                Large inputs or non-text files will queue in the background automatically.
+                Large inputs will process in the background. Check the topbar for status.
               </p>
             </div>
 
             {isSubmitting && (
               <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2">
                   <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <span className="font-medium">Starting import…</span>
                 </div>
-                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                  {progress.map((line, idx) => (
-                    <li key={idx}>{line}</li>
-                  ))}
-                </ul>
               </div>
             )}
           </div>

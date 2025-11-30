@@ -38,6 +38,9 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    if (row?.status === "completed" && !row?.extracted) {
+      logger.warn("Import job completed but has no extracted payload", { id });
+    }
     return NextResponse.json(row);
   } catch (err) {
     logger.error("Unexpected error fetching import job", err);

@@ -1,6 +1,6 @@
 import { RawSourceInput } from "./jobs";
 
-const WORD_LIMIT = 20000;
+const WORD_LIMIT = 2500;  // Lower threshold so more jobs queue to worker
 const SOURCE_LIMIT = 2;
 
 export function countWords(text: string): number {

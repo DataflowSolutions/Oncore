@@ -113,10 +113,19 @@ export async function POST(req: NextRequest) {
     );
 
     const shouldBackground = shouldBackgroundImport(normalizedSources, body.forceBackground);
+    const totalWords = normalizedSources.reduce((sum, source) => sum + (source.rawText ? source.rawText.split(/\s+/).filter(Boolean).length : 0), 0);
+    logger.info("Import: background decision", {
+      orgId,
+      sources: normalizedSources.map((s) => ({ fileName: s.fileName, mimeType: s.mimeType, wordCount: s.rawText ? s.rawText.split(/\s+/).filter(Boolean).length : 0 })),
+      totalWords,
+      shouldBackground,
+      forceBackground: body.forceBackground,
+    });
 
     // Check if worker is available before creating background job
     if (shouldBackground) {
       const workerHealthy = await checkWorkerHealth();
+      logger.info("Import: worker health check", { workerHealthy });
       if (!workerHealthy) {
         logger.warn("Import: no workers available, falling back to sync processing", { orgId });
         // Force synchronous processing since no worker is running
@@ -178,13 +187,15 @@ export async function POST(req: NextRequest) {
     if (shouldBackground) {
       logger.info("Import job queued for background", {
         orgId,
+        jobId,
         sources: normalizedSources.map((s) => ({ fileName: s.fileName, mimeType: s.mimeType, sizeBytes: s.sizeBytes })),
       });
-      await updateImportJobExtracted({
+      const updateResult = await updateImportJobExtracted({
         jobId,
         status: "pending",
         errorMessage: null,
       });
+      logger.info("Import job status set to pending", { jobId, updateResult });
       return NextResponse.json({ jobId, queued: true });
     }
 

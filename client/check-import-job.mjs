@@ -40,11 +40,11 @@ if (error) {
   } else {
     console.log('  (none)');
   }
-  console.log('\nExtracted data sections:', Object.keys(job.extracted_data || {}).join(', ') || '(none)');
+  console.log('\nExtracted data sections:', Object.keys(job.extracted || {}).join(', ') || '(none)');
   console.log('\nProgress data:', JSON.stringify(job.progress_data, null, 2));
   console.log('\nExtracted data preview:');
-  if (job.extracted_data) {
-    for (const [section, data] of Object.entries(job.extracted_data)) {
+  if (job.extracted) {
+    for (const [section, data] of Object.entries(job.extracted)) {
       console.log(`  ${section}:`, Array.isArray(data) ? `${data.length} items` : JSON.stringify(data).substring(0, 100));
     }
   } else {
@@ -53,9 +53,9 @@ if (error) {
   
   // Check if job is actually pending
   console.log('\n--- Job Analysis ---');
-  if (job.status === 'completed' && !job.extracted_data) {
-    console.log('⚠️  WARNING: Job marked completed but has NO extracted_data!');
-    console.log('    This likely means the job was created but never processed.');
+  if (job.status === 'completed' && !job.extracted) {
+    console.log('⚠️  WARNING: Job marked completed but has NO extracted payload!');
+    console.log('    This likely means the job did not persist extracted results.');
   }
   if (!job.raw_sources || job.raw_sources.length === 0) {
     console.log('⚠️  WARNING: Job has no raw_sources!');

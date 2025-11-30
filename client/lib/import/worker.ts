@@ -61,21 +61,30 @@ export async function processImportJobs(config: WorkerConfig = {}): Promise<numb
   // Use provided supabase client or create service client for standalone worker
   const supabase = config.supabase || getSupabaseServiceClient();
 
+  console.log(`🔍 Checking for pending import jobs...`);
   logger.info("Worker: claiming pending jobs", { batchSize });
 
   try {
     const { jobs, error } = await claimPendingImportJobs(batchSize, supabase as SupabaseClientLike);
 
     if (error) {
+      console.log(`❌ Failed to claim jobs: ${error}`);
       logger.error("Worker: failed to claim jobs", { error });
       return 0;
     }
 
     if (!jobs || jobs.length === 0) {
+      console.log(`✓ No pending jobs found`);
       logger.info("Worker: no pending jobs");
       return 0;
     }
 
+    console.log(`\n📦 Found ${jobs.length} job(s) to process`);
+    jobs.forEach((job, i) => {
+      console.log(`   ${i + 1}. Job ID: ${job.id.substring(0, 8)}... (Status: ${job.status})`);
+    });
+    console.log();
+    
     logger.info("Worker: processing batch", { count: jobs.length });
 
     // Process jobs in parallel (configurable concurrency)
@@ -86,6 +95,8 @@ export async function processImportJobs(config: WorkerConfig = {}): Promise<numb
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
 
+    console.log(`\n✅ Batch complete: ${succeeded} succeeded, ${failed} failed\n`);
+    console.log(`${'─'.repeat(60)}\n`);
     logger.info("Worker: batch complete", { succeeded, failed, total: jobs.length });
 
     return succeeded;
@@ -104,8 +115,10 @@ export async function processImportJobs(config: WorkerConfig = {}): Promise<numb
  */
 async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): Promise<void> {
   const jobId = job.id;
+  const shortId = jobId.substring(0, 8);
 
   try {
+    console.log(`\n🚀 [${shortId}] Starting job processing`);
     logger.info("Worker: starting job", { jobId, orgId: job.org_id });
 
     // Mark as processing
@@ -115,6 +128,8 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       errorMessage: null,
       supabase,
     });
+    
+    console.log(`   [${shortId}] Status updated to 'processing'`);
 
     // Update progress: starting
     await updateProgress(jobId, {
@@ -138,12 +153,23 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       rawText: s.rawText,
     }));
 
+    console.log(`   [${shortId}] Extracted ${extractionSources.length} source(s)`);
+    extractionSources.forEach((src, i) => {
+      console.log(`      ${i + 1}. ${src.fileName} (${src.rawText?.length || 0} chars)`);
+    });
+    console.log(`   [${shortId}] Running AI extraction...`);
+    
     logger.info("Worker: running extraction", { jobId, sources: extractionSources.length });
 
     // Run full extraction with progress callbacks
     const { data, confidenceByField } = await runFullImportExtraction(
       extractionSources,
       async (progress) => {
+        const section = progress.current_section || 'unknown';
+        const sectionNum = (progress.sections_completed || 0) + 1;
+        const totalSections = progress.total_sections || 9;
+        console.log(`   [${shortId}] Section ${sectionNum}/${totalSections}: ${section}`);
+        
         await updateProgress(jobId, {
           ...progress,
           last_updated: new Date().toISOString(),
@@ -151,6 +177,13 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       }
     );
 
+    console.log(`   [${shortId}] ✓ Extraction complete!`);
+    console.log(`      • Hotels: ${data.hotels.length}`);
+    console.log(`      • Flights: ${data.flights.length}`);
+    console.log(`      • Food: ${data.food.length}`);
+    console.log(`      • Contacts: ${data.contacts.length}`);
+    console.log(`      • Documents: ${data.documents.length}`);
+    
     logger.info("Worker: extraction returned data", {
       jobId,
       data: {
@@ -168,6 +201,7 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
     });
 
     // Finalize with extracted data
+    console.log(`   [${shortId}] 💾 Saving extracted data to database...`);
     await updateImportJobExtracted({
       jobId,
       extracted: data,
@@ -176,6 +210,37 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       errorMessage: null,
       supabase,
     });
+
+    // Read-back verification: ensure extracted payload persisted
+    console.log(`   [${shortId}] ✓ Job complete and saved!`);
+    try {
+      const { data: savedJob, error: readError } = await (supabase as any).rpc("app_get_import_job", {
+        p_job_id: jobId,
+      });
+      if (readError) {
+        logger.warn("Worker: read-back failed after update", { jobId, error: readError });
+      } else if (savedJob) {
+        const extracted = (savedJob as any).extracted || null;
+        const confidence = (savedJob as any).confidence_map || null;
+        logger.info("Worker: read-back persisted payload", {
+          jobId,
+          hasExtracted: !!extracted,
+          hasConfidence: !!confidence,
+          totals: extracted
+            ? {
+                hotels: extracted.hotels?.length || 0,
+                flights: extracted.flights?.length || 0,
+                food: extracted.food?.length || 0,
+                activities: extracted.activities?.length || 0,
+                contacts: extracted.contacts?.length || 0,
+                documents: extracted.documents?.length || 0,
+              }
+            : undefined,
+        });
+      }
+    } catch (rbErr) {
+      logger.warn("Worker: read-back verification exception", { jobId, error: rbErr });
+    }
 
     // Update progress: completed
     await updateProgress(jobId, {
@@ -196,6 +261,8 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       },
     });
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.log(`   [${shortId}] ❌ Job failed: ${errorMsg}`);
     logger.error("Worker: job failed", { jobId, error });
 
     await updateImportJobExtracted({
