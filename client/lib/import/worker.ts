@@ -14,6 +14,7 @@ import { getSupabaseServiceClient } from "./worker-client";
 import { claimPendingImportJobs, updateImportJobExtracted, ImportJobRecord } from "./jobs";
 import { ImportSource } from "./chunking";
 import { runSemanticImportExtraction } from "./semantic";
+import { countWords } from "./background";
 import type { Database } from "../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -143,6 +144,9 @@ async function processSemanticJob(
       fileName: string;
       mimeType?: string;
       rawText: string;
+      pageCount?: number;
+      isLowText?: boolean;
+      wordCount?: number;
     }>;
 
     const extractionSources: ImportSource[] = rawSources.map((s) => ({
@@ -150,6 +154,9 @@ async function processSemanticJob(
       fileName: s.fileName,
       mimeType: s.mimeType,
       rawText: s.rawText,
+      pageCount: s.pageCount,
+      isLowText: s.isLowText,
+      wordCount: s.wordCount,
     }));
 
     console.log(`   [${shortId}] Processing ${extractionSources.length} source(s)`);
@@ -205,6 +212,8 @@ async function processSemanticJob(
       result.warnings.forEach(w => console.log(`      • ${w}`));
     }
 
+    const lowTextSources = extractionSources.filter((src) => isLowTextSource(src));
+
     logger.info("SemanticWorker: extraction complete", {
       jobId,
       factsExtracted: result.facts_extracted,
@@ -214,6 +223,7 @@ async function processSemanticJob(
         unagreed: unagreed.length,
         informational: info.length,
       },
+      lowTextSources: lowTextSources.map((s) => s.fileName),
     });
 
     // Build confidence map from resolutions
@@ -227,9 +237,19 @@ async function processSemanticJob(
 
     // Save extracted data
     console.log(`   [${shortId}] 💾 Saving extracted data to database...`);
+    const dataWithWarnings: any = { ...result.data };
+    if (lowTextSources.length) {
+      const warning = {
+        code: "LOW_TEXT",
+        message: "Insufficient text extracted from one or more documents (likely scanned/image-based PDF). Manual review or OCR required.",
+        sources: lowTextSources.map((s) => s.fileName),
+      };
+      dataWithWarnings.warnings = [...(dataWithWarnings.warnings ?? []), warning];
+    }
+
     await updateImportJobExtracted({
       jobId,
-      extracted: result.data,
+      extracted: dataWithWarnings,
       confidenceMap: confidenceByField,
       status: "completed",
       errorMessage: null,
@@ -286,6 +306,13 @@ async function updateSemanticProgress(
   } catch (err) {
     logger.error("SemanticWorker: progress update exception", { jobId, err });
   }
+}
+
+function isLowTextSource(source: ImportSource): boolean {
+  const words = source.wordCount ?? countWords(source.rawText || "");
+  if (words <= 0) return true;
+  const wpp = source.pageCount && source.pageCount > 0 ? words / source.pageCount : words;
+  return words < 200 || wpp < 30 || !!source.isLowText;
 }
 
 /**

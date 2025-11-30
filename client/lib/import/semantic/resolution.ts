@@ -23,6 +23,7 @@ import type {
   ImportFactType,
   ImportFactStatus,
   ReasoningStep,
+  ImportSourceScope,
 } from './types';
 import {
   STATUS_PRIORITY,
@@ -40,6 +41,87 @@ import {
 // =============================================================================
 // HARD SERVER-SIDE RULES (LLM cannot override these)
 // =============================================================================
+
+// Source scope priority for provenance weighting (higher = more trusted)
+const SOURCE_SCOPE_PRIORITY: Record<ImportSourceScope, number> = {
+  contract_main: 100,
+  itinerary: 90,
+  confirmation: 85,
+  general_info: 50,
+  rider_example: 20,
+  unknown: 10,
+};
+
+function getSourceScopePriority(scope?: ImportSourceScope): number {
+  if (!scope) return SOURCE_SCOPE_PRIORITY.unknown;
+  return SOURCE_SCOPE_PRIORITY[scope] ?? SOURCE_SCOPE_PRIORITY.unknown;
+}
+
+/**
+ * Normalize common date formats to ISO YYYY-MM-DD.
+ */
+function normalizeEventDateToISO(input?: string | null): string | null {
+  if (!input) return null;
+  const raw = input.trim();
+  if (!raw) return null;
+
+  // Already ISO-like
+  const isoMatch = raw.match(/^(\d{4})[-/\.](\d{1,2})[-/\.](\d{1,2})$/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    const mm = m.padStart(2, '0');
+    const dd = d.padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  // DD Mon YYYY or DD Month YYYY
+  const monthNames: Record<string, string> = {
+    jan: '01', january: '01',
+    feb: '02', february: '02',
+    mar: '03', march: '03',
+    apr: '04', april: '04',
+    may: '05',
+    jun: '06', june: '06',
+    jul: '07', july: '07',
+    aug: '08', august: '08',
+    sep: '09', sept: '09', september: '09',
+    oct: '10', october: '10',
+    nov: '11', november: '11',
+    dec: '12', december: '12',
+  };
+
+  const ddMonY = raw.match(/^(\d{1,2})[\s\.\-\/](\w+)[\s\.\-\/](\d{4})$/);
+  if (ddMonY) {
+    const [ , d, mon, y ] = ddMonY;
+    const mm = monthNames[mon.toLowerCase()];
+    if (mm) {
+      const dd = d.padStart(2, '0');
+      return `${y}-${mm}-${dd}`;
+    }
+  }
+
+  // Month DD, YYYY
+  const monDdY = raw.match(/^(\w+)[\s]+(\d{1,2}),[\s]*(\d{4})$/);
+  if (monDdY) {
+    const [, mon, d, y] = monDdY;
+    const mm = monthNames[mon.toLowerCase()];
+    if (mm) {
+      const dd = d.padStart(2, '0');
+      return `${y}-${mm}-${dd}`;
+    }
+  }
+
+  // DD.MM.YYYY
+  const dotted = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (dotted) {
+    const [, d, m, y] = dotted;
+    const mm = m.padStart(2, '0');
+    const dd = d.padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  return null;
+}
 
 /**
  * Server-side assertion: A fact can be selected.
@@ -101,6 +183,9 @@ function computeFactConfidence(
   group: FactGroup
 ): number {
   let confidence = 0.3; // Base confidence
+  
+  // Source scope weighting
+  confidence += (getSourceScopePriority(fact.source_scope) / 100) * 0.1;
   
   // 1. Status-based confidence boost
   if (fact.status === 'accepted' || fact.status === 'final') {
@@ -284,6 +369,20 @@ interface FactGroup {
   facts: ImportFact[];
 }
 
+function defaultDomainForFact(fact: ImportFact): string | null {
+  if (fact.fact_type.startsWith('flight_')) return 'flight_leg_1';
+  if (fact.fact_type.startsWith('hotel_')) return 'hotel_main';
+  if (fact.fact_type.startsWith('contact_')) return 'contact_main';
+  return null;
+}
+
+function defaultDomainForType(factType: ImportFactType): string | null {
+  if (factType.startsWith('flight_')) return 'flight_leg_1';
+  if (factType.startsWith('hotel_')) return 'hotel_main';
+  if (factType.startsWith('contact_')) return 'contact_main';
+  return null;
+}
+
 /**
  * Group facts by type and domain for resolution
  */
@@ -291,12 +390,13 @@ function groupFactsForResolution(facts: ImportFact[]): FactGroup[] {
   const groups = new Map<string, FactGroup>();
 
   for (const fact of facts) {
-    const key = `${fact.fact_type}|${fact.fact_domain || ''}`;
+    const normalizedDomain = fact.fact_domain || defaultDomainForFact(fact) || '';
+    const key = `${fact.fact_type}|${normalizedDomain}`;
     
     if (!groups.has(key)) {
       groups.set(key, {
         fact_type: fact.fact_type,
-        fact_domain: fact.fact_domain || null,
+        fact_domain: normalizedDomain || null,
         facts: [],
       });
     }
@@ -374,6 +474,10 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
   if (finalized.length > 0) {
     // Sort by: 1) Speaker authority (desc), 2) Computed confidence (desc), 3) Message index (latest)
     finalized.sort((a, b) => {
+      const aScope = getSourceScopePriority(a.source_scope);
+      const bScope = getSourceScopePriority(b.source_scope);
+      if (bScope !== aScope) return bScope - aScope;
+
       // First: speaker authority for this fact type
       const aAuth = getEffectiveSpeakerAuthority(a.speaker_role, a.fact_type);
       const bAuth = getEffectiveSpeakerAuthority(b.speaker_role, b.fact_type);
@@ -398,6 +502,10 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
       observation: `Selected fact ${selected.id} (speaker: ${selected.speaker_role}, authority: ${speakerAuth}, confidence: ${factConf.toFixed(2)})`,
       conclusion: `Final value: ${selected.value_text || selected.value_number}`,
     });
+
+    const normalizedDate = selected.fact_type === 'event_date'
+      ? normalizeEventDateToISO(selected.value_date || selected.value_text)
+      : undefined;
     
     return {
       fact_type,
@@ -407,7 +515,7 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
       reason: `Accepted/final fact from ${selected.speaker_role} (authority: ${speakerAuth})`,
       final_value_text: selected.value_text,
       final_value_number: selected.value_number,
-      final_value_date: selected.value_date,
+      final_value_date: normalizedDate || selected.value_date,
       reasoning_trace: reasoning,
       confidence: factConf,
     };
@@ -463,12 +571,20 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
   if (informationalFacts.length > 0) {
     // For info/offer facts without negotiation, sort by computed confidence
     informationalFacts.sort((a, b) => {
+      const aScope = getSourceScopePriority(a.source_scope);
+      const bScope = getSourceScopePriority(b.source_scope);
+      if (bScope !== aScope) return bScope - aScope;
+
       const aConf = computeFactConfidence(a, facts, group);
       const bConf = computeFactConfidence(b, facts, group);
       return bConf - aConf;
     });
     const selected = informationalFacts[0];
     const factConf = computeFactConfidence(selected, facts, group);
+
+    const normalizedDate = selected.fact_type === 'event_date'
+      ? normalizeEventDateToISO(selected.value_date || selected.value_text)
+      : undefined;
     
     reasoning.push({
       step: 4,
@@ -485,7 +601,7 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
       reason: `Informational fact selected (${selected.status === 'offer' ? 'single offer treated as confirmed' : 'no negotiation involved'})`,
       final_value_text: selected.value_text,
       final_value_number: selected.value_number,
-      final_value_date: selected.value_date,
+      final_value_date: normalizedDate || selected.value_date,
       reasoning_trace: reasoning,
       confidence: factConf,
     };
@@ -757,7 +873,8 @@ function validateResolutions(
   const groupsByKey = new Map(factGroups.map(g => [`${g.fact_type}|${g.fact_domain || ''}`, g]));
   
   return resolutions.map(resolution => {
-    const groupKey = `${resolution.fact_type}|${resolution.fact_domain || ''}`;
+    const normalizedResolutionDomain = resolution.fact_domain || defaultDomainForType(resolution.fact_type) || '';
+    const groupKey = `${resolution.fact_type}|${normalizedResolutionDomain}`;
     const group = groupsByKey.get(groupKey);
     const selectedFact = resolution.selected_fact_id 
       ? factsById.get(resolution.selected_fact_id) 
@@ -797,7 +914,9 @@ function validateResolutions(
             selected_fact_id: acceptedFact.id,
             final_value_number: acceptedFact.value_number,
             final_value_text: acceptedFact.value_text,
-            final_value_date: acceptedFact.value_date,
+            final_value_date: resolution.fact_type === 'event_date'
+              ? (normalizeEventDateToISO(acceptedFact.value_date || acceptedFact.value_text) || acceptedFact.value_date)
+              : acceptedFact.value_date,
             reason: `${resolution.reason} [SERVER-CORRECTED: Using accepted fact]`,
             confidence: group 
               ? computeResolutionConfidence(resolution, acceptedFact, group) 
@@ -817,6 +936,26 @@ function validateResolutions(
             confidence: 0.5,
           };
         }
+      }
+    } else if ((resolution.state === 'resolved' || resolution.state === 'informational') && !selectedFact) {
+      // Allow resolved/informational with explicit value but missing selected_fact_id (LLM omission)
+      const hasValue =
+        resolution.final_value_text !== undefined ||
+        resolution.final_value_number !== undefined ||
+        resolution.final_value_date !== undefined;
+      if (hasValue) {
+        const normalizedDate = resolution.fact_type === 'event_date'
+          ? normalizeEventDateToISO(resolution.final_value_date || resolution.final_value_text || null)
+          : resolution.final_value_date;
+        warnings.push(
+          `Resolution for ${resolution.fact_type} has no selected_fact_id but includes a value; keeping value as-is`
+        );
+        return {
+          ...resolution,
+          fact_domain: resolution.fact_domain ?? group?.fact_domain ?? undefined,
+          final_value_date: normalizedDate ?? resolution.final_value_date,
+          confidence: resolution.confidence ?? 0.6,
+        };
       }
     }
     
@@ -900,11 +1039,15 @@ function validateResolutions(
         (resolution.final_value_date === undefined && selectedFact.value_date !== undefined);
       
       if (needsValueFix) {
+        const normalizedDate = resolution.fact_type === 'event_date'
+          ? normalizeEventDateToISO(resolution.final_value_date ?? selectedFact.value_date ?? selectedFact.value_text)
+          : resolution.final_value_date;
+
         return {
           ...resolution,
           final_value_number: resolution.final_value_number ?? selectedFact.value_number,
           final_value_text: resolution.final_value_text ?? selectedFact.value_text,
-          final_value_date: resolution.final_value_date ?? selectedFact.value_date,
+          final_value_date: normalizedDate ?? selectedFact.value_date,
           confidence: group 
             ? computeResolutionConfidence(resolution, selectedFact, group) 
             : resolution.confidence,

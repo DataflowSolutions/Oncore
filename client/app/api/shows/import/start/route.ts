@@ -9,7 +9,7 @@ import {
 import { runFullImportExtraction } from "@/lib/import/orchestrator";
 import { ImportSource } from "@/lib/import/chunking";
 import { shouldBackgroundImport } from "@/lib/import/background";
-import type { ImportedDocument } from "@/components/import/types";
+import type { ImportedDocument, ImportWarning } from "@/components/import/types";
 import { createEmptyImportData } from "@/components/import/types";
 import { extractText } from "@/lib/import/text-extraction";
 
@@ -66,6 +66,10 @@ export async function POST(req: NextRequest) {
       sources.map(async (source, index) => {
         let extractedText = source.rawText || "";
         let pageCount = source.pageCount;
+        let wordCount: number | undefined = source.rawText
+          ? source.rawText.split(/\s+/).filter(Boolean).length
+          : undefined;
+        let isLowText = false;
 
         // If fileData is provided, extract text from it
         if ((source as any).fileData && source.fileName) {
@@ -83,6 +87,8 @@ export async function POST(req: NextRequest) {
             });
             extractedText = result.text || "";
             pageCount = result.pageCount;
+            wordCount = result.wordCount;
+            isLowText = !!result.isLowText;
             logger.info("Import: text extracted from file", {
               fileName: source.fileName,
               words: result.wordCount,
@@ -90,6 +96,7 @@ export async function POST(req: NextRequest) {
               textLength: extractedText.length,
               hasError: !!result.error,
               error: result.error,
+              isLowText,
             });
           } catch (err) {
             logger.error("Import: text extraction failed", {
@@ -107,19 +114,30 @@ export async function POST(req: NextRequest) {
           mimeType: source.mimeType,
           sizeBytes: source.sizeBytes,
           pageCount,
+          wordCount,
+          isLowText: isLowText || isLowTextSource(extractedText, pageCount),
           rawText: extractedText,
         };
       })
     );
 
     const shouldBackground = shouldBackgroundImport(normalizedSources, body.forceBackground);
-    const totalWords = normalizedSources.reduce((sum, source) => sum + (source.rawText ? source.rawText.split(/\s+/).filter(Boolean).length : 0), 0);
+    const totalWords = normalizedSources.reduce((sum, source) => sum + (source.wordCount ?? (source.rawText ? source.rawText.split(/\s+/).filter(Boolean).length : 0)), 0);
+    const lowTextSources = normalizedSources.filter((s) => s.isLowText);
+    const warnings: ImportWarning[] = lowTextSources.length
+      ? [{
+          code: "LOW_TEXT",
+          message: "Insufficient text extracted from one or more documents (likely scanned/image-based PDF). Manual review or OCR required.",
+          sources: lowTextSources.map((s) => s.fileName),
+        }]
+      : [];
     logger.info("Import: background decision", {
       orgId,
-      sources: normalizedSources.map((s) => ({ fileName: s.fileName, mimeType: s.mimeType, wordCount: s.rawText ? s.rawText.split(/\s+/).filter(Boolean).length : 0 })),
+      sources: normalizedSources.map((s) => ({ fileName: s.fileName, mimeType: s.mimeType, wordCount: s.wordCount ?? (s.rawText ? s.rawText.split(/\s+/).filter(Boolean).length : 0), isLowText: s.isLowText })),
       totalWords,
       shouldBackground,
       forceBackground: body.forceBackground,
+      lowTextSources: lowTextSources.map((s) => s.fileName),
     });
 
     // Check if worker is available before creating background job
@@ -172,6 +190,9 @@ export async function POST(req: NextRequest) {
 
       const data = createEmptyImportData();
       data.documents = attachedDocuments;
+      if (warnings.length) {
+        data.warnings = warnings;
+      }
 
       await updateImportJobExtracted({
         jobId,
@@ -218,9 +239,15 @@ export async function POST(req: NextRequest) {
         fileName: s.fileName,
         mimeType: s.mimeType,
         rawText: s.rawText,
+        pageCount: s.pageCount,
+        isLowText: s.isLowText,
+        wordCount: s.wordCount,
       }));
 
       const { data, confidenceByField } = await runFullImportExtraction(extractionSources);
+      if (warnings.length) {
+        data.warnings = warnings;
+      }
 
       // Only include truly attached files as documents. Ignore textual mentions.
       const attachedDocuments: ImportedDocument[] = normalizedSources
@@ -289,4 +316,11 @@ function inferDocumentCategory(fileName?: string, mimeType?: string): ImportedDo
   if (name.includes("boarding") && name.includes("pass")) return "boarding_pass";
   if (mime.includes("pdf")) return "other";
   return "other";
+}
+
+function isLowTextSource(rawText: string, pageCount?: number): boolean {
+  const words = rawText ? rawText.split(/\s+/).filter(Boolean).length : 0;
+  if (words <= 0) return true;
+  const wpp = pageCount && pageCount > 0 ? words / pageCount : words;
+  return words < 200 || wpp < 30;
 }

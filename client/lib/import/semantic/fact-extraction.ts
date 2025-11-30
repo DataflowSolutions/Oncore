@@ -15,6 +15,7 @@ import type {
   ImportFactDirection,
   ImportFactStatus,
   ImportFactSpeaker,
+  ImportSourceScope,
 } from './types';
 
 // =============================================================================
@@ -60,7 +61,27 @@ STATUS CLASSIFICATION:
 CRITICAL RULE: If the document is a confirmation, itinerary, ticket, or booking - ALWAYS use status "final".
 Do NOT use "offer" for confirmed bookings. A flight confirmation is NOT an offer - it's a FINAL fact.
 
+SOURCE SCOPE (set per fact):
+- contract_main: primary show contract / offer / deal doc
+- itinerary: schedules, travel plans, run-of-show
+- confirmation: airline/hotel confirmations, bookings, tickets
+- rider_example: riders that look generic or reference other cities
+- general_info: bios, FYI, reference material
+- unknown: fallback
+
+FACT DOMAIN RULES:
+- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg)
+- Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ...
+- Hotels: fact_domain = hotel_main, hotel_alt1, ...
+- If unsure, leave fact_domain null.
+
 FACT TYPES - be precise:
+- Flights (use fact_domain = flight_leg_1, flight_leg_2, ...):
+  - flight_origin_city, flight_origin_airport
+  - flight_destination_city, flight_destination_airport
+  - flight_departure_datetime, flight_arrival_datetime (ISO datetime if possible)
+  - flight_airline, flight_passenger_name, flight_booking_reference
+  - flight_number (legacy), flight_departure (legacy), flight_arrival (legacy)
 - artist_fee: Money paid TO the artist for performing
 - venue_cost: Cost of the venue itself
 - production_cost: Sound, lights, staging equipment
@@ -68,12 +89,11 @@ FACT TYPES - be precise:
 - accommodation_cost: Hotels, lodging
 - travel_cost: Flights, ground transport
 - other_cost: Anything else
-- flight_number, flight_departure, flight_arrival: Flight details
-- hotel_name, hotel_address, hotel_checkin, hotel_checkout: Hotel details
+- hotel_name, hotel_address, hotel_checkin, hotel_checkout: Hotel details (use fact_domain = hotel_main, hotel_alt1, ...)
 - event_date, event_time, set_time: Show timing
 - venue_name, venue_city, venue_country, venue_capacity: Venue info
 - artist_name, event_name: Show identification
-- contact_name, contact_email, contact_phone, contact_role: People
+- contact_name, contact_email, contact_phone, contact_role: People (use fact_domain = contact_promoter, contact_agent, contact_tour_manager, etc.)
 
 OUTPUT FORMAT (respond with JSON only):
 {
@@ -96,15 +116,38 @@ Respond with JSON containing your extracted facts.
 STEP 1 - Document Type Analysis (DO THIS FIRST):
 Look at the source filename "{source_file_name}" and the content.
 
+Assign source_scope for each fact (keep consistent across facts from this document):
+- contract_main: primary show contract / offer / deal doc
+- itinerary: schedules, travel plans, run-of-show
+- confirmation: airline/hotel confirmations, bookings, tickets
+- rider_example: riders that look generic or reference other cities
+- general_info: bios, FYI, reference material
+- unknown: fallback
+
+Filename hints: "Flight", airline names, "Booking", "Confirmation" -> confirmation; "rider" -> rider_example.
+
 Is this filename suggesting a confirmation/booking/ticket/itinerary?
-- Contains "Turkish Airlines", "Flight", "Booking", "Confirmation" → CONFIRMATION document
-- Contains "Contract", "Agreement", "Signed" → CONTRACT document  
-- Contains "@" (like email format) or looks like correspondence → might be NEGOTIATION
+- Contains "Turkish Airlines", "Flight", "Booking", "Confirmation" -> CONFIRMATION document
+- Contains "Contract", "Agreement", "Signed" -> CONTRACT document  
+- Contains "@" (like email format) or looks like correspondence -> might be NEGOTIATION
 
 For CONFIRMATION documents: ALL facts should use status "final"
 For CONTRACT documents: Use "final" for agreed terms, "accepted" for signatures
 For NEGOTIATION documents: Use appropriate status (offer, counter_offer, accepted, rejected)
 For INFORMATIONAL documents: Use "info" status
+
+FACT DOMAIN RULES (CRITICAL):
+- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg)
+- Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ... Keep name/email/phone/role for the same person in the same domain.
+- Hotels: fact_domain = hotel_main, hotel_alt1, ...
+- If unsure, leave fact_domain null (do NOT invent new patterns).
+
+GRANULAR FLIGHT FIELDS (emit when available):
+- flight_origin_city / flight_origin_airport
+- flight_destination_city / flight_destination_airport
+- flight_departure_datetime / flight_arrival_datetime (ISO if possible)
+- flight_airline, flight_passenger_name, flight_booking_reference
+- flight_number, flight_departure (legacy), flight_arrival (legacy)
 
 Previous facts for context (to detect counter-offers):
 {previous_facts}
@@ -332,6 +375,7 @@ interface RawFactFromLLM {
   raw_snippet?: string;
   raw_snippet_start?: number;
   raw_snippet_end?: number;
+   source_scope?: string;
 }
 
 /**
@@ -348,6 +392,10 @@ function normalizeFactType(raw?: string): ImportFactType {
     'event_time', 'set_time', 'venue_name', 'venue_city', 'venue_country',
     'venue_capacity', 'artist_name', 'event_name', 'hotel_name',
     'hotel_address', 'hotel_checkin', 'hotel_checkout', 'flight_number',
+    'flight_origin_city', 'flight_origin_airport',
+    'flight_destination_city', 'flight_destination_airport',
+    'flight_departure_datetime', 'flight_arrival_datetime',
+    'flight_airline', 'flight_passenger_name', 'flight_booking_reference',
     'flight_departure', 'flight_arrival', 'contact_name', 'contact_email',
     'contact_phone', 'contact_role', 'currency', 'payment_terms',
     'deal_type', 'technical_requirement', 'catering_detail',
@@ -420,6 +468,44 @@ function normalizeSpeakerRole(raw?: string): ImportFactSpeaker {
 }
 
 /**
+ * Validate and normalize source_scope from LLM output
+ */
+function normalizeSourceScope(raw?: string): ImportSourceScope {
+  if (!raw) return 'unknown';
+  
+  const normalized = raw.toLowerCase().replace(/[^a-z_]/g, '_');
+  
+  const validScopes: ImportSourceScope[] = [
+    'contract_main',
+    'itinerary',
+    'confirmation',
+    'rider_example',
+    'general_info',
+    'unknown',
+  ];
+  
+  if (validScopes.includes(normalized as ImportSourceScope)) {
+    return normalized as ImportSourceScope;
+  }
+  
+  return 'unknown';
+}
+
+/**
+ * Lightweight filename-based source scope inference (used as fallback when model does not provide one)
+ */
+function inferSourceScopeFromFilename(fileName: string): ImportSourceScope {
+  const lower = (fileName || '').toLowerCase();
+
+  if (lower.includes('rider')) return 'rider_example';
+  if (lower.match(/itinerary|schedule|run[-_ ]?of[-_ ]?show/)) return 'itinerary';
+  if (lower.match(/flight|airline|booking|confirmation|ticket|boarding|pnr/)) return 'confirmation';
+  if (lower.match(/contract|agreement|offer/)) return 'contract_main';
+
+  return 'unknown';
+}
+
+/**
  * Parse and validate facts from LLM response
  */
 function parseLLMFacts(
@@ -435,6 +521,7 @@ function parseLLMFacts(
       chunk_index: request.chunk_index,
       source_id: request.source_id,
       source_file_name: request.source_file_name,
+      source_scope: normalizeSourceScope(raw.source_scope),
       
       speaker_role: normalizeSpeakerRole(raw.speaker_role),
       speaker_name: raw.speaker_name,
@@ -500,6 +587,15 @@ const CONFIRMATION_FILENAME_PATTERNS = [
  */
 const CONFIRMATION_FACT_TYPES: Set<ImportFactType> = new Set([
   'flight_number',
+  'flight_origin_city',
+  'flight_origin_airport',
+  'flight_destination_city',
+  'flight_destination_airport',
+  'flight_departure_datetime',
+  'flight_arrival_datetime',
+  'flight_airline',
+  'flight_passenger_name',
+  'flight_booking_reference',
   'flight_departure', 
   'flight_arrival',
   'hotel_name',
@@ -606,6 +702,15 @@ export async function extractFactsFromChunk(
 
   // Parse facts
   let facts = parseLLMFacts(llmResponse.content || '{"facts": []}', request);
+  
+  // Apply filename-based source_scope fallback when model did not set one
+  const inferredScope = inferSourceScopeFromFilename(request.source_file_name);
+  facts = facts.map(fact => ({
+    ...fact,
+    source_scope: fact.source_scope && fact.source_scope !== 'unknown'
+      ? fact.source_scope
+      : inferredScope,
+  }));
   
   // Safety net: upgrade fact statuses based on filename patterns
   // This catches cases where the LLM misclassifies confirmation documents

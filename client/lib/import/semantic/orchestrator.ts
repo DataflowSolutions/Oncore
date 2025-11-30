@@ -27,6 +27,7 @@ import type {
   ImportFact,
   FactResolution,
   ImportFactType,
+  ImportSourceScope,
 } from './types';
 import { FACT_TYPE_TO_IMPORT_FIELD } from './types';
 import { extractFactsFromChunk } from './fact-extraction';
@@ -275,17 +276,12 @@ function applyResolutionsToImportData(
     // 'unagreed' and 'missing' are VALID OUTCOMES that produce NO data
     // =================================================================
     if (resolution.state === 'unagreed' || resolution.state === 'missing') {
-      // This is intentional - we're explicitly choosing NOT to write data
-      // because there was no agreement or the fact is missing.
-      // Log for visibility but don't treat as an error.
       logger.debug(
-        `[Semantic] ${resolution.fact_type}: state='${resolution.state}' - ` +
-        `NOT writing to canonical data (this is expected)`
+        `[Semantic] ${resolution.fact_type}: state='${resolution.state}' - NOT writing (expected)`
       );
       continue;
     }
 
-    // ASSERTION: Only resolved/informational should reach here
     if (resolution.state !== 'resolved' && resolution.state !== 'informational') {
       logger.warn(
         `[Semantic] Unexpected resolution state '${resolution.state}' for ${resolution.fact_type} - skipping`
@@ -293,16 +289,17 @@ function applyResolutionsToImportData(
       continue;
     }
 
-    // ASSERTION: Resolved/informational must have a selected fact
-    if (!resolution.selected_fact_id) {
-      logger.warn(
-        `[Semantic] Resolution state '${resolution.state}' for ${resolution.fact_type} ` +
-        `has no selected_fact_id - skipping`
-      );
+    const fact =
+      resolution.selected_fact_id && factsById.get(resolution.selected_fact_id)
+        ? (factsById.get(resolution.selected_fact_id) as ImportFact)
+        : null;
+
+    // Accept resolutions with values even if selected_fact_id missing (already vetted in validation)
+    if (!fact && !resolution.selected_fact_id) {
+      applyFactToImportData(data, undefined, resolution);
       continue;
     }
 
-    const fact = factsById.get(resolution.selected_fact_id);
     if (!fact) {
       logger.warn(
         `[Semantic] Selected fact ${resolution.selected_fact_id} not found in facts map - skipping`
@@ -310,13 +307,12 @@ function applyResolutionsToImportData(
       continue;
     }
 
-    // Final assertion: The fact must have a selectable status
     if (fact.status === 'rejected' || fact.status === 'withdrawn' || fact.status === 'question') {
       logger.error(
         `[Semantic] HARD RULE VIOLATION: Attempting to apply fact ${fact.id} with ` +
         `status '${fact.status}' to canonical data. This should have been caught by validation.`
       );
-      continue; // Don't throw - just skip and log
+      continue;
     }
 
     applyFactToImportData(data, fact, resolution);
@@ -330,21 +326,26 @@ function applyResolutionsToImportData(
  */
 function applyFactToImportData(
   data: ImportData,
-  fact: ImportFact,
+  fact: ImportFact | undefined,
   resolution: FactResolution
 ): void {
+  // If no fact (LLM omitted selected_fact_id) use resolution values only
   const value = resolution.final_value_text 
     || String(resolution.final_value_number ?? '') 
     || resolution.final_value_date
-    || fact.value_text
-    || String(fact.value_number ?? '');
+    || fact?.value_text
+    || (fact?.value_number !== undefined ? String(fact.value_number) : '');
 
   if (!value) return;
 
-  const fields = FACT_TYPE_TO_IMPORT_FIELD[fact.fact_type] || [];
+  const factType = fact?.fact_type ?? resolution.fact_type;
+  const factDomain = fact?.fact_domain ?? resolution.fact_domain ?? null;
+  const factSourceScope = (fact?.source_scope as ImportSourceScope | undefined) ?? 'unknown';
+
+  const fields = FACT_TYPE_TO_IMPORT_FIELD[factType] || [];
   
   for (const field of fields) {
-    applyValueToField(data, field, value, fact);
+    applyValueToField(data, field, value, factType, factDomain, factSourceScope);
   }
 }
 
@@ -355,30 +356,57 @@ function applyValueToField(
   data: ImportData,
   fieldPath: string,
   value: string,
-  fact: ImportFact
+  factType: ImportFactType,
+  factDomain: string | null,
+  sourceScope: ImportSourceScope
 ): void {
+  // Legacy flight_departure/arrival: only apply if parsing as date/time
+  if ((factType === 'flight_departure' || factType === 'flight_arrival') &&
+      (fieldPath.endsWith('Airport'))) {
+    return; // never map legacy date-ish strings into airport fields
+  }
+
   // Handle array fields (e.g., "hotels[].name")
   if (fieldPath.includes('[]')) {
     const [arrayKey, property] = fieldPath.split('[].');
     const array = (data as any)[arrayKey] as any[];
     
+    // Normalize domain per section
+    const normalizedDomain = normalizeDomain(arrayKey, factDomain);
+    const targetIndex = normalizedDomain ? domainToIndex(arrayKey, normalizedDomain) : 0;
+
     // Find or create item by domain
-    let item = fact.fact_domain
-      ? array.find((i: any) => i._domain === fact.fact_domain)
-      : array[0];
+    let item = array.find((i: any) => i._domain === normalizedDomain);
     
     if (!item) {
       // Create a properly initialized item based on the array type
       item = createEmptyArrayItem(arrayKey);
       // Track domain for future fact associations
-      if (fact.fact_domain) {
-        item._domain = fact.fact_domain;
+      if (normalizedDomain) {
+        item._domain = normalizedDomain;
       }
-      array.push(item);
+      if (targetIndex !== undefined && targetIndex <= array.length) {
+        array[targetIndex] = item;
+      } else {
+        array.push(item);
+      }
     }
     
-    if (property && !item[property]) {
-      item[property] = value;
+    if (property) {
+      // Hotel scoping: prefer higher source_scope; skip rider_example if better data exists
+      if (arrayKey === 'hotels' && shouldSkipHotelField(item, sourceScope)) {
+        return;
+      }
+
+      if (!item[property]) {
+        item[property] = value;
+      } else if (shouldOverrideExisting(arrayKey, sourceScope, item._source_scope as ImportSourceScope | undefined)) {
+        item[property] = value;
+      }
+      // Track source_scope for later comparisons
+      if (arrayKey === 'hotels' || arrayKey === 'flights' || arrayKey === 'contacts') {
+        item._source_scope = sourceScope;
+      }
     }
     return;
   }
@@ -425,6 +453,75 @@ function createEmptyArrayItem(arrayKey: string): object {
       // Fallback for unknown array types
       return { id: crypto.randomUUID() };
   }
+}
+
+// =============================================================================
+// Domain helpers
+// =============================================================================
+
+function normalizeDomain(arrayKey: string, factDomain: string | null): string | null {
+  if (factDomain) return factDomain;
+  if (arrayKey === 'flights') return 'flight_leg_1';
+  if (arrayKey === 'hotels') return 'hotel_main';
+  if (arrayKey === 'contacts') return 'contact_main';
+  return null;
+}
+
+function domainToIndex(arrayKey: string, domain: string | null): number {
+  if (!domain) return 0;
+  if (arrayKey === 'flights' && domain.startsWith('flight_leg_')) {
+    const leg = Number(domain.replace('flight_leg_', ''));
+    return Number.isFinite(leg) && leg > 0 ? leg - 1 : 0;
+  }
+  if (arrayKey === 'hotels' && domain.startsWith('hotel_alt')) {
+    const alt = Number(domain.replace('hotel_alt', ''));
+    return Number.isFinite(alt) && alt >= 1 ? alt : 0;
+  }
+  if (arrayKey === 'hotels' && domain === 'hotel_main') return 0;
+  if (arrayKey === 'contacts' && domain.startsWith('contact_')) {
+    const map: Record<string, number> = {
+      contact_promoter: 0,
+      contact_main: 0,
+      contact_agent: 1,
+      contact_tour_manager: 2,
+      contact_manager: 2,
+    };
+    if (domain in map) return map[domain];
+    const suffix = Number(domain.replace('contact_', ''));
+    return Number.isFinite(suffix) && suffix >= 1 ? suffix - 1 : 0;
+  }
+  return 0;
+}
+
+function scopePriority(scope: ImportSourceScope): number {
+  const order: Record<ImportSourceScope, number> = {
+    contract_main: 100,
+    itinerary: 90,
+    confirmation: 85,
+    general_info: 50,
+    rider_example: 20,
+    unknown: 10,
+  };
+  return order[scope] ?? 10;
+}
+
+function shouldSkipHotelField(item: any, incomingScope: ImportSourceScope): boolean {
+  const existingScope = item?._source_scope as ImportSourceScope | undefined;
+  if (!existingScope) return false;
+  // If existing scope is higher/equal, skip; rider_example can be overwritten by better scopes
+  if (scopePriority(existingScope) >= scopePriority(incomingScope)) {
+    return true;
+  }
+  return false;
+}
+
+function shouldOverrideExisting(arrayKey: string, incomingScope: ImportSourceScope, existingScope?: ImportSourceScope): boolean {
+  // Only allow override within same domain collections when incoming scope is higher
+  if (arrayKey === 'hotels' || arrayKey === 'flights' || arrayKey === 'contacts') {
+    if (!existingScope) return true;
+    return scopePriority(incomingScope) > scopePriority(existingScope);
+  }
+  return false;
 }
 
 // =============================================================================

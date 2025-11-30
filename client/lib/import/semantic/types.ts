@@ -32,6 +32,15 @@ export type ImportFactType =
   | 'hotel_checkin'
   | 'hotel_checkout'
   | 'flight_number'
+  | 'flight_origin_city'
+  | 'flight_origin_airport'
+  | 'flight_destination_city'
+  | 'flight_destination_airport'
+  | 'flight_departure_datetime'
+  | 'flight_arrival_datetime'
+  | 'flight_airline'
+  | 'flight_passenger_name'
+  | 'flight_booking_reference'
   | 'flight_departure'
   | 'flight_arrival'
   | 'contact_name'
@@ -84,6 +93,18 @@ export type ExtractionStage =
   | 'completed';
 
 // =============================================================================
+// Source Scope (provenance of a fact)
+// =============================================================================
+
+export type ImportSourceScope =
+  | 'contract_main'
+  | 'itinerary'
+  | 'confirmation'
+  | 'rider_example'
+  | 'general_info'
+  | 'unknown';
+
+// =============================================================================
 // Extracted Fact (from LLM during Stage 1)
 // =============================================================================
 
@@ -100,6 +121,8 @@ export interface ExtractedFact {
   source_id?: string;
   /** Source file name for display */
   source_file_name?: string;
+  /** Provenance classification for the source document */
+  source_scope?: ImportSourceScope;
   
   /** Who made this statement */
   speaker_role: ImportFactSpeaker;
@@ -301,8 +324,18 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   hotel_checkin: ['hotels[].checkInDate', 'hotels[].checkInTime'],
   hotel_checkout: ['hotels[].checkOutDate', 'hotels[].checkOutTime'],
   flight_number: ['flights[].flightNumber'],
-  flight_departure: ['flights[].departureTime', 'flights[].fromAirport'],
-  flight_arrival: ['flights[].arrivalTime', 'flights[].toAirport'],
+  flight_airline: ['flights[].airline'],
+  flight_passenger_name: ['flights[].fullName'],
+  flight_booking_reference: ['flights[].bookingReference'],
+  flight_origin_city: ['flights[].fromCity'],
+  flight_origin_airport: ['flights[].fromAirport'],
+  flight_destination_city: ['flights[].toCity'],
+  flight_destination_airport: ['flights[].toAirport'],
+  flight_departure_datetime: ['flights[].departureDate', 'flights[].departureTime'],
+  flight_arrival_datetime: ['flights[].arrivalDate', 'flights[].arrivalTime'],
+  // Legacy fields: only apply to time/date when parseable; do NOT map to airports anymore
+  flight_departure: ['flights[].departureDate', 'flights[].departureTime'],
+  flight_arrival: ['flights[].arrivalDate', 'flights[].arrivalTime'],
   contact_name: ['contacts[].name'],
   contact_email: ['contacts[].email'],
   contact_phone: ['contacts[].phone'],

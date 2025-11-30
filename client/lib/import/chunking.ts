@@ -11,6 +11,9 @@ export interface ImportSource {
   fileName: string;
   mimeType?: string;
   rawText: string;
+  pageCount?: number;
+  isLowText?: boolean;
+  wordCount?: number;
 }
 
 /**

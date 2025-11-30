@@ -21,6 +21,7 @@ export interface ExtractTextResult {
   text: string;
   pageCount?: number;
   wordCount?: number;
+  isLowText?: boolean;
   error?: string;
 }
 
@@ -74,16 +75,19 @@ async function extractFromPDF(buffer: Buffer, fileName: string): Promise<Extract
     const result = await parser.getText();
 
     const wordCount = countWords(result.text);
+    const isLowText = isLowTextDocument(wordCount, result.total);
     logger.info("PDF text extracted", {
       fileName,
       pages: result.total,
       words: wordCount,
+      isLowText,
     });
 
     return {
       text: result.text,
       pageCount: result.total,
       wordCount,
+      isLowText,
     };
   } catch (error) {
     logger.error("PDF extraction failed", { fileName, error });
@@ -111,16 +115,19 @@ async function extractFromDOCX(buffer: Buffer, fileName: string): Promise<Extrac
     const result = await mammoth.extractRawText({ buffer });
     const text = result.value || "";
     const wordCount = countWords(text);
+    const isLowText = isLowTextDocument(wordCount, undefined);
 
     logger.info("DOCX text extracted", {
       fileName,
       words: wordCount,
       messages: result.messages.length,
+      isLowText,
     });
 
     return {
       text,
       wordCount,
+      isLowText,
     };
   } catch (error) {
     logger.error("DOCX extraction failed", { fileName, error });
@@ -138,15 +145,18 @@ function extractFromText(buffer: Buffer, fileName: string): ExtractTextResult {
   try {
     const text = buffer.toString("utf-8");
     const wordCount = countWords(text);
+    const isLowText = isLowTextDocument(wordCount, undefined);
 
     logger.info("Text file extracted", {
       fileName,
       words: wordCount,
+      isLowText,
     });
 
     return {
       text,
       wordCount,
+      isLowText,
     };
   } catch (error) {
     logger.error("Text file extraction failed", { fileName, error });
@@ -160,4 +170,11 @@ function extractFromText(buffer: Buffer, fileName: string): ExtractTextResult {
 function countWords(text: string): number {
   if (!text) return 0;
   return text.split(/\s+/).filter(Boolean).length;
+}
+
+function isLowTextDocument(wordCount?: number, pageCount?: number): boolean {
+  const words = wordCount ?? 0;
+  if (words <= 0) return true;
+  const wordsPerPage = pageCount && pageCount > 0 ? words / pageCount : words;
+  return words < 200 || wordsPerPage < 30;
 }

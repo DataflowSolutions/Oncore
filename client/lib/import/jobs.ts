@@ -19,6 +19,8 @@ export interface RawSourceInput {
   mimeType?: string;
   sizeBytes?: number;
   pageCount?: number;
+  wordCount?: number;
+  isLowText?: boolean;
   rawText: string;
 }
 

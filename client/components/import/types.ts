@@ -117,6 +117,12 @@ export interface ImportedTechnical {
   other: string;
 }
 
+export interface ImportWarning {
+  code: string;
+  message: string;
+  sources?: string[];
+}
+
 export interface ImportData {
   general: ImportedGeneral;
   deal: ImportedDeal;
@@ -127,6 +133,7 @@ export interface ImportData {
   documents: ImportedDocument[];
   contacts: ImportedContact[];
   technical: ImportedTechnical;
+  warnings?: ImportWarning[];
 }
 
 // Section navigation helpers
@@ -296,6 +303,7 @@ export function createEmptyImportData(): ImportData {
     documents: [],
     contacts: [],
     technical: createEmptyTechnical(),
+    warnings: [],
   };
 }
 
@@ -329,5 +337,6 @@ export function sanitizeImportData(data: Partial<ImportData>): ImportData {
     activities: (data.activities || []).map(a => mergeWithDefaults(a, createEmptyActivity())),
     documents: (data.documents || []).map(d => mergeWithDefaults(d, createEmptyDocument())),
     contacts: (data.contacts || []).map(c => mergeWithDefaults(c, createEmptyContact())),
+    warnings: data.warnings && Array.isArray(data.warnings) ? data.warnings : [],
   };
 }

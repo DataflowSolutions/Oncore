@@ -107,6 +107,7 @@ export function ImportConfirmationPage({
       ...initialData,
       // Pre-populate documents from source files
       documents: sourceDocuments.length > 0 ? sourceDocuments : (initialData?.documents || []),
+      warnings: initialData?.warnings ?? base.warnings,
     };
   });
 
@@ -164,7 +165,12 @@ export function ImportConfirmationPage({
             }
           }
           setData((prev) => {
-            if (prev && prev.general?.artist) return prev; // Already hydrated
+            if (prev && prev.general?.artist) {
+              if ((!prev.warnings || prev.warnings.length === 0) && sanitized.warnings && sanitized.warnings.length > 0) {
+                return { ...prev, warnings: sanitized.warnings };
+              }
+              return prev; // Already hydrated
+            }
             return {
               ...sanitized,
               documents: mergedDocuments,
@@ -306,6 +312,11 @@ export function ImportConfirmationPage({
       {/* Scrollable content area */}
       <ScrollArea className="flex-1">
         <div className="max-w-5xl mx-auto px-4 py-8 space-y-12">
+          {data.warnings && data.warnings.length > 0 && (
+            <div className="rounded-md border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              {data.warnings[0]?.message || "Some documents had very little readable text. Please review and complete missing fields manually."}
+            </div>
+          )}
           {(jobStatus === "pending" || jobStatus === "processing") && (
             <div className="p-4 rounded-lg border border-border bg-muted/40 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
