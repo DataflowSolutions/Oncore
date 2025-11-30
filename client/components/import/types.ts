@@ -298,3 +298,36 @@ export function createEmptyImportData(): ImportData {
     technical: createEmptyTechnical(),
   };
 }
+
+/**
+ * Sanitize imported data to ensure all fields have defined values.
+ * This prevents React controlled/uncontrolled input warnings when
+ * fields are undefined instead of empty strings.
+ */
+export function sanitizeImportData(data: Partial<ImportData>): ImportData {
+  const empty = createEmptyImportData();
+  
+  // Helper to merge with defaults, ensuring no undefined values
+  const mergeWithDefaults = <T extends object>(item: Partial<T>, defaults: T): T => {
+    const result = { ...defaults };
+    for (const key of Object.keys(defaults) as (keyof T)[]) {
+      if (item[key] !== undefined && item[key] !== null) {
+        result[key] = item[key] as T[keyof T];
+      }
+    }
+    return result;
+  };
+  
+  return {
+    general: mergeWithDefaults(data.general || {}, empty.general),
+    deal: mergeWithDefaults(data.deal || {}, empty.deal),
+    technical: mergeWithDefaults(data.technical || {}, empty.technical),
+    // For arrays, ensure each item has all required fields
+    hotels: (data.hotels || []).map(h => mergeWithDefaults(h, createEmptyHotel())),
+    food: (data.food || []).map(f => mergeWithDefaults(f, createEmptyFood())),
+    flights: (data.flights || []).map(f => mergeWithDefaults(f, createEmptyFlight())),
+    activities: (data.activities || []).map(a => mergeWithDefaults(a, createEmptyActivity())),
+    documents: (data.documents || []).map(d => mergeWithDefaults(d, createEmptyDocument())),
+    contacts: (data.contacts || []).map(c => mergeWithDefaults(c, createEmptyContact())),
+  };
+}

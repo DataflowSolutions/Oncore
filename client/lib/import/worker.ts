@@ -1,125 +1,125 @@
+/**
+ * Semantic Import Worker
+ * 
+ * Background worker that uses the two-stage semantic import pipeline:
+ * - Stage 1: Extract candidate facts from all chunks
+ * - Stage 2: Perform semantic resolution to select final values
+ * 
+ * This worker replaces the "last-value-wins" extraction with
+ * semantic decision-making that respects negotiation flow.
+ */
+
 import { logger } from "@/lib/logger";
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseServiceClient } from "./worker-client";
 import { claimPendingImportJobs, updateImportJobExtracted, ImportJobRecord } from "./jobs";
-import { runFullImportExtraction } from "./orchestrator";
 import { ImportSource } from "./chunking";
+import { runSemanticImportExtraction } from "./semantic";
 import type { Database } from "../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type SupabaseClientLike = Pick<SupabaseClient<Database>, "rpc">;
 
-/**
- * Enterprise-grade background worker for processing import jobs.
- * 
- * Features:
- * - Atomic job claiming to prevent duplicate processing
- * - Progress tracking for real-time UI updates
- * - Graceful error handling with retries
- * - Configurable concurrency and batch size
- * - Horizontal scalability (multiple workers)
- * 
- * Architecture:
- * - Workers poll for pending jobs using app_claim_next_import_jobs RPC
- * - Each job is locked to prevent race conditions
- * - Progress updates are written atomically via app_update_import_job_progress
- * - Extraction runs section-by-section with progress checkpoints
- * 
- * Deployment:
- * - Can run as standalone process: npm run import:worker
- * - Can run as API route triggered by cron/queue: POST /api/import-worker/process
- * - Supports multiple instances for horizontal scaling
- */
-
-export interface WorkerConfig {
+export interface SemanticWorkerConfig {
   batchSize?: number;
   pollInterval?: number;
-  maxRetries?: number;
   supabase?: SupabaseClientLike;
 }
 
-export interface JobProgress {
-  current_section?: string;
+export interface SemanticJobProgress {
+  stage: string;
   current_source?: string;
-  sections_completed?: number;
-  total_sections?: number;
+  current_chunk?: number;
+  total_chunks?: number;
+  facts_extracted?: number;
+  sources_completed?: number;
+  total_sources?: number;
   started_at?: string;
   last_updated?: string;
 }
 
 const DEFAULT_BATCH_SIZE = 3;
-const DEFAULT_POLL_INTERVAL = 5000; // 5 seconds
-const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_POLL_INTERVAL = 5000;
 
 /**
- * Process one batch of pending import jobs.
- * Returns count of jobs processed.
+ * Process one batch of pending import jobs using semantic extraction.
  */
-export async function processImportJobs(config: WorkerConfig = {}): Promise<number> {
+export async function processSemanticImportJobs(
+  config: SemanticWorkerConfig = {}
+): Promise<number> {
   const batchSize = config.batchSize || DEFAULT_BATCH_SIZE;
-  
-  // Use provided supabase client or create service client for standalone worker
   const supabase = config.supabase || getSupabaseServiceClient();
 
-  console.log(`🔍 Checking for pending import jobs...`);
-  logger.info("Worker: claiming pending jobs", { batchSize });
+  console.log(`🔍 [Semantic] Checking for pending import jobs...`);
+  logger.info("SemanticWorker: claiming pending jobs", { batchSize });
 
   try {
     const { jobs, error } = await claimPendingImportJobs(batchSize, supabase as SupabaseClientLike);
 
     if (error) {
       console.log(`❌ Failed to claim jobs: ${error}`);
-      logger.error("Worker: failed to claim jobs", { error });
+      logger.error("SemanticWorker: failed to claim jobs", { error });
       return 0;
     }
 
     if (!jobs || jobs.length === 0) {
       console.log(`✓ No pending jobs found`);
-      logger.info("Worker: no pending jobs");
+      logger.info("SemanticWorker: no pending jobs");
       return 0;
     }
 
-    console.log(`\n📦 Found ${jobs.length} job(s) to process`);
+    console.log(`\n📦 [Semantic] Found ${jobs.length} job(s) to process`);
     jobs.forEach((job, i) => {
       console.log(`   ${i + 1}. Job ID: ${job.id.substring(0, 8)}... (Status: ${job.status})`);
     });
     console.log();
-    
-    logger.info("Worker: processing batch", { count: jobs.length });
 
-    // Process jobs in parallel (configurable concurrency)
-    const results = await Promise.allSettled(
-      jobs.map((job) => processJob(job, supabase as SupabaseClientLike))
-    );
+    logger.info("SemanticWorker: processing batch", { count: jobs.length });
 
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
+    // Process jobs sequentially for semantic extraction
+    // (parallel processing can cause context issues)
+    let succeeded = 0;
+    let failed = 0;
 
-    console.log(`\n✅ Batch complete: ${succeeded} succeeded, ${failed} failed\n`);
+    for (const job of jobs) {
+      try {
+        await processSemanticJob(job, supabase as SupabaseClientLike);
+        succeeded++;
+      } catch (error) {
+        failed++;
+        logger.error("SemanticWorker: job failed", {
+          jobId: job.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    console.log(`\n✅ [Semantic] Batch complete: ${succeeded} succeeded, ${failed} failed\n`);
     console.log(`${'─'.repeat(60)}\n`);
-    logger.info("Worker: batch complete", { succeeded, failed, total: jobs.length });
+    logger.info("SemanticWorker: batch complete", { succeeded, failed, total: jobs.length });
 
     return succeeded;
   } catch (error) {
-    logger.error("Worker: processImportJobs failed", {
+    logger.error("SemanticWorker: processSemanticImportJobs failed", {
       error,
       message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
     });
     return 0;
   }
 }
 
 /**
- * Process a single import job end-to-end.
+ * Process a single import job using semantic extraction.
  */
-async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): Promise<void> {
+async function processSemanticJob(
+  job: ImportJobRecord,
+  supabase: SupabaseClientLike
+): Promise<void> {
   const jobId = job.id;
   const shortId = jobId.substring(0, 8);
 
   try {
-    console.log(`\n🚀 [${shortId}] Starting job processing`);
-    logger.info("Worker: starting job", { jobId, orgId: job.org_id });
+    console.log(`\n🧠 [${shortId}] Starting semantic import processing`);
+    logger.info("SemanticWorker: starting job", { jobId, orgId: job.org_id });
 
     // Mark as processing
     await updateImportJobExtracted({
@@ -128,14 +128,13 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       errorMessage: null,
       supabase,
     });
-    
+
     console.log(`   [${shortId}] Status updated to 'processing'`);
 
     // Update progress: starting
-    await updateProgress(jobId, {
+    await updateSemanticProgress(jobId, {
+      stage: "starting",
       started_at: new Date().toISOString(),
-      sections_completed: 0,
-      total_sections: 9, // general, deal, hotels, flights, food, activities, contacts, technical, documents
     }, supabase);
 
     // Build extraction sources from raw_sources
@@ -153,133 +152,126 @@ async function processJob(job: ImportJobRecord, supabase: SupabaseClientLike): P
       rawText: s.rawText,
     }));
 
-    console.log(`   [${shortId}] Extracted ${extractionSources.length} source(s)`);
+    console.log(`   [${shortId}] Processing ${extractionSources.length} source(s)`);
     extractionSources.forEach((src, i) => {
       console.log(`      ${i + 1}. ${src.fileName} (${src.rawText?.length || 0} chars)`);
     });
-    console.log(`   [${shortId}] Running AI extraction...`);
-    
-    logger.info("Worker: running extraction", { jobId, sources: extractionSources.length });
 
-    // Run full extraction with progress callbacks
-    const { data, confidenceByField } = await runFullImportExtraction(
+    // Run semantic extraction with progress callbacks
+    console.log(`   [${shortId}] 🔬 Stage 1: Extracting candidate facts...`);
+    
+    const result = await runSemanticImportExtraction(
+      supabase,
+      jobId,
       extractionSources,
       async (progress) => {
-        const section = progress.current_section || 'unknown';
-        const sectionNum = (progress.sections_completed || 0) + 1;
-        const totalSections = progress.total_sections || 9;
-        console.log(`   [${shortId}] Section ${sectionNum}/${totalSections}: ${section}`);
+        const stage = progress.stage;
         
-        await updateProgress(jobId, {
+        if (stage === 'extracting_facts') {
+          console.log(
+            `   [${shortId}] Extracting: ${progress.current_source} ` +
+            `(chunk ${progress.current_chunk}/${progress.total_chunks}, ` +
+            `${progress.facts_extracted} facts so far)`
+          );
+        } else if (stage === 'resolving') {
+          console.log(`   [${shortId}] 🧠 Stage 2: Resolving facts...`);
+        } else if (stage === 'applying') {
+          console.log(`   [${shortId}] 📝 Stage 3: Applying resolved values...`);
+        }
+
+        await updateSemanticProgress(jobId, {
           ...progress,
           last_updated: new Date().toISOString(),
         }, supabase);
       }
     );
 
-    console.log(`   [${shortId}] ✓ Extraction complete!`);
-    console.log(`      • Hotels: ${data.hotels.length}`);
-    console.log(`      • Flights: ${data.flights.length}`);
-    console.log(`      • Food: ${data.food.length}`);
-    console.log(`      • Contacts: ${data.contacts.length}`);
-    console.log(`      • Documents: ${data.documents.length}`);
-    
-    logger.info("Worker: extraction returned data", {
+    console.log(`   [${shortId}] ✓ Semantic extraction complete!`);
+    console.log(`      • Facts extracted: ${result.facts_extracted}`);
+    console.log(`      • Facts selected: ${result.facts_selected}`);
+    console.log(`      • Resolutions: ${result.resolutions.length}`);
+
+    // Log resolution summary
+    console.log(`   [${shortId}] Resolution summary:`);
+    const resolved = result.resolutions.filter(r => r.state === 'resolved');
+    const unagreed = result.resolutions.filter(r => r.state === 'unagreed');
+    const info = result.resolutions.filter(r => r.state === 'informational');
+    console.log(`      • Resolved: ${resolved.length}`);
+    console.log(`      • Unagreed: ${unagreed.length}`);
+    console.log(`      • Informational: ${info.length}`);
+
+    if (result.warnings && result.warnings.length > 0) {
+      console.log(`   [${shortId}] ⚠️ Warnings:`);
+      result.warnings.forEach(w => console.log(`      • ${w}`));
+    }
+
+    logger.info("SemanticWorker: extraction complete", {
       jobId,
-      data: {
-        general: data.general ? Object.keys(data.general).length : 0,
-        deal: data.deal ? Object.keys(data.deal).length : 0,
-        technical: data.technical ? Object.keys(data.technical).length : 0,
-        hotels: data.hotels.length,
-        flights: data.flights.length,
-        food: data.food.length,
-        activities: data.activities.length,
-        contacts: data.contacts.length,
-        documents: data.documents.length,
+      factsExtracted: result.facts_extracted,
+      factsSelected: result.facts_selected,
+      resolutions: {
+        resolved: resolved.length,
+        unagreed: unagreed.length,
+        informational: info.length,
       },
-      confidenceFields: Object.keys(confidenceByField).length,
     });
 
-    // Finalize with extracted data
+    // Build confidence map from resolutions
+    const confidenceByField: Record<string, number> = {};
+    for (const resolution of result.resolutions) {
+      if (resolution.selected_fact_id && resolution.state === 'resolved') {
+        // Use fact_type as a proxy for field path
+        confidenceByField[`resolved.${resolution.fact_type}`] = 1.0;
+      }
+    }
+
+    // Save extracted data
     console.log(`   [${shortId}] 💾 Saving extracted data to database...`);
     await updateImportJobExtracted({
       jobId,
-      extracted: data,
+      extracted: result.data,
       confidenceMap: confidenceByField,
       status: "completed",
       errorMessage: null,
       supabase,
     });
 
-    // Read-back verification: ensure extracted payload persisted
     console.log(`   [${shortId}] ✓ Job complete and saved!`);
-    try {
-      const { data: savedJob, error: readError } = await (supabase as any).rpc("app_get_import_job", {
-        p_job_id: jobId,
-      });
-      if (readError) {
-        logger.warn("Worker: read-back failed after update", { jobId, error: readError });
-      } else if (savedJob) {
-        const extracted = (savedJob as any).extracted || null;
-        const confidence = (savedJob as any).confidence_map || null;
-        logger.info("Worker: read-back persisted payload", {
-          jobId,
-          hasExtracted: !!extracted,
-          hasConfidence: !!confidence,
-          totals: extracted
-            ? {
-                hotels: extracted.hotels?.length || 0,
-                flights: extracted.flights?.length || 0,
-                food: extracted.food?.length || 0,
-                activities: extracted.activities?.length || 0,
-                contacts: extracted.contacts?.length || 0,
-                documents: extracted.documents?.length || 0,
-              }
-            : undefined,
-        });
-      }
-    } catch (rbErr) {
-      logger.warn("Worker: read-back verification exception", { jobId, error: rbErr });
-    }
 
     // Update progress: completed
-    await updateProgress(jobId, {
-      sections_completed: 9,
-      total_sections: 9,
+    await updateSemanticProgress(jobId, {
+      stage: "completed",
+      facts_extracted: result.facts_extracted,
       last_updated: new Date().toISOString(),
     }, supabase);
 
-    logger.info("Worker: job completed", {
+    logger.info("SemanticWorker: job completed", {
       jobId,
-      totals: {
-        hotels: data.hotels.length,
-        flights: data.flights.length,
-        food: data.food.length,
-        activities: data.activities.length,
-        contacts: data.contacts.length,
-        documents: data.documents.length,
-      },
+      factsExtracted: result.facts_extracted,
+      factsSelected: result.facts_selected,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.log(`   [${shortId}] ❌ Job failed: ${errorMsg}`);
-    logger.error("Worker: job failed", { jobId, error });
+    logger.error("SemanticWorker: job failed", { jobId, error });
 
     await updateImportJobExtracted({
       jobId,
       status: "failed",
-      errorMessage: error instanceof Error ? error.message : "Unknown worker error",
+      errorMessage: errorMsg,
       supabase,
     });
+
+    throw error;
   }
 }
 
 /**
- * Update job progress atomically for UI visibility.
+ * Update semantic job progress atomically.
  */
-async function updateProgress(
+async function updateSemanticProgress(
   jobId: string,
-  progress: Partial<JobProgress>,
+  progress: Partial<SemanticJobProgress>,
   supabase: SupabaseClientLike
 ): Promise<void> {
   try {
@@ -289,68 +281,72 @@ async function updateProgress(
     });
 
     if (error) {
-      logger.error("Worker: failed to update progress", { jobId, error });
+      logger.error("SemanticWorker: failed to update progress", { jobId, error });
     }
   } catch (err) {
-    logger.error("Worker: progress update exception", { jobId, err });
+    logger.error("SemanticWorker: progress update exception", { jobId, err });
   }
 }
 
 /**
  * Register worker with health check endpoint.
  */
-async function registerWorkerHealth(workerId: string): Promise<void> {
+async function registerSemanticWorkerHealth(workerId: string): Promise<void> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("127.0.0.1")
       ? "http://localhost:3000"
       : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    
+
     await fetch(`${apiUrl}/api/import-worker/health`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workerId }),
+      body: JSON.stringify({ workerId, type: "semantic" }),
     });
   } catch (error) {
-    // Don't fail the worker if health check fails
-    logger.warn("Worker: health check ping failed", { workerId, error });
+    logger.warn("SemanticWorker: health check ping failed", { workerId, error });
   }
 }
 
 /**
- * Run worker in continuous polling mode (for standalone process).
+ * Run semantic worker in continuous polling mode.
  */
-export async function runWorkerLoop(config: WorkerConfig = {}): Promise<void> {
+export async function runSemanticWorkerLoop(
+  config: SemanticWorkerConfig = {}
+): Promise<void> {
   const pollInterval = config.pollInterval || DEFAULT_POLL_INTERVAL;
-  const workerId = `worker-${process.pid}-${Date.now()}`;
+  const workerId = `semantic-worker-${process.pid}-${Date.now()}`;
 
-  logger.info("Worker: starting polling loop", { pollInterval, workerId });
+  console.log(`\n${'═'.repeat(60)}`);
+  console.log(`🧠 SEMANTIC IMPORT WORKER STARTED`);
+  console.log(`   Worker ID: ${workerId}`);
+  console.log(`   Poll interval: ${pollInterval}ms`);
+  console.log(`   Batch size: ${config.batchSize || DEFAULT_BATCH_SIZE}`);
+  console.log(`${'═'.repeat(60)}\n`);
+
+  logger.info("SemanticWorker: starting polling loop", { pollInterval, workerId });
 
   // Initial health check registration
-  await registerWorkerHealth(workerId);
+  await registerSemanticWorkerHealth(workerId);
 
-  // Set up periodic health check pings (every 10 seconds)
+  // Set up periodic health check pings
   const healthCheckInterval = setInterval(() => {
-    registerWorkerHealth(workerId);
+    registerSemanticWorkerHealth(workerId);
   }, 10000);
 
   try {
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
-        await processImportJobs(config);
+        await processSemanticImportJobs(config);
       } catch (error) {
-        logger.error("Worker: loop iteration failed", { 
+        logger.error("SemanticWorker: loop iteration failed", {
           error,
           message: error instanceof Error ? error.message : "Unknown error",
-          stack: error instanceof Error ? error.stack : undefined,
         });
       }
 
-      // Wait before next poll
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
   } finally {
-    // Clean up health check interval on shutdown
     clearInterval(healthCheckInterval);
   }
 }

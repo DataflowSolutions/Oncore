@@ -1,75 +1,56 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env npx tsx
 /**
- * Standalone import worker process.
+ * Import Worker Script
+ * 
+ * Runs the semantic import worker that uses two-stage extraction:
+ * - Stage 1: Extract candidate facts
+ * - Stage 2: Semantic resolution
  * 
  * Usage:
  *   npm run import:worker
- * 
- * Environment:
- *   IMPORT_WORKER_POLL_INTERVAL - milliseconds between polls (default: 5000)
- *   IMPORT_WORKER_BATCH_SIZE - jobs per batch (default: 3)
- * 
- * Deployment:
- *   - Docker: Build with FROM node:20-alpine, COPY client/, RUN npm ci, CMD npm run import:worker
- *   - Vercel: Not recommended (use cron + API route instead)
- *   - AWS ECS/Fargate: Containerized task with auto-scaling
- *   - Kubernetes: Deployment with HPA based on queue depth
- * 
- * Scaling:
- *   - Horizontal: Run multiple instances; job claiming is atomic
- *   - Vertical: Increase NODE_OPTIONS --max-old-space-size for large PDFs
+ *   npx tsx scripts/import-worker.ts
  */
 
-// Load environment variables from .env.local
-import { config } from "dotenv";
+// Load environment variables FIRST before any other imports
+import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
 
-config({ path: resolve(__dirname, "../.env.local") });
+dotenvConfig({ path: resolve(__dirname, "../.env.local") });
 
-// Enable debug logging for worker
-process.env.DEBUG = "true";
+import { runSemanticWorkerLoop } from "../lib/import/worker";
 
-import { runWorkerLoop } from "@/lib/import/worker";
-import { logger } from "@/lib/logger";
+// Configuration from environment
+const config = {
+  batchSize: parseInt(process.env.IMPORT_WORKER_BATCH_SIZE || "3", 10),
+  pollInterval: parseInt(process.env.IMPORT_WORKER_POLL_INTERVAL || "5000", 10),
+};
 
-const pollInterval = process.env.IMPORT_WORKER_POLL_INTERVAL
-  ? parseInt(process.env.IMPORT_WORKER_POLL_INTERVAL, 10)
-  : 5000;
+console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║           🧠 IMPORT WORKER                                   ║
+║                                                              ║
+║  Two-stage intelligent import extraction:                    ║
+║  • Stage 1: Extract candidate facts from all chunks          ║
+║  • Stage 2: Semantic resolution (respects negotiations)      ║
+║                                                              ║
+║  Uses semantic decision-making that understands context      ║
+║  and negotiations, not simple "last-value-wins".             ║
+╚══════════════════════════════════════════════════════════════╝
+`);
 
-const batchSize = process.env.IMPORT_WORKER_BATCH_SIZE
-  ? parseInt(process.env.IMPORT_WORKER_BATCH_SIZE, 10)
-  : 3;
+// Handle graceful shutdown
+process.on("SIGINT", () => {
+  console.log("\n\n🛑 Received SIGINT, shutting down gracefully...");
+  process.exit(0);
+});
 
-console.log("\n╔════════════════════════════════════════════════════════╗");
-console.log("║         IMPORT WORKER - BACKGROUND PROCESSOR          ║");
-console.log("╚════════════════════════════════════════════════════════╝\n");
-console.log(`📊 Configuration:`);
-console.log(`   • Poll Interval: ${pollInterval}ms`);
-console.log(`   • Batch Size: ${batchSize} jobs`);
-console.log(`   • Environment: ${process.env.NODE_ENV || 'production'}`);
-console.log(`   • Debug Mode: ENABLED\n`);
-console.log(`🔄 Worker starting... Press Ctrl+C to stop\n`);
-console.log(`${'─'.repeat(60)}\n`);
+process.on("SIGTERM", () => {
+  console.log("\n\n🛑 Received SIGTERM, shutting down gracefully...");
+  process.exit(0);
+});
 
-logger.info("Starting import worker", { pollInterval, batchSize });
-
-runWorkerLoop({ pollInterval, batchSize }).catch((error) => {
-  console.log(`\n❌ WORKER CRASHED\n`);
-  logger.error("Worker crashed", error);
-  console.error(error);
+// Start the worker
+runSemanticWorkerLoop(config).catch((error) => {
+  console.error("Fatal error in semantic worker:", error);
   process.exit(1);
 });
-
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log(`\n⚠️  SIGTERM received - shutting down gracefully...\n`);
-  logger.info("SIGTERM received; shutting down gracefully");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  console.log(`\n⚠️  SIGINT received - shutting down gracefully...\n`);
-  logger.info("SIGINT received; shutting down gracefully");
-  process.exit(0);
-});
-

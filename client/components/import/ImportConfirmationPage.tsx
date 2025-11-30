@@ -20,8 +20,21 @@ import {
 } from "./sections";
 
 import type { ImportData } from "./types";
-import { createEmptyImportData } from "./types";
+import { createEmptyImportData, sanitizeImportData } from "./types";
 import type { ImportJobStatus } from "@/lib/import/jobs";
+import type { DocumentCategory } from "./types";
+
+/**
+ * Infer document category from filename
+ */
+function inferDocumentCategory(fileName: string): DocumentCategory {
+  const lower = fileName.toLowerCase();
+  if (lower.includes('contract') || lower.includes('agreement')) return 'contract';
+  if (lower.includes('rider') || lower.includes('tech') || lower.includes('spec')) return 'rider';
+  if (lower.includes('visa') || lower.includes('passport')) return 'visa';
+  if (lower.includes('boarding') || lower.includes('flight') || lower.includes('ticket')) return 'boarding_pass';
+  return 'other';
+}
 
 interface ImportConfirmationPageProps {
   orgId: string;
@@ -78,11 +91,24 @@ export function ImportConfirmationPage({
     total_sections?: number;
   }>({});
   
-  // Initialize state with provided data or empty defaults
-  const [data, setData] = useState<ImportData>(() => ({
-    ...createEmptyImportData(),
-    ...initialData,
+  // Convert rawSources to ImportedDocument[] for document section
+  const sourceDocuments = (rawSources || []).map((source): import('./types').ImportedDocument => ({
+    id: source.id,
+    fileName: source.fileName,
+    fileSize: 0, // Unknown from sources
+    category: inferDocumentCategory(source.fileName),
   }));
+
+  // Initialize state with provided data or empty defaults
+  const [data, setData] = useState<ImportData>(() => {
+    const base = createEmptyImportData();
+    return {
+      ...base,
+      ...initialData,
+      // Pre-populate documents from source files
+      documents: sourceDocuments.length > 0 ? sourceDocuments : (initialData?.documents || []),
+    };
+  });
 
   const confidenceLookup: ConfidenceLookup = (path) => {
     const entry = confidenceByField?.[path];
@@ -127,7 +153,23 @@ export function ImportConfirmationPage({
 
         if (job.status === "completed" && job.extracted) {
           console.log(`[import-ui] Job ${jobId} completed; hydrating extracted data`);
-          setData((prev) => (prev && prev.general?.artist ? prev : job.extracted));
+          // Sanitize extracted data to ensure all fields have defined values
+          const sanitized = sanitizeImportData(job.extracted);
+          // Merge with source documents (keep existing source docs, don't lose them)
+          const mergedDocuments = [...sourceDocuments];
+          // Add any extracted documents that aren't already in the source list
+          for (const doc of sanitized.documents) {
+            if (!mergedDocuments.find(d => d.fileName === doc.fileName)) {
+              mergedDocuments.push(doc);
+            }
+          }
+          setData((prev) => {
+            if (prev && prev.general?.artist) return prev; // Already hydrated
+            return {
+              ...sanitized,
+              documents: mergedDocuments,
+            };
+          });
           clearInterval(interval);
         }
 

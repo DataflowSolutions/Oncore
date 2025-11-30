@@ -25,15 +25,19 @@ interface HotelSectionProps {
  */
 export function HotelSection({ data, onChange, confidenceForField }: HotelSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Auto-add first item if empty
+  // Auto-add first item if empty (only once on mount)
   useEffect(() => {
-    if (data.length === 0) {
-      onChange([createEmptyHotel()]);
+    if (!isInitialized) {
+      setIsInitialized(true);
+      if (data.length === 0) {
+        onChange([createEmptyHotel()]);
+      }
     }
-  }, []);
+  }, [isInitialized, data.length, onChange]);
 
-  // Handle empty data during initial render
+  // Handle empty data - show empty state with add button, not "Loading..."
   const currentHotel = data[currentIndex] || null;
 
   const updateField = <K extends keyof ImportedHotel>(
@@ -69,7 +73,19 @@ export function HotelSection({ data, onChange, confidenceForField }: HotelSectio
   if (!currentHotel) {
     return (
       <SectionContainer title="Hotel">
-        <div className="text-muted-foreground text-sm">Loading...</div>
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <p className="text-muted-foreground text-sm">No hotel bookings yet</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange([createEmptyHotel()])}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Hotel
+          </Button>
+        </div>
       </SectionContainer>
     );
   }

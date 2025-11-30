@@ -25,15 +25,19 @@ interface FlightsSectionProps {
  */
 export function FlightsSection({ data, onChange, confidenceForField }: FlightsSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Auto-add first item if empty
+  // Auto-add first item if empty (only once on mount)
   useEffect(() => {
-    if (data.length === 0) {
-      onChange([createEmptyFlight()]);
+    if (!isInitialized) {
+      setIsInitialized(true);
+      if (data.length === 0) {
+        onChange([createEmptyFlight()]);
+      }
     }
-  }, []);
+  }, [isInitialized, data.length, onChange]);
 
-  // Handle empty data during initial render
+  // Handle empty data - show empty state with add button, not "Loading..."
   const currentFlight = data[currentIndex] || null;
 
   const updateField = <K extends keyof ImportedFlight>(
@@ -69,7 +73,19 @@ export function FlightsSection({ data, onChange, confidenceForField }: FlightsSe
   if (!currentFlight) {
     return (
       <SectionContainer title="Flights">
-        <div className="text-muted-foreground text-sm">Loading...</div>
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <p className="text-muted-foreground text-sm">No flights yet</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange([createEmptyFlight()])}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Flight
+          </Button>
+        </div>
       </SectionContainer>
     );
   }

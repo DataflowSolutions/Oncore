@@ -26,15 +26,19 @@ interface ActivitiesSectionProps {
  */
 export function ActivitiesSection({ data, onChange, confidenceForField }: ActivitiesSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Auto-add first item if empty
+  // Auto-add first item if empty (only once on mount)
   useEffect(() => {
-    if (data.length === 0) {
-      onChange([createEmptyActivity()]);
+    if (!isInitialized) {
+      setIsInitialized(true);
+      if (data.length === 0) {
+        onChange([createEmptyActivity()]);
+      }
     }
-  }, []);
+  }, [isInitialized, data.length, onChange]);
 
-  // Handle empty data during initial render
+  // Handle empty data - show empty state with add button, not "Loading..."
   const currentActivity = data[currentIndex] || null;
 
   const updateField = <K extends keyof ImportedActivity>(
@@ -82,7 +86,19 @@ export function ActivitiesSection({ data, onChange, confidenceForField }: Activi
   if (!currentActivity) {
     return (
       <SectionContainer title="Activities & Transfers">
-        <div className="text-muted-foreground text-sm">Loading...</div>
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <p className="text-muted-foreground text-sm">No activities or transfers yet</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange([createEmptyActivity()])}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Activity
+          </Button>
+        </div>
       </SectionContainer>
     );
   }
