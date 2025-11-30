@@ -133,6 +133,15 @@ interface CalendarDayViewProps {
     source: string;
     created_at: string;
   }>;
+  contactsData?: Array<{
+    id: string;
+    name: string;
+    role: string | null;
+    phone: string | null;
+    email: string | null;
+    is_promoter: boolean;
+    created_at: string;
+  }>;
 }
 
 export function CalendarDayView({
@@ -151,6 +160,7 @@ export function CalendarDayView({
   lodgingData = [],
   flightsData = [],
   cateringData = [],
+  contactsData = [],
 }: CalendarDayViewProps) {
   const [selectedItem, setSelectedItem] = useState<ScheduleItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -438,7 +448,11 @@ export function CalendarDayView({
                   orgSlug={orgSlug}
                   showId={showId}
                 />
-                <ContactsPanel />
+                <ContactsPanel
+                  orgSlug={orgSlug}
+                  showId={showId}
+                  contactsData={contactsData as any}
+                />
               </div>
             </div>
           </div>

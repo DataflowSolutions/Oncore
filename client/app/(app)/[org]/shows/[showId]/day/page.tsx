@@ -2,6 +2,7 @@ import { getAdvancingDocuments } from "@/lib/actions/advancing";
 import { getShowLodging } from "@/lib/actions/advancing/lodging";
 import { getShowFlights } from "@/lib/actions/advancing/flights";
 import { getShowCatering } from "@/lib/actions/advancing/catering";
+import { getShowContacts } from "@/lib/actions/advancing/show-contacts";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { CalendarDayView } from "@/components/shows/CalendarDayView";
 
@@ -91,11 +92,18 @@ export default async function ShowDayPage({
   >;
 
   // Fetch lodging, flights, and catering data using RPCs
-  const [lodgingData, flightsData, cateringData, documentsData] = await Promise.all([
+  const [
+    lodgingData,
+    flightsData,
+    cateringData,
+    documentsData,
+    showContactsData,
+  ] = await Promise.all([
     getShowLodging(showId),
     getShowFlights(showId),
     getShowCatering(showId),
     getAdvancingDocuments(showId),
+    getShowContacts(showId),
   ]);
 
   advancingDocuments = documentsData;
@@ -190,6 +198,7 @@ export default async function ShowDayPage({
         lodgingData={lodgingData}
         flightsData={flightsData}
         cateringData={cateringData as any}
+        contactsData={showContactsData as any}
       />
     </div>
   );
