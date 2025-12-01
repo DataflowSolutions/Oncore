@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../shows/shows_list_screen.dart';
+import '../shows/create_show_modal.dart';
 
 /// Calendar screen - month view with swipeable months
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -395,7 +396,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Search row
+          // Search row with filter and add button
           Row(
             children: [
               Expanded(
@@ -420,28 +421,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
               const SizedBox(width: 12),
               const Icon(Icons.tune, color: _muted, size: 22),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Add New button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _foreground,
-                foregroundColor: _background,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+              const SizedBox(width: 12),
+              // Add button
+              GestureDetector(
+                onTap: () => showCreateShowModal(context, widget.orgId),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _foreground,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.add, color: _background, size: 24),
                 ),
               ),
-              child: const Text(
-                'Add New',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
           // Bottom navigation
