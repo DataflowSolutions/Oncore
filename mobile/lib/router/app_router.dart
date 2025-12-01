@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/shows/shows_list_screen.dart';
 
 /// Notifier that triggers router refresh when auth state changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -38,8 +39,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       
       final isAuthenticated = authState.isAuthenticated;
       final isLoading = authState.isLoading;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                          state.matchedLocation == '/signup';
+      final location = state.matchedLocation;
+      final isAuthRoute = location == '/login' || location == '/signup';
 
       // Don't redirect while loading auth state
       if (isLoading) return null;
@@ -64,6 +65,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      
+      // Organization shows list (protected)
+      GoRoute(
+        path: '/org/:orgId/shows',
+        name: 'shows',
+        builder: (context, state) {
+          final orgId = state.pathParameters['orgId']!;
+          final orgName = state.extra as String? ?? 'Organization';
+          return ShowsListScreen(orgId: orgId, orgName: orgName);
+        },
       ),
       
       // Login page (public)

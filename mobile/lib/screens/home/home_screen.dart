@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 
@@ -222,11 +223,10 @@ class _OrganizationCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to organization detail
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Navigate to ${organization.name}'),
-            ),
+          // Navigate to organization shows list
+          context.go(
+            '/org/${organization.orgId}/shows',
+            extra: organization.name,
           );
         },
         borderRadius: BorderRadius.circular(12),

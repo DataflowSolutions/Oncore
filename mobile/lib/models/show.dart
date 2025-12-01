@@ -1,6 +1,6 @@
-/// Show model - matches your Supabase 'shows' table
+/// Show model - matches the RPC response from get_shows_by_org
 /// 
-/// This demonstrates how to map Supabase JSON data to Dart objects
+/// This maps Supabase JSON data to Dart objects, matching the web client structure
 class Show {
   final String id;
   final String title;
@@ -8,11 +8,20 @@ class Show {
   final String? venueId;
   final String orgId;
   
-  // Joined venue data
+  // Joined venue data from RPC
   final String? venueName;
   final String? venueCity;
+  final String? venueCountry;
+  final String? venueAddress;
+  final int? venueCapacity;
   
-  final DateTime createdAt;
+  // Additional fields
+  final String? setTime;
+  final String? doorsAt;
+  final String? notes;
+  final String? status;
+  
+  final DateTime? createdAt;
 
   Show({
     required this.id,
@@ -22,10 +31,18 @@ class Show {
     required this.orgId,
     this.venueName,
     this.venueCity,
-    required this.createdAt,
+    this.venueCountry,
+    this.venueAddress,
+    this.venueCapacity,
+    this.setTime,
+    this.doorsAt,
+    this.notes,
+    this.status,
+    this.createdAt,
   });
 
-  /// Create Show from Supabase JSON response
+  /// Create Show from get_shows_by_org RPC response
+  /// The RPC returns flattened venue data (venue_name, venue_city, etc.)
   factory Show.fromJson(Map<String, dynamic> json) {
     return Show(
       id: json['id'] as String,
@@ -33,14 +50,19 @@ class Show {
       date: DateTime.parse(json['date'] as String),
       venueId: json['venue_id'] as String?,
       orgId: json['org_id'] as String,
-      // Handle joined venue data
-      venueName: json['venue'] != null 
-          ? (json['venue'] as Map<String, dynamic>)['name'] as String?
+      // RPC returns flat venue fields
+      venueName: json['venue_name'] as String?,
+      venueCity: json['venue_city'] as String?,
+      venueCountry: json['venue_country'] as String?,
+      venueAddress: json['venue_address'] as String?,
+      venueCapacity: json['venue_capacity'] as int?,
+      setTime: json['set_time'] as String?,
+      doorsAt: json['doors_at'] as String?,
+      notes: json['notes'] as String?,
+      status: json['status'] as String?,
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String)
           : null,
-      venueCity: json['venue'] != null 
-          ? (json['venue'] as Map<String, dynamic>)['city'] as String?
-          : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
 
@@ -49,18 +71,18 @@ class Show {
     return {
       'id': id,
       'title': title,
-      'date': date.toIso8601String(),
+      'date': date.toIso8601String().split('T')[0],
       'venue_id': venueId,
       'org_id': orgId,
-      'created_at': createdAt.toIso8601String(),
     };
   }
 
-  /// Format date for display (matches Next.js format: "Oct 15")
+  /// Format date for display (matches Next.js format: "Sat, Oct 15")
   String get formattedDate {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[date.month - 1]} ${date.day}';
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
   /// Get month and year for grouping (matches Next.js: "October 2025")
