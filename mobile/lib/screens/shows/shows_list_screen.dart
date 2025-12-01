@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../../providers/auth_provider.dart';
 
@@ -127,7 +128,7 @@ class ShowsContent extends ConsumerWidget {
             // Show cards
             ...monthShows.map((show) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: ShowCard(show: show),
+              child: ShowCard(show: show, orgId: orgId),
             )),
           ],
         );
@@ -139,8 +140,9 @@ class ShowsContent extends ConsumerWidget {
 /// Show card matching web client's rounded card design
 class ShowCard extends StatelessWidget {
   final Show show;
+  final String orgId;
 
-  const ShowCard({super.key, required this.show});
+  const ShowCard({super.key, required this.show, required this.orgId});
 
   static const _foreground = Color(0xFFF0F0F0);
   static const _muted = Color(0xFFA3A3A3);
@@ -149,55 +151,58 @@ class ShowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          // Left: Title and artist
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => context.push('/org/$orgId/shows/${show.id}/day'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            // Left: Title and artist
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    show.title,
+                    style: const TextStyle(
+                      color: _foreground,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'Alesso', // TODO: Get from show_assignments
+                    style: TextStyle(color: _muted, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Right: Venue and date
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  show.title,
-                  style: const TextStyle(
-                    color: _foreground,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  show.venueCity ?? 'TBD',
+                  style: const TextStyle(color: _muted, fontSize: 13),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'Alesso', // TODO: Get from show_assignments
-                  style: TextStyle(color: _muted, fontSize: 13),
+                Text(
+                  show.formattedDate,
+                  style: const TextStyle(color: _muted, fontSize: 13),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          // Right: Venue and date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                show.venueCity ?? 'TBD',
-                style: const TextStyle(color: _muted, fontSize: 13),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                show.formattedDate,
-                style: const TextStyle(color: _muted, fontSize: 13),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
