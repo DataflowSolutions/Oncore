@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../day/day_screen.dart';
 import '../shows/shows_list_screen.dart';
+import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
 
 /// Main shell that wraps Day, Shows, Network screens with swipe navigation
@@ -193,7 +194,7 @@ class _MainShellState extends State<MainShell> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () => showCreateShowModal(context, widget.orgId),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _foreground,
                 foregroundColor: _background,
