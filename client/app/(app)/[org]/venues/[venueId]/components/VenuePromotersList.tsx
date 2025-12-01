@@ -210,7 +210,7 @@ export function VenuePromotersList({
             company: selectedPromoter.company,
             city: selectedPromoter.city,
             country: selectedPromoter.country,
-            role: selectedPromoter.role,
+            role: selectedPromoter.type,
             notes: selectedPromoter.notes,
             status: selectedPromoter.status,
             created_at: selectedPromoter.created_at,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { processImportJobs } from "@/lib/import/worker";
+import { processSemanticImportJobs } from "@/lib/import/worker";
 
 /**
  * Worker API endpoint for processing import jobs.
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     // Process batch of jobs
     logger.info("Worker API: processing jobs");
-    const processed = await processImportJobs({ batchSize: 5 });
+    const processed = await processSemanticImportJobs({ batchSize: 5 });
 
     return NextResponse.json({ processed });
   } catch (error) {

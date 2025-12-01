@@ -35,7 +35,10 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
   const [rawText, setRawText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
-  const disabled = !orgId || !orgSlug;
+  // Temporarily disable imports until the flow is ready
+  const importDisabled = true;
+  const disabled = importDisabled || !orgId || !orgSlug;
+  const disabledMessage = importDisabled ? "Import coming soon" : undefined;
 
   const handleStartImport = async () => {
     if (!orgId || !orgSlug) return;
@@ -199,6 +202,9 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
           className
         )}
         variant="secondary"
+        disabled={disabled}
+        title={disabledMessage}
+        aria-disabled={disabled}
         onClick={() => !disabled && setOpen(true)}
       >
         Import Data
