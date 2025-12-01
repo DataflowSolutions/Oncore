@@ -6,12 +6,16 @@ class AppTheme {
   // Prevent instantiation
   AppTheme._();
 
+  // Font family matching web app (Arial, Helvetica, sans-serif)
+  // Note: Special Gothic Expanded One (web header font) is not yet available in google_fonts,
+  // so we use Arial consistently for now. When the font becomes available, we can add it.
+  static const String _fontFamily = 'Arial';
+
   // ===========================================
   // LIGHT THEME COLORS (from :root in CSS)
   // ===========================================
   static const _lightBackground = Color(0xFFFFFFFF);         // #ffffff
   static const _lightForeground = Color(0xFF0A0A0A);         // #0a0a0a
-  static const _lightDescriptionForeground = Color(0xFF737373); // #737373
   
   // Card colors
   static const _lightCard = Color(0xFFFFFFFF);               // #ffffff
@@ -200,22 +204,30 @@ class AppTheme {
       color: _lightForeground,
     ),
     
+    // Use Arial font to match web app (body: Arial, Helvetica, sans-serif)
+    fontFamily: _fontFamily,
+    
     textTheme: const TextTheme(
-      displayLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold),
-      displayMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold),
-      displaySmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold),
-      headlineLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600),
-      headlineMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600),
-      headlineSmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600),
-      titleLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500),
-      titleSmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500),
-      bodyLarge: TextStyle(color: _lightForeground),
-      bodyMedium: TextStyle(color: _lightForeground),
-      bodySmall: TextStyle(color: _lightMutedForeground),
-      labelLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500),
-      labelMedium: TextStyle(color: _lightMutedForeground),
-      labelSmall: TextStyle(color: _lightMutedForeground),
+      // Display styles - headers (Arial for now, web uses Special Gothic Expanded One which isn't in google_fonts yet)
+      displayLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      displayMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      displaySmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      // Headline styles
+      headlineLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      headlineMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      headlineSmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      // Title styles
+      titleLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      titleMedium: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      titleSmall: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      // Body styles
+      bodyLarge: TextStyle(color: _lightForeground, fontFamily: _fontFamily),
+      bodyMedium: TextStyle(color: _lightForeground, fontFamily: _fontFamily),
+      bodySmall: TextStyle(color: _lightMutedForeground, fontFamily: _fontFamily),
+      // Label styles
+      labelLarge: TextStyle(color: _lightForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      labelMedium: TextStyle(color: _lightMutedForeground, fontFamily: _fontFamily),
+      labelSmall: TextStyle(color: _lightMutedForeground, fontFamily: _fontFamily),
     ),
   );
 
@@ -336,22 +348,30 @@ class AppTheme {
       color: _darkForeground,
     ),
     
+    // Use Arial font to match web app (body: Arial, Helvetica, sans-serif)
+    fontFamily: _fontFamily,
+    
     textTheme: const TextTheme(
-      displayLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold),
-      displayMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold),
-      displaySmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold),
-      headlineLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600),
-      headlineMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600),
-      headlineSmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600),
-      titleLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500),
-      titleSmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500),
-      bodyLarge: TextStyle(color: _darkForeground),
-      bodyMedium: TextStyle(color: _darkForeground),
-      bodySmall: TextStyle(color: _darkMutedForeground),
-      labelLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500),
-      labelMedium: TextStyle(color: _darkMutedForeground),
-      labelSmall: TextStyle(color: _darkMutedForeground),
+      // Display styles - headers (Arial for now, web uses Special Gothic Expanded One which isn't in google_fonts yet)
+      displayLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      displayMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      displaySmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.bold, fontFamily: _fontFamily),
+      // Headline styles
+      headlineLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      headlineMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      headlineSmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      // Title styles
+      titleLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w600, fontFamily: _fontFamily),
+      titleMedium: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      titleSmall: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      // Body styles
+      bodyLarge: TextStyle(color: _darkForeground, fontFamily: _fontFamily),
+      bodyMedium: TextStyle(color: _darkForeground, fontFamily: _fontFamily),
+      bodySmall: TextStyle(color: _darkMutedForeground, fontFamily: _fontFamily),
+      // Label styles
+      labelLarge: TextStyle(color: _darkForeground, fontWeight: FontWeight.w500, fontFamily: _fontFamily),
+      labelMedium: TextStyle(color: _darkMutedForeground, fontFamily: _fontFamily),
+      labelSmall: TextStyle(color: _darkMutedForeground, fontFamily: _fontFamily),
     ),
   );
 }
