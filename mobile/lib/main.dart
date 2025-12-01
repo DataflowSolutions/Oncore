@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/env.dart';
-import 'screens/shows_screen.dart';
+import 'config/theme.dart';
+import 'router/app_router.dart';
 
 /// 🎯 Main Entry Point
 /// 
@@ -11,6 +13,17 @@ void main() async {
   // Required for async operations before runApp
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables from .env file
+  await Env.init();
+
+  // Verify environment is configured
+  if (!Env.isConfigured) {
+    throw Exception(
+      'Environment not configured! Please check your .env file.\n'
+      'Copy .env.example to .env and fill in your Supabase credentials.',
+    );
+  }
+
   // 🚀 Initialize Supabase (connects DIRECTLY to your database)
   // This is equivalent to your Next.js getSupabaseServer() setup
   await Supabase.initialize(
@@ -18,38 +31,32 @@ void main() async {
     anonKey: Env.supabaseAnonKey,
   );
 
-  print('✅ Supabase initialized: ${Env.supabaseUrl}');
+  debugPrint('✅ Supabase initialized: ${Env.supabaseUrl}');
   
-  runApp(const OncoreApp());
+  runApp(
+    const ProviderScope(
+      child: OncoreApp(),
+    ),
+  );
 }
 
 /// 🎨 Main App Widget
 /// 
 /// This is equivalent to your Next.js app/layout.tsx
-class OncoreApp extends StatelessWidget {
+class OncoreApp extends ConsumerWidget {
   const OncoreApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+    
+    return MaterialApp.router(
       title: 'Oncore - Tour Management',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      // Start with the shows list screen
-      home: const ShowsScreen(),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
     );
   }
 }

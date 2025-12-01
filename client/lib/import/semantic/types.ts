@@ -27,10 +27,18 @@ export type ImportFactType =
   | 'venue_capacity'
   | 'artist_name'
   | 'event_name'
+  // Hotel fields
   | 'hotel_name'
   | 'hotel_address'
+  | 'hotel_city'
+  | 'hotel_country'
   | 'hotel_checkin'
   | 'hotel_checkout'
+  | 'hotel_booking_reference'
+  | 'hotel_phone'
+  | 'hotel_email'
+  | 'hotel_notes'
+  // Flight fields
   | 'flight_number'
   | 'flight_origin_city'
   | 'flight_origin_airport'
@@ -41,21 +49,44 @@ export type ImportFactType =
   | 'flight_airline'
   | 'flight_passenger_name'
   | 'flight_booking_reference'
-  | 'flight_departure'
-  | 'flight_arrival'
+  | 'flight_ticket_number'
+  | 'flight_seat'
+  | 'flight_class'
+  | 'flight_aircraft_model'
+  | 'flight_duration'
+  | 'flight_departure'  // Legacy
+  | 'flight_arrival'    // Legacy
+  // Contact fields
   | 'contact_name'
   | 'contact_email'
   | 'contact_phone'
   | 'contact_role'
+  // Deal fields
   | 'currency'
   | 'payment_terms'
   | 'deal_type'
+  | 'deal_notes'
+  // Technical fields
   | 'technical_requirement'
+  | 'technical_equipment_summary'
+  | 'technical_backline_summary'
+  | 'technical_stage_setup_summary'
+  | 'technical_lighting_summary'
+  | 'technical_soundcheck_summary'
+  | 'technical_other_summary'
+  // Catering / food provider fields
   | 'catering_detail'
   | 'catering_summary'
+  | 'catering_provider_name'
+  | 'catering_provider_address'
+  | 'catering_provider_city'
+  | 'catering_provider_country'
+  | 'catering_provider_phone'
+  | 'catering_provider_email'
+  | 'catering_booking_reference'
+  // Activities / transfers
   | 'transfer_summary'
   | 'ground_transport_summary'
-  | 'technical_equipment_summary'
   | 'activity_detail'
   | 'general_note'
   | 'other';
@@ -307,6 +338,7 @@ export interface ResolutionResult {
  * Mapping from fact types to ImportData fields
  */
 export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
+  // Deal / costs
   artist_fee: ['deal.fee'],
   venue_cost: [],
   production_cost: [],
@@ -314,6 +346,12 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   accommodation_cost: [],
   travel_cost: [],
   other_cost: [],
+  currency: ['deal.currency'],
+  payment_terms: ['deal.paymentTerms'],
+  deal_type: ['deal.dealType'],
+  deal_notes: ['deal.notes'],
+  
+  // Event / general
   event_date: ['general.date'],
   event_time: ['general.setTime'],
   set_time: ['general.setTime'],
@@ -323,14 +361,29 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   venue_capacity: ['technical.other'],
   artist_name: ['general.artist'],
   event_name: ['general.eventName'],
+  
+  // Hotels
   hotel_name: ['hotels[].name'],
   hotel_address: ['hotels[].address'],
+  hotel_city: ['hotels[].city'],
+  hotel_country: ['hotels[].country'],
   hotel_checkin: ['hotels[].checkInDate', 'hotels[].checkInTime'],
   hotel_checkout: ['hotels[].checkOutDate', 'hotels[].checkOutTime'],
+  hotel_booking_reference: ['hotels[].bookingReference'],
+  hotel_phone: ['hotels[].phone'],
+  hotel_email: ['hotels[].email'],
+  hotel_notes: ['hotels[].notes'],
+  
+  // Flights
   flight_number: ['flights[].flightNumber'],
   flight_airline: ['flights[].airline'],
   flight_passenger_name: ['flights[].fullName'],
   flight_booking_reference: ['flights[].bookingReference'],
+  flight_ticket_number: ['flights[].ticketNumber'],
+  flight_seat: ['flights[].seat'],
+  flight_class: ['flights[].travelClass'],
+  flight_aircraft_model: ['flights[].aircraft'],
+  flight_duration: ['flights[].flightTime'],
   flight_origin_city: ['flights[].fromCity'],
   flight_origin_airport: ['flights[].fromAirport'],
   flight_destination_city: ['flights[].toCity'],
@@ -340,20 +393,39 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
   // Legacy fields: only apply to time/date when parseable; do NOT map to airports anymore
   flight_departure: ['flights[].departureDate', 'flights[].departureTime'],
   flight_arrival: ['flights[].arrivalDate', 'flights[].arrivalTime'],
+  
+  // Contacts
   contact_name: ['contacts[].name'],
   contact_email: ['contacts[].email'],
   contact_phone: ['contacts[].phone'],
   contact_role: ['contacts[].role'],
-  currency: ['deal.currency'],
-  payment_terms: ['deal.paymentTerms'],
-  deal_type: ['deal.dealType'],
+  
+  // Technical
   technical_requirement: ['technical.equipment', 'technical.other'],
+  technical_equipment_summary: ['technical.equipment'],
+  technical_backline_summary: ['technical.backline'],
+  technical_stage_setup_summary: ['technical.stageSetup'],
+  technical_lighting_summary: ['technical.lightingRequirements'],
+  technical_soundcheck_summary: ['technical.soundcheck'],
+  technical_other_summary: ['technical.other'],
+  
+  // Catering / food
   catering_detail: ['food[].notes'],
   catering_summary: ['food[].notes'],
+  catering_provider_name: ['food[].name'],
+  catering_provider_address: ['food[].address'],
+  catering_provider_city: ['food[].city'],
+  catering_provider_country: ['food[].country'],
+  catering_provider_phone: ['food[].phone'],
+  catering_provider_email: ['food[].email'],
+  catering_booking_reference: ['food[].bookingReference'],
+  
+  // Activities / transfers
   transfer_summary: ['activities[].notes'],
   ground_transport_summary: ['activities[].notes'],
-  technical_equipment_summary: ['technical.equipment'],
   activity_detail: ['activities[].notes'],
+  
+  // Misc
   general_note: ['deal.notes'],
   other: [],
 };

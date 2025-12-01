@@ -73,36 +73,78 @@ FACT DOMAIN RULES:
 - Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg)
 - Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ...
 - Hotels: fact_domain = hotel_main, hotel_alt1, ...
+- Food/Catering: fact_domain = catering_main, catering_alt1, ...
 - If unsure, leave fact_domain null.
 
-FACT TYPES - be precise:
-- Flights (use fact_domain = flight_leg_1, flight_leg_2, ...):
-  - flight_origin_city, flight_origin_airport
-  - flight_destination_city, flight_destination_airport
-  - flight_departure_datetime, flight_arrival_datetime (ISO datetime if possible)
-  - flight_airline, flight_passenger_name, flight_booking_reference
-  - flight_number (legacy), flight_departure (legacy), flight_arrival (legacy)
+FACT TYPES - COMPREHENSIVE LIST (be precise):
+
+FLIGHTS (use fact_domain = flight_leg_1, flight_leg_2, ... per leg):
+- flight_airline: Airline name (e.g., "Turkish Airlines")
+- flight_number: Flight number (e.g., "TK67")
+- flight_origin_city, flight_origin_airport: Departure city/airport
+- flight_destination_city, flight_destination_airport: Arrival city/airport
+- flight_departure_datetime, flight_arrival_datetime: ISO datetime (e.g., "2024-12-31T21:10:00")
+- flight_passenger_name: Traveler's full name
+- flight_booking_reference: PNR / booking code
+- flight_ticket_number: E-ticket number if shown
+- flight_seat: Seat assignment (e.g., "12A")
+- flight_class: Cabin class (e.g., "Economy", "Business")
+- flight_aircraft_model: Aircraft type (e.g., "Boeing 777", "Airbus A321")
+- flight_duration: Flight duration if stated (e.g., "2h 45m")
+
+HOTELS (use fact_domain = hotel_main, hotel_alt1, ...):
+- hotel_name: Hotel name
+- hotel_address: Full address
+- hotel_city: City
+- hotel_country: Country
+- hotel_checkin, hotel_checkout: Check-in/out date+time
+- hotel_booking_reference: Confirmation number
+- hotel_phone: Hotel phone number
+- hotel_email: Hotel email
+- hotel_notes: Special requests, room type, etc.
+
+DEAL / COSTS:
 - artist_fee: Money paid TO the artist for performing
-- venue_cost: Cost of the venue itself
-- production_cost: Sound, lights, staging equipment
-- catering_cost: Food and beverages
-- accommodation_cost: Hotels, lodging
-- travel_cost: Flights, ground transport
-- other_cost: Anything else
-- hotel_name, hotel_address, hotel_checkin, hotel_checkout: Hotel details (use fact_domain = hotel_main, hotel_alt1, ...)
-- event_date, event_time, set_time, event_name: Show timing/identification
+- currency: Currency code (EUR, USD, GBP, AED, etc.)
+- payment_terms: Payment schedule/terms
+- deal_type: Type of deal (flat fee, vs door, etc.)
+- deal_notes: Other deal-related notes
+- venue_cost, production_cost, catering_cost, accommodation_cost, travel_cost, other_cost
+
+EVENT / GENERAL:
+- event_date, event_time, set_time: Show date/time
 - venue_name, venue_city, venue_country, venue_capacity: Venue info
 - artist_name, event_name: Show identification
-- catering_summary: One per show; short summary of catering/food/drink requirements
-- transfer_summary or ground_transport_summary: One per show; summary of transfers/ground transport plan
-- technical_equipment_summary: One per show; key technical/backline requirements (CDJs, mixers, monitors, etc.)
-- contact_name, contact_email, contact_phone, contact_role: People (use fact_domain = contact_promoter, contact_agent, contact_tour_manager, etc.)
+
+CONTACTS (use fact_domain = contact_promoter, contact_agent, contact_tour_manager, etc.):
+- contact_name, contact_email, contact_phone, contact_role
+
+TECHNICAL (emit separate facts for each category when present):
+- technical_equipment_summary: Main DJ/artist equipment (CDJs, mixers, monitors)
+- technical_backline_summary: Backline instruments/gear
+- technical_stage_setup_summary: Stage dimensions, risers, setup requirements
+- technical_lighting_summary: Lighting requirements
+- technical_soundcheck_summary: Soundcheck time/requirements
+- technical_other_summary: Any other technical notes
+
+CATERING / FOOD (use fact_domain = catering_main, catering_alt1, ...):
+- catering_summary: Overall food/drink requirements
+- catering_detail: Specific items
+- catering_provider_name: Restaurant/caterer name
+- catering_provider_address, catering_provider_city, catering_provider_country
+- catering_provider_phone, catering_provider_email
+- catering_booking_reference: Reservation number
+
+TRANSFERS / ACTIVITIES:
+- transfer_summary or ground_transport_summary: Ground transport plan
+- activity_detail: Other scheduled activities
 
 OUTPUT FORMAT (respond with JSON only):
 {
   "facts": [
     {
       "fact_type": "flight_number",
+      "fact_domain": "flight_leg_1",
       "value_text": "TK1234",
       "status": "final",
       "speaker_role": "unknown",
@@ -140,23 +182,59 @@ For NEGOTIATION documents: Use appropriate status (offer, counter_offer, accepte
 For INFORMATIONAL documents: Use "info" status
 
 FACT DOMAIN RULES (CRITICAL):
-- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg)
+- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg). Keep ALL facts for the same leg in the same domain.
 - Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ... Keep name/email/phone/role for the same person in the same domain.
 - Hotels: fact_domain = hotel_main, hotel_alt1, ...
+- Food/Catering: fact_domain = catering_main, catering_alt1, ...
 - If unsure, leave fact_domain null (do NOT invent new patterns).
 
-GRANULAR FLIGHT FIELDS (emit when available):
-- flight_origin_city / flight_origin_airport
-- flight_destination_city / flight_destination_airport
-- flight_departure_datetime / flight_arrival_datetime (ISO if possible)
-- flight_airline, flight_passenger_name, flight_booking_reference
-- flight_number, flight_departure (legacy), flight_arrival (legacy)
+FLIGHT FIELDS (emit ALL available per leg):
+- flight_airline: Airline name
+- flight_number: Flight number
+- flight_origin_city / flight_origin_airport: Departure city and airport code/name
+- flight_destination_city / flight_destination_airport: Arrival city and airport code/name
+- flight_departure_datetime / flight_arrival_datetime: ISO datetime (e.g., "2024-12-31T21:10:00")
+- flight_passenger_name: Traveler's full name
+- flight_booking_reference: PNR / booking code
+- flight_ticket_number: E-ticket number if shown
+- flight_seat: Seat assignment (e.g., "12A")
+- flight_class: Cabin class (Economy, Business, First)
+- flight_aircraft_model: Aircraft type (Boeing 777, Airbus A321, etc.)
+- flight_duration: Flight duration if stated
 
-LOGISTICS / RIDER SUMMARIES (emit once if present):
-- catering_summary: concise summary of catering/food/drink requirements (dinner, drinks, brand requests)
-- transfer_summary or ground_transport_summary: summary of transfers/ground transport plan (airport -> hotel -> venue etc.)
-- technical_equipment_summary: summary of technical/backline needs (CDJs, mixers, monitors, PA, stage requirements)
-- event_name: if the document names the show (e.g., "Son of Son @ Soho, Dubai")
+HOTEL FIELDS (emit ALL available):
+- hotel_name, hotel_address, hotel_city, hotel_country
+- hotel_checkin, hotel_checkout: Date/time
+- hotel_booking_reference: Confirmation number
+- hotel_phone, hotel_email
+- hotel_notes: Room type, special requests
+
+TECHNICAL FIELDS (split into categories when present):
+- technical_equipment_summary: Main DJ/artist equipment (CDJs, mixers, monitors)
+- technical_backline_summary: Backline instruments/gear
+- technical_stage_setup_summary: Stage dimensions, risers, setup
+- technical_lighting_summary: Lighting requirements
+- technical_soundcheck_summary: Soundcheck time/requirements
+- technical_other_summary: Other technical notes
+
+CATERING/FOOD FIELDS:
+- catering_summary: Overall food/drink requirements
+- catering_detail: Specific items
+- catering_provider_name: Restaurant/caterer name
+- catering_provider_address, catering_provider_city, catering_provider_country
+- catering_provider_phone, catering_provider_email
+- catering_booking_reference: Reservation number
+
+DEAL FIELDS:
+- artist_fee: Fee amount
+- currency: Currency code (EUR, USD, GBP, AED)
+- payment_terms: Payment schedule
+- deal_type: Type of deal
+- deal_notes: Other notes
+
+LOGISTICS:
+- transfer_summary / ground_transport_summary: Ground transport plan
+- activity_detail: Scheduled activities
 
 Previous facts for context (to detect counter-offers):
 {previous_facts}
@@ -167,159 +245,10 @@ Text to analyze (chunk {chunk_index} from {source_file_name}):
 ---
 
 REMINDER: If this is a flight booking confirmation, all flight facts MUST have status "final", NOT "offer".
+Extract as many facts as possible from the text. Do NOT skip fields that are clearly stated.
 Return valid JSON with a "facts" array.`;
 
-// =============================================================================
-// Fact Type Classification
-// =============================================================================
 
-/**
- * Keywords that help classify fact types
- */
-const FACT_TYPE_KEYWORDS: Record<string, ImportFactType[]> = {
-  // Artist fee indicators
-  'fee': ['artist_fee'],
-  'artist fee': ['artist_fee'],
-  'performance fee': ['artist_fee'],
-  'guarantee': ['artist_fee'],
-  'flat fee': ['artist_fee'],
-  'pay the artist': ['artist_fee'],
-  'offer': ['artist_fee'],
-  
-  // Venue cost indicators
-  'venue cost': ['venue_cost'],
-  'venue rental': ['venue_cost'],
-  'room rental': ['venue_cost'],
-  'hall rental': ['venue_cost'],
-  'venue fee': ['venue_cost'],
-  
-  // Production cost indicators
-  'production': ['production_cost'],
-  'sound': ['production_cost', 'technical_requirement', 'technical_equipment_summary'],
-  'lighting': ['production_cost', 'technical_requirement'],
-  'backline': ['production_cost', 'technical_requirement', 'technical_equipment_summary'],
-  'staging': ['production_cost', 'technical_requirement'],
-  'technical': ['technical_requirement', 'technical_equipment_summary'],
-  'technical rider': ['technical_requirement', 'technical_equipment_summary'],
-  'cdj': ['technical_equipment_summary', 'technical_requirement'],
-  'mixer': ['technical_equipment_summary', 'technical_requirement'],
-  
-  // Catering indicators
-  'catering': ['catering_cost', 'catering_detail', 'catering_summary'],
-  'food': ['catering_cost', 'catering_detail', 'catering_summary'],
-  'meal': ['catering_cost', 'catering_detail', 'catering_summary'],
-  'buyout': ['catering_cost'],
-  'hospitality': ['catering_summary', 'catering_detail'],
-  
-  // Accommodation indicators
-  'hotel': ['accommodation_cost', 'hotel_name'],
-  'lodging': ['accommodation_cost'],
-  'accommodation': ['accommodation_cost'],
-  'room': ['accommodation_cost', 'hotel_name'],
-  'check-in': ['hotel_checkin'],
-  'check-out': ['hotel_checkout'],
-  
-  // Travel indicators
-  'flight': ['travel_cost', 'flight_number'],
-  'travel': ['travel_cost'],
-  'transport': ['travel_cost'],
-  'ground': ['travel_cost', 'transfer_summary'],
-  'transfer': ['transfer_summary', 'activity_detail'],
-  'shuttle': ['transfer_summary', 'activity_detail'],
-  'pickup': ['transfer_summary', 'activity_detail'],
-  'driver': ['transfer_summary', 'activity_detail'],
-  
-  // Date/time indicators
-  'date': ['event_date'],
-  'time': ['event_time'],
-  'set time': ['set_time'],
-  'showtime': ['set_time'],
-  'doors': ['event_time'],
-  'event': ['event_name'],
-  'show': ['event_name'],
-  'lineup': ['event_name'],
-  
-  // Contact indicators
-  'contact': ['contact_name'],
-  'phone': ['contact_phone'],
-  'email': ['contact_email'],
-  'role': ['contact_role'],
-  
-  // Deal indicators
-  'payment': ['payment_terms'],
-  'terms': ['payment_terms'],
-  'deposit': ['payment_terms'],
-  'deal': ['deal_type'],
-  'currency': ['currency'],
-};
-
-/**
- * Keywords that indicate negotiation status
- */
-const STATUS_KEYWORDS: Record<string, ImportFactStatus[]> = {
-  'offer': ['offer'],
-  'propose': ['offer'],
-  'we can do': ['offer'],
-  'how about': ['offer', 'counter_offer'],
-  
-  'counter': ['counter_offer'],
-  'instead': ['counter_offer'],
-  'alternatively': ['counter_offer'],
-  'what if': ['counter_offer'],
-  
-  'agreed': ['accepted'],
-  'accept': ['accepted'],
-  'confirmed': ['accepted'],
-  'deal': ['accepted'],
-  'done': ['accepted'],
-  'sounds good': ['accepted'],
-  'perfect': ['accepted'],
-  
-  'decline': ['rejected'],
-  'reject': ['rejected'],
-  'can\'t': ['rejected'],
-  'won\'t work': ['rejected'],
-  'no longer': ['withdrawn'],
-  'withdraw': ['withdrawn'],
-  
-  'fyi': ['info'],
-  'note': ['info'],
-  'btw': ['info'],
-  'reminder': ['info'],
-  
-  'question': ['question'],
-  '?': ['question'],
-  'could you': ['question'],
-  'is it possible': ['question'],
-};
-
-/**
- * Keywords that indicate speaker role
- */
-const SPEAKER_KEYWORDS: Record<string, ImportFactSpeaker[]> = {
-  'artist': ['artist'],
-  'band': ['artist'],
-  'performer': ['artist'],
-  'we (artist)': ['artist'],
-  
-  'agent': ['artist_agent'],
-  'manager': ['artist_agent'],
-  'booking': ['artist_agent'],
-  
-  'promoter': ['promoter'],
-  'presenter': ['promoter'],
-  'organizer': ['promoter'],
-  'festival': ['promoter'],
-  
-  'venue': ['venue'],
-  'club': ['venue'],
-  'hall': ['venue'],
-  'theater': ['venue'],
-  
-  'production': ['production'],
-  'tech': ['production'],
-  'sound engineer': ['production'],
-};
 
 // =============================================================================
 // LLM Call
@@ -353,7 +282,7 @@ async function callFactExtractionLLM(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.1, // Low temperature for more consistent extraction
+        temperature: 0, // Zero temperature for deterministic extraction
         response_format: { type: 'json_object' },
       }),
     });
@@ -408,21 +337,42 @@ function normalizeFactType(raw?: string): ImportFactType {
   const normalized = raw.toLowerCase().replace(/[^a-z_]/g, '_');
   
   const validTypes: ImportFactType[] = [
+    // Deal / costs
     'artist_fee', 'venue_cost', 'production_cost', 'catering_cost',
-    'accommodation_cost', 'travel_cost', 'other_cost', 'event_date',
-    'event_time', 'set_time', 'venue_name', 'venue_city', 'venue_country',
-    'venue_capacity', 'artist_name', 'event_name', 'hotel_name',
-    'hotel_address', 'hotel_checkin', 'hotel_checkout', 'flight_number',
-    'flight_origin_city', 'flight_origin_airport',
+    'accommodation_cost', 'travel_cost', 'other_cost',
+    'currency', 'payment_terms', 'deal_type', 'deal_notes',
+    // Event / general
+    'event_date', 'event_time', 'set_time', 'venue_name', 'venue_city',
+    'venue_country', 'venue_capacity', 'artist_name', 'event_name',
+    // Hotels
+    'hotel_name', 'hotel_address', 'hotel_city', 'hotel_country',
+    'hotel_checkin', 'hotel_checkout', 'hotel_booking_reference',
+    'hotel_phone', 'hotel_email', 'hotel_notes',
+    // Flights
+    'flight_number', 'flight_origin_city', 'flight_origin_airport',
     'flight_destination_city', 'flight_destination_airport',
     'flight_departure_datetime', 'flight_arrival_datetime',
     'flight_airline', 'flight_passenger_name', 'flight_booking_reference',
-    'flight_departure', 'flight_arrival', 'contact_name', 'contact_email',
-    'contact_phone', 'contact_role', 'currency', 'payment_terms',
-    'deal_type', 'technical_requirement', 'technical_equipment_summary',
+    'flight_ticket_number', 'flight_seat', 'flight_class',
+    'flight_aircraft_model', 'flight_duration',
+    'flight_departure', 'flight_arrival',  // Legacy
+    // Contacts
+    'contact_name', 'contact_email', 'contact_phone', 'contact_role',
+    // Technical
+    'technical_requirement', 'technical_equipment_summary',
+    'technical_backline_summary', 'technical_stage_setup_summary',
+    'technical_lighting_summary', 'technical_soundcheck_summary',
+    'technical_other_summary',
+    // Catering / food
     'catering_detail', 'catering_summary',
-    'transfer_summary', 'ground_transport_summary',
-    'activity_detail', 'general_note', 'other',
+    'catering_provider_name', 'catering_provider_address',
+    'catering_provider_city', 'catering_provider_country',
+    'catering_provider_phone', 'catering_provider_email',
+    'catering_booking_reference',
+    // Activities / transfers
+    'transfer_summary', 'ground_transport_summary', 'activity_detail',
+    // Misc
+    'general_note', 'other',
   ];
   
   if (validTypes.includes(normalized as ImportFactType)) {
@@ -609,6 +559,7 @@ const CONFIRMATION_FILENAME_PATTERNS = [
  * Fact types that are typically "final" in confirmation documents
  */
 const CONFIRMATION_FACT_TYPES: Set<ImportFactType> = new Set([
+  // Flight facts
   'flight_number',
   'flight_origin_city',
   'flight_origin_airport',
@@ -619,12 +570,25 @@ const CONFIRMATION_FACT_TYPES: Set<ImportFactType> = new Set([
   'flight_airline',
   'flight_passenger_name',
   'flight_booking_reference',
-  'flight_departure', 
-  'flight_arrival',
+  'flight_ticket_number',
+  'flight_seat',
+  'flight_class',
+  'flight_aircraft_model',
+  'flight_duration',
+  'flight_departure',  // Legacy
+  'flight_arrival',    // Legacy
+  // Hotel facts
   'hotel_name',
   'hotel_address',
+  'hotel_city',
+  'hotel_country',
   'hotel_checkin',
   'hotel_checkout',
+  'hotel_booking_reference',
+  'hotel_phone',
+  'hotel_email',
+  'hotel_notes',
+  // Contact facts
   'contact_name',
   'contact_email',
   'contact_phone',

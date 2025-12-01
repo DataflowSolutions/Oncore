@@ -425,8 +425,8 @@ function applyValueToField(
     const normalizedDomain = normalizeDomain(arrayKey, factDomain);
     const targetIndex = resolveArrayIndex(arrayKey, normalizedDomain, factType, value, array);
 
-    // Find or create item by domain/index
-    let item = array.find((i: any, idx: number) => i._domain === normalizedDomain || idx === targetIndex);
+    // Find or create item by domain/index (filter out undefined for sparse arrays)
+    let item = array.find((i: any, idx: number) => i && (i._domain === normalizedDomain || idx === targetIndex));
     if (!item) {
       item = createEmptyArrayItem(arrayKey);
       if (normalizedDomain) {
