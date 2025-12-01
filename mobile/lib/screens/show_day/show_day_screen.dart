@@ -6,6 +6,7 @@ import '../../models/show_day.dart';
 import '../../theme/app_theme.dart';
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
+import 'widgets/detail_modal.dart';
 
 /// Show Day Screen - detailed view of a single show day
 /// Matches the web client's CalendarDayView design
@@ -312,15 +313,43 @@ class _UpcomingScheduleSection extends StatelessWidget {
               dateStr = '${dt.day} ${months[dt.month - 1]}';
             } catch (_) {}
 
-            return UpcomingScheduleCard(
-              title: item.title,
-              time: item.formattedStartTime,
-              date: dateStr,
+            return GestureDetector(
+              onTap: () => _showScheduleDetails(context, item),
+              child: UpcomingScheduleCard(
+                title: item.title,
+                time: item.formattedStartTime,
+                date: dateStr,
+              ),
             );
           }).toList(),
         ),
         const SizedBox(height: AppTheme.spacingMd),
       ],
+    );
+  }
+
+  void _showScheduleDetails(BuildContext context, ScheduleItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailModal(
+          title: item.title,
+          subtitle: item.type.toUpperCase(),
+          address: item.location,
+          content: [
+            DetailSplitCard(
+              label1: 'Start Time',
+              value1: item.formattedStartTime,
+              label2: 'End Time',
+              value2: item.formattedEndTime ?? '-',
+            ),
+            if (item.notes != null && item.notes!.isNotEmpty)
+              DetailValueCard(
+                label: 'Notes',
+                value: item.notes!,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -347,16 +376,50 @@ class _FlightsSection extends StatelessWidget {
         children: [
           HorizontalCardList(
             height: 140, // Increased height for new card design
-            children: flights.map((flight) => FlightCard(
-              flightNumber: flight.displayFlightNumber,
-              departure: flight.departAirportCode ?? '???',
-              arrival: flight.arrivalAirportCode ?? '???',
-              departureTime: flight.formattedDepartTime ?? '--:--',
-              arrivalTime: flight.formattedArrivalTime ?? '--:--',
-              duration: flight.duration,
+            children: flights.map((flight) => GestureDetector(
+              onTap: () => _showFlightDetails(context, flight),
+              child: FlightCard(
+                flightNumber: flight.displayFlightNumber,
+                departure: flight.departAirportCode ?? '???',
+                arrival: flight.arrivalAirportCode ?? '???',
+                departureTime: flight.formattedDepartTime ?? '--:--',
+                arrivalTime: flight.formattedArrivalTime ?? '--:--',
+                duration: flight.duration,
+              ),
             )).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFlightDetails(BuildContext context, FlightInfo flight) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailModal(
+          title: flight.airline ?? 'Flight',
+          subtitle: flight.flightNumber,
+          content: [
+            DetailSplitCard(
+              label1: 'Departure',
+              value1: flight.formattedDepartTime ?? '--:--',
+              subValue1: flight.departAirportCode,
+              label2: 'Arrival',
+              value2: flight.formattedArrivalTime ?? '--:--',
+              subValue2: flight.arrivalAirportCode,
+            ),
+            if (flight.duration != null)
+              DetailValueCard(
+                label: 'Duration',
+                value: flight.duration!,
+              ),
+            if (flight.bookingRef != null)
+              DetailValueCard(
+                label: 'Booking Reference',
+                value: flight.bookingRef!,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -381,30 +444,36 @@ class _LodgingCateringSection extends StatelessWidget {
       child: Column(
         children: [
           // Combine items into rows of 2
-          ..._buildRows(),
+          ..._buildRows(context),
         ],
       ),
     );
   }
 
-  List<Widget> _buildRows() {
+  List<Widget> _buildRows(BuildContext context) {
     final widgets = <Widget>[];
     
     // Add lodging items
     for (final hotel in lodging) {
-      widgets.add(InfoCard(
-        title: hotel.hotelName ?? 'Hotel',
-        subtitle: hotel.timeRange,
-        type: InfoCardType.hotel,
+      widgets.add(GestureDetector(
+        onTap: () => _showLodgingDetails(context, hotel),
+        child: InfoCard(
+          title: hotel.hotelName ?? 'Hotel',
+          subtitle: hotel.timeRange,
+          type: InfoCardType.hotel,
+        ),
       ));
     }
     
     // Add catering items
     for (final restaurant in catering) {
-      widgets.add(InfoCard(
-        title: restaurant.providerName ?? 'Restaurant',
-        subtitle: restaurant.formattedServiceTime,
-        type: InfoCardType.restaurant,
+      widgets.add(GestureDetector(
+        onTap: () => _showCateringDetails(context, restaurant),
+        child: InfoCard(
+          title: restaurant.providerName ?? 'Restaurant',
+          subtitle: restaurant.formattedServiceTime,
+          type: InfoCardType.restaurant,
+        ),
       ));
     }
 
@@ -426,6 +495,80 @@ class _LodgingCateringSection extends StatelessWidget {
     }
 
     return rows;
+  }
+
+  void _showLodgingDetails(BuildContext context, LodgingInfo hotel) {
+    final actions = <DetailAction>[];
+    if (hotel.phone != null) actions.add(DetailAction.phone(hotel.phone!));
+    if (hotel.email != null) actions.add(DetailAction.email(hotel.email!));
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailModal(
+          title: hotel.hotelName ?? 'Hotel',
+          subtitle: hotel.city, // Or room type if available
+          address: hotel.address,
+          content: [
+            DetailSplitCard(
+              label1: 'Check-in',
+              value1: hotel.formattedCheckIn ?? '--:--',
+              label2: 'Check-out',
+              value2: hotel.formattedCheckOut ?? '--:--',
+            ),
+            if (hotel.bookingRefs != null && hotel.bookingRefs!.isNotEmpty)
+              DetailValueCard(
+                label: 'Booking Reference',
+                value: hotel.bookingRefs!.join(', '),
+              ),
+            if (hotel.notes != null && hotel.notes!.isNotEmpty)
+              DetailValueCard(
+                label: 'Notes',
+                value: hotel.notes!,
+              ),
+          ],
+          actions: actions,
+        ),
+      ),
+    );
+  }
+
+  void _showCateringDetails(BuildContext context, CateringInfo restaurant) {
+    final actions = <DetailAction>[];
+    if (restaurant.phone != null) actions.add(DetailAction.phone(restaurant.phone!));
+    if (restaurant.email != null) actions.add(DetailAction.email(restaurant.email!));
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailModal(
+          title: restaurant.providerName ?? 'Restaurant',
+          subtitle: restaurant.city,
+          address: restaurant.address,
+          content: [
+            if (restaurant.formattedServiceTime != null)
+              DetailValueCard(
+                label: 'Service Time',
+                value: restaurant.formattedServiceTime!,
+              ),
+            if (restaurant.guestCount != null)
+              DetailValueCard(
+                label: 'Guest Count',
+                value: restaurant.guestCount.toString(),
+              ),
+            if (restaurant.bookingRefs != null && restaurant.bookingRefs!.isNotEmpty)
+              DetailValueCard(
+                label: 'Booking Reference',
+                value: restaurant.bookingRefs!.join(', '),
+              ),
+            if (restaurant.notes != null && restaurant.notes!.isNotEmpty)
+              DetailValueCard(
+                label: 'Notes',
+                value: restaurant.notes!,
+              ),
+          ],
+          actions: actions,
+        ),
+      ),
+    );
   }
 }
 

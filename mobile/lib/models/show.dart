@@ -22,6 +22,9 @@ class Show {
   final String? status;
   
   final DateTime? createdAt;
+  
+  // Artist names from show_assignments (set after fetching)
+  final List<String> artistNames;
 
   Show({
     required this.id,
@@ -39,6 +42,7 @@ class Show {
     this.notes,
     this.status,
     this.createdAt,
+    this.artistNames = const [],
   });
 
   /// Create Show from get_shows_by_org RPC response
@@ -90,5 +94,33 @@ class Show {
     const months = ['January', 'February', 'March', 'April', 'May', 'June',
                     'July', 'August', 'September', 'October', 'November', 'December'];
     return '${months[date.month - 1]} ${date.year}';
+  }
+  
+  /// Get formatted artist names for display
+  String get artistNamesDisplay {
+    if (artistNames.isEmpty) return 'No Artist';
+    return artistNames.join(', ');
+  }
+  
+  /// Create a copy with updated artist names
+  Show copyWith({List<String>? artistNames}) {
+    return Show(
+      id: id,
+      title: title,
+      date: date,
+      venueId: venueId,
+      orgId: orgId,
+      venueName: venueName,
+      venueCity: venueCity,
+      venueCountry: venueCountry,
+      venueAddress: venueAddress,
+      venueCapacity: venueCapacity,
+      setTime: setTime,
+      doorsAt: doorsAt,
+      notes: notes,
+      status: status,
+      createdAt: createdAt,
+      artistNames: artistNames ?? this.artistNames,
+    );
   }
 }

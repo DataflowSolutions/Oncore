@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../../providers/auth_provider.dart';
 
-/// Provider for fetching shows by organization
+/// Provider for fetching shows by organization with artist assignments
 final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId) async {
   final supabase = ref.watch(supabaseClientProvider);
   
+  // Fetch shows
   final response = await supabase.rpc('get_shows_by_org', params: {'p_org_id': orgId});
   
   if (response == null) {
@@ -15,7 +16,37 @@ final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId
   }
   
   final List<dynamic> data = response as List<dynamic>;
-  return data.map((json) => Show.fromJson(json as Map<String, dynamic>)).toList();
+  final shows = data.map((json) => Show.fromJson(json as Map<String, dynamic>)).toList();
+  
+  if (shows.isEmpty) return shows;
+  
+  // Fetch show assignments to get artist names (same as web client)
+  final showIds = shows.map((s) => s.id).toList();
+  final assignmentsResponse = await supabase.rpc(
+    'get_show_assignments_for_shows',
+    params: {'p_show_ids': showIds},
+  );
+  
+  if (assignmentsResponse == null) return shows;
+  
+  // Group assignments by show_id, filtering for artists only
+  final Map<String, List<String>> artistNamesByShow = {};
+  for (final assignment in assignmentsResponse as List<dynamic>) {
+    final a = assignment as Map<String, dynamic>;
+    final showId = a['show_id'] as String;
+    final memberType = a['member_type'] as String?;
+    final personName = a['person_name'] as String?;
+    
+    if (memberType == 'artist' && personName != null) {
+      artistNamesByShow.putIfAbsent(showId, () => []).add(personName);
+    }
+  }
+  
+  // Merge artist names into shows
+  return shows.map((show) {
+    final artists = artistNamesByShow[show.id] ?? [];
+    return show.copyWith(artistNames: artists);
+  }).toList();
 });
 
 // Colors matching web dark theme - shared
@@ -178,9 +209,9 @@ class ShowCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
-                  const Text(
-                    'Alesso', // TODO: Get from show_assignments
-                    style: TextStyle(color: _muted, fontSize: 13),
+                  Text(
+                    show.artistNamesDisplay,
+                    style: const TextStyle(color: _muted, fontSize: 13),
                   ),
                 ],
               ),
