@@ -100,3 +100,37 @@ export async function saveShowContact(
   revalidatePath(`/${orgSlug}/shows/${showId}/day`);
   return { success: true, data: created };
 }
+
+/**
+ * Update a show contact
+ */
+export async function updateShowContact(
+  orgSlug: string,
+  showId: string,
+  contactId: string,
+  updates: Partial<ShowContactData>
+): Promise<{ success: boolean; error?: string; data?: ShowContactRow }> {
+  const supabase = await getSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "User not authenticated" };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("update_show_contact", {
+    p_show_contact_id: contactId,
+    p_name: updates.name ?? null,
+    p_role: updates.role ?? null,
+    p_phone: updates.phone ?? null,
+    p_email: updates.email ?? null,
+    p_notes: updates.notes ?? null,
+  });
+
+  if (error) {
+    logger.error("Error updating show contact", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/${orgSlug}/shows/${showId}/day`);
+  return { success: true, data: data as ShowContactRow };
+}

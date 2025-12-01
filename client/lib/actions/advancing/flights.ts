@@ -5,6 +5,7 @@ import { Database } from "@/lib/database.types";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { logger } from "@/lib/logger";
+import { createScheduleItem, deleteScheduleItem } from "@/lib/actions/schedule";
 
 type AdvancingFlight = Database["public"]["Tables"]["advancing_flights"]["Row"];
 
@@ -31,43 +32,49 @@ export interface FlightData {
 /**
  * Get all flights for a show (cached)
  */
-export const getShowFlights = cache(async (showId: string): Promise<AdvancingFlight[]> => {
-  const supabase = await getSupabaseServer();
+export const getShowFlights = cache(
+  async (showId: string): Promise<AdvancingFlight[]> => {
+    const supabase = await getSupabaseServer();
 
-  // Use RPC to avoid RLS recursion
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_show_flights", {
-    p_show_id: showId,
-  });
+    // Use RPC to avoid RLS recursion
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("get_show_flights", {
+      p_show_id: showId,
+    });
 
-  if (error) {
-    logger.error("Error fetching flights data", error);
-    return [];
+    if (error) {
+      logger.error("Error fetching flights data", error);
+      return [];
+    }
+
+    return data || [];
   }
-
-  return data || [];
-});
+);
 
 /**
  * Get flights for a specific person on a show
  */
-export const getPersonFlights = cache(async (showId: string, personId: string): Promise<AdvancingFlight[]> => {
-  const supabase = await getSupabaseServer();
+export const getPersonFlights = cache(
+  async (showId: string, personId: string): Promise<AdvancingFlight[]> => {
+    const supabase = await getSupabaseServer();
 
-  // Use RPC to avoid RLS recursion
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_show_flights", {
-    p_show_id: showId,
-  });
+    // Use RPC to avoid RLS recursion
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("get_show_flights", {
+      p_show_id: showId,
+    });
 
-  if (error) {
-    logger.error("Error fetching person flights", error);
-    return [];
+    if (error) {
+      logger.error("Error fetching person flights", error);
+      return [];
+    }
+
+    // Filter by person_id client-side
+    return (data || []).filter(
+      (f: AdvancingFlight) => f.person_id === personId
+    );
   }
-
-  // Filter by person_id client-side
-  return (data || []).filter((f: AdvancingFlight) => f.person_id === personId);
-});
+);
 
 /**
  * Create or update a flight
@@ -82,7 +89,9 @@ export async function saveFlight(
 ): Promise<{ success: boolean; error?: string; data?: AdvancingFlight }> {
   const supabase = await getSupabaseServer();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return { success: false, error: "User not authenticated" };
   }
@@ -103,10 +112,14 @@ export async function saveFlight(
       p_passenger_name: flightData.passengerName || null,
       p_depart_airport_code: flightData.departAirportCode || null,
       p_depart_city: flightData.departCity || null,
-      p_depart_at: flightData.departAt ? new Date(flightData.departAt).toISOString() : null,
+      p_depart_at: flightData.departAt
+        ? new Date(flightData.departAt).toISOString()
+        : null,
       p_arrival_airport_code: flightData.arrivalAirportCode || null,
       p_arrival_city: flightData.arrivalCity || null,
-      p_arrival_at: flightData.arrivalAt ? new Date(flightData.arrivalAt).toISOString() : null,
+      p_arrival_at: flightData.arrivalAt
+        ? new Date(flightData.arrivalAt).toISOString()
+        : null,
       p_seat_number: flightData.seatNumber || null,
       p_travel_class: flightData.travelClass || null,
       p_notes: flightData.notes || null,
@@ -134,10 +147,14 @@ export async function saveFlight(
       p_passenger_name: flightData.passengerName || null,
       p_depart_airport_code: flightData.departAirportCode || null,
       p_depart_city: flightData.departCity || null,
-      p_depart_at: flightData.departAt ? new Date(flightData.departAt).toISOString() : null,
+      p_depart_at: flightData.departAt
+        ? new Date(flightData.departAt).toISOString()
+        : null,
       p_arrival_airport_code: flightData.arrivalAirportCode || null,
       p_arrival_city: flightData.arrivalCity || null,
-      p_arrival_at: flightData.arrivalAt ? new Date(flightData.arrivalAt).toISOString() : null,
+      p_arrival_at: flightData.arrivalAt
+        ? new Date(flightData.arrivalAt).toISOString()
+        : null,
       p_seat_number: flightData.seatNumber || null,
       p_travel_class: flightData.travelClass || null,
       p_notes: flightData.notes || null,
@@ -150,6 +167,17 @@ export async function saveFlight(
       return { success: false, error: error.message };
     }
     result = data;
+  }
+
+  const flightRecord = result as AdvancingFlight | undefined;
+
+  if (flightRecord?.id) {
+    await syncFlightScheduleItem({
+      supabase,
+      orgSlug,
+      showId,
+      flight: flightRecord,
+    });
   }
 
   revalidatePath(`/${orgSlug}/shows/${showId}/day`);
@@ -196,7 +224,9 @@ export async function saveFlightsBulk(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await getSupabaseServer();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return { success: false, error: "User not authenticated" };
   }
@@ -211,11 +241,96 @@ export async function saveFlightsBulk(
       flight.id,
       source
     );
-    
+
     if (!result.success) {
       return result;
     }
   }
 
   return { success: true };
+}
+
+async function syncFlightScheduleItem({
+  supabase,
+  orgSlug,
+  showId,
+  flight,
+}: {
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>;
+  orgSlug: string;
+  showId: string;
+  flight: AdvancingFlight;
+}) {
+  if (!flight.id) return;
+  try {
+    const { data: existingItems, error } = await supabase
+      .from("schedule_items")
+      .select("id")
+      .eq("show_id", showId)
+      .eq("source", "advancing_flight")
+      .eq("source_ref", flight.id);
+
+    if (error) {
+      logger.error("Failed to fetch existing flight schedule items", error);
+      return;
+    }
+
+    const itemsToDelete: { id: string }[] = existingItems ?? [];
+
+    if (itemsToDelete.length === 0 && flight.flight_number) {
+      const { data: legacyItems } = await supabase
+        .from("schedule_items")
+        .select("id")
+        .eq("show_id", showId)
+        .eq("auto_generated", true)
+        .in("item_type", ["arrival", "departure"])
+        .ilike("title", `%${flight.flight_number}%`);
+      if (legacyItems?.length) {
+        itemsToDelete.push(...legacyItems);
+      }
+    }
+
+    await Promise.all(
+      itemsToDelete.map((item) => deleteScheduleItem(orgSlug, showId, item.id))
+    );
+
+    if (
+      flight.auto_schedule === false ||
+      !flight.depart_at ||
+      !flight.arrival_at
+    ) {
+      return;
+    }
+
+    const departure = new Date(flight.depart_at);
+    const arrival = new Date(flight.arrival_at);
+    if (Number.isNaN(departure.getTime()) || Number.isNaN(arrival.getTime())) {
+      return;
+    }
+    const location = `${flight.depart_airport_code || "DEP"} → ${
+      flight.arrival_airport_code || "ARR"
+    }`;
+    const notes = [
+      flight.depart_city ? `From ${flight.depart_city}` : null,
+      flight.arrival_city ? `to ${flight.arrival_city}` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    await createScheduleItem(orgSlug, showId, {
+      title: `Flight ${flight.flight_number || ""} - ${
+        flight.airline || "Flight"
+      }`.trim(),
+      starts_at: departure.toISOString(),
+      ends_at: arrival.toISOString(),
+      location,
+      notes: notes || null,
+      item_type: flight.direction === "arrival" ? "arrival" : "departure",
+      auto_generated: true,
+      source: "advancing_flight",
+      source_ref: flight.id,
+    });
+  } catch (error) {
+    logger.error("Failed to sync flight schedule item", error);
+  }
 }

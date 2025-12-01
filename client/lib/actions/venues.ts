@@ -193,6 +193,62 @@ export async function updateVenue(venueId: string, formData: FormData) {
   }
 }
 
+// Update venue with partial data (used for inline editing)
+export interface VenueUpdateData {
+  name?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  capacity?: number;
+  notes?: string;
+}
+
+export async function updateVenueData(
+  venueId: string,
+  updates: VenueUpdateData
+) {
+  try {
+    const supabase = await getSupabaseServer();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("update_venue", {
+      p_venue_id: venueId,
+      p_name: updates.name ?? null,
+      p_address: updates.address ?? null,
+      p_city: updates.city ?? null,
+      p_country: updates.country ?? null,
+      p_capacity: updates.capacity ?? null,
+      p_notes: updates.notes ?? null,
+    });
+
+    if (error) {
+      logger.error("Error updating venue", error);
+      throw new Error(`Failed to update venue: ${error.message}`);
+    }
+
+    // Get org slug for revalidation using RPC
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: org } = await (supabase as any).rpc("get_org_by_id", {
+      p_org_id: data.org_id,
+    });
+
+    if (org?.slug) {
+      revalidatePath(`/${org.slug}/venues`);
+      revalidatePath(`/${org.slug}/shows`);
+      revalidatePath(`/${org.slug}/venues/${venueId}`);
+      revalidatePath(`/${org.slug}/people/venues`);
+    }
+
+    return { success: true, venue: data };
+  } catch (error) {
+    logger.error("Error in updateVenueData", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update venue",
+    };
+  }
+}
+
 // Delete venue
 export async function deleteVenue(venueId: string) {
   try {

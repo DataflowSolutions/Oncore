@@ -1,19 +1,27 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EditableText } from "@/components/ui/editable-text";
 import { MarqueeText } from "@/components/ui/marquee-text";
 import { saveFlight } from "@/lib/actions/advancing";
+import type { FlightData as FlightDataAction } from "@/lib/actions/advancing/flights";
 import {
   createScheduleItem,
   deleteScheduleItem,
   getScheduleItemsForShow,
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
-import { formatTime } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
+import type { Database } from "@/lib/database.types";
+
+type AdvancingFlight = Database["public"]["Tables"]["advancing_flights"]["Row"];
+
+const inlineEditButtonClasses =
+  "px-0 py-0 border-none bg-transparent hover:bg-transparent focus-visible:ring-0 [&>span:last-child]:hidden";
 
 interface FlightData {
   airlineName?: string;
@@ -36,29 +44,7 @@ interface FlightsPanelProps {
   advancingFields: Array<{ field_name: string; value: unknown }>;
   orgSlug: string;
   showId: string;
-  flightsData?: Array<{
-    id: string;
-    show_id: string;
-    person_id: string | null;
-    direction: string;
-    airline: string | null;
-    flight_number: string | null;
-    booking_ref: string | null;
-    depart_airport_code: string | null;
-    depart_city: string | null;
-    depart_at: string | null;
-    arrival_airport_code: string | null;
-    arrival_city: string | null;
-    arrival_at: string | null;
-    notes: string | null;
-    source: string;
-    created_at: string;
-    ticket_number?: string | null;
-    aircraft_model?: string | null;
-    passenger_name?: string | null;
-    seat_number?: string | null;
-    travel_class?: string | null;
-  }>;
+  flightsData?: AdvancingFlight[];
 }
 
 export function FlightsPanel({
@@ -88,8 +74,23 @@ export function FlightsPanel({
   const [travelClass, setTravelClass] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track flights in local state to allow inline editing updates
+  const [localFlights, setLocalFlights] =
+    useState<AdvancingFlight[]>(flightsData);
+
+  useEffect(() => {
+    setLocalFlights(flightsData);
+  }, [flightsData]);
+
+  // Get the selected flight record
+  const selectedFlight = useMemo(
+    () =>
+      selectedFlightIndex !== null ? localFlights[selectedFlightIndex] : null,
+    [localFlights, selectedFlightIndex]
+  );
+
   // Convert flightsData from database format to UI format
-  const flights: FlightData[] = flightsData.map(f => ({
+  const flights: FlightData[] = localFlights.map((f) => ({
     airlineName: f.airline || undefined,
     flightNumber: f.flight_number || undefined,
     bookingRef: f.booking_ref || undefined,
@@ -113,6 +114,70 @@ export function FlightsPanel({
     setSelectedFlightIndex(index);
   };
 
+  const toLocalDateTimeValue = (iso?: string | null) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const toIsoOrUndefined = (value: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return undefined;
+    return date.toISOString();
+  };
+
+  const sanitizeText = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : undefined;
+  };
+
+  const persistFlightUpdate = async (
+    flight: AdvancingFlight,
+    updates: Partial<FlightDataAction>
+  ) => {
+    const payload: FlightDataAction = {
+      direction: (flight.direction as "arrival" | "departure") || "departure",
+      airline: flight.airline ?? undefined,
+      flightNumber: flight.flight_number ?? undefined,
+      bookingRef: flight.booking_ref ?? undefined,
+      ticketNumber: flight.ticket_number ?? undefined,
+      aircraftModel: flight.aircraft_model ?? undefined,
+      passengerName: flight.passenger_name ?? undefined,
+      departAirportCode: flight.depart_airport_code ?? undefined,
+      departCity: flight.depart_city ?? undefined,
+      departAt: flight.depart_at ?? undefined,
+      arrivalAirportCode: flight.arrival_airport_code ?? undefined,
+      arrivalCity: flight.arrival_city ?? undefined,
+      arrivalAt: flight.arrival_at ?? undefined,
+      seatNumber: flight.seat_number ?? undefined,
+      travelClass: flight.travel_class ?? undefined,
+      notes: flight.notes ?? undefined,
+      ...updates,
+    };
+
+    const result = await saveFlight(
+      orgSlug,
+      showId,
+      payload,
+      flight.person_id ?? undefined,
+      flight.id,
+      (flight.source as "artist" | "promoter") || "artist"
+    );
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || "Failed to update flight");
+    }
+
+    // Update local state
+    setLocalFlights((prev) =>
+      prev.map((f) => (f.id === flight.id ? result.data! : f))
+    );
+  };
+
   const resetForm = () => {
     setAirlineName("");
     setFlightNumber("");
@@ -131,8 +196,8 @@ export function FlightsPanel({
   };
 
   return (
-    <div className="bg-card  border border-card-border rounded-[20px] p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-card  border border-card-border rounded-[20px] px-4 py-6">
+      <div className="flex justify-between items-center mb-2">
         <h3
           onClick={() => setIsOverviewOpen(true)}
           title="View All Flights"
@@ -152,7 +217,7 @@ export function FlightsPanel({
       </div>
 
       {flights.length === 0 ? (
-        <div>
+        <div className="px-2">
           <p className="text-sm text-description-foreground">
             No flight information available
           </p>
@@ -161,7 +226,7 @@ export function FlightsPanel({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 px-2">
           {flights.map((flight, index) => (
             <div key={index} className="flex items-center gap-3 rounded-lg ">
               {/* Flight Number Circle */}
@@ -326,13 +391,9 @@ export function FlightsPanel({
                 // Create schedule item for the new flight
                 if (departureISO && arrivalISO) {
                   const cityNotes = `${
-                    departureAirportCity
-                      ? `From ${departureAirportCity}`
-                      : ""
+                    departureAirportCity ? `From ${departureAirportCity}` : ""
                   } ${
-                    arrivalAirportCity
-                      ? `to ${arrivalAirportCity}`
-                      : ""
+                    arrivalAirportCity ? `to ${arrivalAirportCity}` : ""
                   }`.trim();
 
                   const flightResult = await createScheduleItem(
@@ -734,160 +795,308 @@ export function FlightsPanel({
           onOpenChange={(open) => !open && setSelectedFlightIndex(null)}
           className="sm:max-w-[800px]"
         >
-          {selectedFlightIndex !== null && flights[selectedFlightIndex] && (
+          {selectedFlightIndex !== null && selectedFlight && (
             <div className="space-y-4">
-              {(() => {
-                const flight = flights[selectedFlightIndex];
-                const index = selectedFlightIndex;
-                return (
-                  <div className="flex items-center gap-3">
-                    <div className="relative bg-card-cell rounded-[20px] px-4 py-2 md:px-6 md:py-4 border border-card-border w-full">
-                      {/* Airline Name Header */}
-                      <div className="flex justify-between pr-6">
-                        <div className="font-header text-sm md:text-lg mb-4">
-                          {flight.airlineName || "AIRLINE"}
-                        </div>
-                        <div className="text-xs md:text-sm text-description-foreground">
-                          <span className="font-bold">Flight</span>&nbsp;
-                          {flight.flightNumber || ""}
-                        </div>
-                      </div>
-                      {/* Main Content - Two Groups */}
-                      <div className="flex justify-between items-center pr-6">
-                        {/* Left Group */}
-                        <div className="grid grid-cols-2 justify-between min-w-[30%] gap-8">
-                          {/* Booking Ref */}
-                          <div className="flex flex-col ">
-                            <div className="text-xs md:text-sm font-header">
-                              {flight.bookingRef || "N/A"}
-                            </div>
-                            <div className="text-xs md:text-xs text-description-foreground">
-                              Booking Ref
-                            </div>
-                          </div>
-
-                          {/* Ticket */}
-                          <div className="flex flex-col ">
-                            <div className="text-xs md:text-sm font-header">
-                              {flight.ticketNumber || "N/A"}
-                            </div>
-                            <div className="text-xs md:text-xs text-description-foreground">
-                              Ticket #
-                            </div>
-                          </div>
-
-                          {/* Aircraft */}
-                          <div className="flex flex-col ">
-                            <div className="text-xs md:text-sm font-header">
-                              {flight.aircraftModel || "N/A"}
-                            </div>
-                            <div className="text-xs md:text-xs text-description-foreground">
-                              Aircraft
-                            </div>
-                          </div>
-
-                          {/* Full Name */}
-                          <div className="flex flex-col ">
-                            <div className="text-xs md:text-sm font-header">
-                              {flight.fullName || "N/A"}
-                            </div>
-                            <div className="text-xs md:text-xs text-description-foreground">
-                              Full Name
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right Group */}
-                        <div className="grid grid-cols-2 min-w-[30%] gap-8">
-                          {/* Departure and Arrival - Takes up 2 grid columns */}
-                          <div className="flex col-span-2 justify-between relative gap-2">
-                            {/* Departure */}
-                            <div className="flex flex-col items-center text-center">
-                              <div className="text-xs md:text-xs text-description-foreground">
-                                {flight.departureAirportCity || "Departure"}
-                              </div>
-                              <div className="font-header text-sm md:text-xl">
-                                {flight.departureAirportCode || "DEP"}
-                              </div>
-                              {flight.departureDateTime && (
-                                <div className="text-xs md:text-xs text-description-foreground">
-                                  {formatTime(flight.departureDateTime)}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Center Line and Duration */}
-                            <div className="justify-center flex flex-col items-center gap-1 ">
-                              <div className="w-12 h-[1px] bg-description-foreground" />
-                              {flight.departureDateTime &&
-                                flight.arrivalDateTime && (
-                                  <div className="text-xs md:text-xs text-description-foreground whitespace-nowrap">
-                                    {(() => {
-                                      const departure = new Date(
-                                        flight.departureDateTime
-                                      );
-                                      const arrival = new Date(
-                                        flight.arrivalDateTime
-                                      );
-                                      const durationMs =
-                                        arrival.getTime() - departure.getTime();
-                                      const hours = Math.floor(
-                                        durationMs / (1000 * 60 * 60)
-                                      );
-                                      const minutes = Math.floor(
-                                        (durationMs % (1000 * 60 * 60)) /
-                                          (1000 * 60)
-                                      );
-                                      return `${hours}h ${minutes}min`;
-                                    })()}
-                                  </div>
-                                )}
-                            </div>
-
-                            {/* Arrival */}
-                            <div className="flex flex-col items-center text-center">
-                              <div className="text-xs md:text-xs text-description-foreground ">
-                                {flight.arrivalAirportCity || "Arrival"}
-                              </div>
-                              <div className="font-header text-sm md:text-xl">
-                                {flight.arrivalAirportCode || "ARR"}
-                              </div>
-                              {flight.arrivalDateTime && (
-                                <div className="text-xs md:text-xs text-description-foreground">
-                                  {formatTime(flight.arrivalDateTime)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Seat - Takes up 1 grid column */}
-                          <div className="col-span-2 flex justify-between text-center">
-                            <div className="flex flex-col items-center">
-                              <div className="text-xs md:text-sm font-header">
-                                {flight.seatNumber || "N/A"}
-                              </div>
-                              <div className="text-xs md:text-xs text-description-foreground ">
-                                Seat
-                              </div>
-                            </div>
-
-                            {/* Class - Takes up 1 grid column */}
-                            <div className="flex flex-col items-center text-center">
-                              <div className="text-xs md:text-sm font-header">
-                                {flight.travelClass || "N/A"}
-                              </div>
-                              <div className="text-xs md:text-xs text-description-foreground ">
-                                Class
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-card flex items-center justify-center" />
+              <div className="flex items-center gap-3">
+                <div className="relative bg-card-cell rounded-[20px] px-4 py-2 md:px-6 md:py-4 border border-card-border w-full">
+                  {/* Airline Name Header */}
+                  <div className="flex justify-between pr-6">
+                    <EditableText
+                      value={selectedFlight.airline || ""}
+                      onSave={(v) =>
+                        persistFlightUpdate(selectedFlight, {
+                          airline: sanitizeText(v),
+                        })
+                      }
+                      placeholder="Airline"
+                      className={cn(
+                        "font-header text-sm md:text-lg mb-4",
+                        inlineEditButtonClasses
+                      )}
+                    />
+                    <div className="text-xs md:text-sm text-description-foreground flex items-center gap-1">
+                      <span className="font-bold">Flight</span>
+                      <EditableText
+                        value={selectedFlight.flight_number || ""}
+                        onSave={(v) =>
+                          persistFlightUpdate(selectedFlight, {
+                            flightNumber: sanitizeText(v),
+                          })
+                        }
+                        placeholder="###"
+                        className={cn(
+                          "text-xs md:text-sm",
+                          inlineEditButtonClasses
+                        )}
+                      />
                     </div>
                   </div>
-                );
-              })()}
+                  {/* Main Content - Two Groups */}
+                  <div className="flex justify-between items-center pr-6">
+                    {/* Left Group */}
+                    <div className="grid grid-cols-2 justify-between min-w-[30%] gap-8">
+                      {/* Booking Ref */}
+                      <div className="flex flex-col ">
+                        <EditableText
+                          value={selectedFlight.booking_ref || ""}
+                          onSave={(v) =>
+                            persistFlightUpdate(selectedFlight, {
+                              bookingRef: sanitizeText(v),
+                            })
+                          }
+                          placeholder="N/A"
+                          className={cn(
+                            "text-xs md:text-sm font-header",
+                            inlineEditButtonClasses
+                          )}
+                        />
+                        <div className="text-xs md:text-xs text-description-foreground">
+                          Booking Ref
+                        </div>
+                      </div>
+
+                      {/* Ticket */}
+                      <div className="flex flex-col ">
+                        <EditableText
+                          value={selectedFlight.ticket_number || ""}
+                          onSave={(v) =>
+                            persistFlightUpdate(selectedFlight, {
+                              ticketNumber: sanitizeText(v),
+                            })
+                          }
+                          placeholder="N/A"
+                          className={cn(
+                            "text-xs md:text-sm font-header",
+                            inlineEditButtonClasses
+                          )}
+                        />
+                        <div className="text-xs md:text-xs text-description-foreground">
+                          Ticket #
+                        </div>
+                      </div>
+
+                      {/* Aircraft */}
+                      <div className="flex flex-col ">
+                        <EditableText
+                          value={selectedFlight.aircraft_model || ""}
+                          onSave={(v) =>
+                            persistFlightUpdate(selectedFlight, {
+                              aircraftModel: sanitizeText(v),
+                            })
+                          }
+                          placeholder="N/A"
+                          className={cn(
+                            "text-xs md:text-sm font-header",
+                            inlineEditButtonClasses
+                          )}
+                        />
+                        <div className="text-xs md:text-xs text-description-foreground">
+                          Aircraft
+                        </div>
+                      </div>
+
+                      {/* Full Name */}
+                      <div className="flex flex-col ">
+                        <EditableText
+                          value={selectedFlight.passenger_name || ""}
+                          onSave={(v) =>
+                            persistFlightUpdate(selectedFlight, {
+                              passengerName: sanitizeText(v),
+                            })
+                          }
+                          placeholder="N/A"
+                          className={cn(
+                            "text-xs md:text-sm font-header",
+                            inlineEditButtonClasses
+                          )}
+                        />
+                        <div className="text-xs md:text-xs text-description-foreground">
+                          Full Name
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Group */}
+                    <div className="grid grid-cols-2 min-w-[30%] gap-8">
+                      {/* Departure and Arrival - Takes up 2 grid columns */}
+                      <div className="flex col-span-2 justify-between relative gap-2">
+                        {/* Departure */}
+                        <div className="flex flex-col items-center text-center">
+                          <EditableText
+                            value={selectedFlight.depart_city || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                departCity: sanitizeText(v),
+                              })
+                            }
+                            placeholder="City"
+                            className={cn(
+                              "text-xs md:text-xs text-description-foreground",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <EditableText
+                            value={selectedFlight.depart_airport_code || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                departAirportCode: sanitizeText(v),
+                              })
+                            }
+                            placeholder="DEP"
+                            className={cn(
+                              "font-header text-sm md:text-xl",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <EditableText
+                            value={toLocalDateTimeValue(
+                              selectedFlight.depart_at
+                            )}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                departAt: toIsoOrUndefined(v),
+                              })
+                            }
+                            placeholder="Select time"
+                            inputType="datetime-local"
+                            className={cn(
+                              "text-xs md:text-xs text-description-foreground",
+                              inlineEditButtonClasses
+                            )}
+                            displayValue={
+                              selectedFlight.depart_at
+                                ? formatTime(selectedFlight.depart_at)
+                                : "Set time"
+                            }
+                          />
+                        </div>
+
+                        {/* Center Line and Duration */}
+                        <div className="justify-center flex flex-col items-center gap-1 ">
+                          <div className="w-12 h-[1px] bg-description-foreground" />
+                          {selectedFlight.depart_at &&
+                            selectedFlight.arrival_at && (
+                              <div className="text-xs md:text-xs text-description-foreground whitespace-nowrap">
+                                {(() => {
+                                  const departure = new Date(
+                                    selectedFlight.depart_at
+                                  );
+                                  const arrival = new Date(
+                                    selectedFlight.arrival_at
+                                  );
+                                  const durationMs =
+                                    arrival.getTime() - departure.getTime();
+                                  const hours = Math.floor(
+                                    durationMs / (1000 * 60 * 60)
+                                  );
+                                  const minutes = Math.floor(
+                                    (durationMs % (1000 * 60 * 60)) /
+                                      (1000 * 60)
+                                  );
+                                  return `${hours}h ${minutes}min`;
+                                })()}
+                              </div>
+                            )}
+                        </div>
+
+                        {/* Arrival */}
+                        <div className="flex flex-col items-center text-center">
+                          <EditableText
+                            value={selectedFlight.arrival_city || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                arrivalCity: sanitizeText(v),
+                              })
+                            }
+                            placeholder="City"
+                            className={cn(
+                              "text-xs md:text-xs text-description-foreground",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <EditableText
+                            value={selectedFlight.arrival_airport_code || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                arrivalAirportCode: sanitizeText(v),
+                              })
+                            }
+                            placeholder="ARR"
+                            className={cn(
+                              "font-header text-sm md:text-xl",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <EditableText
+                            value={toLocalDateTimeValue(
+                              selectedFlight.arrival_at
+                            )}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                arrivalAt: toIsoOrUndefined(v),
+                              })
+                            }
+                            placeholder="Select time"
+                            inputType="datetime-local"
+                            className={cn(
+                              "text-xs md:text-xs text-description-foreground",
+                              inlineEditButtonClasses
+                            )}
+                            displayValue={
+                              selectedFlight.arrival_at
+                                ? formatTime(selectedFlight.arrival_at)
+                                : "Set time"
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {/* Seat - Takes up 1 grid column */}
+                      <div className="col-span-2 flex justify-between text-center">
+                        <div className="flex flex-col items-center">
+                          <EditableText
+                            value={selectedFlight.seat_number || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                seatNumber: sanitizeText(v),
+                              })
+                            }
+                            placeholder="N/A"
+                            className={cn(
+                              "text-xs md:text-sm font-header",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <div className="text-xs md:text-xs text-description-foreground ">
+                            Seat
+                          </div>
+                        </div>
+
+                        {/* Class - Takes up 1 grid column */}
+                        <div className="flex flex-col items-center text-center">
+                          <EditableText
+                            value={selectedFlight.travel_class || ""}
+                            onSave={(v) =>
+                              persistFlightUpdate(selectedFlight, {
+                                travelClass: sanitizeText(v),
+                              })
+                            }
+                            placeholder="N/A"
+                            className={cn(
+                              "text-xs md:text-sm font-header",
+                              inlineEditButtonClasses
+                            )}
+                          />
+                          <div className="text-xs md:text-xs text-description-foreground ">
+                            Class
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-card flex items-center justify-center" />
+                </div>
+              </div>
             </div>
           )}
         </Popup>

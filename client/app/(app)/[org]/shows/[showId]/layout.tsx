@@ -5,8 +5,7 @@ import {
   dehydrate,
 } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { ShowTabs } from "@/components/shows/ShowTabs";
-import { Badge } from "@/components/ui/badge";
+import { ShowHeader } from "@/components/shows/ShowHeader";
 
 interface ShowLayoutProps {
   children: React.ReactNode;
@@ -68,35 +67,13 @@ export default async function ShowLayout({
         </Link> */}
 
         {/* Shared Header */}
-        <div className="flex justify-between items-start gap-4 max-w-[1440px] mx-auto">
-          <div className="space-y-2 flex-1">
-            <div className="flex gap-4 items-center">
-              <h1 className="text-3xl font-header">
-                {show.title || "Untitled Show"}
-              </h1>
-              <Badge
-                variant={show.status === "confirmed" ? "default" : "secondary"}
-              >
-                {show.status}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {show.date && (
-                <span className="text-sm text-muted-foreground">
-                  {new Date(show.date).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <ShowTabs orgSlug={orgSlug} showId={showId} />
-        </div>
+        <ShowHeader
+          showId={showId}
+          orgSlug={orgSlug}
+          initialTitle={show.title}
+          initialDate={show.date}
+          initialStatus={show.status}
+        />
 
         {/* Page Content */}
         <div>{children}</div>

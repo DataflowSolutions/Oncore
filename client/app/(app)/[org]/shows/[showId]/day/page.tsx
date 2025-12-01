@@ -197,8 +197,8 @@ export default async function ShowDayPage({
         advancingFields={advancingFields}
         lodgingData={lodgingData}
         flightsData={flightsData}
-        cateringData={cateringData as any}
-        contactsData={showContactsData as any}
+        cateringData={cateringData}
+        contactsData={showContactsData}
       />
     </div>
   );

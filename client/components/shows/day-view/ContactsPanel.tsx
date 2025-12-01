@@ -10,11 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import {
   saveShowContact,
   getShowContacts,
+  updateShowContact,
   ShowContactRow,
 } from "@/lib/actions/advancing/show-contacts";
 import { toast } from "sonner";
 import { ContactDetailPopup } from "@/components/contacts/ContactDetailPopup";
 import { PromoterDetailPopup } from "@/components/contacts/PromoterDetailPopup";
+import { logger } from "@/lib/logger";
 
 interface ContactsPanelProps {
   orgSlug: string;
@@ -51,6 +53,51 @@ export function ContactsPanel({
       })();
     }
   }, [contactsData.length, showId]);
+
+  // Sync local contacts with prop changes
+  useEffect(() => {
+    setContacts(contactsData);
+  }, [contactsData]);
+
+  // Sync selectedContact with local contacts state
+  useEffect(() => {
+    if (selectedContact) {
+      const updated = contacts.find((c) => c.id === selectedContact.id);
+      if (updated) {
+        setSelectedContact(updated);
+      }
+    }
+  }, [contacts, selectedContact]);
+
+  const handleContactUpdate = async (updates: {
+    name?: string;
+    role?: string;
+    phone?: string;
+    email?: string;
+    notes?: string;
+  }) => {
+    if (!selectedContact) return;
+
+    try {
+      const result = await updateShowContact(
+        orgSlug,
+        showId,
+        selectedContact.id,
+        updates
+      );
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to update contact");
+      }
+      // Update local state
+      setContacts((prev) =>
+        prev.map((c) => (c.id === selectedContact.id ? result.data! : c))
+      );
+    } catch (error) {
+      logger.error("Error updating contact", error);
+      toast.error("Failed to update contact");
+      throw error;
+    }
+  };
 
   async function handleSave() {
     if (!name.trim()) {
@@ -219,6 +266,7 @@ export function ContactsPanel({
           open={!!selectedContact}
           onOpenChange={(open) => !open && setSelectedContact(null)}
           contact={{
+            id: selectedContact.id,
             name: selectedContact.name,
             role: selectedContact.role,
             phone: selectedContact.phone,
@@ -226,6 +274,7 @@ export function ContactsPanel({
             notes: selectedContact.notes,
             created_at: selectedContact.created_at,
           }}
+          onUpdate={handleContactUpdate}
         />
       )}
       {selectedContact && selectedContact.is_promoter && (
@@ -233,6 +282,7 @@ export function ContactsPanel({
           open={!!selectedContact}
           onOpenChange={(open) => !open && setSelectedContact(null)}
           promoter={{
+            id: selectedContact.id,
             name: selectedContact.name,
             role: selectedContact.role,
             phone: selectedContact.phone,
@@ -241,6 +291,7 @@ export function ContactsPanel({
             created_at: selectedContact.created_at,
             venues: selectedContact.venues || [],
           }}
+          onUpdate={handleContactUpdate}
         />
       )}
     </div>

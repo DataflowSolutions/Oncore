@@ -1,14 +1,20 @@
 "use client";
 
 import { Popup } from "@/components/ui/popup";
+import { EditableText } from "@/components/ui/editable-text";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, StickyNote } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const inlineEditButtonClasses =
+  "px-0 py-0 border-none bg-transparent hover:bg-transparent focus-visible:ring-0 [&>span:last-child]:hidden";
 
 interface PromoterDetailPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   promoter: {
+    id?: string;
     name: string;
     email?: string | null;
     phone?: string | null;
@@ -26,13 +32,36 @@ interface PromoterDetailPopupProps {
       is_primary?: boolean;
     }>;
   };
+  onUpdate?: (updates: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    notes?: string;
+  }) => Promise<void>;
 }
 
 export function PromoterDetailPopup({
   open,
   onOpenChange,
   promoter,
+  onUpdate,
 }: PromoterDetailPopupProps) {
+  const sanitize = (val: string) => {
+    const trimmed = val.trim();
+    return trimmed.length ? trimmed : undefined;
+  };
+
+  const handleUpdate = async (updates: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    notes?: string;
+  }) => {
+    if (onUpdate) {
+      await onUpdate(updates);
+    }
+  };
+
   return (
     <Popup title="Promoter Details" open={open} onOpenChange={onOpenChange}>
       <div className="space-y-6">
@@ -40,7 +69,16 @@ export function PromoterDetailPopup({
 
         <div className="space-y-1">
           <div className="flex items-center gap-4">
-            <p className="font-header text-lg">{promoter.name}</p>
+            {onUpdate ? (
+              <EditableText
+                value={promoter.name}
+                onSave={(v) => handleUpdate({ name: sanitize(v) })}
+                placeholder="Name"
+                className={cn("font-header text-lg", inlineEditButtonClasses)}
+              />
+            ) : (
+              <p className="font-header text-lg">{promoter.name}</p>
+            )}
             <Badge
               className="bg-badge-secondary-bg text-badge-secondary-text"
               variant="secondary"
@@ -50,7 +88,18 @@ export function PromoterDetailPopup({
           </div>
           <div>
             <div>
-              {promoter.phone ? (
+              {onUpdate ? (
+                <EditableText
+                  value={promoter.phone || ""}
+                  onSave={(v) => handleUpdate({ phone: sanitize(v) })}
+                  placeholder="N/A"
+                  inputType="tel"
+                  className={cn(
+                    "text-sm text-description-foreground",
+                    inlineEditButtonClasses
+                  )}
+                />
+              ) : promoter.phone ? (
                 <Link
                   href={`tel:${promoter.phone}`}
                   className="text-sm text-description-foreground hover:underline"
@@ -62,7 +111,18 @@ export function PromoterDetailPopup({
               )}
             </div>
             <div>
-              {promoter.email ? (
+              {onUpdate ? (
+                <EditableText
+                  value={promoter.email || ""}
+                  onSave={(v) => handleUpdate({ email: sanitize(v) })}
+                  placeholder="N/A"
+                  inputType="email"
+                  className={cn(
+                    "text-sm text-description-foreground break-all",
+                    inlineEditButtonClasses
+                  )}
+                />
+              ) : promoter.email ? (
                 <Link
                   href={`mailto:${promoter.email}`}
                   className="text-sm text-description-foreground hover:underline break-all"
@@ -109,8 +169,22 @@ export function PromoterDetailPopup({
 
         {/* Notes */}
         <div className="space-y-1 text-description-foreground">
-          <p className="text-lg font-header">Notes</p>
-          {promoter.notes ? (
+          <div className="flex items-start gap-2">
+            <StickyNote className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+            <p className="text-lg font-header">Notes</p>
+          </div>
+          {onUpdate ? (
+            <EditableText
+              value={promoter.notes || ""}
+              onSave={(v) => handleUpdate({ notes: sanitize(v) })}
+              placeholder="Add notes..."
+              multiline
+              className={cn(
+                "text-sm whitespace-pre-wrap",
+                inlineEditButtonClasses
+              )}
+            />
+          ) : promoter.notes ? (
             <p className="text-sm whitespace-pre-wrap">{promoter.notes}</p>
           ) : (
             <p className="text-sm">N/A</p>

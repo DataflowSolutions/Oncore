@@ -6,6 +6,7 @@ import { Building } from "lucide-react";
 import ViewHeader from "./ViewHeader";
 import type { PromoterWithVenues } from "@/lib/actions/promoters";
 import { getPromotersByVenue } from "@/lib/actions/promoters";
+import { updateVenueData } from "@/lib/actions/venues";
 import type { Database } from "@/lib/database.types";
 import AddPersonButton from "../../people/components/AddPersonButton";
 import { AddPromoterModal } from "@/components/promoters/AddPromoterModal";
@@ -14,6 +15,8 @@ import type { TeamMemberFilterValue } from "@/lib/constants/team-filters";
 import { AddVenueModal } from "@/components/venues/AddVenueModal";
 import { PromoterDetailPopup } from "@/components/contacts/PromoterDetailPopup";
 import { VenueDetailPopup } from "@/components/venues/VenueDetailPopup";
+import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface Venue {
   id: string;
@@ -46,6 +49,7 @@ export default function VenuesClient({
   orgSlug,
   view,
 }: VenuesClientProps) {
+  const [localVenues, setLocalVenues] = useState<Venue[]>(venues);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] =
     useState<TeamMemberFilterValue>("all");
@@ -61,6 +65,49 @@ export default function VenuesClient({
       is_primary?: boolean;
     }>
   >([]);
+
+  // Sync local venues with prop changes
+  useEffect(() => {
+    setLocalVenues(venues);
+  }, [venues]);
+
+  // Sync selectedVenue with local state
+  useEffect(() => {
+    if (selectedVenue) {
+      const updated = localVenues.find((v) => v.id === selectedVenue.id);
+      if (updated) {
+        setSelectedVenue(updated);
+      }
+    }
+  }, [localVenues, selectedVenue]);
+
+  const handleVenueUpdate = async (updates: {
+    name?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    capacity?: number;
+    notes?: string;
+  }) => {
+    if (!selectedVenue) return;
+
+    try {
+      const result = await updateVenueData(selectedVenue.id, updates);
+      if (!result.success || !result.venue) {
+        throw new Error(result.error || "Failed to update venue");
+      }
+      // Update local state
+      setLocalVenues((prev) =>
+        prev.map((v) =>
+          v.id === selectedVenue.id ? { ...v, ...result.venue } : v
+        )
+      );
+    } catch (error) {
+      logger.error("Error updating venue", error);
+      toast.error("Failed to update venue");
+      throw error;
+    }
+  };
 
   // Fetch promoters when a venue is selected
   useEffect(() => {
@@ -78,12 +125,12 @@ export default function VenuesClient({
   // Filter venues based on search query
   const filteredVenues = useMemo(() => {
     if (!searchQuery.trim()) {
-      return venues;
+      return localVenues;
     }
 
     const query = searchQuery.toLowerCase();
 
-    return venues.filter((venue) => {
+    return localVenues.filter((venue) => {
       const nameMatch = venue.name?.toLowerCase().includes(query);
       const cityMatch = venue.city?.toLowerCase().includes(query);
       const countryMatch = venue.country?.toLowerCase().includes(query);
@@ -91,7 +138,7 @@ export default function VenuesClient({
 
       return nameMatch || cityMatch || countryMatch || addressMatch;
     });
-  }, [venues, searchQuery]);
+  }, [localVenues, searchQuery]);
 
   // Filter promoters based on search query
   const filteredPromoters = useMemo(() => {
@@ -370,6 +417,7 @@ export default function VenuesClient({
           open={!!selectedVenue}
           onOpenChange={(open) => !open && setSelectedVenue(null)}
           venue={{
+            id: selectedVenue.id,
             name: selectedVenue.name,
             address: selectedVenue.address,
             city: selectedVenue.city,
@@ -378,6 +426,7 @@ export default function VenuesClient({
             created_at: selectedVenue.created_at,
             promoters: venuePromoters,
           }}
+          onUpdate={handleVenueUpdate}
         />
       )}
     </>

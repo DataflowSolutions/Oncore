@@ -2,10 +2,11 @@
 
 import { Phone, Mail } from "lucide-react";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Popup } from "@/components/ui/popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EditableText } from "@/components/ui/editable-text";
 import { saveCatering } from "@/lib/actions/advancing";
 import {
   createScheduleItem,
@@ -13,12 +14,17 @@ import {
   getScheduleItemsForShow,
 } from "@/lib/actions/schedule";
 import { logger } from "@/lib/logger";
-import { formatDate, formatTime } from "@/lib/utils";
+import { cn, formatDate, formatTime } from "@/lib/utils";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Database } from "@/lib/database.types";
+import type { CateringData } from "@/lib/actions/advancing/catering";
 
-type AdvancingCatering = Database["public"]["Tables"]["advancing_catering"]["Row"];
+const inlineEditButtonClasses =
+  "px-0 py-0 border-none bg-transparent hover:bg-transparent focus-visible:ring-0 [&>span:last-child]:hidden";
+
+type AdvancingCatering =
+  Database["public"]["Tables"]["advancing_catering"]["Row"];
 
 interface CateringPanelProps {
   /** New format: catering data from advancing_catering table */
@@ -47,6 +53,16 @@ export function CateringPanel({
   const [menuNotesForm, setMenuNotesForm] = useState("");
   const [bookingRefs, setBookingRefs] = useState<string[]>([""]);
   const [isSaving, setIsSaving] = useState(false);
+  const derivedCatering = useMemo(
+    () => cateringData[0] || null,
+    [cateringData]
+  );
+  const [currentCatering, setCurrentCatering] =
+    useState<AdvancingCatering | null>(derivedCatering);
+
+  useEffect(() => {
+    setCurrentCatering(derivedCatering);
+  }, [derivedCatering]);
   const addBookingRef = () => {
     setBookingRefs([...bookingRefs, ""]);
   };
@@ -63,32 +79,31 @@ export function CateringPanel({
     }
   };
 
-  // Use new format first (from advancing_catering table), fall back to legacy format
-  const firstCatering = cateringData[0];
-  
   // Map new table format to display format
-  const cateringInfo = firstCatering ? {
-    name: firstCatering.provider_name || undefined,
-    address: firstCatering.address || undefined,
-    city: firstCatering.city || undefined,
-    serviceDateTime: firstCatering.service_at || undefined,
-    bookingRefs: firstCatering.booking_refs || undefined,
-    notes: firstCatering.notes || undefined,
-    phone: firstCatering.phone || undefined,
-    email: firstCatering.email || undefined,
-    guestCount: firstCatering.guest_count || undefined,
-  } : (advancingFields.find((f) => f.field_name === "catering")?.value as
-    | {
-        name?: string;
-        address?: string;
-        city?: string;
-        serviceDateTime?: string;
-        bookingRefs?: string[];
-        notes?: string;
-        phone?: string;
-        email?: string;
+  const cateringInfo = currentCatering
+    ? {
+        name: currentCatering.provider_name || undefined,
+        address: currentCatering.address || undefined,
+        city: currentCatering.city || undefined,
+        serviceDateTime: currentCatering.service_at || undefined,
+        bookingRefs: currentCatering.booking_refs || undefined,
+        notes: currentCatering.notes || undefined,
+        phone: currentCatering.phone || undefined,
+        email: currentCatering.email || undefined,
+        guestCount: currentCatering.guest_count || undefined,
       }
-    | undefined);
+    : (advancingFields.find((f) => f.field_name === "catering")?.value as
+        | {
+            name?: string;
+            address?: string;
+            city?: string;
+            serviceDateTime?: string;
+            bookingRefs?: string[];
+            notes?: string;
+            phone?: string;
+            email?: string;
+          }
+        | undefined);
 
   // Check for old field format (fallback)
   const company =
@@ -115,6 +130,61 @@ export function CateringPanel({
   const promoterCateringInfo = advancingFields.find(
     (f) => f.field_name === "promoter_catering"
   )?.value as string | undefined;
+
+  const toLocalDateTimeValue = (iso?: string | null) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const toIsoOrUndefined = (value: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return undefined;
+    return date.toISOString();
+  };
+
+  const sanitizeText = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : undefined;
+  };
+
+  const buildPayloadFromRecord = (): CateringData => ({
+    name: cateringInfo?.name ?? undefined,
+    address: cateringInfo?.address ?? undefined,
+    city: cateringInfo?.city ?? undefined,
+    serviceDateTime: cateringInfo?.serviceDateTime ?? undefined,
+    bookingRefs: cateringInfo?.bookingRefs ?? undefined,
+    notes: cateringInfo?.notes ?? undefined,
+    phone: cateringInfo?.phone ?? undefined,
+    email: cateringInfo?.email ?? undefined,
+  });
+
+  const persistCateringUpdate = async (updates: Partial<CateringData>) => {
+    const payload: CateringData = {
+      ...buildPayloadFromRecord(),
+      ...updates,
+    };
+
+    const result = await saveCatering(
+      orgSlug,
+      showId,
+      payload,
+      currentCatering?.id
+    );
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || "Failed to save catering data");
+    }
+
+    setCurrentCatering(result.data);
+  };
+
+  const currentBookingRefs =
+    currentCatering?.booking_refs ?? cateringInfo?.bookingRefs ?? [];
 
   return (
     <div className="bg-card border border-card-border rounded-[20px] p-6">
@@ -424,106 +494,222 @@ export function CateringPanel({
         className="sm:max-w-[540px]"
       >
         <div className="space-y-6">
-          {/* Company Name and Address */}
-          <div>
-            {cateringInfo?.name && (
+          {(currentCatering || cateringInfo) && (
+            <div className="space-y-3">
+              <EditableText
+                value={
+                  currentCatering?.provider_name ?? cateringInfo?.name ?? ""
+                }
+                displayValue={cateringInfo?.name || "Add food provider"}
+                placeholder="Add food provider"
+                className={cn(
+                  inlineEditButtonClasses,
+                  "text-xl font-header text-card-foreground"
+                )}
+                inputClassName="text-xl font-header"
+                onSave={(value) =>
+                  persistCateringUpdate({ name: sanitizeText(value) })
+                }
+              />
+              <div className="flex justify-between gap-4">
+                <div className="flex flex-col gap-1 flex-1">
+                  <EditableText
+                    value={
+                      currentCatering?.address ?? cateringInfo?.address ?? ""
+                    }
+                    displayValue={cateringInfo?.address || "Add address"}
+                    placeholder="Add address"
+                    className={cn(
+                      inlineEditButtonClasses,
+                      "text-sm text-description-foreground text-left"
+                    )}
+                    inputClassName="text-sm"
+                    onSave={(value) =>
+                      persistCateringUpdate({ address: sanitizeText(value) })
+                    }
+                  />
+                  <EditableText
+                    value={currentCatering?.city ?? cateringInfo?.city ?? ""}
+                    displayValue={cateringInfo?.city || "Add city"}
+                    placeholder="Add city"
+                    className={cn(
+                      inlineEditButtonClasses,
+                      "text-sm text-description-foreground text-left"
+                    )}
+                    inputClassName="text-sm"
+                    onSave={(value) =>
+                      persistCateringUpdate({ city: sanitizeText(value) })
+                    }
+                  />
+                </div>
+                <div className="text-right">
+                  <EditableText
+                    value={toLocalDateTimeValue(
+                      currentCatering?.service_at ||
+                        cateringInfo?.serviceDateTime
+                    )}
+                    displayValue={
+                      cateringInfo?.serviceDateTime
+                        ? `${formatDate(cateringInfo.serviceDateTime, {
+                            format: "date",
+                          })} · ${formatTime(cateringInfo.serviceDateTime)}`
+                        : "Add service time"
+                    }
+                    placeholder="Set service time"
+                    inputType="datetime-local"
+                    className={cn(
+                      inlineEditButtonClasses,
+                      "text-sm text-description-foreground text-right"
+                    )}
+                    inputClassName="text-sm"
+                    onSave={(value) =>
+                      persistCateringUpdate({
+                        serviceDateTime: toIsoOrUndefined(value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(currentCatering || currentBookingRefs.length > 0) && (
+            <>
+              <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
               <div>
-                <h3 className="text-xl font-header text-card-foreground mb-1">
-                  {cateringInfo?.name}
-                </h3>
-              </div>
-            )}
-            <div className="flex justify-between">
-              {(cateringInfo?.address || cateringInfo?.city) && (
-                <div className="flex flex-col">
-                  <p className="text-sm text-description-foreground">
-                    {cateringInfo?.address}
-                  </p>
-                  <p className="text-sm text-description-foreground">
-                    {cateringInfo?.city}
-                  </p>
+                <h4 className="text-sm font-header text-card-foreground mb-2">
+                  Booking Reference
+                </h4>
+                <div className="space-y-1">
+                  {(currentBookingRefs.length ? currentBookingRefs : [""]).map(
+                    (ref, idx) => (
+                      <EditableText
+                        key={`${idx}-${ref}`}
+                        value={ref ?? ""}
+                        displayValue={ref || "Add booking reference"}
+                        placeholder="Add booking reference"
+                        className={cn(
+                          inlineEditButtonClasses,
+                          "text-sm text-description-foreground text-left"
+                        )}
+                        inputClassName="text-sm"
+                        onSave={(value) => {
+                          const sanitized = sanitizeText(value);
+                          const nextRefs = [...currentBookingRefs];
+                          if (sanitized) {
+                            if (idx < nextRefs.length) {
+                              nextRefs[idx] = sanitized;
+                            } else {
+                              nextRefs.push(sanitized);
+                            }
+                          } else if (idx < nextRefs.length) {
+                            nextRefs.splice(idx, 1);
+                          }
+                          return persistCateringUpdate({
+                            bookingRefs: nextRefs.length ? nextRefs : undefined,
+                          });
+                        }}
+                      />
+                    )
+                  )}
                 </div>
-              )}
-              {/* Service Date & Time */}
-              {cateringInfo?.serviceDateTime && (
-                <div className="text-center">
-                  <p className="text-sm text-description-foreground text-end">
-                    {formatDate(cateringInfo.serviceDateTime, { format: "date" })}
-                  </p>
-                  <p className="text-sm text-description-foreground text-end">
-                    {formatTime(cateringInfo.serviceDateTime)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
-
-          {/* Booking References */}
-          {cateringInfo?.bookingRefs && cateringInfo.bookingRefs.length > 0 && (
-            <div>
-              <h4 className="text-sm font-header text-card-foreground mb-2">
-                Booking Reference
-              </h4>
-              <div className="space-y-1">
-                {cateringInfo.bookingRefs.map((ref, idx) => (
-                  <p key={idx} className="text-sm text-description-foreground">
-                    {ref}
-                  </p>
-                ))}
               </div>
-            </div>
-          )}
-          <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
-          {/* Notes */}
-          {cateringInfo?.notes && (
-            <div className="">
-              <h4 className="text-sm font-header text-card-foreground mb-2">
-                Notes
-              </h4>
-              <p className="text-sm text-description-foreground whitespace-pre-wrap">
-                {cateringInfo.notes}
-              </p>
-            </div>
+            </>
           )}
 
-          {/* Contact Information */}
-          {(cateringInfo?.phone || cateringInfo?.email) && (
-            <div className="space-y-3 pt-4 ">
-              {cateringInfo.phone && (
-                <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
-                  <span className="text-sm text-card-foreground">
-                    {cateringInfo.phone}
-                  </span>
+          {(currentCatering || cateringInfo?.notes) && (
+            <>
+              <div className="w-full h-[1px] bg-foreground/20 rounded-full" />
+              <div>
+                <h4 className="text-sm font-header text-card-foreground mb-2">
+                  Notes
+                </h4>
+                <EditableText
+                  value={currentCatering?.notes ?? cateringInfo?.notes ?? ""}
+                  displayValue={cateringInfo?.notes || "Add notes"}
+                  placeholder="Add notes"
+                  multiline
+                  className={cn(
+                    inlineEditButtonClasses,
+                    "text-sm text-description-foreground text-left"
+                  )}
+                  inputClassName="text-sm"
+                  onSave={(value) => {
+                    const trimmed = value.trim();
+                    return persistCateringUpdate({
+                      notes: trimmed.length ? value : undefined,
+                    });
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {(currentCatering || cateringInfo?.phone || cateringInfo?.email) && (
+            <div className="space-y-3 pt-4">
+              <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
+                <EditableText
+                  value={currentCatering?.phone ?? cateringInfo?.phone ?? ""}
+                  displayValue={cateringInfo?.phone || "Add phone number"}
+                  placeholder="Add phone number"
+                  className={cn(
+                    inlineEditButtonClasses,
+                    "flex-1 text-sm text-card-foreground text-left"
+                  )}
+                  inputClassName="text-sm"
+                  onSave={(value) =>
+                    persistCateringUpdate({ phone: sanitizeText(value) })
+                  }
+                />
+                {(currentCatering?.phone || cateringInfo?.phone) && (
                   <Link
                     className="bg-button-bg-contact border border-button-border-contact rounded-full flex items-center justify-center size-7"
-                    title={`Call ${cateringInfo.phone}`}
-                    href={`tel:${cateringInfo.phone}`}
+                    title={`Call ${
+                      cateringInfo?.phone || currentCatering?.phone
+                    }`}
+                    href={`tel:${
+                      cateringInfo?.phone || currentCatering?.phone
+                    }`}
                   >
                     <Phone
                       size={16}
                       className="inline-block text-card-foreground hover:text-neutral-400 cursor-pointer"
                     />
                   </Link>
-                </div>
-              )}
-              {cateringInfo.email && (
-                <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
-                  <span className="text-sm text-card-foreground">
-                    {cateringInfo.email}
-                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 py-2 px-4 bg-card-cell justify-between rounded-full">
+                <EditableText
+                  value={currentCatering?.email ?? cateringInfo?.email ?? ""}
+                  displayValue={cateringInfo?.email || "Add email"}
+                  placeholder="Add email"
+                  className={cn(
+                    inlineEditButtonClasses,
+                    "flex-1 text-sm text-card-foreground text-left"
+                  )}
+                  inputClassName="text-sm"
+                  inputType="email"
+                  onSave={(value) =>
+                    persistCateringUpdate({ email: sanitizeText(value) })
+                  }
+                />
+                {(currentCatering?.email || cateringInfo?.email) && (
                   <Link
                     className="bg-button-bg-contact border border-button-border-contact rounded-full flex items-center justify-center size-7"
-                    title={`Email ${cateringInfo.email}`}
-                    href={`mailto:${cateringInfo.email}`}
+                    title={`Email ${
+                      cateringInfo?.email || currentCatering?.email
+                    }`}
+                    href={`mailto:${
+                      cateringInfo?.email || currentCatering?.email
+                    }`}
                   >
                     <Mail
                       size={16}
                       className="inline-block text-card-foreground hover:text-neutral-400 cursor-pointer"
                     />
                   </Link>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>
