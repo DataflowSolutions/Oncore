@@ -1,13 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../day/day_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../shows/shows_list_screen.dart';
 import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
 
-/// Main shell that wraps Day, Shows, Network screens with swipe navigation
-/// This allows horizontal swiping between the main tabs while keeping
-/// nested navigation (like individual show pages) separate
+/// Storage key for last viewed show
+const String _lastShowKey = 'oncore_last_show';
+
+/// Helper to save last show to preferences
+Future<void> saveLastShow(String orgId, String showId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_lastShowKey, '$orgId:$showId');
+}
+
+/// Helper to get last show from preferences
+Future<(String?, String?)?> getLastShow() async {
+  final prefs = await SharedPreferences.getInstance();
+  final stored = prefs.getString(_lastShowKey);
+  if (stored != null && stored.contains(':')) {
+    final parts = stored.split(':');
+    if (parts.length == 2) {
+      return (parts[0], parts[1]);
+    }
+  }
+  return null;
+}
+
+/// Main shell that wraps Shows, Network screens with swipe navigation
+/// Day button navigates directly to last viewed show's day view
 class MainShell extends StatefulWidget {
   final String orgId;
   final String orgName;
@@ -17,7 +38,7 @@ class MainShell extends StatefulWidget {
     super.key,
     required this.orgId,
     required this.orgName,
-    this.initialIndex = 1, // Default to Shows (middle)
+    this.initialIndex = 0, // Default to Shows (first)
   });
 
   @override
@@ -27,6 +48,8 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   late PageController _pageController;
   late int _currentIndex;
+  NetworkTab _networkTab = NetworkTab.team;
+  bool _isNavigatingToDay = false;
 
   // Colors matching web dark theme
   static const _background = Color(0xFF000000);
@@ -37,8 +60,10 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: _currentIndex);
+    // PageView indices: 0=Day(placeholder), 1=Shows, 2=Network
+    // Start on Shows (index 1)
+    _currentIndex = 1;
+    _pageController = PageController(initialPage: 1);
   }
 
   @override
@@ -48,17 +73,57 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _onPageChanged(int index) {
+    if (index == 0 && !_isNavigatingToDay) {
+      // Swiped to Day - navigate to last show's day view
+      _isNavigatingToDay = true;
+      _navigateToDay().then((_) {
+        // After navigation attempt, snap back to Shows
+        if (mounted) {
+          _pageController.jumpToPage(1);
+          _isNavigatingToDay = false;
+        }
+      });
+      return;
+    }
+    
     setState(() {
       _currentIndex = index;
     });
   }
 
-  void _onNavTap(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _onNavTap(int index) async {
+    if (index == 0) {
+      // Day tapped - navigate to last show's day view
+      await _navigateToDay();
+    } else {
+      // Shows or Network - swipe to that page
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Future<void> _navigateToDay() async {
+    // Always load fresh from SharedPreferences to get the latest show
+    final lastShow = await getLastShow();
+    final showId = (lastShow != null && lastShow.$1 == widget.orgId) 
+        ? lastShow.$2 
+        : null;
+    
+    if (showId != null && mounted) {
+      // Navigate to the day view for the last show
+      context.push('/org/${widget.orgId}/shows/$showId/day');
+    } else if (mounted) {
+      // No last show - show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open a show first to access Day view'),
+          backgroundColor: Color(0xFF282828),
+        ),
+      );
+    }
   }
 
   @override
@@ -74,9 +139,17 @@ class _MainShellState extends State<MainShell> {
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
                 children: [
-                  DayContent(orgId: widget.orgId, orgName: widget.orgName),
+                  // Index 0: Day placeholder - just a black screen that triggers navigation
+                  Container(color: _background),
+                  // Index 1: Shows
                   ShowsContent(orgId: widget.orgId, orgName: widget.orgName),
-                  NetworkContent(orgId: widget.orgId, orgName: widget.orgName),
+                  // Index 2: Network
+                  NetworkContent(
+                    orgId: widget.orgId, 
+                    orgName: widget.orgName,
+                    activeTab: _networkTab,
+                    onTabChanged: (tab) => setState(() => _networkTab = tab),
+                  ),
                 ],
               ),
             ),
@@ -88,8 +161,9 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _buildTopBar() {
-    // Only show list/calendar toggle when on Shows tab
-    final showToggle = _currentIndex == 1;
+    // Indices: 0=Day, 1=Shows, 2=Network
+    final isShowsTab = _currentIndex == 1;
+    final isNetworkTab = _currentIndex == 2;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -105,10 +179,10 @@ class _MainShellState extends State<MainShell> {
             ),
             child: const Icon(Icons.person_outline, color: _foreground, size: 20),
           ),
-          // Center: View toggle (only on Shows tab)
+          // Center: View toggle (Shows or Network)
           Expanded(
             child: Center(
-              child: showToggle
+              child: isShowsTab
                   ? Container(
                       decoration: BoxDecoration(
                         color: _inputBg,
@@ -126,12 +200,47 @@ class _MainShellState extends State<MainShell> {
                         ],
                       ),
                     )
-                  : const SizedBox.shrink(),
+                  : isNetworkTab
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: _inputBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildNetworkToggle(Icons.person_outline, NetworkTab.team),
+                              _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters),
+                              _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
             ),
           ),
           // Right: Settings icon
           const Icon(Icons.settings_outlined, color: _foreground, size: 22),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNetworkToggle(IconData icon, NetworkTab tab) {
+    final isSelected = _networkTab == tab;
+    return GestureDetector(
+      onTap: () => setState(() => _networkTab = tab),
+      child: Container(
+        width: 44,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isSelected ? _foreground : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(
+          icon,
+          color: isSelected ? _background : _muted,
+          size: 20,
+        ),
       ),
     );
   }
@@ -156,53 +265,58 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _buildBottomSection() {
+    // Nav indices: 0=Day, 1=Shows, 2=Network
+    // Only show search/add for Shows tab
+    final isShowsTab = _currentIndex == 1;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Search row with filter and add button
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: _inputBg,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.search, color: _muted, size: 20),
-                      SizedBox(width: 12),
-                      Text(
-                        'Search',
-                        style: TextStyle(color: _muted, fontSize: 15),
-                      ),
-                    ],
+          // Search row - only show for Shows tab
+          if (isShowsTab) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: _inputBg,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.search, color: _muted, size: 20),
+                        SizedBox(width: 12),
+                        Text(
+                          'Search',
+                          style: TextStyle(color: _muted, fontSize: 15),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              const Icon(Icons.tune, color: _muted, size: 22),
-              const SizedBox(width: 12),
-              // Add button
-              GestureDetector(
-                onTap: () => showCreateShowModal(context, widget.orgId),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _foreground,
-                    borderRadius: BorderRadius.circular(20),
+                const SizedBox(width: 12),
+                const Icon(Icons.tune, color: _muted, size: 22),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => showCreateShowModal(context, widget.orgId),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _foreground,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.add, color: _background, size: 24),
                   ),
-                  child: const Icon(Icons.add, color: _background, size: 24),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           // Bottom navigation
           _buildBottomNav(),
         ],
@@ -228,12 +342,12 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isSelected = _currentIndex == index;
+  Widget _buildNavItem(IconData icon, String label, int navIndex) {
+    final isSelected = _currentIndex == navIndex;
     final color = isSelected ? _foreground : _muted;
 
     return GestureDetector(
-      onTap: () => _onNavTap(index),
+      onTap: () => _onNavTap(navIndex),
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

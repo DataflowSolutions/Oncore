@@ -4,13 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../../theme/app_theme.dart';
+import '../main/main_shell.dart' show saveLastShow;
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
 import 'widgets/detail_modal.dart';
 
 /// Show Day Screen - detailed view of a single show day
 /// Matches the web client's CalendarDayView design
-class ShowDayScreen extends ConsumerWidget {
+class ShowDayScreen extends ConsumerStatefulWidget {
   final String orgId;
   final String showId;
 
@@ -21,9 +22,21 @@ class ShowDayScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final showAsync = ref.watch(showDetailProvider(showId));
-    final assignmentsAsync = ref.watch(showAssignmentsProvider(showId));
+  ConsumerState<ShowDayScreen> createState() => _ShowDayScreenState();
+}
+
+class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Save this show as the last viewed show for quick access from Day button
+    saveLastShow(widget.orgId, widget.showId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showAsync = ref.watch(showDetailProvider(widget.showId));
+    final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
     
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -52,7 +65,7 @@ class ShowDayScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => ref.invalidate(showDetailProvider(showId)),
+                onPressed: () => ref.invalidate(showDetailProvider(widget.showId)),
                 child: Text(
                   'Retry',
                   style: AppTheme.bodyMedium.copyWith(color: AppTheme.foreground),
@@ -105,7 +118,7 @@ class ShowDayScreen extends ConsumerWidget {
             data: (assignments) => _ShowDayContent(
               show: show,
               assignments: assignments,
-              showId: showId,
+              showId: widget.showId,
             ),
           );
         },
@@ -246,8 +259,8 @@ class _ShowDayContent extends ConsumerWidget {
 
           // Info cards grid
           _InfoCardsGrid(
-            documentsCount: documentsAsync.whenData((d) => d.length).value ?? 0,
-            contactsCount: contactsAsync.whenData((c) => c.length).value ?? 0,
+            documents: documentsAsync.value ?? [],
+            contacts: contactsAsync.value ?? [],
           ),
 
           const SizedBox(height: AppTheme.spacingXl),
@@ -574,12 +587,12 @@ class _LodgingCateringSection extends StatelessWidget {
 
 /// Info cards grid (Documents, Contacts, Guestlist, Notes)
 class _InfoCardsGrid extends StatelessWidget {
-  final int documentsCount;
-  final int contactsCount;
+  final List<DocumentInfo> documents;
+  final List<ContactInfo> contacts;
 
   const _InfoCardsGrid({
-    required this.documentsCount,
-    required this.contactsCount,
+    required this.documents,
+    required this.contacts,
   });
 
   @override
@@ -594,7 +607,8 @@ class _InfoCardsGrid extends StatelessWidget {
                 child: InfoCardCompact(
                   title: 'Documents',
                   type: InfoCardType.documents,
-                  badgeCount: documentsCount,
+                  badgeCount: documents.length,
+                  onTap: () => _showDocumentsModal(context),
                 ),
               ),
               const SizedBox(width: AppTheme.spacingMd),
@@ -602,7 +616,8 @@ class _InfoCardsGrid extends StatelessWidget {
                 child: InfoCardCompact(
                   title: 'Contacts',
                   type: InfoCardType.contacts,
-                  badgeCount: contactsCount,
+                  badgeCount: contacts.length,
+                  onTap: () => _showContactsModal(context),
                 ),
               ),
             ],
@@ -627,6 +642,212 @@ class _InfoCardsGrid extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDocumentsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Documents',
+                  style: AppTheme.headingMedium,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: AppTheme.foreground),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            if (documents.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
+                child: Center(
+                  child: Text(
+                    'No documents attached',
+                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                  ),
+                ),
+              )
+            else
+              ...documents.map((doc) => Padding(
+                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                child: Container(
+                  padding: const EdgeInsets.all(AppTheme.spacingMd),
+                  decoration: BoxDecoration(
+                    color: AppTheme.inputBg,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description, color: Color(0xFFA78BFA)),
+                      const SizedBox(width: AppTheme.spacingMd),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              doc.label ?? 'Document',
+                              style: AppTheme.bodyMedium,
+                            ),
+                            Text(
+                              '${doc.fileCount} file${doc.fileCount != 1 ? 's' : ''} • ${doc.partyType == 'from_us' ? 'From Us' : 'From You'}',
+                              style: AppTheme.caption,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+            const SizedBox(height: AppTheme.spacingMd),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showContactsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingLg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Contacts',
+                    style: AppTheme.headingMedium,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppTheme.foreground),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              Expanded(
+                child: contacts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No contacts attached',
+                          style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        itemCount: contacts.length,
+                        itemBuilder: (context, index) {
+                          final contact = contacts[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                            child: Container(
+                              padding: const EdgeInsets.all(AppTheme.spacingMd),
+                              decoration: BoxDecoration(
+                                color: AppTheme.inputBg,
+                                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF34D399).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Color(0xFF34D399),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppTheme.spacingMd),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          contact.name,
+                                          style: AppTheme.bodyMedium.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (contact.role != null)
+                                          Text(
+                                            contact.role!,
+                                            style: AppTheme.caption,
+                                          ),
+                                        if (contact.email != null || contact.phone != null)
+                                          Text(
+                                            [contact.email, contact.phone]
+                                                .where((e) => e != null)
+                                                .join(' • '),
+                                            style: AppTheme.caption.copyWith(
+                                              color: AppTheme.muted.withOpacity(0.8),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (contact.isPromoter)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFBBF24).withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'Promoter',
+                                        style: TextStyle(
+                                          color: Color(0xFFFBBF24),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

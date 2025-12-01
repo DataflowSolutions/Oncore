@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../main/main_shell.dart' show saveLastShow;
 import 'shows_list_screen.dart';
 
 /// Modal for creating a new show - matches web client functionality
@@ -174,6 +175,8 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
         ref.invalidate(showsByOrgProvider(widget.orgId));
         
         if (mounted) {
+          // Save as last show and navigate to it
+          saveLastShow(widget.orgId, showId);
           // Close modal and navigate to the new show
           Navigator.of(context).pop();
           context.push('/org/${widget.orgId}/shows/$showId/day');

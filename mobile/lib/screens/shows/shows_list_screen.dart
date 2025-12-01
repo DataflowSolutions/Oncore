@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../../providers/auth_provider.dart';
+import '../main/main_shell.dart' show saveLastShow;
 
 /// Provider for fetching shows by organization with artist assignments
 final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId) async {
@@ -183,7 +184,12 @@ class ShowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/org/$orgId/shows/${show.id}/day'),
+      onTap: () async {
+        await saveLastShow(orgId, show.id);
+        if (context.mounted) {
+          context.push('/org/$orgId/shows/${show.id}/day');
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(

@@ -57,6 +57,9 @@ dependencies:
   # Environment variables
   flutter_dotenv: ^5.1.0
   url_launcher: ^6.3.2
+  
+  # Local storage for persisting last viewed show
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

@@ -69,15 +69,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       
-      // Main shell with swipeable Day/Shows/Network (protected)
-      // Default to Shows tab (index 1)
+      // Main shell with swipeable Shows/Network (protected)
+      // Day button navigates to last viewed show
+      // Default to Shows tab (index 0)
       GoRoute(
         path: '/org/:orgId/shows',
         name: 'shows',
         builder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return MainShell(orgId: orgId, orgName: orgName, initialIndex: 1);
+          return MainShell(orgId: orgId, orgName: orgName, initialIndex: 0);
         },
       ),
       
