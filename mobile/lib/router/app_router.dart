@@ -5,7 +5,8 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/shows/shows_list_screen.dart';
+import '../screens/main/main_shell.dart';
+import '../screens/calendar/calendar_screen.dart';
 
 /// Notifier that triggers router refresh when auth state changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -67,14 +68,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       
-      // Organization shows list (protected)
+      // Main shell with swipeable Day/Shows/Network (protected)
+      // Default to Shows tab (index 1)
       GoRoute(
         path: '/org/:orgId/shows',
         name: 'shows',
         builder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return ShowsListScreen(orgId: orgId, orgName: orgName);
+          return MainShell(orgId: orgId, orgName: orgName, initialIndex: 1);
+        },
+      ),
+      
+      // Organization shows calendar (protected) - separate from swipe nav
+      GoRoute(
+        path: '/org/:orgId/calendar',
+        name: 'calendar',
+        builder: (context, state) {
+          final orgId = state.pathParameters['orgId']!;
+          final orgName = state.extra as String? ?? 'Organization';
+          return CalendarScreen(orgId: orgId, orgName: orgName);
         },
       ),
       
