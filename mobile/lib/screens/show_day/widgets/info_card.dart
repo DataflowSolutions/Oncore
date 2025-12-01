@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Info card types for different content
 enum InfoCardType {
@@ -68,21 +67,25 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.border),
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: AppTheme.bodyMedium.copyWith(
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
@@ -92,7 +95,7 @@ class InfoCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle!,
-                style: AppTheme.caption,
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -101,8 +104,9 @@ class InfoCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 detail!,
-                style: AppTheme.caption.copyWith(
-                  color: AppTheme.muted.withValues(alpha: 0.7),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  fontSize: 12,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -134,21 +138,25 @@ class InfoCardCompact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.border),
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: AppTheme.bodyMedium.copyWith(
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
@@ -158,19 +166,19 @@ class InfoCardCompact extends StatelessWidget {
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: AppTheme.caption,
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               )
             else if (badgeCount != null && badgeCount! > 0)
               Text(
                 '$badgeCount Attached', // Or "Available" depending on context
-                style: AppTheme.caption,
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
               )
             else
               Text(
                 'Not Added',
-                style: AppTheme.caption.copyWith(color: AppTheme.muted.withValues(alpha: 0.5)),
+                style: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5), fontSize: 12),
               ),
           ],
         ),

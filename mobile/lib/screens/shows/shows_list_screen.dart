@@ -50,11 +50,6 @@ final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId
   }).toList();
 });
 
-// Colors matching web dark theme - shared
-const showsBackground = Color(0xFF000000);
-const showsForeground = Color(0xFFF0F0F0);
-const showsMuted = Color(0xFFA3A3A3);
-
 /// Shows content widget - just the list content, no shell/nav
 /// Used inside MainShell for swipe navigation
 class ShowsContent extends ConsumerWidget {
@@ -70,51 +65,55 @@ class ShowsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showsAsync = ref.watch(showsByOrgProvider(orgId));
+    final colorScheme = Theme.of(context).colorScheme;
 
     return showsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: showsForeground),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colorScheme.onSurface),
       ),
-      error: (error, stack) => _buildErrorState(ref, error),
-      data: (shows) => shows.isEmpty ? _buildEmptyState() : _buildShowsList(shows),
+      error: (error, stack) => _buildErrorState(context, ref, error),
+      data: (shows) => shows.isEmpty ? _buildEmptyState(context) : _buildShowsList(context, shows),
     );
   }
 
-  Widget _buildErrorState(WidgetRef ref, Object error) {
+  Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: showsMuted),
+          Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
-          const Text('Failed to load shows', style: TextStyle(color: showsMuted)),
+          Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => ref.invalidate(showsByOrgProvider(orgId)),
-            child: const Text('Retry', style: TextStyle(color: showsForeground)),
+            child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_note_outlined, size: 56, color: showsMuted.withOpacity(0.5)),
+          Icon(Icons.event_note_outlined, size: 56, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
           const SizedBox(height: 16),
-          const Text('No shows yet', style: TextStyle(color: showsForeground, fontSize: 17)),
+          Text('No shows yet', style: TextStyle(color: colorScheme.onSurface, fontSize: 17)),
           const SizedBox(height: 6),
-          const Text('Add your first show to get started', 
-            style: TextStyle(color: showsMuted, fontSize: 14)),
+          Text('Add your first show to get started', 
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
         ],
       ),
     );
   }
 
-  Widget _buildShowsList(List<Show> shows) {
+  Widget _buildShowsList(BuildContext context, List<Show> shows) {
+    final colorScheme = Theme.of(context).colorScheme;
     // Group shows by month
     final grouped = <String, List<Show>>{};
     for (final show in shows) {
@@ -150,8 +149,8 @@ class ShowsContent extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 monthYear,
-                style: const TextStyle(
-                  color: showsForeground,
+                style: TextStyle(
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -176,13 +175,10 @@ class ShowCard extends StatelessWidget {
 
   const ShowCard({super.key, required this.show, required this.orgId});
 
-  static const _foreground = Color(0xFFF0F0F0);
-  static const _muted = Color(0xFFA3A3A3);
-  static const _card = Color(0xFF1E1E1E);
-  static const _border = Color(0xFF262626);
-
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: () async {
         await saveLastShow(orgId, show.id);
@@ -193,9 +189,9 @@ class ShowCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: _card,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
@@ -206,8 +202,8 @@ class ShowCard extends StatelessWidget {
                 children: [
                   Text(
                     show.title,
-                    style: const TextStyle(
-                      color: _foreground,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -217,7 +213,7 @@ class ShowCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     show.artistNamesDisplay,
-                    style: const TextStyle(color: _muted, fontSize: 13),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                   ),
                 ],
               ),
@@ -229,12 +225,12 @@ class ShowCard extends StatelessWidget {
               children: [
                 Text(
                   show.venueCity ?? 'TBD',
-                  style: const TextStyle(color: _muted, fontSize: 13),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   show.formattedDate,
-                  style: const TextStyle(color: _muted, fontSize: 13),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
               ],
             ),

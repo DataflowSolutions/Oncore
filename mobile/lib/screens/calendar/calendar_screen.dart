@@ -26,13 +26,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   // We'll use a large number of pages with current month in the middle
   static const int _initialPage = 1200; // ~100 years in each direction
-  
-  // Colors matching web dark theme
-  static const _background = Color(0xFF000000);
-  static const _foreground = Color(0xFFF0F0F0);
-  static const _muted = Color(0xFFA3A3A3);
-  static const _inputBg = Color(0xFF282828);
-  static const _border = Color(0xFF262626);
 
   @override
   void initState() {
@@ -61,30 +54,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(),
+            _buildTopBar(colorScheme),
             Expanded(
               child: showsAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: _foreground),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: colorScheme.onSurface),
                 ),
-                error: (error, stack) => _buildErrorState(),
-                data: (shows) => _buildCalendar(shows),
+                error: (error, stack) => _buildErrorState(colorScheme),
+                data: (shows) => _buildCalendar(shows, colorScheme),
               ),
             ),
-            _buildBottomSection(),
+            _buildBottomSection(colorScheme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
@@ -95,25 +89,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: _muted, width: 1.5),
+              border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
             ),
-            child: const Icon(Icons.person_outline, color: _foreground, size: 20),
+            child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
           ),
           // Center: View toggle (list/calendar)
           Expanded(
             child: Center(
               child: Container(
                 decoration: BoxDecoration(
-                  color: _inputBg,
+                  color: colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildToggle(Icons.format_list_bulleted, false, () {
+                    _buildToggle(Icons.format_list_bulleted, false, colorScheme, () {
                       context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
                     }),
-                    _buildToggle(Icons.calendar_today_outlined, true, () {
+                    _buildToggle(Icons.calendar_today_outlined, true, colorScheme, () {
                       // Already on calendar
                     }),
                   ],
@@ -122,50 +116,50 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
           // Right: Settings icon
-          const Icon(Icons.settings_outlined, color: _foreground, size: 22),
+          Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
         ],
       ),
     );
   }
 
-  Widget _buildToggle(IconData icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildToggle(IconData icon, bool isSelected, ColorScheme colorScheme, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 32,
         decoration: BoxDecoration(
-          color: isSelected ? _foreground : Colors.transparent,
+          color: isSelected ? colorScheme.onSurface : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
-          color: isSelected ? _background : _muted,
+          color: isSelected ? colorScheme.surface : colorScheme.onSurfaceVariant,
           size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(ColorScheme colorScheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: _muted),
+          Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
-          const Text('Failed to load shows', style: TextStyle(color: _muted)),
+          Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => ref.invalidate(showsByOrgProvider(widget.orgId)),
-            child: const Text('Retry', style: TextStyle(color: _foreground)),
+            child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCalendar(List<Show> shows) {
+  Widget _buildCalendar(List<Show> shows, ColorScheme colorScheme) {
     // Group shows by date string (YYYY-MM-DD)
     final showsByDate = <String, List<Show>>{};
     for (final show in shows) {
@@ -178,12 +172,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       onPageChanged: _onPageChanged,
       itemBuilder: (context, page) {
         final monthDate = _getMonthFromPage(page);
-        return _buildMonthView(monthDate, showsByDate);
+        return _buildMonthView(monthDate, showsByDate, colorScheme);
       },
     );
   }
 
-  Widget _buildMonthView(DateTime monthDate, Map<String, List<Show>> showsByDate) {
+  Widget _buildMonthView(DateTime monthDate, Map<String, List<Show>> showsByDate, ColorScheme colorScheme) {
     final year = monthDate.year;
     final month = monthDate.month;
     
@@ -251,8 +245,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               '$monthName $year',
-              style: const TextStyle(
-                color: _foreground,
+              style: TextStyle(
+                color: colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -267,8 +261,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: Center(
                 child: Text(
                   day,
-                  style: const TextStyle(
-                    color: _muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -293,7 +287,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       final dateKey = '${dayInfo.date.year}-${dayInfo.date.month.toString().padLeft(2, '0')}-${dayInfo.date.day.toString().padLeft(2, '0')}';
                       final dayShows = showsByDate[dateKey] ?? [];
                       return Expanded(
-                        child: _buildDayCell(dayInfo, dayShows),
+                        child: _buildDayCell(dayInfo, dayShows, colorScheme),
                       );
                     }).toList(),
                   ),
@@ -306,7 +300,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildDayCell(_CalendarDay dayInfo, List<Show> shows) {
+  Widget _buildDayCell(_CalendarDay dayInfo, List<Show> shows, ColorScheme colorScheme) {
     final now = DateTime.now();
     final isToday = dayInfo.date.year == now.year &&
         dayInfo.date.month == now.month &&
@@ -315,7 +309,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: _border.withOpacity(0.3), width: 0.5),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3), width: 0.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -327,7 +321,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             height: 28,
             decoration: isToday
                 ? BoxDecoration(
-                    color: _muted.withOpacity(0.3),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(14),
                   )
                 : null,
@@ -336,8 +330,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 '${dayInfo.day}',
                 style: TextStyle(
                   color: dayInfo.isCurrentMonth
-                      ? (isToday ? _foreground : _foreground)
-                      : _muted.withOpacity(0.4),
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   fontSize: 14,
                   fontWeight: dayInfo.isCurrentMonth ? FontWeight.w600 : FontWeight.normal,
                 ),
@@ -351,7 +345,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
-                children: shows.take(3).map((show) => _buildShowBadge(show)).toList(),
+                children: shows.take(3).map((show) => _buildShowBadge(show, colorScheme)).toList(),
               ),
             ),
           ],
@@ -360,19 +354,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildShowBadge(Show show) {
+  Widget _buildShowBadge(Show show, ColorScheme colorScheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 2, left: 2, right: 2),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: _muted.withOpacity(0.15),
+        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: _muted.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Text(
         show.venueCity ?? show.title,
-        style: const TextStyle(
-          color: _foreground,
+        style: TextStyle(
+          color: colorScheme.onSurface,
           fontSize: 8,
           fontWeight: FontWeight.w500,
         ),
@@ -390,7 +384,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return months[month - 1];
   }
 
-  Widget _buildBottomSection() {
+  Widget _buildBottomSection(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
@@ -404,23 +398,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: _inputBg,
+                    color: colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.search, color: _muted, size: 20),
-                      SizedBox(width: 12),
+                      Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+                      const SizedBox(width: 12),
                       Text(
                         'Search',
-                        style: TextStyle(color: _muted, fontSize: 15),
+                        style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.tune, color: _muted, size: 22),
+              Icon(Icons.tune, color: colorScheme.onSurfaceVariant, size: 22),
               const SizedBox(width: 12),
               // Add button
               GestureDetector(
@@ -429,27 +423,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _foreground,
+                    color: colorScheme.onSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.add, color: _background, size: 24),
+                  child: Icon(Icons.add, color: colorScheme.surface, size: 24),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           // Bottom navigation
-          _buildBottomNav(),
+          _buildBottomNav(colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: _inputBg,
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -457,20 +451,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           _buildNavItem(Icons.play_arrow_outlined, 'Day', false, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
-          }),
+          }, colorScheme),
           _buildNavItem(Icons.format_list_bulleted, 'Shows', true, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
-          }),
+          }, colorScheme),
           _buildNavItem(Icons.people_outline, 'Network', false, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
-          }),
+          }, colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
-    final color = isSelected ? _foreground : _muted;
+  Widget _buildNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap, ColorScheme colorScheme) {
+    final color = isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: onTap,

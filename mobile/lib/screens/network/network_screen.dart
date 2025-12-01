@@ -198,13 +198,6 @@ class NetworkContent extends ConsumerStatefulWidget {
 }
 
 class _NetworkContentState extends ConsumerState<NetworkContent> {
-  // Colors matching web dark theme
-  static const _foreground = Color(0xFFF0F0F0);
-  static const _muted = Color(0xFFA3A3A3);
-  static const _cardBg = Color(0xFF1A1A1A);
-  static const _border = Color(0xFF262626);
-  static const _destructive = Color(0xFFEF4444);
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -221,6 +214,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   }
 
   Widget _buildTitle() {
+    final colorScheme = Theme.of(context).colorScheme;
     String title;
     switch (widget.activeTab) {
       case NetworkTab.team:
@@ -240,8 +234,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(
-            color: _foreground,
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
@@ -263,18 +257,19 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
 
   Widget _buildTeamList() {
     final teamAsync = ref.watch(teamMembersProvider(widget.orgId));
+    final colorScheme = Theme.of(context).colorScheme;
 
     return teamAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: _foreground),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colorScheme.onSurface),
       ),
       error: (error, stack) => Center(
-        child: Text('Error: $error', style: const TextStyle(color: _muted)),
+        child: Text('Error: $error', style: TextStyle(color: colorScheme.onSurfaceVariant)),
       ),
       data: (members) {
         if (members.isEmpty) {
-          return const Center(
-            child: Text('No team members', style: TextStyle(color: _muted)),
+          return Center(
+            child: Text('No team members', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           );
         }
         return ListView.builder(
@@ -287,13 +282,15 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   }
 
   Widget _buildTeamCard(TeamMember member) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -304,8 +301,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               children: [
                 Text(
                   member.name,
-                  style: const TextStyle(
-                    color: _foreground,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -314,14 +311,14 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                   const SizedBox(height: 4),
                   Text(
                     member.phone!,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
                 if (member.email != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     member.email!,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ],
@@ -336,13 +333,13 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _foreground,
+                    color: colorScheme.onSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     member.memberType!,
-                    style: const TextStyle(
-                      color: Color(0xFF000000),
+                    style: TextStyle(
+                      color: colorScheme.surface,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -354,7 +351,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _destructive,
+                    color: colorScheme.error,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -376,18 +373,19 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
 
   Widget _buildPromotersList() {
     final promotersAsync = ref.watch(promotersProvider(widget.orgId));
+    final colorScheme = Theme.of(context).colorScheme;
 
     return promotersAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: _foreground),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colorScheme.onSurface),
       ),
       error: (error, stack) => Center(
-        child: Text('Error: $error', style: const TextStyle(color: _muted)),
+        child: Text('Error: $error', style: TextStyle(color: colorScheme.onSurfaceVariant)),
       ),
       data: (promoters) {
         if (promoters.isEmpty) {
-          return const Center(
-            child: Text('No promoters', style: TextStyle(color: _muted)),
+          return Center(
+            child: Text('No promoters', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           );
         }
         return ListView.builder(
@@ -400,13 +398,15 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   }
 
   Widget _buildPromoterCard(Promoter promoter) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -417,8 +417,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               children: [
                 Text(
                   promoter.name,
-                  style: const TextStyle(
-                    color: _foreground,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -427,14 +427,14 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                   const SizedBox(height: 4),
                   Text(
                     promoter.phone!,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
                 if (promoter.email != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     promoter.email!,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ],
@@ -448,8 +448,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               if (promoter.company != null)
                 Text(
                   promoter.company!,
-                  style: const TextStyle(
-                    color: _muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -457,8 +457,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 const SizedBox(height: 2),
                 Text(
                   promoter.location,
-                  style: const TextStyle(
-                    color: _muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -469,7 +469,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _destructive,
+                    color: colorScheme.error,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -491,18 +491,19 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
 
   Widget _buildVenuesList() {
     final venuesAsync = ref.watch(venuesProvider(widget.orgId));
+    final colorScheme = Theme.of(context).colorScheme;
 
     return venuesAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: _foreground),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colorScheme.onSurface),
       ),
       error: (error, stack) => Center(
-        child: Text('Error: $error', style: const TextStyle(color: _muted)),
+        child: Text('Error: $error', style: TextStyle(color: colorScheme.onSurfaceVariant)),
       ),
       data: (venues) {
         if (venues.isEmpty) {
-          return const Center(
-            child: Text('No venues', style: TextStyle(color: _muted)),
+          return Center(
+            child: Text('No venues', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           );
         }
         return ListView.builder(
@@ -515,6 +516,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   }
 
   Widget _buildVenueCard(Venue venue) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasPromoters = venue.promoterNames.isNotEmpty;
     final promoterText = hasPromoters
         ? venue.promoterNames.length > 1
@@ -526,9 +528,9 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -539,8 +541,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               children: [
                 Text(
                   venue.name,
-                  style: const TextStyle(
-                    color: _foreground,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -549,14 +551,14 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                   const SizedBox(height: 4),
                   Text(
                     venue.location,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
                 if (promoterText != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     promoterText,
-                    style: const TextStyle(color: _muted, fontSize: 14),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ],
@@ -570,8 +572,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               if (venue.phone != null)
                 Text(
                   venue.phone!,
-                  style: const TextStyle(
-                    color: _muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -579,8 +581,8 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 const SizedBox(height: 2),
                 Text(
                   venue.email!,
-                  style: const TextStyle(
-                    color: _muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -591,7 +593,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _destructive,
+                    color: colorScheme.error,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -612,26 +614,28 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   }
 
   void _showRemoveDialog(String name) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _cardBg,
-        title: const Text('Remove', style: TextStyle(color: _foreground)),
+        backgroundColor: colorScheme.surfaceContainer,
+        title: Text('Remove', style: TextStyle(color: colorScheme.onSurface)),
         content: Text(
           'Are you sure you want to remove $name?',
-          style: const TextStyle(color: _muted),
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: _muted)),
+            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               // TODO: Implement remove functionality
             },
-            child: const Text('Remove', style: TextStyle(color: _destructive)),
+            child: Text('Remove', style: TextStyle(color: colorScheme.error)),
           ),
         ],
       ),

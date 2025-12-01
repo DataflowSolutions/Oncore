@@ -51,12 +51,6 @@ class _MainShellState extends State<MainShell> {
   NetworkTab _networkTab = NetworkTab.team;
   bool _isNavigatingToDay = false;
 
-  // Colors matching web dark theme
-  static const _background = Color(0xFF000000);
-  static const _foreground = Color(0xFFF0F0F0);
-  static const _muted = Color(0xFFA3A3A3);
-  static const _inputBg = Color(0xFF282828);
-
   @override
   void initState() {
     super.initState();
@@ -128,19 +122,21 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(),
+            _buildTopBar(colorScheme),
             Expanded(
               child: PageView(
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
                 children: [
-                  // Index 0: Day placeholder - just a black screen that triggers navigation
-                  Container(color: _background),
+                  // Index 0: Day placeholder - just a screen that triggers navigation
+                  Container(color: colorScheme.surface),
                   // Index 1: Shows
                   ShowsContent(orgId: widget.orgId, orgName: widget.orgName),
                   // Index 2: Network
@@ -153,14 +149,14 @@ class _MainShellState extends State<MainShell> {
                 ],
               ),
             ),
-            _buildBottomSection(),
+            _buildBottomSection(colorScheme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(ColorScheme colorScheme) {
     // Indices: 0=Day, 1=Shows, 2=Network
     final isShowsTab = _currentIndex == 1;
     final isNetworkTab = _currentIndex == 2;
@@ -175,9 +171,9 @@ class _MainShellState extends State<MainShell> {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: _muted, width: 1.5),
+              border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
             ),
-            child: const Icon(Icons.person_outline, color: _foreground, size: 20),
+            child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
           ),
           // Center: View toggle (Shows or Network)
           Expanded(
@@ -185,16 +181,16 @@ class _MainShellState extends State<MainShell> {
               child: isShowsTab
                   ? Container(
                       decoration: BoxDecoration(
-                        color: _inputBg,
+                        color: colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildToggle(Icons.format_list_bulleted, true, () {
+                          _buildToggle(Icons.format_list_bulleted, true, colorScheme, () {
                             // Already on list view
                           }),
-                          _buildToggle(Icons.calendar_today_outlined, false, () {
+                          _buildToggle(Icons.calendar_today_outlined, false, colorScheme, () {
                             context.go('/org/${widget.orgId}/calendar', extra: widget.orgName);
                           }),
                         ],
@@ -203,15 +199,15 @@ class _MainShellState extends State<MainShell> {
                   : isNetworkTab
                       ? Container(
                           decoration: BoxDecoration(
-                            color: _inputBg,
+                            color: colorScheme.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildNetworkToggle(Icons.person_outline, NetworkTab.team),
-                              _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters),
-                              _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues),
+                              _buildNetworkToggle(Icons.person_outline, NetworkTab.team, colorScheme),
+                              _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters, colorScheme),
+                              _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues, colorScheme),
                             ],
                           ),
                         )
@@ -219,13 +215,16 @@ class _MainShellState extends State<MainShell> {
             ),
           ),
           // Right: Settings icon
-          const Icon(Icons.settings_outlined, color: _foreground, size: 22),
+          GestureDetector(
+            onTap: () => context.push('/org/${widget.orgId}/settings'),
+            child: Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildNetworkToggle(IconData icon, NetworkTab tab) {
+  Widget _buildNetworkToggle(IconData icon, NetworkTab tab, ColorScheme colorScheme) {
     final isSelected = _networkTab == tab;
     return GestureDetector(
       onTap: () => setState(() => _networkTab = tab),
@@ -233,38 +232,38 @@ class _MainShellState extends State<MainShell> {
         width: 44,
         height: 36,
         decoration: BoxDecoration(
-          color: isSelected ? _foreground : Colors.transparent,
+          color: isSelected ? colorScheme.onSurface : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
-          color: isSelected ? _background : _muted,
+          color: isSelected ? colorScheme.surface : colorScheme.onSurfaceVariant,
           size: 20,
         ),
       ),
     );
   }
 
-  Widget _buildToggle(IconData icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildToggle(IconData icon, bool isSelected, ColorScheme colorScheme, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 32,
         decoration: BoxDecoration(
-          color: isSelected ? _foreground : Colors.transparent,
+          color: isSelected ? colorScheme.onSurface : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
-          color: isSelected ? _background : _muted,
+          color: isSelected ? colorScheme.surface : colorScheme.onSurfaceVariant,
           size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildBottomSection() {
+  Widget _buildBottomSection(ColorScheme colorScheme) {
     // Nav indices: 0=Day, 1=Shows, 2=Network
     // Only show search/add for Shows tab
     final isShowsTab = _currentIndex == 1;
@@ -283,23 +282,23 @@ class _MainShellState extends State<MainShell> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: _inputBg,
+                      color: colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.search, color: _muted, size: 20),
-                        SizedBox(width: 12),
+                        Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+                        const SizedBox(width: 12),
                         Text(
                           'Search',
-                          style: TextStyle(color: _muted, fontSize: 15),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Icon(Icons.tune, color: _muted, size: 22),
+                Icon(Icons.tune, color: colorScheme.onSurfaceVariant, size: 22),
                 const SizedBox(width: 12),
                 GestureDetector(
                   onTap: () => showCreateShowModal(context, widget.orgId),
@@ -307,10 +306,10 @@ class _MainShellState extends State<MainShell> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _foreground,
+                      color: colorScheme.onSurface,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.add, color: _background, size: 24),
+                    child: Icon(Icons.add, color: colorScheme.surface, size: 24),
                   ),
                 ),
               ],
@@ -318,33 +317,33 @@ class _MainShellState extends State<MainShell> {
             const SizedBox(height: 16),
           ],
           // Bottom navigation
-          _buildBottomNav(),
+          _buildBottomNav(colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: _inputBg,
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.play_arrow_outlined, 'Day', 0),
-          _buildNavItem(Icons.format_list_bulleted, 'Shows', 1),
-          _buildNavItem(Icons.people_outline, 'Network', 2),
+          _buildNavItem(Icons.play_arrow_outlined, 'Day', 0, colorScheme),
+          _buildNavItem(Icons.format_list_bulleted, 'Shows', 1, colorScheme),
+          _buildNavItem(Icons.people_outline, 'Network', 2, colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int navIndex) {
+  Widget _buildNavItem(IconData icon, String label, int navIndex, ColorScheme colorScheme) {
     final isSelected = _currentIndex == navIndex;
-    final color = isSelected ? _foreground : _muted;
+    final color = isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: () => _onNavTap(navIndex),

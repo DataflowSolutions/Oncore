@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Header widget for the show day view
 /// Displays: Show title, artist, day/time, and full date
@@ -19,10 +18,12 @@ class DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingLg,
-        vertical: AppTheme.spacingMd,
+        horizontal: 24,
+        vertical: 16,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,7 +35,9 @@ class DayHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTheme.headingMedium.copyWith(
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                   maxLines: 2,
@@ -43,24 +46,24 @@ class DayHeader extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   artist,
-                  style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppTheme.spacingMd),
+          const SizedBox(width: 16),
           // Right: Day/time and date
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 dayTime,
-                style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
               ),
               const SizedBox(height: 2),
               Text(
                 date,
-                style: AppTheme.bodySmall,
+                style: TextStyle(color: colorScheme.onSurface, fontSize: 12),
               ),
             ],
           ),

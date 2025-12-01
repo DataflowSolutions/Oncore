@@ -8,6 +8,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/main/main_shell.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/show_day/show_day_screen.dart';
+import '../screens/settings/settings_screen.dart';
 
 /// Notifier that triggers router refresh when auth state changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -101,6 +102,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final orgId = state.pathParameters['orgId']!;
           final showId = state.pathParameters['showId']!;
           return ShowDayScreen(orgId: orgId, showId: showId);
+        },
+      ),
+      
+      // Settings page (protected)
+      GoRoute(
+        path: '/org/:orgId/settings',
+        name: 'settings',
+        builder: (context, state) {
+          final orgId = state.pathParameters['orgId']!;
+          return SettingsScreen(orgId: orgId);
         },
       ),
       

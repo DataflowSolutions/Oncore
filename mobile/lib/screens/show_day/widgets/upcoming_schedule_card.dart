@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Card for displaying upcoming schedule items
 class UpcomingScheduleCard extends StatelessWidget {
@@ -18,15 +17,17 @@ class UpcomingScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 200,
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.border),
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,39 +35,41 @@ class UpcomingScheduleCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: AppTheme.bodyMedium.copyWith(
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: AppTheme.spacingSm),
+            const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_today,
                   size: 14,
-                  color: AppTheme.muted,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   date,
-                  style: AppTheme.caption,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.access_time,
                   size: 14,
-                  color: AppTheme.muted,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   time,
-                  style: AppTheme.caption,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
               ],
             ),

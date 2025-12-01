@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
-import '../../theme/app_theme.dart';
 import '../main/main_shell.dart' show saveLastShow;
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
@@ -35,40 +34,41 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final showAsync = ref.watch(showDetailProvider(widget.showId));
     final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
     
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Day View', style: TextStyle(color: AppTheme.foreground)),
+        title: Text('Day View', style: TextStyle(color: colorScheme.onSurface)),
       ),
       body: showAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.foreground),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: colorScheme.onSurface),
         ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppTheme.muted),
+              Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
               const SizedBox(height: 16),
               Text(
                 'Failed to load show',
-                style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => ref.invalidate(showDetailProvider(widget.showId)),
                 child: Text(
                   'Retry',
-                  style: AppTheme.bodyMedium.copyWith(color: AppTheme.foreground),
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                 ),
               ),
             ],
@@ -80,18 +80,18 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.event_busy, size: 48, color: AppTheme.muted),
+                  Icon(Icons.event_busy, size: 48, color: colorScheme.onSurfaceVariant),
                   const SizedBox(height: 16),
                   Text(
                     'Show not found',
-                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(
                       'Go back',
-                      style: AppTheme.bodyMedium.copyWith(color: AppTheme.foreground),
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                     ),
                   ),
                 ],
@@ -99,18 +99,18 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
             );
           }
           return assignmentsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppTheme.foreground),
+            loading: () => Center(
+              child: CircularProgressIndicator(color: colorScheme.onSurface),
             ),
             error: (error, stack) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: AppTheme.muted),
+                  Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
                   const SizedBox(height: 16),
                   Text(
                     'Failed to load show data',
-                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ),
@@ -181,7 +181,7 @@ class _ShowDayContent extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: AppTheme.spacingLg),
+          const SizedBox(height: 24),
 
           // Schedule section
           scheduleAsync.when(
@@ -255,7 +255,7 @@ class _ShowDayContent extends ConsumerWidget {
               catering: cateringAsync.value ?? [],
             ),
 
-          const SizedBox(height: AppTheme.spacingLg),
+          const SizedBox(height: 24),
 
           // Info cards grid
           _InfoCardsGrid(
@@ -263,7 +263,7 @@ class _ShowDayContent extends ConsumerWidget {
             contacts: contactsAsync.value ?? [],
           ),
 
-          const SizedBox(height: AppTheme.spacingXl),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -336,7 +336,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
             );
           }).toList(),
         ),
-        const SizedBox(height: AppTheme.spacingMd),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -375,15 +375,17 @@ class _FlightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppTheme.border, width: 1),
-          bottom: BorderSide(color: AppTheme.border, width: 1),
+          top: BorderSide(color: colorScheme.outline, width: 1),
+          bottom: BorderSide(color: colorScheme.outline, width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMd),
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingLg),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -453,7 +455,7 @@ class _LodgingCateringSection extends StatelessWidget {
     if (lodging.isEmpty && catering.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           // Combine items into rows of 2
@@ -496,11 +498,11 @@ class _LodgingCateringSection extends StatelessWidget {
       final right = i + 1 < widgets.length ? widgets[i + 1] : null;
 
       rows.add(Padding(
-        padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
+        padding: const EdgeInsets.only(bottom: 16),
         child: Row(
           children: [
             Expanded(child: left),
-            const SizedBox(width: AppTheme.spacingMd),
+            const SizedBox(width: 16),
             Expanded(child: right ?? const SizedBox.shrink()),
           ],
         ),
@@ -598,7 +600,7 @@ class _InfoCardsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           Row(
@@ -611,7 +613,7 @@ class _InfoCardsGrid extends StatelessWidget {
                   onTap: () => _showDocumentsModal(context),
                 ),
               ),
-              const SizedBox(width: AppTheme.spacingMd),
+              const SizedBox(width: 16),
               Expanded(
                 child: InfoCardCompact(
                   title: 'Contacts',
@@ -622,7 +624,7 @@ class _InfoCardsGrid extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.spacingMd),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -632,7 +634,7 @@ class _InfoCardsGrid extends StatelessWidget {
                   badgeCount: 0,
                 ),
               ),
-              const SizedBox(width: AppTheme.spacingMd),
+              const SizedBox(width: 16),
               Expanded(
                 child: InfoCardCompact(
                   title: 'Notes',
@@ -647,96 +649,18 @@ class _InfoCardsGrid extends StatelessWidget {
   }
 
   void _showDocumentsModal(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.card,
+      backgroundColor: colorScheme.surfaceContainer,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Documents',
-                  style: AppTheme.headingMedium,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: AppTheme.foreground),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingMd),
-            if (documents.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
-                child: Center(
-                  child: Text(
-                    'No documents attached',
-                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
-                  ),
-                ),
-              )
-            else
-              ...documents.map((doc) => Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-                child: Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingMd),
-                  decoration: BoxDecoration(
-                    color: AppTheme.inputBg,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.description, color: Color(0xFFA78BFA)),
-                      const SizedBox(width: AppTheme.spacingMd),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              doc.label ?? 'Document',
-                              style: AppTheme.bodyMedium,
-                            ),
-                            Text(
-                              '${doc.fileCount} file${doc.fileCount != 1 ? 's' : ''} • ${doc.partyType == 'from_us' ? 'From Us' : 'From You'}',
-                              style: AppTheme.caption,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )),
-            const SizedBox(height: AppTheme.spacingMd),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showContactsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingLg),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -745,110 +669,209 @@ class _InfoCardsGrid extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Contacts',
-                    style: AppTheme.headingMedium,
+                    'Documents',
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.foreground),
+                    icon: Icon(Icons.close, color: colorScheme.onSurface),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const SizedBox(height: AppTheme.spacingMd),
-              Expanded(
-                child: contacts.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No contacts attached',
-                          style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: contacts.length,
-                        itemBuilder: (context, index) {
-                          final contact = contacts[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-                            child: Container(
-                              padding: const EdgeInsets.all(AppTheme.spacingMd),
-                              decoration: BoxDecoration(
-                                color: AppTheme.inputBg,
-                                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              const SizedBox(height: 16),
+              if (documents.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'No documents attached',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ),
+                )
+              else
+                ...documents.map((doc) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.description, color: Color(0xFFA78BFA)),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                doc.label ?? 'Document',
+                                style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF34D399).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
+                              Text(
+                                '${doc.fileCount} file${doc.fileCount != 1 ? 's' : ''} • ${doc.partyType == 'from_us' ? 'From Us' : 'From You'}',
+                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showContactsModal(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Contacts',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: colorScheme.onSurface),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: contacts.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No contacts attached',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: scrollController,
+                          itemCount: contacts.length,
+                          itemBuilder: (context, index) {
+                            final contact = contacts[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF34D399).withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        color: Color(0xFF34D399),
+                                        size: 20,
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Color(0xFF34D399),
-                                      size: 20,
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            contact.name,
+                                            style: TextStyle(
+                                              color: colorScheme.onSurface,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (contact.role != null)
+                                            Text(
+                                              contact.role!,
+                                              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                                            ),
+                                          if (contact.email != null || contact.phone != null)
+                                            Text(
+                                              [contact.email, contact.phone]
+                                                  .where((e) => e != null)
+                                                  .join(' • '),
+                                              style: TextStyle(
+                                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: AppTheme.spacingMd),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          contact.name,
-                                          style: AppTheme.bodyMedium.copyWith(
+                                    if (contact.isPromoter)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFBBF24).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'Promoter',
+                                          style: TextStyle(
+                                            color: Color(0xFFFBBF24),
+                                            fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        if (contact.role != null)
-                                          Text(
-                                            contact.role!,
-                                            style: AppTheme.caption,
-                                          ),
-                                        if (contact.email != null || contact.phone != null)
-                                          Text(
-                                            [contact.email, contact.phone]
-                                                .where((e) => e != null)
-                                                .join(' • '),
-                                            style: AppTheme.caption.copyWith(
-                                              color: AppTheme.muted.withOpacity(0.8),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (contact.isPromoter)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFBBF24).withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Text(
-                                        'Promoter',
-                                        style: TextStyle(
-                                          color: Color(0xFFFBBF24),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

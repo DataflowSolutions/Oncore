@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Flight card widget for displaying flight information
 /// Designed for horizontal scrolling list
@@ -25,15 +24,17 @@ class FlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 240, // Wider card
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.border),
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,17 +46,18 @@ class FlightCard extends StatelessWidget {
               children: [
                 Text(
                   'Flight', // Generic label or could be passed in
-                  style: AppTheme.caption,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
                 Text(
                   flightNumber,
-                  style: AppTheme.caption.copyWith(
-                    color: AppTheme.muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spacingMd),
+            const SizedBox(height: 16),
             
             // Middle row: Route with big codes
             Row(
@@ -64,21 +66,25 @@ class FlightCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     departure,
-                    style: AppTheme.headingMedium.copyWith(fontSize: 20),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       children: [
                         if (duration != null)
                           Text(
                             duration!,
-                            style: const TextStyle(
-                              color: AppTheme.muted,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 10,
                             ),
                             maxLines: 1,
@@ -87,7 +93,7 @@ class FlightCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Container(
                           height: 1,
-                          color: AppTheme.muted.withValues(alpha: 0.5),
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                         ),
                       ],
                     ),
@@ -96,7 +102,11 @@ class FlightCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     arrival,
-                    style: AppTheme.headingMedium.copyWith(fontSize: 20),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -104,7 +114,7 @@ class FlightCard extends StatelessWidget {
               ],
             ),
             
-            const SizedBox(height: AppTheme.spacingMd),
+            const SizedBox(height: 16),
             
             // Bottom row: Times
             Row(
@@ -112,12 +122,13 @@ class FlightCard extends StatelessWidget {
               children: [
                 Text(
                   departureTime,
-                  style: AppTheme.bodySmall,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 12),
                 ),
                 Text(
                   arrivalTime,
-                  style: AppTheme.bodySmall.copyWith(
-                    color: AppTheme.muted,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
                   ),
                 ),
               ],

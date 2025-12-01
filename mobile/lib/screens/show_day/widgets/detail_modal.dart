@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../theme/app_theme.dart';
 
 /// A generic detail modal for displaying information in cards
 /// Matches the design of the web client's detail popups
@@ -25,24 +24,26 @@ class DetailModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leadingWidth: 100,
         leading: TextButton.icon(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_ios, size: 16, color: AppTheme.muted),
-          label: const Text('Back', style: TextStyle(color: AppTheme.muted)),
+          icon: Icon(Icons.arrow_back_ios, size: 16, color: colorScheme.onSurfaceVariant),
+          label: Text('Back', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           style: TextButton.styleFrom(
-            padding: const EdgeInsets.only(left: AppTheme.spacingMd),
+            padding: const EdgeInsets.only(left: 16),
             alignment: Alignment.centerLeft,
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingLg),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -55,21 +56,21 @@ class DetailModal extends StatelessWidget {
                 content: headerContent,
               ),
             
-            const SizedBox(height: AppTheme.spacingMd),
+            const SizedBox(height: 16),
             
             // Content Cards
             ...content.map((widget) => Padding(
-              padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
+              padding: const EdgeInsets.only(bottom: 16),
               child: widget,
             )),
             
             // Actions
             if (actions.isNotEmpty) ...[
-              const SizedBox(height: AppTheme.spacingSm),
-              const Divider(color: AppTheme.border),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 8),
+              Divider(color: colorScheme.outline),
+              const SizedBox(height: 24),
               ...actions.map((action) => Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: DetailActionPill(action: action),
               )),
             ],
@@ -97,35 +98,41 @@ class DetailHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: AppTheme.headingLarge.copyWith(fontSize: 20),
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
             ),
           ],
           if (address != null) ...[
             const SizedBox(height: 4),
             Text(
               address!,
-              style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
             ),
           ],
           if (content != null) ...[
-            const SizedBox(height: AppTheme.spacingMd),
+            const SizedBox(height: 16),
             content!,
           ],
         ],
@@ -155,11 +162,13 @@ class DetailSplitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
@@ -170,17 +179,17 @@ class DetailSplitCard extends StatelessWidget {
               children: [
                 Text(
                   label1,
-                  style: AppTheme.headingSmall.copyWith(color: AppTheme.muted, fontSize: 14),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   value1,
-                  style: AppTheme.bodyMedium,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                 ),
                 if (subValue1 != null)
                   Text(
                     subValue1!,
-                    style: AppTheme.headingMedium,
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600),
                   ),
               ],
             ),
@@ -190,8 +199,8 @@ class DetailSplitCard extends StatelessWidget {
           Container(
             width: 1,
             height: 60,
-            color: AppTheme.border,
-            margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+            color: colorScheme.outline,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
           ),
           
           // Right Side
@@ -201,18 +210,18 @@ class DetailSplitCard extends StatelessWidget {
               children: [
                 Text(
                   label2,
-                  style: AppTheme.headingSmall.copyWith(color: AppTheme.muted, fontSize: 14),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   value2,
-                  style: AppTheme.bodyMedium,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                   textAlign: TextAlign.right,
                 ),
                 if (subValue2 != null)
                   Text(
                     subValue2!,
-                    style: AppTheme.headingMedium,
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.right,
                   ),
               ],
@@ -237,24 +246,26 @@ class DetailValueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: AppTheme.headingSmall.copyWith(color: AppTheme.muted, fontSize: 14), // Matches "Booking Reference" style
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted), // Matches value style
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
           ),
         ],
       ),
@@ -306,35 +317,37 @@ class DetailActionPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingLg,
-        vertical: AppTheme.spacingMd,
+        horizontal: 24,
+        vertical: 16,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.cardCell,
-        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             action.value,
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.muted),
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
           ),
           GestureDetector(
             onTap: action.onTap,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.inputBg,
+                color: colorScheme.surfaceContainerHigh,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: colorScheme.outline),
               ),
               child: Icon(
                 action.icon,
                 size: 16,
-                color: AppTheme.foreground,
+                color: colorScheme.onSurface,
               ),
             ),
           ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Action item data for the action bar
 class ActionItem {
@@ -28,8 +27,8 @@ class ActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingMd,
-        vertical: AppTheme.spacingSm,
+        horizontal: 16,
+        vertical: 8,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -46,25 +45,27 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return InkWell(
       onTap: action.onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+      borderRadius: BorderRadius.circular(4),
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingSm),
+        padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               action.icon,
-              color: AppTheme.muted,
+              color: colorScheme.onSurfaceVariant,
               size: 22,
             ),
             if (action.label != null) ...[
               const SizedBox(height: 4),
               Text(
                 action.label!,
-                style: AppTheme.bodySmall.copyWith(
-                  color: AppTheme.muted,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 10,
                 ),
               ),

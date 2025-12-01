@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
 
 /// Section header widget for day view sections
 class SectionHeader extends StatelessWidget {
@@ -16,25 +15,32 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingLg,
-        vertical: AppTheme.spacingSm,
+        horizontal: 24,
+        vertical: 8,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
-            style: AppTheme.headingSmall,
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           if (actionLabel != null && onAction != null)
             GestureDetector(
               onTap: onAction,
               child: Text(
                 actionLabel!,
-                style: AppTheme.bodySmall.copyWith(
-                  color: AppTheme.primary,
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -65,7 +71,7 @@ class HorizontalCardList extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: padding,
         itemCount: children.length,
-        separatorBuilder: (context, index) => const SizedBox(width: AppTheme.spacingMd),
+        separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) => children[index],
       ),
     );
