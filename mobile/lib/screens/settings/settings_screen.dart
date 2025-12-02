@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../theme/colors.dart';
 
 /// Provider for user profile data
 final userProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
@@ -321,7 +322,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF3B82F6) : colorScheme.surfaceContainerHighest,
+                  color: isSelected ? AppColors.info : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -358,7 +359,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: colorScheme.error,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
@@ -378,7 +379,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6),
+                  color: AppColors.info,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
@@ -411,8 +412,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: const Color(0xFF3B82F6),
-          activeTrackColor: const Color(0xFF3B82F6).withValues(alpha: 0.5),
+          activeThumbColor: AppColors.info,
+          activeTrackColor: AppColors.info.withValues(alpha: 0.5),
           inactiveThumbColor: colorScheme.onSurfaceVariant,
           inactiveTrackColor: colorScheme.surfaceContainerHighest,
         ),

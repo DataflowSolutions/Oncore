@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shows/shows_list_screen.dart';
 import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
+import '../calendar/calendar_content.dart';
+import '../show_day/show_day_content.dart';
 
 /// Storage key for last viewed show
 const String _lastShowKey = 'oncore_last_show';
+
+/// Storage key for shows view mode (list/calendar)
+const String _showsViewModeKey = 'oncore_shows_view_mode';
+
+/// Shows view modes
+enum ShowsViewMode { list, calendar }
 
 /// Helper to save last show to preferences
 Future<void> saveLastShow(String orgId, String showId) async {
@@ -27,37 +36,87 @@ Future<(String?, String?)?> getLastShow() async {
   return null;
 }
 
-/// Main shell that wraps Shows, Network screens with swipe navigation
-/// Day button navigates directly to last viewed show's day view
-class MainShell extends StatefulWidget {
+/// Helper to save shows view mode
+Future<void> saveShowsViewMode(ShowsViewMode mode) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_showsViewModeKey, mode == ShowsViewMode.calendar ? 'calendar' : 'list');
+}
+
+/// Helper to get shows view mode
+Future<ShowsViewMode> getShowsViewMode() async {
+  final prefs = await SharedPreferences.getInstance();
+  final stored = prefs.getString(_showsViewModeKey);
+  return stored == 'calendar' ? ShowsViewMode.calendar : ShowsViewMode.list;
+}
+
+/// Main shell that wraps Day, Shows (list/calendar), Network screens
+/// This is Layer 1 - always shows the bottom navigation bar
+/// All three tabs are swipeable and at the same hierarchy level
+class MainShell extends ConsumerStatefulWidget {
   final String orgId;
   final String orgName;
-  final int initialIndex;
+  final int initialTabIndex; // 0=Day, 1=Shows, 2=Network
+  final String? showId; // Optional: specific show to display in Day view
+  final ShowsViewMode? initialShowsViewMode;
 
   const MainShell({
     super.key,
     required this.orgId,
     required this.orgName,
-    this.initialIndex = 0, // Default to Shows (first)
+    this.initialTabIndex = 1, // Default to Shows
+    this.showId,
+    this.initialShowsViewMode,
   });
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   late PageController _pageController;
-  late int _currentIndex;
+  late int _currentTabIndex; // 0=Day, 1=Shows, 2=Network
+  late ShowsViewMode _showsViewMode;
   NetworkTab _networkTab = NetworkTab.team;
-  bool _isNavigatingToDay = false;
+  bool _isInitialized = false;
+  String? _currentShowId;
 
   @override
   void initState() {
     super.initState();
-    // PageView indices: 0=Day(placeholder), 1=Shows, 2=Network
-    // Start on Shows (index 1)
-    _currentIndex = 1;
-    _pageController = PageController(initialPage: 1);
+    _currentTabIndex = widget.initialTabIndex;
+    _currentShowId = widget.showId;
+    _showsViewMode = widget.initialShowsViewMode ?? ShowsViewMode.list;
+    _pageController = PageController(initialPage: widget.initialTabIndex);
+    
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    // Load saved view mode if not provided
+    if (widget.initialShowsViewMode == null) {
+      final savedMode = await getShowsViewMode();
+      if (mounted) {
+        setState(() {
+          _showsViewMode = savedMode;
+        });
+      }
+    }
+    
+    // Load last show if no showId provided and we're on Day tab
+    if (_currentShowId == null) {
+      final lastShow = await getLastShow();
+      if (lastShow != null && lastShow.$1 == widget.orgId && mounted) {
+        setState(() {
+          _currentShowId = lastShow.$2;
+        });
+      }
+    }
+    
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   @override
@@ -67,62 +126,54 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _onPageChanged(int index) {
-    if (index == 0 && !_isNavigatingToDay) {
-      // Swiped to Day - navigate to last show's day view
-      _isNavigatingToDay = true;
-      _navigateToDay().then((_) {
-        // After navigation attempt, snap back to Shows
-        if (mounted) {
-          _pageController.jumpToPage(1);
-          _isNavigatingToDay = false;
-        }
-      });
-      return;
-    }
-    
     setState(() {
-      _currentIndex = index;
+      _currentTabIndex = index;
     });
   }
 
-  void _onNavTap(int index) async {
-    if (index == 0) {
-      // Day tapped - navigate to last show's day view
-      await _navigateToDay();
-    } else {
-      // Shows or Network - swipe to that page
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+  void _onNavTap(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _toggleShowsViewMode(ShowsViewMode mode) {
+    if (_showsViewMode != mode) {
+      setState(() {
+        _showsViewMode = mode;
+      });
+      saveShowsViewMode(mode);
     }
   }
 
-  Future<void> _navigateToDay() async {
-    // Always load fresh from SharedPreferences to get the latest show
-    final lastShow = await getLastShow();
-    final showId = (lastShow != null && lastShow.$1 == widget.orgId) 
-        ? lastShow.$2 
-        : null;
-    
-    if (showId != null && mounted) {
-      // Navigate to the day view for the last show
-      context.push('/org/${widget.orgId}/shows/$showId/day');
-    } else if (mounted) {
-      // No last show - show a message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Open a show first to access Day view'),
-          backgroundColor: Color(0xFF282828),
-        ),
-      );
-    }
+  /// Called when a show is selected from the Shows list or Calendar
+  void _onShowSelected(String showId) {
+    setState(() {
+      _currentShowId = showId;
+    });
+    saveLastShow(widget.orgId, showId);
+    // Navigate to Day tab
+    _pageController.animateToPage(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    
+    if (!_isInitialized) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Center(
+          child: CircularProgressIndicator(color: colorScheme.onSurface),
+        ),
+      );
+    }
     
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -135,13 +186,23 @@ class _MainShellState extends State<MainShell> {
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
                 children: [
-                  // Index 0: Day placeholder - just a screen that triggers navigation
-                  Container(color: colorScheme.surface),
-                  // Index 1: Shows
-                  ShowsContent(orgId: widget.orgId, orgName: widget.orgName),
-                  // Index 2: Network
+                  // Tab 0: Day view
+                  ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
+                  // Tab 1: Shows (list or calendar)
+                  _showsViewMode == ShowsViewMode.calendar
+                      ? CalendarContent(
+                          orgId: widget.orgId,
+                          orgName: widget.orgName,
+                          onShowSelected: _onShowSelected,
+                        )
+                      : ShowsContent(
+                          orgId: widget.orgId,
+                          orgName: widget.orgName,
+                          onShowSelected: _onShowSelected,
+                        ),
+                  // Tab 2: Network
                   NetworkContent(
-                    orgId: widget.orgId, 
+                    orgId: widget.orgId,
                     orgName: widget.orgName,
                     activeTab: _networkTab,
                     onTabChanged: (tab) => setState(() => _networkTab = tab),
@@ -157,9 +218,9 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _buildTopBar(ColorScheme colorScheme) {
-    // Indices: 0=Day, 1=Shows, 2=Network
-    final isShowsTab = _currentIndex == 1;
-    final isNetworkTab = _currentIndex == 2;
+    final isDayTab = _currentTabIndex == 0;
+    final isShowsTab = _currentTabIndex == 1;
+    final isNetworkTab = _currentTabIndex == 2;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -175,28 +236,13 @@ class _MainShellState extends State<MainShell> {
             ),
             child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
           ),
-          // Center: View toggle (Shows or Network)
+          // Center: View toggle (Shows list/calendar or Network tabs)
           Expanded(
             child: Center(
-              child: isShowsTab
-                  ? Container(
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildToggle(Icons.format_list_bulleted, true, colorScheme, () {
-                            // Already on list view
-                          }),
-                          _buildToggle(Icons.calendar_today_outlined, false, colorScheme, () {
-                            context.go('/org/${widget.orgId}/calendar', extra: widget.orgName);
-                          }),
-                        ],
-                      ),
-                    )
-                  : isNetworkTab
+              child: isDayTab
+                  // Day tab - no toggle, just empty or could show something else
+                  ? const SizedBox.shrink()
+                  : isShowsTab
                       ? Container(
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHigh,
@@ -205,13 +251,37 @@ class _MainShellState extends State<MainShell> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildNetworkToggle(Icons.person_outline, NetworkTab.team, colorScheme),
-                              _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters, colorScheme),
-                              _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues, colorScheme),
+                              _buildViewModeToggle(
+                                Icons.format_list_bulleted,
+                                _showsViewMode == ShowsViewMode.list,
+                                colorScheme,
+                                () => _toggleShowsViewMode(ShowsViewMode.list),
+                              ),
+                              _buildViewModeToggle(
+                                Icons.calendar_today_outlined,
+                                _showsViewMode == ShowsViewMode.calendar,
+                                colorScheme,
+                                () => _toggleShowsViewMode(ShowsViewMode.calendar),
+                              ),
                             ],
                           ),
                         )
-                      : const SizedBox.shrink(),
+                      : isNetworkTab
+                          ? Container(
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildNetworkToggle(Icons.person_outline, NetworkTab.team, colorScheme),
+                                  _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters, colorScheme),
+                                  _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues, colorScheme),
+                                ],
+                              ),
+                            )
+                          : const SizedBox.shrink(),
             ),
           ),
           // Right: Settings icon
@@ -244,7 +314,7 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _buildToggle(IconData icon, bool isSelected, ColorScheme colorScheme, VoidCallback onTap) {
+  Widget _buildViewModeToggle(IconData icon, bool isSelected, ColorScheme colorScheme, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -264,9 +334,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _buildBottomSection(ColorScheme colorScheme) {
-    // Nav indices: 0=Day, 1=Shows, 2=Network
-    // Only show search/add for Shows tab
-    final isShowsTab = _currentIndex == 1;
+    final isShowsTab = _currentTabIndex == 1;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -316,7 +384,7 @@ class _MainShellState extends State<MainShell> {
             ),
             const SizedBox(height: 16),
           ],
-          // Bottom navigation
+          // Bottom navigation - always visible on Layer 1
           _buildBottomNav(colorScheme),
         ],
       ),
@@ -342,7 +410,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   Widget _buildNavItem(IconData icon, String label, int navIndex, ColorScheme colorScheme) {
-    final isSelected = _currentIndex == navIndex;
+    final isSelected = _currentTabIndex == navIndex;
     final color = isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
 
     return GestureDetector(

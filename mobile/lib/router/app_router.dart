@@ -6,8 +6,6 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/main/main_shell.dart';
-import '../screens/calendar/calendar_screen.dart';
-import '../screens/show_day/show_day_screen.dart';
 import '../screens/settings/settings_screen.dart';
 
 /// Notifier that triggers router refresh when auth state changes
@@ -70,42 +68,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       
-      // Main shell with swipeable Shows/Network (protected)
-      // Day button navigates to last viewed show
-      // Default to Shows tab (index 0)
+      // Main shell with Day, Shows (list/calendar toggle), and Network tabs (protected)
+      // This is Layer 1 - has bottom navigation bar
+      // All three tabs (Day, Shows, Network) are swipeable and at same level
       GoRoute(
         path: '/org/:orgId/shows',
         name: 'shows',
         builder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return MainShell(orgId: orgId, orgName: orgName, initialIndex: 0);
+          return MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 1);
         },
       ),
       
-      // Organization shows calendar (protected) - separate from swipe nav
-      GoRoute(
-        path: '/org/:orgId/calendar',
-        name: 'calendar',
-        builder: (context, state) {
-          final orgId = state.pathParameters['orgId']!;
-          final orgName = state.extra as String? ?? 'Organization';
-          return CalendarScreen(orgId: orgId, orgName: orgName);
-        },
-      ),
-      
-      // Show day view (protected) - detailed view of a single show
+      // Day view - Layer 1, same as Shows and Network
+      // This route is used when navigating to a specific show's Day view
       GoRoute(
         path: '/org/:orgId/shows/:showId/day',
         name: 'show-day',
         builder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final showId = state.pathParameters['showId']!;
-          return ShowDayScreen(orgId: orgId, showId: showId);
+          final orgName = state.extra as String? ?? 'Organization';
+          return MainShell(
+            orgId: orgId, 
+            orgName: orgName, 
+            initialTabIndex: 0,
+            showId: showId,
+          );
         },
       ),
       
-      // Settings page (protected)
+      // Network page - Layer 1 (MainShell with Network tab)
+      GoRoute(
+        path: '/org/:orgId/network',
+        name: 'network',
+        builder: (context, state) {
+          final orgId = state.pathParameters['orgId']!;
+          final orgName = state.extra as String? ?? 'Organization';
+          return MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 2);
+        },
+      ),
+      
+      // Settings page (protected) - Layer 2
+      // No bottom navigation bar - has back button to return to Layer 1
       GoRoute(
         path: '/org/:orgId/settings',
         name: 'settings',
@@ -131,36 +137,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
     
     // Error page
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Page not found',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.matchedLocation,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
+    errorBuilder: (context, state) {
+      final colorScheme = Theme.of(context).colorScheme;
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: colorScheme.error,
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.go('/'),
-              child: const Text('Go Home'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'Page not found',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                state.matchedLocation,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go('/'),
+                child: const Text('Go Home'),
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 });

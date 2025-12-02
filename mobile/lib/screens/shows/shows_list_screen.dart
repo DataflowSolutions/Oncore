@@ -55,11 +55,13 @@ final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId
 class ShowsContent extends ConsumerWidget {
   final String orgId;
   final String orgName;
+  final void Function(String showId)? onShowSelected;
 
   const ShowsContent({
     super.key,
     required this.orgId,
     required this.orgName,
+    this.onShowSelected,
   });
 
   @override
@@ -159,7 +161,7 @@ class ShowsContent extends ConsumerWidget {
             // Show cards
             ...monthShows.map((show) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: ShowCard(show: show, orgId: orgId),
+              child: ShowCard(show: show, orgId: orgId, onShowSelected: onShowSelected),
             )),
           ],
         );
@@ -172,8 +174,14 @@ class ShowsContent extends ConsumerWidget {
 class ShowCard extends StatelessWidget {
   final Show show;
   final String orgId;
+  final void Function(String showId)? onShowSelected;
 
-  const ShowCard({super.key, required this.show, required this.orgId});
+  const ShowCard({
+    super.key, 
+    required this.show, 
+    required this.orgId,
+    this.onShowSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +190,9 @@ class ShowCard extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         await saveLastShow(orgId, show.id);
-        if (context.mounted) {
+        if (onShowSelected != null) {
+          onShowSelected!(show.id);
+        } else if (context.mounted) {
           context.push('/org/$orgId/shows/${show.id}/day');
         }
       },
