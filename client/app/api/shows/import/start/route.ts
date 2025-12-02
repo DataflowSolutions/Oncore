@@ -6,12 +6,13 @@ import {
   createImportJob,
   updateImportJobExtracted,
 } from "@/lib/import/jobs";
-import { runFullImportExtraction } from "@/lib/import/orchestrator";
+import { runSemanticImportExtraction } from "@/lib/import/semantic";
 import { ImportSource } from "@/lib/import/chunking";
 import { shouldBackgroundImport } from "@/lib/import/background";
 import type { ImportedDocument, ImportWarning } from "@/components/import/types";
 import { createEmptyImportData } from "@/components/import/types";
 import { extractText } from "@/lib/import/text-extraction";
+import { getSupabaseServiceClient } from "@/lib/import/worker-client";
 
 /**
  * Check if background workers are available.
@@ -30,7 +31,8 @@ async function checkWorkerHealth(): Promise<boolean> {
     if (!response.ok) return false;
     
     const data = await response.json();
-    return data.healthy === true && data.activeWorkers > 0;
+    // RPC returns snake_case: healthy, active_workers
+    return data.healthy === true && (data.active_workers > 0 || data.activeWorkers > 0);
   } catch (error) {
     logger.warn("Import: worker health check failed", { error });
     return false;
@@ -220,7 +222,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ jobId, queued: true });
     }
 
-    // Run section-wise extraction synchronously for now; later this can move to a background worker.
+    // Run semantic extraction synchronously (same pipeline as background worker)
     try {
       await updateImportJobExtracted({
         jobId,
@@ -244,7 +246,15 @@ export async function POST(req: NextRequest) {
         wordCount: s.wordCount,
       }));
 
-      const { data, confidenceByField } = await runFullImportExtraction(extractionSources);
+      // Use the semantic extraction pipeline (same as background worker)
+      const supabase = getSupabaseServiceClient();
+      const result = await runSemanticImportExtraction(
+        supabase,
+        jobId,
+        extractionSources
+      );
+
+      const data = result.data;
       if (warnings.length) {
         data.warnings = warnings;
       }
@@ -264,8 +274,18 @@ export async function POST(req: NextRequest) {
         data.documents = attachedDocuments;
       }
 
+      // Build confidence map from resolutions
+      const confidenceByField: Record<string, number> = {};
+      for (const resolution of result.resolutions) {
+        if (resolution.selected_fact_id && resolution.state === 'resolved') {
+          confidenceByField[`resolved.${resolution.fact_type}`] = resolution.confidence ?? 1.0;
+        }
+      }
+
       logger.info("Import extraction finished (sync)", {
         jobId,
+        factsExtracted: result.facts_extracted,
+        factsSelected: result.facts_selected,
         totals: {
           hotels: data.hotels.length,
           flights: data.flights.length,

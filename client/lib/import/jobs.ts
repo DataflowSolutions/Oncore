@@ -1,9 +1,18 @@
 import { ImportData } from "@/components/import/types";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-import type { ConfidenceEntry } from "./ai";
 import type { Database } from "../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+/**
+ * Confidence entry: either a simple number or an object with score and optional reason.
+ */
+export type ConfidenceEntry =
+  | number
+  | {
+      score: number;
+      reason?: string;
+    };
 
 export type ImportJobStatus =
   | "pending"

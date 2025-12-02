@@ -36,7 +36,7 @@ export function ImportDataButton({ orgId, orgSlug, className }: ImportDataButton
   const [files, setFiles] = useState<File[]>([]);
 
   // Temporarily disable imports until the flow is ready
-  const importDisabled = true;
+  const importDisabled = false;
   const disabled = importDisabled || !orgId || !orgSlug;
   const disabledMessage = importDisabled ? "Import coming soon" : undefined;
 

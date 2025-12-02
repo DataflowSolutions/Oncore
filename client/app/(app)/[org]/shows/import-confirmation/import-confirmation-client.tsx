@@ -11,7 +11,7 @@ interface ImportConfirmationClientProps {
   orgSlug: string;
   jobId?: string;
   initialData?: Partial<ImportData>;
-  confidenceMap?: Record<string, import("@/lib/import/ai").ConfidenceEntry>;
+  confidenceMap?: Record<string, import("@/lib/import/jobs").ConfidenceEntry>;
   initialJobStatus?: ImportJobStatus;
   rawSources?: Array<{ id: string; fileName: string }>;
 }

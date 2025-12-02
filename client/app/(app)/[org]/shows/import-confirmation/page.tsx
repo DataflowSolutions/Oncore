@@ -19,7 +19,7 @@ export default async function ImportConfirmationPage({ params, searchParams }: P
   }
 
   let initialData: Partial<ImportData> | undefined;
-  let confidenceMap: Record<string, import("@/lib/import/ai").ConfidenceEntry> | undefined;
+  let confidenceMap: Record<string, import("@/lib/import/jobs").ConfidenceEntry> | undefined;
   let initialJobStatus: ImportJobStatus | undefined;
   let rawSources: Array<{ id: string; fileName: string }> | undefined;
 

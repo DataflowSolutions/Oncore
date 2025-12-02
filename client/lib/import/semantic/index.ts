@@ -26,12 +26,18 @@ export type {
 
 export {
   FACT_TYPE_TO_IMPORT_FIELD,
-  COST_DOMAINS,
-  getCostDomain,
-  areCompetingCostDomains,
+  getFactTypesForSection,
+  isArrayFactType,
+  getArrayKeyForFactType,
+  getFieldNameForFactType,
+  getSectionFromFactType,
   STATUS_PRIORITY,
   isFinalizableStatus,
   isRejectedStatus,
+  isSelectableStatus,
+  SPEAKER_AUTHORITY,
+  speakerHasAuthority,
+  getEffectiveSpeakerAuthority,
 } from './types';
 
 // Fact Extraction (Stage 1)

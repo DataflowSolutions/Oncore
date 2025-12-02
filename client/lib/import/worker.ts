@@ -316,19 +316,21 @@ function isLowTextSource(source: ImportSource): boolean {
 }
 
 /**
- * Register worker with health check endpoint.
+ * Register worker with health check (database-backed).
  */
-async function registerSemanticWorkerHealth(workerId: string): Promise<void> {
+async function registerSemanticWorkerHealth(
+  workerId: string,
+  supabase: SupabaseClientLike
+): Promise<void> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("127.0.0.1")
-      ? "http://localhost:3000"
-      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-    await fetch(`${apiUrl}/api/import-worker/health`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workerId, type: "semantic" }),
+    const { error } = await (supabase as any).rpc("app_register_worker_heartbeat", {
+      p_worker_id: workerId,
+      p_worker_type: "semantic",
     });
+
+    if (error) {
+      logger.warn("SemanticWorker: health check registration failed", { workerId, error });
+    }
   } catch (error) {
     logger.warn("SemanticWorker: health check ping failed", { workerId, error });
   }
@@ -342,6 +344,7 @@ export async function runSemanticWorkerLoop(
 ): Promise<void> {
   const pollInterval = config.pollInterval || DEFAULT_POLL_INTERVAL;
   const workerId = `semantic-worker-${process.pid}-${Date.now()}`;
+  const supabase = config.supabase || getSupabaseServiceClient();
 
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`🧠 SEMANTIC IMPORT WORKER STARTED`);
@@ -352,12 +355,12 @@ export async function runSemanticWorkerLoop(
 
   logger.info("SemanticWorker: starting polling loop", { pollInterval, workerId });
 
-  // Initial health check registration
-  await registerSemanticWorkerHealth(workerId);
+  // Initial health check registration (database-backed)
+  await registerSemanticWorkerHealth(workerId, supabase as SupabaseClientLike);
 
   // Set up periodic health check pings
   const healthCheckInterval = setInterval(() => {
-    registerSemanticWorkerHealth(workerId);
+    registerSemanticWorkerHealth(workerId, supabase as SupabaseClientLike);
   }, 10000);
 
   try {

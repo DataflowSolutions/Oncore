@@ -30,12 +30,10 @@ import {
   isFinalizableStatus,
   isRejectedStatus,
   isSelectableStatus,
-  getCostDomain,
-  areCompetingCostDomains,
-  COST_DOMAINS,
   NEVER_SELECTABLE_STATUSES,
   getEffectiveSpeakerAuthority,
   speakerHasAuthority,
+  getSectionFromFactType,
 } from './types';
 
 // =============================================================================
@@ -412,7 +410,7 @@ function factPositionValue(fact: ImportFact): number {
  */
 function normalizeFlightFactDomains(facts: ImportFact[]): ImportFact[] {
   const flightNumberFacts = facts
-    .filter(f => f.fact_type === 'flight_number' && f.value_text)
+    .filter(f => f.fact_type === 'flight_flightNumber' && f.value_text)
     .sort((a, b) => {
       if (a.message_index !== b.message_index) return a.message_index - b.message_index;
       return a.chunk_index - b.chunk_index;
@@ -503,7 +501,7 @@ function normalizeFlightFactDomains(facts: ImportFact[]): ImportFact[] {
     if (!fact.fact_type.startsWith('flight_')) return fact;
     const normalizedFact = { ...fact };
 
-    if (normalizedFact.fact_type === 'flight_number') {
+    if (normalizedFact.fact_type === 'flight_flightNumber') {
       const normalizedNumber = normalizeFlightNumberValue(normalizedFact.value_text);
       if (normalizedNumber && domainByFlightNumber.has(normalizedNumber)) {
         normalizedFact.fact_domain = domainByFlightNumber.get(normalizedNumber) || normalizedFact.fact_domain;
@@ -665,7 +663,7 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
       conclusion: `Final value: ${selected.value_text || selected.value_number}`,
     });
 
-    const normalizedDate = selected.fact_type === 'event_date'
+    const normalizedDate = selected.fact_type === 'general_date'
       ? normalizeEventDateToISO(selected.value_date || selected.value_text)
       : undefined;
     
@@ -744,7 +742,7 @@ function resolveFactGroupByRules(group: FactGroup): FactResolution {
     const selected = informationalFacts[0];
     const factConf = computeFactConfidence(selected, facts, group);
 
-    const normalizedDate = selected.fact_type === 'event_date'
+    const normalizedDate = selected.fact_type === 'general_date'
       ? normalizeEventDateToISO(selected.value_date || selected.value_text)
       : undefined;
     
@@ -1004,7 +1002,7 @@ export async function resolveImportFacts(
 
   // Normalize event_date strings to ISO when possible (for downstream mapping)
   resolutions = resolutions.map(resolution => {
-    if (resolution.fact_type !== 'event_date') return resolution;
+    if (resolution.fact_type !== 'general_date') return resolution;
     const normalizedDate = normalizeEventDateToISO(
       resolution.final_value_date || resolution.final_value_text || null
     );
@@ -1091,7 +1089,7 @@ function validateResolutions(
             selected_fact_id: acceptedFact.id,
             final_value_number: acceptedFact.value_number,
             final_value_text: acceptedFact.value_text,
-            final_value_date: resolution.fact_type === 'event_date'
+            final_value_date: resolution.fact_type === 'general_date'
               ? (normalizeEventDateToISO(acceptedFact.value_date || acceptedFact.value_text) || acceptedFact.value_date)
               : acceptedFact.value_date,
             reason: `${resolution.reason} [SERVER-CORRECTED: Using accepted fact]`,
@@ -1121,7 +1119,7 @@ function validateResolutions(
         resolution.final_value_number !== undefined ||
         resolution.final_value_date !== undefined;
       if (hasValue) {
-        const normalizedDate = resolution.fact_type === 'event_date'
+        const normalizedDate = resolution.fact_type === 'general_date'
           ? normalizeEventDateToISO(resolution.final_value_date || resolution.final_value_text || null)
           : resolution.final_value_date;
         warnings.push(
@@ -1194,19 +1192,9 @@ function validateResolutions(
         };
       }
     }
-
-    // =================================================================
-    // RULE 5: Cost domain validation
-    // =================================================================
-    const costDomain = getCostDomain(resolution.fact_type);
-    if (costDomain && selectedFact && getCostDomain(selectedFact.fact_type) !== costDomain) {
-      warnings.push(
-        `Cost domain mismatch for ${resolution.fact_type}: selected fact is ${selectedFact.fact_type}`
-      );
-    }
     
     // =================================================================
-    // RULE 6: Ensure values are populated from selected fact
+    // RULE 5: Ensure values are populated from selected fact
     // LLM sometimes returns correct selection but omits values
     // =================================================================
     if (selectedFact && (resolution.state === 'resolved' || resolution.state === 'informational')) {
@@ -1216,7 +1204,7 @@ function validateResolutions(
         (resolution.final_value_date === undefined && selectedFact.value_date !== undefined);
       
       if (needsValueFix) {
-        const normalizedDate = resolution.fact_type === 'event_date'
+        const normalizedDate = resolution.fact_type === 'general_date'
           ? normalizeEventDateToISO(resolution.final_value_date ?? selectedFact.value_date ?? selectedFact.value_text)
           : resolution.final_value_date;
 

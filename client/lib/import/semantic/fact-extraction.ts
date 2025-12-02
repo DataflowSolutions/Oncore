@@ -4,9 +4,14 @@
  * This module extracts candidate facts from source text chunks.
  * It does NOT make final decisions - it extracts ALL potential facts
  * with their negotiation status and context.
+ * 
+ * IMPORTANT: Fact types are derived directly from the ImportData structure
+ * in components/import/types.ts to ensure 1:1 mapping with the UI.
  */
 
 import { logger } from '@/lib/logger';
+import { FACT_TYPE_TO_IMPORT_FIELD } from './types';
+import { logRawLLMResponse } from './diagnostics';
 import type {
   ExtractedFact,
   FactExtractionRequest,
@@ -19,8 +24,53 @@ import type {
 } from './types';
 
 // =============================================================================
+// Generate fact type documentation from the mapping
+// =============================================================================
+
+function generateFactTypeList(): string {
+  const sections: Record<string, string[]> = {
+    'GENERAL (event info)': [],
+    'DEAL (financial terms)': [],
+    'HOTEL (accommodation)': [],
+    'FOOD (catering)': [],
+    'FLIGHT (travel)': [],
+    'ACTIVITY (transfers/activities)': [],
+    'CONTACT (people)': [],
+    'TECHNICAL (requirements)': [],
+  };
+
+  for (const [factType, fieldPath] of Object.entries(FACT_TYPE_TO_IMPORT_FIELD)) {
+    const prefix = factType.split('_')[0];
+    let section = '';
+    switch (prefix) {
+      case 'general': section = 'GENERAL (event info)'; break;
+      case 'deal': section = 'DEAL (financial terms)'; break;
+      case 'hotel': section = 'HOTEL (accommodation)'; break;
+      case 'food': section = 'FOOD (catering)'; break;
+      case 'flight': section = 'FLIGHT (travel)'; break;
+      case 'activity': section = 'ACTIVITY (transfers/activities)'; break;
+      case 'contact': section = 'CONTACT (people)'; break;
+      case 'technical': section = 'TECHNICAL (requirements)'; break;
+      default: continue;
+    }
+    
+    const fieldName = fieldPath.includes('[].') 
+      ? fieldPath.split('[].')[1] 
+      : fieldPath.split('.').pop();
+    sections[section].push(`  - ${factType}: maps to ${fieldName}`);
+  }
+
+  return Object.entries(sections)
+    .filter(([, items]) => items.length > 0)
+    .map(([section, items]) => `${section}:\n${items.join('\n')}`)
+    .join('\n\n');
+}
+
+// =============================================================================
 // LLM Prompts for Fact Extraction
 // =============================================================================
+
+const FACT_TYPE_LIST = generateFactTypeList();
 
 const FACT_EXTRACTION_SYSTEM_PROMPT = `You are an expert at extracting factual claims from event/show advancement documents.
 You must respond with valid JSON only.
@@ -32,34 +82,25 @@ STEP 1 - DETERMINE DOCUMENT TYPE (CRITICAL):
 Look at the filename and content to classify the document:
 
 CONFIRMATION/RECORD DOCUMENTS → use "final" status:
-- Airline booking confirmations (e.g., "Turkish Airlines", "Booking Reference: ABC123")
-- Flight itineraries with PNR codes
+- Airline booking confirmations, flight itineraries with PNR codes
 - Hotel reservations with confirmation numbers  
-- Signed contracts
-- Invoices and receipts
-- Tickets (boarding passes, event tickets)
+- Signed contracts, invoices, receipts, tickets
 
 NEGOTIATION DOCUMENTS → use negotiation statuses (offer/counter_offer/accepted/rejected):
 - Email threads with back-and-forth discussion
 - Messages containing "we can offer", "how about", "our proposal"
-- Documents with explicit negotiation language
 
 INFORMATIONAL DOCUMENTS → use "info" status:
-- General descriptions, venue info
-- FYI messages, notes
-- Reference material without commitments
+- General descriptions, venue info, FYI messages, notes
 
 STATUS CLASSIFICATION:
-- "final": CONFIRMED data - flight bookings, hotel reservations, signed deals (DEFAULT FOR CONFIRMATIONS!)
+- "final": CONFIRMED data - flight bookings, hotel reservations, signed deals
 - "info": Informational statements without negotiation context
-- "accepted": Explicit agreement to a PRIOR offer in the conversation
-- "offer": Initial proposal being made TO someone else
+- "accepted": Explicit agreement to a PRIOR offer
+- "offer": Initial proposal being made
 - "counter_offer": Response to an offer with different terms
 - "rejected": Explicit decline of a proposal
 - "question": Inquiry, not a statement
-
-CRITICAL RULE: If the document is a confirmation, itinerary, ticket, or booking - ALWAYS use status "final".
-Do NOT use "offer" for confirmed bookings. A flight confirmation is NOT an offer - it's a FINAL fact.
 
 SOURCE SCOPE (set per fact):
 - contract_main: primary show contract / offer / deal doc
@@ -69,82 +110,23 @@ SOURCE SCOPE (set per fact):
 - general_info: bios, FYI, reference material
 - unknown: fallback
 
-FACT DOMAIN RULES:
-- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg)
-- Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ...
-- Hotels: fact_domain = hotel_main, hotel_alt1, ...
-- Food/Catering: fact_domain = catering_main, catering_alt1, ...
-- If unsure, leave fact_domain null.
+FACT DOMAIN RULES (for grouping related facts):
+- Flights: fact_domain = flight_1, flight_2, ... (per leg)
+- Hotels: fact_domain = hotel_1, hotel_2, ...
+- Food/Catering: fact_domain = food_1, food_2, ...
+- Activities: fact_domain = activity_1, activity_2, ...
+- Contacts: fact_domain = contact_1, contact_2, ...
 
-FACT TYPES - COMPREHENSIVE LIST (be precise):
+FACT TYPES - Use these EXACT types:
 
-FLIGHTS (use fact_domain = flight_leg_1, flight_leg_2, ... per leg):
-- flight_airline: Airline name (e.g., "Turkish Airlines")
-- flight_number: Flight number (e.g., "TK67")
-- flight_origin_city, flight_origin_airport: Departure city/airport
-- flight_destination_city, flight_destination_airport: Arrival city/airport
-- flight_departure_datetime, flight_arrival_datetime: ISO datetime (e.g., "2024-12-31T21:10:00")
-- flight_passenger_name: Traveler's full name
-- flight_booking_reference: PNR / booking code
-- flight_ticket_number: E-ticket number if shown
-- flight_seat: Seat assignment (e.g., "12A")
-- flight_class: Cabin class (e.g., "Economy", "Business")
-- flight_aircraft_model: Aircraft type (e.g., "Boeing 777", "Airbus A321")
-- flight_duration: Flight duration if stated (e.g., "2h 45m")
-
-HOTELS (use fact_domain = hotel_main, hotel_alt1, ...):
-- hotel_name: Hotel name
-- hotel_address: Full address
-- hotel_city: City
-- hotel_country: Country
-- hotel_checkin, hotel_checkout: Check-in/out date+time
-- hotel_booking_reference: Confirmation number
-- hotel_phone: Hotel phone number
-- hotel_email: Hotel email
-- hotel_notes: Special requests, room type, etc.
-
-DEAL / COSTS:
-- artist_fee: Money paid TO the artist for performing
-- currency: Currency code (EUR, USD, GBP, AED, etc.)
-- payment_terms: Payment schedule/terms
-- deal_type: Type of deal (flat fee, vs door, etc.)
-- deal_notes: Other deal-related notes
-- venue_cost, production_cost, catering_cost, accommodation_cost, travel_cost, other_cost
-
-EVENT / GENERAL:
-- event_date, event_time, set_time: Show date/time
-- venue_name, venue_city, venue_country, venue_capacity: Venue info
-- artist_name, event_name: Show identification
-
-CONTACTS (use fact_domain = contact_promoter, contact_agent, contact_tour_manager, etc.):
-- contact_name, contact_email, contact_phone, contact_role
-
-TECHNICAL (emit separate facts for each category when present):
-- technical_equipment_summary: Main DJ/artist equipment (CDJs, mixers, monitors)
-- technical_backline_summary: Backline instruments/gear
-- technical_stage_setup_summary: Stage dimensions, risers, setup requirements
-- technical_lighting_summary: Lighting requirements
-- technical_soundcheck_summary: Soundcheck time/requirements
-- technical_other_summary: Any other technical notes
-
-CATERING / FOOD (use fact_domain = catering_main, catering_alt1, ...):
-- catering_summary: Overall food/drink requirements
-- catering_detail: Specific items
-- catering_provider_name: Restaurant/caterer name
-- catering_provider_address, catering_provider_city, catering_provider_country
-- catering_provider_phone, catering_provider_email
-- catering_booking_reference: Reservation number
-
-TRANSFERS / ACTIVITIES:
-- transfer_summary or ground_transport_summary: Ground transport plan
-- activity_detail: Other scheduled activities
+${FACT_TYPE_LIST}
 
 OUTPUT FORMAT (respond with JSON only):
 {
   "facts": [
     {
-      "fact_type": "flight_number",
-      "fact_domain": "flight_leg_1",
+      "fact_type": "flight_flightNumber",
+      "fact_domain": "flight_1",
       "value_text": "TK1234",
       "status": "final",
       "speaker_role": "unknown",
@@ -158,83 +140,91 @@ OUTPUT FORMAT (respond with JSON only):
 const FACT_EXTRACTION_USER_PROMPT = `Extract ALL candidate facts from the following text chunk.
 Respond with JSON containing your extracted facts.
 
-STEP 1 - Document Type Analysis (DO THIS FIRST):
+STEP 1 - Document Type Analysis:
 Look at the source filename "{source_file_name}" and the content.
-
-Assign source_scope for each fact (keep consistent across facts from this document):
-- contract_main: primary show contract / offer / deal doc
-- itinerary: schedules, travel plans, run-of-show
-- confirmation: airline/hotel confirmations, bookings, tickets
-- rider_example: riders that look generic or reference other cities
-- general_info: bios, FYI, reference material
-- unknown: fallback
-
-Filename hints: "Flight", airline names, "Booking", "Confirmation" -> confirmation; "rider" -> rider_example.
-
-Is this filename suggesting a confirmation/booking/ticket/itinerary?
-- Contains "Turkish Airlines", "Flight", "Booking", "Confirmation" -> CONFIRMATION document
-- Contains "Contract", "Agreement", "Signed" -> CONTRACT document  
-- Contains "@" (like email format) or looks like correspondence -> might be NEGOTIATION
-
-For CONFIRMATION documents: ALL facts should use status "final"
-For CONTRACT documents: Use "final" for agreed terms, "accepted" for signatures
-For NEGOTIATION documents: Use appropriate status (offer, counter_offer, accepted, rejected)
-For INFORMATIONAL documents: Use "info" status
+- Contains airline names, "Booking", "Confirmation", "Itinerary" -> CONFIRMATION (use status "final")
+- Contains "Contract", "Agreement" -> CONTRACT (use status "final" or "accepted")
+- Contains "@" or looks like correspondence -> NEGOTIATION (use appropriate status)
+- Otherwise -> INFORMATIONAL (use status "info")
 
 FACT DOMAIN RULES (CRITICAL):
-- Flights: fact_domain = flight_leg_1, flight_leg_2, ... (per leg). Keep ALL facts for the same leg in the same domain.
-- Contacts: fact_domain = contact_promoter, contact_agent, contact_tour_manager, ... Keep name/email/phone/role for the same person in the same domain.
-- Hotels: fact_domain = hotel_main, hotel_alt1, ...
-- Food/Catering: fact_domain = catering_main, catering_alt1, ...
-- If unsure, leave fact_domain null (do NOT invent new patterns).
+- Keep ALL facts for the same item in the same domain.
+- Flights: fact_domain = flight_1, flight_2, ... (per flight leg)
+- Hotels: fact_domain = hotel_1, hotel_2, ... (per hotel)
+- Food: fact_domain = food_1, food_2, ... (per catering item)
+- Activities: fact_domain = activity_1, activity_2, ... (per activity/transfer)
+- Contacts: fact_domain = contact_1, contact_2, ... (per person)
 
-FLIGHT FIELDS (emit ALL available per leg):
-- flight_airline: Airline name
-- flight_number: Flight number
-- flight_origin_city / flight_origin_airport: Departure city and airport code/name
-- flight_destination_city / flight_destination_airport: Arrival city and airport code/name
-- flight_departure_datetime / flight_arrival_datetime: ISO datetime (e.g., "2024-12-31T21:10:00")
-- flight_passenger_name: Traveler's full name
-- flight_booking_reference: PNR / booking code
-- flight_ticket_number: E-ticket number if shown
-- flight_seat: Seat assignment (e.g., "12A")
-- flight_class: Cabin class (Economy, Business, First)
-- flight_aircraft_model: Aircraft type (Boeing 777, Airbus A321, etc.)
-- flight_duration: Flight duration if stated
+ONE-SHOT EXAMPLES (Use these patterns):
 
-HOTEL FIELDS (emit ALL available):
+Example 1: Flight Confirmation
+Input: "Flight TK67 from Istanbul (IST) to Bali (DPS) departs 21:10. Ticket 235-1234567890."
+Output:
+[
+  { "fact_type": "flight_airline", "value_text": "Turkish Airlines", "fact_domain": "flight_1" },
+  { "fact_type": "flight_flightNumber", "value_text": "TK67", "fact_domain": "flight_1" },
+  { "fact_type": "flight_fromAirport", "value_text": "IST", "fact_domain": "flight_1" },
+  { "fact_type": "flight_fromCity", "value_text": "Istanbul", "fact_domain": "flight_1" },
+  { "fact_type": "flight_toAirport", "value_text": "DPS", "fact_domain": "flight_1" },
+  { "fact_type": "flight_toCity", "value_text": "Bali", "fact_domain": "flight_1" },
+  { "fact_type": "flight_departureTime", "value_time": "21:10", "fact_domain": "flight_1" },
+  { "fact_type": "flight_ticketNumber", "value_text": "235-1234567890", "fact_domain": "flight_1" }
+]
+
+Example 2: Contract Deal
+Input: "Artist Fee: $5,000 USD flat fee. 50% deposit required."
+Output:
+[
+  { "fact_type": "deal_fee", "value_number": 5000, "currency": "USD" },
+  { "fact_type": "deal_dealType", "value_text": "flat fee" },
+  { "fact_type": "deal_paymentTerms", "value_text": "50% deposit required" }
+]
+
+Example 3: Rider Venue Info
+Input: "Venue: Sohho Dubai. Address: Meydan Racecourse."
+Output:
+[
+  { "fact_type": "general_venue", "value_text": "Sohho Dubai" },
+  { "fact_type": "general_city", "value_text": "Dubai" },
+  { "fact_type": "hotel_address", "value_text": "Meydan Racecourse" }
+]
+
+EXTRACT ALL FIELDS YOU CAN FIND:
+
+For FLIGHTS, extract all of these per leg:
+- flight_airline, flight_flightNumber, flight_aircraft
+- flight_fullName (passenger), flight_bookingReference, flight_ticketNumber
+- flight_fromCity, flight_fromAirport, flight_departureTime
+- flight_toCity, flight_toAirport, flight_arrivalTime
+- flight_seat, flight_travelClass, flight_flightTime
+
+For HOTELS, extract:
 - hotel_name, hotel_address, hotel_city, hotel_country
-- hotel_checkin, hotel_checkout: Date/time
-- hotel_booking_reference: Confirmation number
-- hotel_phone, hotel_email
-- hotel_notes: Room type, special requests
+- hotel_checkInDate, hotel_checkInTime, hotel_checkOutDate, hotel_checkOutTime
+- hotel_bookingReference, hotel_phone, hotel_email, hotel_notes
 
-TECHNICAL FIELDS (split into categories when present):
-- technical_equipment_summary: Main DJ/artist equipment (CDJs, mixers, monitors)
-- technical_backline_summary: Backline instruments/gear
-- technical_stage_setup_summary: Stage dimensions, risers, setup
-- technical_lighting_summary: Lighting requirements
-- technical_soundcheck_summary: Soundcheck time/requirements
-- technical_other_summary: Other technical notes
+For FOOD/CATERING, extract:
+- food_name (provider), food_address, food_city, food_country
+- food_bookingReference, food_phone, food_email, food_notes
+- food_serviceDate, food_serviceTime, food_guestCount
 
-CATERING/FOOD FIELDS:
-- catering_summary: Overall food/drink requirements
-- catering_detail: Specific items
-- catering_provider_name: Restaurant/caterer name
-- catering_provider_address, catering_provider_city, catering_provider_country
-- catering_provider_phone, catering_provider_email
-- catering_booking_reference: Reservation number
+For ACTIVITIES/TRANSFERS, extract:
+- activity_name, activity_location, activity_startTime, activity_endTime
+- activity_notes, activity_destinationName, activity_destinationLocation
 
-DEAL FIELDS:
-- artist_fee: Fee amount
-- currency: Currency code (EUR, USD, GBP, AED)
-- payment_terms: Payment schedule
-- deal_type: Type of deal
-- deal_notes: Other notes
+For CONTACTS, extract:
+- contact_name, contact_email, contact_phone, contact_role
 
-LOGISTICS:
-- transfer_summary / ground_transport_summary: Ground transport plan
-- activity_detail: Scheduled activities
+For GENERAL event info:
+- general_artist, general_eventName, general_venue
+- general_date, general_setTime, general_city, general_country
+
+For DEAL terms:
+- deal_fee, deal_currency, deal_paymentTerms, deal_dealType, deal_notes
+
+For TECHNICAL requirements:
+- technical_equipment, technical_backline, technical_stageSetup
+- technical_lightingRequirements, technical_soundcheck, technical_other
 
 Previous facts for context (to detect counter-offers):
 {previous_facts}
@@ -244,9 +234,8 @@ Text to analyze (chunk {chunk_index} from {source_file_name}):
 {chunk_text}
 ---
 
-REMINDER: If this is a flight booking confirmation, all flight facts MUST have status "final", NOT "offer".
-Extract as many facts as possible from the text. Do NOT skip fields that are clearly stated.
-Return valid JSON with a "facts" array.`;
+REMINDER: If this is a flight/hotel confirmation, all facts MUST have status "final".
+Extract as many facts as possible. Return valid JSON with a "facts" array.`;
 
 
 
@@ -336,47 +325,62 @@ function normalizeFactType(raw?: string): ImportFactType {
   
   const normalized = raw.toLowerCase().replace(/[^a-z_]/g, '_');
   
-  const validTypes: ImportFactType[] = [
-    // Deal / costs
-    'artist_fee', 'venue_cost', 'production_cost', 'catering_cost',
-    'accommodation_cost', 'travel_cost', 'other_cost',
-    'currency', 'payment_terms', 'deal_type', 'deal_notes',
-    // Event / general
-    'event_date', 'event_time', 'set_time', 'venue_name', 'venue_city',
-    'venue_country', 'venue_capacity', 'artist_name', 'event_name',
-    // Hotels
-    'hotel_name', 'hotel_address', 'hotel_city', 'hotel_country',
-    'hotel_checkin', 'hotel_checkout', 'hotel_booking_reference',
-    'hotel_phone', 'hotel_email', 'hotel_notes',
-    // Flights
-    'flight_number', 'flight_origin_city', 'flight_origin_airport',
-    'flight_destination_city', 'flight_destination_airport',
-    'flight_departure_datetime', 'flight_arrival_datetime',
-    'flight_airline', 'flight_passenger_name', 'flight_booking_reference',
-    'flight_ticket_number', 'flight_seat', 'flight_class',
-    'flight_aircraft_model', 'flight_duration',
-    'flight_departure', 'flight_arrival',  // Legacy
-    // Contacts
-    'contact_name', 'contact_email', 'contact_phone', 'contact_role',
-    // Technical
-    'technical_requirement', 'technical_equipment_summary',
-    'technical_backline_summary', 'technical_stage_setup_summary',
-    'technical_lighting_summary', 'technical_soundcheck_summary',
-    'technical_other_summary',
-    // Catering / food
-    'catering_detail', 'catering_summary',
-    'catering_provider_name', 'catering_provider_address',
-    'catering_provider_city', 'catering_provider_country',
-    'catering_provider_phone', 'catering_provider_email',
-    'catering_booking_reference',
-    // Activities / transfers
-    'transfer_summary', 'ground_transport_summary', 'activity_detail',
-    // Misc
-    'general_note', 'other',
-  ];
+  // Get valid types from the mapping
+  const validTypes = Object.keys(FACT_TYPE_TO_IMPORT_FIELD) as ImportFactType[];
   
   if (validTypes.includes(normalized as ImportFactType)) {
     return normalized as ImportFactType;
+  }
+  
+  // Handle legacy type mappings for backward compatibility
+  const legacyMappings: Record<string, ImportFactType> = {
+    'artist_fee': 'deal_fee',
+    'flight_number': 'flight_flightNumber',
+    'flight_origin_city': 'flight_fromCity',
+    'flight_origin_airport': 'flight_fromAirport',
+    'flight_destination_city': 'flight_toCity',
+    'flight_destination_airport': 'flight_toAirport',
+    'flight_departure_datetime': 'flight_departureTime',
+    'flight_arrival_datetime': 'flight_arrivalTime',
+    'flight_passenger_name': 'flight_fullName',
+    'flight_ticket_number': 'flight_ticketNumber',
+    'flight_class': 'flight_travelClass',
+    'flight_aircraft_model': 'flight_aircraft',
+    'flight_duration': 'flight_flightTime',
+    'hotel_checkin': 'hotel_checkInDate',
+    'hotel_checkout': 'hotel_checkOutDate',
+    'hotel_booking_reference': 'hotel_bookingReference',
+    'event_date': 'general_date',
+    'event_time': 'general_setTime',
+    'set_time': 'general_setTime',
+    'venue_name': 'general_venue',
+    'venue_city': 'general_city',
+    'venue_country': 'general_country',
+    'artist_name': 'general_artist',
+    'event_name': 'general_eventName',
+    'currency': 'deal_currency',
+    'payment_terms': 'deal_paymentTerms',
+    'deal_type': 'deal_dealType',
+    'catering_provider_name': 'food_name',
+    'catering_provider_address': 'food_address',
+    'catering_provider_city': 'food_city',
+    'catering_provider_country': 'food_country',
+    'catering_provider_phone': 'food_phone',
+    'catering_provider_email': 'food_email',
+    'catering_booking_reference': 'food_bookingReference',
+    'transfer_summary': 'activity_notes',
+    'ground_transport_summary': 'activity_notes',
+    'activity_detail': 'activity_notes',
+    'technical_equipment_summary': 'technical_equipment',
+    'technical_backline_summary': 'technical_backline',
+    'technical_stage_setup_summary': 'technical_stageSetup',
+    'technical_lighting_summary': 'technical_lightingRequirements',
+    'technical_soundcheck_summary': 'technical_soundcheck',
+    'technical_other_summary': 'technical_other',
+  };
+  
+  if (normalized in legacyMappings) {
+    return legacyMappings[normalized];
   }
   
   return 'other';
@@ -560,31 +564,31 @@ const CONFIRMATION_FILENAME_PATTERNS = [
  */
 const CONFIRMATION_FACT_TYPES: Set<ImportFactType> = new Set([
   // Flight facts
-  'flight_number',
-  'flight_origin_city',
-  'flight_origin_airport',
-  'flight_destination_city',
-  'flight_destination_airport',
-  'flight_departure_datetime',
-  'flight_arrival_datetime',
   'flight_airline',
-  'flight_passenger_name',
-  'flight_booking_reference',
-  'flight_ticket_number',
+  'flight_flightNumber',
+  'flight_aircraft',
+  'flight_fullName',
+  'flight_bookingReference',
+  'flight_ticketNumber',
+  'flight_fromCity',
+  'flight_fromAirport',
+  'flight_departureTime',
+  'flight_toCity',
+  'flight_toAirport',
+  'flight_arrivalTime',
   'flight_seat',
-  'flight_class',
-  'flight_aircraft_model',
-  'flight_duration',
-  'flight_departure',  // Legacy
-  'flight_arrival',    // Legacy
+  'flight_travelClass',
+  'flight_flightTime',
   // Hotel facts
   'hotel_name',
   'hotel_address',
   'hotel_city',
   'hotel_country',
-  'hotel_checkin',
-  'hotel_checkout',
-  'hotel_booking_reference',
+  'hotel_checkInDate',
+  'hotel_checkInTime',
+  'hotel_checkOutDate',
+  'hotel_checkOutTime',
+  'hotel_bookingReference',
   'hotel_phone',
   'hotel_email',
   'hotel_notes',
@@ -592,6 +596,7 @@ const CONFIRMATION_FACT_TYPES: Set<ImportFactType> = new Set([
   'contact_name',
   'contact_email',
   'contact_phone',
+  'contact_role',
 ]);
 
 /**
@@ -685,6 +690,16 @@ export async function extractFactsFromChunk(
   
   if (llmResponse.error) {
     warnings.push(`LLM error: ${llmResponse.error}`);
+  }
+
+  // Diagnostic: Log raw LLM response before parsing
+  if (llmResponse.content) {
+    logRawLLMResponse(
+      request.job_id,
+      request.source_id,
+      request.chunk_index,
+      llmResponse.content
+    );
   }
 
   // Parse facts

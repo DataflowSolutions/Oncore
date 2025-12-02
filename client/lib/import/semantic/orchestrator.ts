@@ -32,12 +32,27 @@ import type {
 import { FACT_TYPE_TO_IMPORT_FIELD } from './types';
 import { extractFactsFromChunk } from './fact-extraction';
 import { resolveImportFacts, summarizeResolutions } from './resolution';
+import { postProcessAllFacts } from './post-process';
+import {
+  reconstructFlightInstances,
+  applyFlightGroupsToImportData,
+  getConsumedFlightFactTypes,
+} from './flight-reconstruction';
+import { enrichImportData, getEnrichmentStats } from './enrichment';
 import {
   insertImportFacts,
   getImportFacts,
   selectImportFacts,
   updateImportJobStage,
 } from './db';
+import {
+  isDiagnosticsEnabled,
+  logChunk,
+  dumpFacts,
+  dumpPostProcessing,
+  dumpResolutions,
+  dumpApplication,
+} from './diagnostics';
 
 type SupabaseClientLike = Pick<SupabaseClient<Database>, 'rpc'>;
 
@@ -87,7 +102,7 @@ async function runFactExtraction(
   sources: ImportSource[],
   onProgress?: SemanticProgressCallback
 ): Promise<{ facts: ExtractedFact[]; warnings: string[] }> {
-  const allFacts: ExtractedFact[] = [];
+  let allFacts: ExtractedFact[] = [];
   const allWarnings: string[] = [];
   let previousFacts: ExtractedFact[] = [];
   let globalMessageIndex = 0;
@@ -123,6 +138,9 @@ async function runFactExtraction(
         });
       }
 
+      // Diagnostic: Log chunk details
+      logChunk(source.id, source.fileName, chunkIdx, chunk.text);
+      
       const result = await extractFactsFromChunk({
         job_id: jobId,
         source_id: source.id,
@@ -150,6 +168,33 @@ async function runFactExtraction(
       if (insertResult.error) {
         allWarnings.push(`Failed to insert facts for ${source.fileName}: ${insertResult.error}`);
       }
+    }
+  }
+
+  // Diagnostic: Dump raw extracted facts before post-processing
+  dumpFacts('stage1_normalized', jobId, allFacts);
+  
+  // Post-process all facts before marking extraction complete
+  logger.info('Running post-processing on extracted facts', {
+    jobId,
+    factsBeforePostProcessing: allFacts.length,
+  });
+  
+  allFacts = postProcessAllFacts(allFacts, jobId);
+  
+  logger.info('Post-processing complete', {
+    jobId,
+    factsAfterPostProcessing: allFacts.length,
+  });
+  
+  // Diagnostic: Dump post-processing changes (already called inside postProcessAllFacts)
+  dumpFacts('stage1_postprocessed', jobId, allFacts);
+
+  // Insert/update post-processed facts
+  if (allFacts.length > 0) {
+    const insertResult = await insertImportFacts(supabase, jobId, allFacts);
+    if (insertResult.error) {
+      allWarnings.push(`Failed to insert post-processed facts: ${insertResult.error}`);
     }
   }
 
@@ -257,12 +302,39 @@ export { applyResolutionsToImportData };
 // =============================================================================
 
 /**
+ * Singleton fields that can safely trust a single informational fact
+ */
+const SINGLETON_INFORMATIONAL_FIELDS: Set<ImportFactType> = new Set([
+  'general_artist',
+  'general_eventName',
+  'general_date',
+  'general_venue',
+  'general_city',
+  'general_country',
+]);
+
+/**
+ * Build fact count map by fact_type from selected facts
+ */
+function buildFactCountMap(facts: ImportFact[]): Map<ImportFactType, number> {
+  const counts = new Map<ImportFactType, number>();
+  for (const fact of facts) {
+    const current = counts.get(fact.fact_type) || 0;
+    counts.set(fact.fact_type, current + 1);
+  }
+  return counts;
+}
+
+/**
  * Apply resolved facts to create the final ImportData structure.
  * 
  * HARD RULE: Only 'resolved' and 'informational' states write to canonical data.
  * States 'unagreed' and 'missing' are FIRST-CLASS OUTCOMES that intentionally
  * do NOT write to the import data. This is by design - we'd rather have missing
  * data than wrong data.
+ * 
+ * EXCEPTION: For singleton fields (artist, date, venue), a single informational
+ * fact is treated as resolved. This is safe and deterministic.
  */
 function applyResolutionsToImportData(
   resolutions: FactResolution[],
@@ -272,8 +344,31 @@ function applyResolutionsToImportData(
   
   // Build map of selected facts by ID
   const factsById = new Map(selectedFacts.map(f => [f.id, f]));
+  
+  // Build fact count map for singleton detection
+  const factCounts = buildFactCountMap(selectedFacts);
 
-  for (const resolution of resolutions) {
+  // Diagnostic logging
+  const infoResolutions = resolutions.filter(r => r.state === 'informational');
+  logger.info(`[Semantic] Applying resolutions: ${resolutions.length} total, ${infoResolutions.length} informational`);
+
+  for (let resolution of resolutions) {
+    // =================================================================
+    // SINGLETON INFORMATIONAL RULE:
+    // For singleton fields with exactly one informational fact, treat as resolved
+    // =================================================================
+    if (
+      resolution.state === 'informational' &&
+      SINGLETON_INFORMATIONAL_FIELDS.has(resolution.fact_type) &&
+      (factCounts.get(resolution.fact_type) || 0) === 1
+    ) {
+      logger.info(
+        `[Semantic] ${resolution.fact_type}: singleton informational fact - treating as resolved`
+      );
+      // Create new resolution with state overridden
+      resolution = { ...resolution, state: 'resolved' };
+    }
+
     // =================================================================
     // HARD RULE: Only 'resolved' and 'informational' states write to data
     // 'unagreed' and 'missing' are VALID OUTCOMES that produce NO data
@@ -297,16 +392,27 @@ function applyResolutionsToImportData(
         ? (factsById.get(resolution.selected_fact_id) as ImportFact)
         : null;
 
-    // Accept resolutions with values even if selected_fact_id missing (already vetted in validation)
-    if (!fact && !resolution.selected_fact_id) {
+    // Case 1: No selected fact ID (LLM provided value directly)
+    if (!resolution.selected_fact_id) {
       applyFactToImportData(data, undefined, resolution);
       continue;
     }
 
+    // Case 2: Selected fact ID exists, but fact not found in DB/map
+    // This happens if the fact wasn't correctly marked as selected in DB or fetch failed
     if (!fact) {
-      logger.warn(
-        `[Semantic] Selected fact ${resolution.selected_fact_id} not found in facts map - skipping`
-      );
+      // Fallback: Use the resolution's final values if present
+      if (resolution.final_value_text || resolution.final_value_number || resolution.final_value_date) {
+        logger.warn(
+          `[Semantic] Selected fact ${resolution.selected_fact_id} not found in map, but resolution has values - applying fallback`,
+          { factType: resolution.fact_type, value: resolution.final_value_text }
+        );
+        applyFactToImportData(data, undefined, resolution);
+      } else {
+        logger.warn(
+          `[Semantic] Selected fact ${resolution.selected_fact_id} not found in map and no fallback values - skipping`
+        );
+      }
       continue;
     }
 
@@ -358,7 +464,8 @@ function applyFactToImportData(
   const resolvedText = resolution.final_value_text ?? fact?.value_text;
 
   let value: string | undefined;
-  if (factType === 'event_date') {
+  // For date fields, prefer date/text over number
+  if (factType === 'general_date' || factType.includes('Date')) {
     value =
       resolvedDate ||
       resolvedText ||
@@ -376,11 +483,11 @@ function applyFactToImportData(
       fact?.value_date;
   }
 
-  // Handle datetime fields for flights (flight_departure_datetime, flight_arrival_datetime)
+  // Handle datetime fields for flights (flight_departureTime, flight_arrivalTime)
   // The LLM may put datetime values into value_datetime instead of value_text
   if (
     !value &&
-    (factType === 'flight_departure_datetime' || factType === 'flight_arrival_datetime')
+    (factType === 'flight_departureTime' || factType === 'flight_arrivalTime')
   ) {
     if (fact?.value_datetime) {
       value = fact.value_datetime;
@@ -392,10 +499,10 @@ function applyFactToImportData(
   const factDomain = resolution.fact_domain ?? fact?.fact_domain ?? null;
   const factSourceScope = (fact?.source_scope as ImportSourceScope | undefined) ?? 'unknown';
 
-  const fields = FACT_TYPE_TO_IMPORT_FIELD[factType] || [];
+  const fieldPath = FACT_TYPE_TO_IMPORT_FIELD[factType];
   
-  for (const field of fields) {
-    applyValueToField(data, field, value, factType, factDomain, factSourceScope);
+  if (fieldPath) {
+    applyValueToField(data, fieldPath, value, factType, factDomain, factSourceScope);
   }
 }
 
@@ -410,12 +517,6 @@ function applyValueToField(
   factDomain: string | null,
   sourceScope: ImportSourceScope
 ): void {
-  // Legacy flight_departure/arrival: only apply if parsing as date/time
-  if ((factType === 'flight_departure' || factType === 'flight_arrival') &&
-      (fieldPath.endsWith('Airport'))) {
-    return; // never map legacy date-ish strings into airport fields
-  }
-
   // Handle array fields (e.g., "hotels[].name")
   if (fieldPath.includes('[]')) {
     const [arrayKey, property] = fieldPath.split('[].');
@@ -551,11 +652,11 @@ function resolveArrayIndex(
     if (domain) {
       const existing = array.findIndex((i: any) => i._domain === domain);
       if (existing >= 0) return existing;
-      if (domain.startsWith('flight_leg_')) return domainToIndex(arrayKey, domain);
+      if (domain.startsWith('flight_leg_') || domain.startsWith('flight_')) return domainToIndex(arrayKey, domain);
       return array.length;
     }
     // No domain: if this is a flight number, try to place by unique number
-    if (factType === 'flight_number' && value) {
+    if (factType === 'flight_flightNumber' && value) {
       const existingIdx = array.findIndex((f: any) => (f.flightNumber || '').toLowerCase() === value.toLowerCase());
       if (existingIdx >= 0) return existingIdx;
       return array.length; // new flight leg
@@ -657,6 +758,27 @@ export async function runSemanticImportExtraction(
     selected: resolutionResult.selectedIds.length,
   });
 
+  // Stage 2.5: Flight Instance Reconstruction
+  logger.info('Stage 2.5: Reconstructing flight instances', { jobId });
+  
+  // Get all facts for reconstruction
+  const { facts: allFactsForReconstruction } = await getImportFacts(supabase, jobId);
+  
+  const flightGroups = reconstructFlightInstances(
+    resolutionResult.resolutions,
+    allFactsForReconstruction
+  );
+  
+  logger.info('Flight reconstruction complete', {
+    jobId,
+    flightGroupsFound: flightGroups.length,
+    strategies: {
+      fact_domain: flightGroups.filter(g => g.groupingStrategy === 'fact_domain').length,
+      flight_number: flightGroups.filter(g => g.groupingStrategy === 'flight_number').length,
+      chunk_proximity: flightGroups.filter(g => g.groupingStrategy === 'chunk_proximity').length,
+    },
+  });
+
   // Stage 3: Apply to ImportData
   if (onProgress) {
     await onProgress({ stage: 'applying' });
@@ -668,10 +790,58 @@ export async function runSemanticImportExtraction(
   const { facts: allFacts } = await getImportFacts(supabase, jobId);
   const selectedFacts = allFacts.filter(f => f.is_selected);
 
-  const data = applyResolutionsToImportData(
-    resolutionResult.resolutions,
+  // Apply flight groups first
+  let data = createEmptyImportData();
+  
+  if (flightGroups.length > 0) {
+    data = applyFlightGroupsToImportData(data, flightGroups);
+    logger.info('Flight groups applied', {
+      jobId,
+      flightsCreated: data.flights?.length || 0,
+    });
+  }
+
+  // Apply non-flight resolutions
+  const consumedFlightTypes = getConsumedFlightFactTypes();
+  const nonFlightResolutions = resolutionResult.resolutions.filter(
+    r => !consumedFlightTypes.has(r.fact_type)
+  );
+  
+  logger.info('Applying non-flight resolutions', {
+    jobId,
+    totalResolutions: resolutionResult.resolutions.length,
+    flightResolutions: resolutionResult.resolutions.length - nonFlightResolutions.length,
+    nonFlightResolutions: nonFlightResolutions.length,
+  });
+
+  const nonFlightData = applyResolutionsToImportData(
+    nonFlightResolutions,
     selectedFacts
   );
+  
+  // Merge non-flight data (preserve flights array)
+  data = {
+    ...nonFlightData,
+    flights: data.flights,
+  };
+  
+  // =============================================================================
+  // STAGE 3.5: Data Enrichment
+  // =============================================================================
+  
+  logger.info('Stage 3.5: Enriching data with derived fields', { jobId });
+  
+  const beforeEnrichment = { ...data };
+  data = enrichImportData(data);
+  
+  const enrichmentStats = getEnrichmentStats(beforeEnrichment, data);
+  logger.info('Enrichment complete', {
+    jobId,
+    ...enrichmentStats,
+  });
+  
+  // Diagnostic: Dump application results and final ImportData
+  dumpApplication(jobId, data);
 
   // Generate summary
   const summary = summarizeResolutions(resolutionResult.resolutions);

@@ -41,7 +41,7 @@ interface ImportConfirmationPageProps {
   orgSlug: string;
   initialData?: Partial<ImportData>;
   jobId?: string;
-  confidenceMap?: Record<string, import("@/lib/import/ai").ConfidenceEntry>;
+  confidenceMap?: Record<string, import("@/lib/import/jobs").ConfidenceEntry>;
   initialJobStatus?: ImportJobStatus;
   onCancel?: () => void;
   rawSources?: Array<{ id: string; fileName: string }>;
@@ -79,7 +79,7 @@ export function ImportConfirmationPage({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confidenceByField, setConfidenceByField] = useState<
-    Record<string, import("@/lib/import/ai").ConfidenceEntry>
+    Record<string, import("@/lib/import/jobs").ConfidenceEntry>
   >(confidenceMap ?? {});
   const [jobStatus, setJobStatus] = useState<ImportJobStatus | undefined>(initialJobStatus);
   const [progressData, setProgressData] = useState<{

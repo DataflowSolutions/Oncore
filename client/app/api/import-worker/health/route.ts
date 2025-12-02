@@ -1,49 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseServiceClient } from "@/lib/import/worker-client";
+import { logger } from "@/lib/logger";
 
 /**
  * Worker health check endpoint.
  * Workers ping this endpoint periodically to register themselves.
  * Import system checks this to see if workers are available.
+ * 
+ * Uses database storage (import_worker_heartbeats table) instead of
+ * in-memory storage to support serverless/multi-instance deployments.
  */
-
-interface WorkerRegistration {
-  lastPing: number;
-  workerId: string;
-}
-
-// In-memory registry of active workers
-// In production, use Redis or database for distributed systems
-const workerRegistry = new Map<string, WorkerRegistration>();
-
-const WORKER_TIMEOUT_MS = 30000; // 30 seconds - worker considered dead if no ping
 
 export async function POST(req: NextRequest) {
   try {
-    const { workerId } = await req.json();
+    const { workerId, type } = await req.json();
     
     if (!workerId) {
       return NextResponse.json({ error: "workerId required" }, { status: 400 });
     }
 
-    // Register/update worker
-    workerRegistry.set(workerId, {
-      lastPing: Date.now(),
-      workerId,
+    const supabase = getSupabaseServiceClient();
+    
+    const { data, error } = await supabase.rpc("app_register_worker_heartbeat", {
+      p_worker_id: workerId,
+      p_worker_type: type || "semantic",
     });
 
-    // Clean up stale workers
-    const now = Date.now();
-    for (const [id, registration] of workerRegistry.entries()) {
-      if (now - registration.lastPing > WORKER_TIMEOUT_MS) {
-        workerRegistry.delete(id);
-      }
+    if (error) {
+      logger.error("Failed to register worker heartbeat", { workerId, error });
+      return NextResponse.json(
+        { error: "Failed to register worker" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ 
-      status: "ok",
-      activeWorkers: workerRegistry.size,
-    });
+    return NextResponse.json(data);
   } catch (error) {
+    logger.error("Worker health POST error", { error });
     return NextResponse.json(
       { error: "Failed to register worker" },
       { status: 500 }
@@ -52,22 +45,29 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  // Clean up stale workers
-  const now = Date.now();
-  for (const [id, registration] of workerRegistry.entries()) {
-    if (now - registration.lastPing > WORKER_TIMEOUT_MS) {
-      workerRegistry.delete(id);
+  try {
+    const supabase = getSupabaseServiceClient();
+    
+    const { data, error } = await supabase.rpc("app_get_worker_health");
+
+    if (error) {
+      logger.error("Failed to get worker health", { error });
+      return NextResponse.json({
+        healthy: false,
+        active_workers: 0,
+        workers: [],
+        error: error.message,
+      });
     }
+
+    // RPC returns: { healthy, active_workers, workers }
+    return NextResponse.json(data);
+  } catch (error) {
+    logger.error("Worker health GET error", { error });
+    return NextResponse.json({
+      healthy: false,
+      active_workers: 0,
+      workers: [],
+    });
   }
-
-  const activeWorkers = Array.from(workerRegistry.values()).map((w) => ({
-    workerId: w.workerId,
-    lastPingSec: Math.round((now - w.lastPing) / 1000),
-  }));
-
-  return NextResponse.json({
-    healthy: workerRegistry.size > 0,
-    activeWorkers: workerRegistry.size,
-    workers: activeWorkers,
-  });
 }

@@ -14,6 +14,8 @@
     "test:all": "node run-all-tests.js",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
+    "test:semantic-import": "tsx integration/semantic-import-e2e.test.ts",
+    "test:semantic-diagnostic": "tsx integration/semantic-import-diagnostic.ts",
     "benchmark": "npm run test:performance && npm run test:perf:stress",
     "stress-test": "tsx performance/stress-test.ts",
     "test:local": "cross-env TEST_DB_ENV=local node run-all-tests.js",

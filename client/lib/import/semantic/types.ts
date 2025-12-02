@@ -4,91 +4,113 @@
  * Types for the two-stage semantic import pipeline:
  * - Stage 1: Candidate Fact Extraction (per chunk)
  * - Stage 2: Semantic Resolution (global reasoning)
+ * 
+ * IMPORTANT: Fact types are derived directly from the ImportData structure
+ * in components/import/types.ts. Every field displayed in the import 
+ * confirmation UI should be extractable by the AI.
  */
 
 // =============================================================================
-// Fact Types (matching database enums)
+// Fact Types - Derived from ImportData fields
 // =============================================================================
 
+/**
+ * Fact types map 1:1 with ImportData fields.
+ * Format: {section}_{fieldName} in snake_case
+ * 
+ * This ensures every field in the import confirmation UI can be extracted.
+ */
 export type ImportFactType =
-  | 'artist_fee'
-  | 'venue_cost'
-  | 'production_cost'
-  | 'catering_cost'
-  | 'accommodation_cost'
-  | 'travel_cost'
-  | 'other_cost'
-  | 'event_date'
-  | 'event_time'
-  | 'set_time'
-  | 'venue_name'
-  | 'venue_city'
-  | 'venue_country'
-  | 'venue_capacity'
-  | 'artist_name'
-  | 'event_name'
-  // Hotel fields
+  // General section (ImportedGeneral)
+  | 'general_artist'
+  | 'general_eventName'
+  | 'general_venue'
+  | 'general_date'
+  | 'general_setTime'
+  | 'general_city'
+  | 'general_country'
+  
+  // Deal section (ImportedDeal)
+  | 'deal_fee'
+  | 'deal_paymentTerms'
+  | 'deal_dealType'
+  | 'deal_currency'
+  | 'deal_notes'
+  
+  // Hotel section (ImportedHotel[])
   | 'hotel_name'
   | 'hotel_address'
   | 'hotel_city'
   | 'hotel_country'
-  | 'hotel_checkin'
-  | 'hotel_checkout'
-  | 'hotel_booking_reference'
+  | 'hotel_checkInDate'
+  | 'hotel_checkInTime'
+  | 'hotel_checkOutDate'
+  | 'hotel_checkOutTime'
+  | 'hotel_bookingReference'
   | 'hotel_phone'
   | 'hotel_email'
   | 'hotel_notes'
-  // Flight fields
-  | 'flight_number'
-  | 'flight_origin_city'
-  | 'flight_origin_airport'
-  | 'flight_destination_city'
-  | 'flight_destination_airport'
-  | 'flight_departure_datetime'
-  | 'flight_arrival_datetime'
+  
+  // Food/Catering section (ImportedFood[])
+  | 'food_name'
+  | 'food_address'
+  | 'food_city'
+  | 'food_country'
+  | 'food_bookingReference'
+  | 'food_phone'
+  | 'food_email'
+  | 'food_notes'
+  | 'food_serviceDate'
+  | 'food_serviceTime'
+  | 'food_guestCount'
+  
+  // Flight section (ImportedFlight[])
   | 'flight_airline'
-  | 'flight_passenger_name'
-  | 'flight_booking_reference'
-  | 'flight_ticket_number'
+  | 'flight_flightNumber'
+  | 'flight_aircraft'
+  | 'flight_fullName'
+  | 'flight_bookingReference'
+  | 'flight_ticketNumber'
+  | 'flight_fromCity'
+  | 'flight_fromAirport'
+  | 'flight_departureTime'
+  | 'flight_toCity'
+  | 'flight_toAirport'
+  | 'flight_arrivalTime'
   | 'flight_seat'
-  | 'flight_class'
-  | 'flight_aircraft_model'
-  | 'flight_duration'
-  | 'flight_departure'  // Legacy
-  | 'flight_arrival'    // Legacy
-  // Contact fields
+  | 'flight_travelClass'
+  | 'flight_flightTime'
+  | 'flight_direction'
+  | 'flight_notes'
+  
+  // Activity section (ImportedActivity[])
+  | 'activity_name'
+  | 'activity_location'
+  | 'activity_startTime'
+  | 'activity_endTime'
+  | 'activity_notes'
+  | 'activity_hasDestination'
+  | 'activity_destinationName'
+  | 'activity_destinationLocation'
+  
+  // Contact section (ImportedContact[])
   | 'contact_name'
-  | 'contact_email'
   | 'contact_phone'
+  | 'contact_email'
   | 'contact_role'
-  // Deal fields
-  | 'currency'
-  | 'payment_terms'
-  | 'deal_type'
-  | 'deal_notes'
-  // Technical fields
-  | 'technical_requirement'
-  | 'technical_equipment_summary'
-  | 'technical_backline_summary'
-  | 'technical_stage_setup_summary'
-  | 'technical_lighting_summary'
-  | 'technical_soundcheck_summary'
-  | 'technical_other_summary'
-  // Catering / food provider fields
-  | 'catering_detail'
-  | 'catering_summary'
-  | 'catering_provider_name'
-  | 'catering_provider_address'
-  | 'catering_provider_city'
-  | 'catering_provider_country'
-  | 'catering_provider_phone'
-  | 'catering_provider_email'
-  | 'catering_booking_reference'
-  // Activities / transfers
-  | 'transfer_summary'
-  | 'ground_transport_summary'
-  | 'activity_detail'
-  | 'general_note'
+  
+  // Technical section (ImportedTechnical)
+  | 'technical_equipment'
+  | 'technical_backline'
+  | 'technical_stageSetup'
+  | 'technical_lightingRequirements'
+  | 'technical_soundcheck'
+  | 'technical_other'
+  
+  // Document category (we don't extract file content, just categorize uploaded files)
+  | 'document_category'
+  
+  // Fallback for unknown fact types
   | 'other';
 
 export type ImportFactDirection =
@@ -335,147 +357,154 @@ export interface ResolutionResult {
 // =============================================================================
 
 /**
- * Mapping from fact types to ImportData fields
+ * Mapping from fact types to ImportData field paths.
+ * 
+ * Each fact type maps directly to a field in ImportData.
+ * Array fields use [] notation (e.g., 'hotels[].name' means hotels array, name field)
  */
-export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string[]> = {
-  // Deal / costs
-  artist_fee: ['deal.fee'],
-  venue_cost: [],
-  production_cost: [],
-  catering_cost: [],
-  accommodation_cost: [],
-  travel_cost: [],
-  other_cost: [],
-  currency: ['deal.currency'],
-  payment_terms: ['deal.paymentTerms'],
-  deal_type: ['deal.dealType'],
-  deal_notes: ['deal.notes'],
+export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string> = {
+  // General section
+  general_artist: 'general.artist',
+  general_eventName: 'general.eventName',
+  general_venue: 'general.venue',
+  general_date: 'general.date',
+  general_setTime: 'general.setTime',
+  general_city: 'general.city',
+  general_country: 'general.country',
   
-  // Event / general
-  event_date: ['general.date'],
-  event_time: ['general.setTime'],
-  set_time: ['general.setTime'],
-  venue_name: ['general.venue'],
-  venue_city: ['general.city'],
-  venue_country: ['general.country'],
-  venue_capacity: ['technical.other'],
-  artist_name: ['general.artist'],
-  event_name: ['general.eventName'],
+  // Deal section
+  deal_fee: 'deal.fee',
+  deal_paymentTerms: 'deal.paymentTerms',
+  deal_dealType: 'deal.dealType',
+  deal_currency: 'deal.currency',
+  deal_notes: 'deal.notes',
   
-  // Hotels
-  hotel_name: ['hotels[].name'],
-  hotel_address: ['hotels[].address'],
-  hotel_city: ['hotels[].city'],
-  hotel_country: ['hotels[].country'],
-  hotel_checkin: ['hotels[].checkInDate', 'hotels[].checkInTime'],
-  hotel_checkout: ['hotels[].checkOutDate', 'hotels[].checkOutTime'],
-  hotel_booking_reference: ['hotels[].bookingReference'],
-  hotel_phone: ['hotels[].phone'],
-  hotel_email: ['hotels[].email'],
-  hotel_notes: ['hotels[].notes'],
+  // Hotel section (array)
+  hotel_name: 'hotels[].name',
+  hotel_address: 'hotels[].address',
+  hotel_city: 'hotels[].city',
+  hotel_country: 'hotels[].country',
+  hotel_checkInDate: 'hotels[].checkInDate',
+  hotel_checkInTime: 'hotels[].checkInTime',
+  hotel_checkOutDate: 'hotels[].checkOutDate',
+  hotel_checkOutTime: 'hotels[].checkOutTime',
+  hotel_bookingReference: 'hotels[].bookingReference',
+  hotel_phone: 'hotels[].phone',
+  hotel_email: 'hotels[].email',
+  hotel_notes: 'hotels[].notes',
   
-  // Flights
-  flight_number: ['flights[].flightNumber'],
-  flight_airline: ['flights[].airline'],
-  flight_passenger_name: ['flights[].fullName'],
-  flight_booking_reference: ['flights[].bookingReference'],
-  flight_ticket_number: ['flights[].ticketNumber'],
-  flight_seat: ['flights[].seat'],
-  flight_class: ['flights[].travelClass'],
-  flight_aircraft_model: ['flights[].aircraft'],
-  flight_duration: ['flights[].flightTime'],
-  flight_origin_city: ['flights[].fromCity'],
-  flight_origin_airport: ['flights[].fromAirport'],
-  flight_destination_city: ['flights[].toCity'],
-  flight_destination_airport: ['flights[].toAirport'],
-  flight_departure_datetime: ['flights[].departureDate', 'flights[].departureTime'],
-  flight_arrival_datetime: ['flights[].arrivalDate', 'flights[].arrivalTime'],
-  // Legacy fields: only apply to time/date when parseable; do NOT map to airports anymore
-  flight_departure: ['flights[].departureDate', 'flights[].departureTime'],
-  flight_arrival: ['flights[].arrivalDate', 'flights[].arrivalTime'],
+  // Food/Catering section (array)
+  food_name: 'food[].name',
+  food_address: 'food[].address',
+  food_city: 'food[].city',
+  food_country: 'food[].country',
+  food_bookingReference: 'food[].bookingReference',
+  food_phone: 'food[].phone',
+  food_email: 'food[].email',
+  food_notes: 'food[].notes',
+  food_serviceDate: 'food[].serviceDate',
+  food_serviceTime: 'food[].serviceTime',
+  food_guestCount: 'food[].guestCount',
   
-  // Contacts
-  contact_name: ['contacts[].name'],
-  contact_email: ['contacts[].email'],
-  contact_phone: ['contacts[].phone'],
-  contact_role: ['contacts[].role'],
+  // Flight section (array)
+  flight_airline: 'flights[].airline',
+  flight_flightNumber: 'flights[].flightNumber',
+  flight_aircraft: 'flights[].aircraft',
+  flight_fullName: 'flights[].fullName',
+  flight_bookingReference: 'flights[].bookingReference',
+  flight_ticketNumber: 'flights[].ticketNumber',
+  flight_fromCity: 'flights[].fromCity',
+  flight_fromAirport: 'flights[].fromAirport',
+  flight_departureTime: 'flights[].departureTime',
+  flight_toCity: 'flights[].toCity',
+  flight_toAirport: 'flights[].toAirport',
+  flight_arrivalTime: 'flights[].arrivalTime',
+  flight_seat: 'flights[].seat',
+  flight_travelClass: 'flights[].travelClass',
+  flight_flightTime: 'flights[].flightTime',
+  flight_direction: 'flights[].direction',
+  flight_notes: 'flights[].notes',
   
-  // Technical
-  technical_requirement: ['technical.equipment', 'technical.other'],
-  technical_equipment_summary: ['technical.equipment'],
-  technical_backline_summary: ['technical.backline'],
-  technical_stage_setup_summary: ['technical.stageSetup'],
-  technical_lighting_summary: ['technical.lightingRequirements'],
-  technical_soundcheck_summary: ['technical.soundcheck'],
-  technical_other_summary: ['technical.other'],
+  // Activity section (array)
+  activity_name: 'activities[].name',
+  activity_location: 'activities[].location',
+  activity_startTime: 'activities[].startTime',
+  activity_endTime: 'activities[].endTime',
+  activity_notes: 'activities[].notes',
+  activity_hasDestination: 'activities[].hasDestination',
+  activity_destinationName: 'activities[].destinationName',
+  activity_destinationLocation: 'activities[].destinationLocation',
   
-  // Catering / food
-  catering_detail: ['food[].notes'],
-  catering_summary: ['food[].notes'],
-  catering_provider_name: ['food[].name'],
-  catering_provider_address: ['food[].address'],
-  catering_provider_city: ['food[].city'],
-  catering_provider_country: ['food[].country'],
-  catering_provider_phone: ['food[].phone'],
-  catering_provider_email: ['food[].email'],
-  catering_booking_reference: ['food[].bookingReference'],
+  // Contact section (array)
+  contact_name: 'contacts[].name',
+  contact_phone: 'contacts[].phone',
+  contact_email: 'contacts[].email',
+  contact_role: 'contacts[].role',
   
-  // Activities / transfers
-  transfer_summary: ['activities[].notes'],
-  ground_transport_summary: ['activities[].notes'],
-  activity_detail: ['activities[].notes'],
+  // Technical section
+  technical_equipment: 'technical.equipment',
+  technical_backline: 'technical.backline',
+  technical_stageSetup: 'technical.stageSetup',
+  technical_lightingRequirements: 'technical.lightingRequirements',
+  technical_soundcheck: 'technical.soundcheck',
+  technical_other: 'technical.other',
   
-  // Misc
-  general_note: ['deal.notes'],
-  other: [],
-};
-
-// =============================================================================
-// Cost Domain Classification
-// =============================================================================
-
-/**
- * Groups related fact types into cost domains to prevent
- * incorrect merging (e.g., artist fee vs venue cost)
- */
-export const COST_DOMAINS: Record<string, ImportFactType[]> = {
-  artist: ['artist_fee'],
-  venue: ['venue_cost'],
-  production: ['production_cost'],
-  catering: ['catering_cost'],
-  accommodation: ['accommodation_cost'],
-  travel: ['travel_cost'],
-  other: ['other_cost'],
+  // Document category (just category, files are uploaded separately)
+  document_category: 'documents[].category',
+  
+  // Fallback for unknown fact types (mapped to notes if used)
+  other: 'notes',
 };
 
 /**
- * Get the cost domain for a fact type
+ * Get all fact types for a given section
  */
-export function getCostDomain(factType: ImportFactType): string | null {
-  for (const [domain, types] of Object.entries(COST_DOMAINS)) {
-    if (types.includes(factType)) {
-      return domain;
-    }
-  }
-  return null;
+export function getFactTypesForSection(section: string): ImportFactType[] {
+  const prefix = section === 'hotels' ? 'hotel_' 
+    : section === 'food' ? 'food_'
+    : section === 'flights' ? 'flight_'
+    : section === 'activities' ? 'activity_'
+    : section === 'contacts' ? 'contact_'
+    : section === 'documents' ? 'document_'
+    : `${section}_`;
+  
+  return (Object.keys(FACT_TYPE_TO_IMPORT_FIELD) as ImportFactType[])
+    .filter(ft => ft.startsWith(prefix));
 }
 
 /**
- * Check if two fact types are in competing cost domains
- * (should never be merged or confused)
+ * Check if a fact type is for an array field
  */
-export function areCompetingCostDomains(type1: ImportFactType, type2: ImportFactType): boolean {
-  const domain1 = getCostDomain(type1);
-  const domain2 = getCostDomain(type2);
-  
-  // If neither is a cost, they don't compete
-  if (!domain1 || !domain2) return false;
-  
-  // If they're the same domain, they don't compete
-  if (domain1 === domain2) return false;
-  
-  // Different cost domains = competing
-  return true;
+export function isArrayFactType(factType: ImportFactType): boolean {
+  const path = FACT_TYPE_TO_IMPORT_FIELD[factType];
+  return path.includes('[]');
+}
+
+/**
+ * Get the array key for a fact type (e.g., 'hotel_name' -> 'hotels')
+ */
+export function getArrayKeyForFactType(factType: ImportFactType): string | null {
+  const path = FACT_TYPE_TO_IMPORT_FIELD[factType];
+  if (!path.includes('[]')) return null;
+  return path.split('[]')[0];
+}
+
+/**
+ * Get the field name within the array item (e.g., 'hotel_name' -> 'name')
+ */
+export function getFieldNameForFactType(factType: ImportFactType): string {
+  const path = FACT_TYPE_TO_IMPORT_FIELD[factType];
+  if (path.includes('[].')) {
+    return path.split('[].')[1];
+  }
+  return path.split('.').pop() || '';
+}
+
+/**
+ * Get the section name from a fact type (e.g., 'hotel_name' -> 'hotel')
+ */
+export function getSectionFromFactType(factType: ImportFactType): string {
+  return factType.split('_')[0];
 }
 
 // =============================================================================
@@ -550,21 +579,6 @@ export const SPEAKER_AUTHORITY: Record<ImportFactSpeaker, number> = {
 };
 
 /**
- * Speaker role restrictions - which speakers can provide authoritative
- * information for which fact types.
- */
-export const SPEAKER_FACT_AUTHORITY: Partial<Record<ImportFactSpeaker, ImportFactType[]>> = {
-  venue: [
-    'venue_cost', 'venue_name', 'venue_city', 'venue_country', 
-    'venue_capacity', 'technical_requirement',
-  ],
-  production: [
-    'production_cost', 'technical_requirement',
-  ],
-  // promoter, artist, artist_agent can speak to all fact types
-};
-
-/**
  * Check if a speaker has authority to provide information for a fact type.
  * Returns true if the speaker can speak to this fact type authoritatively.
  */
@@ -574,22 +588,16 @@ export function speakerHasAuthority(speaker: ImportFactSpeaker, factType: Import
     return true;
   }
   
-  // Check if speaker has specific authority for this fact type
-  const authorizedTypes = SPEAKER_FACT_AUTHORITY[speaker];
-  if (authorizedTypes && authorizedTypes.includes(factType)) {
-    return true;
-  }
+  const section = getSectionFromFactType(factType);
   
-  // Venue can only speak authoritatively about venue matters
+  // Venue can speak authoritatively about general (venue info) and technical
   if (speaker === 'venue') {
-    const costDomain = getCostDomain(factType);
-    return costDomain === 'venue' || factType.startsWith('venue_');
+    return section === 'general' || section === 'technical';
   }
   
-  // Production can only speak authoritatively about production/technical
+  // Production can speak authoritatively about technical
   if (speaker === 'production') {
-    const costDomain = getCostDomain(factType);
-    return costDomain === 'production' || factType === 'technical_requirement';
+    return section === 'technical';
   }
   
   // Unknown speakers have no special authority
@@ -608,13 +616,6 @@ export function getEffectiveSpeakerAuthority(
   // If speaker doesn't have authority for this fact type, reduce weight significantly
   if (!speakerHasAuthority(speaker, factType)) {
     return Math.floor(baseAuthority * 0.3); // 70% penalty
-  }
-  
-  // Boost for domain-specific authority
-  const authorizedTypes = SPEAKER_FACT_AUTHORITY[speaker];
-  if (authorizedTypes && authorizedTypes.includes(factType)) {
-    // Speaker has EXPLICIT authority for this fact type - boost them
-    return baseAuthority + 30; // Venue (70+30=100) beats promoter (80) on venue_cost
   }
   
   return baseAuthority;
