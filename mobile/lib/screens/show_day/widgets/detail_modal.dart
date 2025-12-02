@@ -88,7 +88,7 @@ class DetailHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -152,7 +152,7 @@ class DetailSplitCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -184,7 +184,7 @@ class DetailSplitCard extends StatelessWidget {
           Container(
             width: 1,
             height: 60,
-            color: colorScheme.outline,
+            color: colorScheme.onSurfaceVariant,
             margin: const EdgeInsets.symmetric(horizontal: 16),
           ),
           
@@ -237,7 +237,7 @@ class DetailValueCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

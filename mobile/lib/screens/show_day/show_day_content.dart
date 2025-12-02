@@ -504,6 +504,10 @@ class _LodgingCateringSection extends StatelessWidget {
   }
 
   void _showLodgingDetails(BuildContext context, LodgingInfo hotel) {
+    final actions = <DetailAction>[];
+    if (hotel.phone != null) actions.add(DetailAction.phone(hotel.phone!));
+    if (hotel.email != null) actions.add(DetailAction.email(hotel.email!));
+
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => DetailModal(
@@ -528,12 +532,17 @@ class _LodgingCateringSection extends StatelessWidget {
                 value: hotel.notes!,
               ),
           ],
+          actions: actions,
         ),
       ),
     );
   }
 
   void _showCateringDetails(BuildContext context, CateringInfo restaurant) {
+    final actions = <DetailAction>[];
+    if (restaurant.phone != null) actions.add(DetailAction.phone(restaurant.phone!));
+    if (restaurant.email != null) actions.add(DetailAction.email(restaurant.email!));
+
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => DetailModal(
@@ -551,6 +560,7 @@ class _LodgingCateringSection extends StatelessWidget {
                 value: restaurant.notes!,
               ),
           ],
+          actions: actions,
         ),
       ),
     );
