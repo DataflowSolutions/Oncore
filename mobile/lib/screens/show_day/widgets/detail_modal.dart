@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../components/components.dart';
 
 /// A generic detail modal for displaying information in cards
 /// Matches the design of the web client's detail popups
@@ -26,22 +26,7 @@ class DetailModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        leadingWidth: 100,
-        leading: TextButton.icon(
-          onPressed: () => context.pop(),
-          icon: Icon(Icons.arrow_back_ios, size: 16, color: colorScheme.onSurfaceVariant),
-          label: Text('Back', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.only(left: 16),
-            alignment: Alignment.centerLeft,
-          ),
-        ),
-      ),
+    return LayerScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

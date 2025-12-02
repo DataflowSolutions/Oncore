@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -112,12 +113,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       
       // Settings page (protected) - Layer 2
       // No bottom navigation bar - has back button to return to Layer 1
+      // Uses CupertinoPage for iOS-style swipe-to-go-back
       GoRoute(
         path: '/org/:orgId/settings',
         name: 'settings',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
-          return SettingsScreen(orgId: orgId);
+          return CupertinoPage(
+            child: SettingsScreen(orgId: orgId),
+          );
         },
       ),
       

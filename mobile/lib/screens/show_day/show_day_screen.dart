@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../components/components.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../main/main_shell.dart' show saveLastShow;
@@ -38,17 +39,8 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
     final showAsync = ref.watch(showDetailProvider(widget.showId));
     final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
     
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
-        ),
-        title: Text('Day View', style: TextStyle(color: colorScheme.onSurface)),
-      ),
+    return LayerScaffold(
+      title: 'Day View',
       body: showAsync.when(
         loading: () => Center(
           child: CircularProgressIndicator(color: colorScheme.onSurface),
@@ -343,7 +335,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
 
   void _showScheduleDetails(BuildContext context, ScheduleItem item) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: item.title,
           subtitle: item.type.toUpperCase(),
@@ -410,7 +402,7 @@ class _FlightsSection extends StatelessWidget {
 
   void _showFlightDetails(BuildContext context, FlightInfo flight) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: flight.airline ?? 'Flight',
           subtitle: flight.flightNumber,
@@ -518,7 +510,7 @@ class _LodgingCateringSection extends StatelessWidget {
     if (hotel.email != null) actions.add(DetailAction.email(hotel.email!));
 
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: hotel.hotelName ?? 'Hotel',
           subtitle: hotel.city, // Or room type if available
@@ -553,7 +545,7 @@ class _LodgingCateringSection extends StatelessWidget {
     if (restaurant.email != null) actions.add(DetailAction.email(restaurant.email!));
 
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: restaurant.providerName ?? 'Restaurant',
           subtitle: restaurant.city,

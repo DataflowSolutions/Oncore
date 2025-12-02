@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../components/components.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../main/main_shell.dart' show saveLastShow;
@@ -336,7 +337,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
 
   void _showScheduleDetails(BuildContext context, ScheduleItem item) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: item.title,
           subtitle: item.type.toUpperCase(),
@@ -403,7 +404,7 @@ class _FlightsSection extends StatelessWidget {
 
   void _showFlightDetails(BuildContext context, FlightInfo flight) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: flight.airline ?? 'Flight',
           subtitle: flight.flightNumber,
@@ -504,7 +505,7 @@ class _LodgingCateringSection extends StatelessWidget {
 
   void _showLodgingDetails(BuildContext context, LodgingInfo hotel) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: hotel.hotelName ?? 'Hotel',
           subtitle: 'LODGING',
@@ -534,7 +535,7 @@ class _LodgingCateringSection extends StatelessWidget {
 
   void _showCateringDetails(BuildContext context, CateringInfo restaurant) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => DetailModal(
           title: restaurant.providerName ?? 'Restaurant',
           subtitle: 'CATERING',
