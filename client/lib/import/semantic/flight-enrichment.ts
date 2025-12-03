@@ -107,53 +107,103 @@ export interface FlightAPIProvider {
 /**
  * Mock provider for development/testing
  * 
- * Returns realistic flight data for known flights in the test database.
- * Acts like a real API: only returns data when both flightNumber and date match.
+ * Dynamically generates realistic flight data for ANY flight number/date combination.
+ * No need to maintain a static database - just generates consistent mock data on the fly.
  */
 class MockFlightProvider implements FlightAPIProvider {
   name = 'mock';
 
   /**
-   * Mock flight database
-   * Key: "FLIGHTNUMBER_YYYY-MM-DD"
+   * Extract airline code from flight number (e.g., "TK67" -> "TK")
    */
-  private readonly MOCK_FLIGHTS: Record<string, FlightEnrichmentData> = {
-    // TK67: Istanbul (IST) → New York JFK on 2026-03-21
-    'TK67_2026-03-21': {
-      airline: 'Turkish Airlines',
-      airlineIATA: 'TK',
-      flightNumber: 'TK67',
-      fromAirport: 'IST',
-      fromCity: 'Istanbul',
-      fromCountry: 'Turkey',
-      toAirport: 'JFK',
-      toCity: 'New York',
-      toCountry: 'USA',
-      departureTime: '2026-03-21T13:55:00Z',
-      arrivalTime: '2026-03-21T17:30:00Z',
-      flightTime: '11h 35m',
-      aircraft: 'Boeing 787-9',
-      status: 'scheduled',
-    },
+  private extractAirlineCode(flightNumber: string): string {
+    const match = flightNumber.match(/^([A-Z]{2})/);
+    return match ? match[1] : 'XX';
+  }
 
-    // TK1793: New York JFK → Istanbul (IST) on 2026-03-22
-    'TK1793_2026-03-22': {
-      airline: 'Turkish Airlines',
-      airlineIATA: 'TK',
-      flightNumber: 'TK1793',
-      fromAirport: 'JFK',
-      fromCity: 'New York',
-      fromCountry: 'USA',
-      toAirport: 'IST',
-      toCity: 'Istanbul',
-      toCountry: 'Turkey',
-      departureTime: '2026-03-22T20:30:00Z',
-      arrivalTime: '2026-03-23T14:10:00Z',
-      flightTime: '10h 40m',
-      aircraft: 'Airbus A350-900',
+  /**
+   * Get airline name from IATA code
+   */
+  private getAirlineName(iataCode: string): string {
+    const airlines: Record<string, string> = {
+      'TK': 'Turkish Airlines',
+      'LH': 'Lufthansa',
+      'BA': 'British Airways',
+      'AF': 'Air France',
+      'KL': 'KLM',
+      'EK': 'Emirates',
+      'QR': 'Qatar Airways',
+      'AA': 'American Airlines',
+      'DL': 'Delta Air Lines',
+      'UA': 'United Airlines',
+    };
+    return airlines[iataCode] || `${iataCode} Airlines`;
+  }
+
+  /**
+   * Generate consistent mock data for any flight
+   */
+  private generateMockFlight(flightNumber: string, date: string): FlightEnrichmentData {
+    const airlineIATA = this.extractAirlineCode(flightNumber);
+    const airline = this.getAirlineName(airlineIATA);
+
+    // Generate consistent departure time based on flight number hash
+    const flightNumeric = parseInt(flightNumber.replace(/\D/g, '')) || 0;
+    const departureHour = 6 + (flightNumeric % 18); // 6:00 - 23:59
+    const departureMinute = (flightNumeric % 12) * 5; // :00, :05, :10, etc.
+
+    const departureTime = `${date}T${String(departureHour).padStart(2, '0')}:${String(departureMinute).padStart(2, '0')}:00Z`;
+    
+    // Flight duration: 6-12 hours based on hash
+    const flightDurationHours = 6 + (flightNumeric % 7);
+    const flightDurationMinutes = (flightNumeric % 6) * 10;
+    
+    // Calculate arrival time
+    const departureDate = new Date(departureTime);
+    departureDate.setHours(departureDate.getHours() + flightDurationHours);
+    departureDate.setMinutes(departureDate.getMinutes() + flightDurationMinutes);
+    const arrivalTime = departureDate.toISOString();
+
+    // Format flight time
+    const flightTime = `${flightDurationHours}h ${flightDurationMinutes}m`;
+
+    // Consistent airport pairs based on flight number
+    const routes = [
+      { from: 'IST', fromCity: 'Istanbul', fromCountry: 'Turkey', to: 'JFK', toCity: 'New York', toCountry: 'USA' },
+      { from: 'LHR', fromCity: 'London', fromCountry: 'UK', to: 'DXB', toCity: 'Dubai', toCountry: 'UAE' },
+      { from: 'CDG', fromCity: 'Paris', fromCountry: 'France', to: 'LAX', toCity: 'Los Angeles', toCountry: 'USA' },
+      { from: 'FRA', fromCity: 'Frankfurt', fromCountry: 'Germany', to: 'SIN', toCity: 'Singapore', toCountry: 'Singapore' },
+      { from: 'AMS', fromCity: 'Amsterdam', fromCountry: 'Netherlands', to: 'NRT', toCity: 'Tokyo', toCountry: 'Japan' },
+    ];
+    const route = routes[flightNumeric % routes.length];
+
+    // Consistent aircraft based on hash
+    const aircraftTypes = [
+      'Boeing 787-9',
+      'Airbus A350-900',
+      'Boeing 777-300ER',
+      'Airbus A330-300',
+      'Boeing 737-800',
+    ];
+    const aircraft = aircraftTypes[flightNumeric % aircraftTypes.length];
+
+    return {
+      airline,
+      airlineIATA,
+      flightNumber,
+      fromAirport: route.from,
+      fromCity: route.fromCity,
+      fromCountry: route.fromCountry,
+      toAirport: route.to,
+      toCity: route.toCity,
+      toCountry: route.toCountry,
+      departureTime,
+      arrivalTime,
+      flightTime,
+      aircraft,
       status: 'scheduled',
-    },
-  };
+    };
+  }
 
   async lookup(flightNumber: string, date: string): Promise<FlightEnrichmentData | null> {
     // Validate required fields
@@ -169,28 +219,16 @@ class MockFlightProvider implements FlightAPIProvider {
     const normalizedFlightNumber = flightNumber.toUpperCase().trim();
     const normalizedDate = date.trim(); // Expect YYYY-MM-DD format
 
-    // Generate lookup key
-    const lookupKey = `${normalizedFlightNumber}_${normalizedDate}`;
+    // Generate mock data dynamically
+    const flightData = this.generateMockFlight(normalizedFlightNumber, normalizedDate);
 
-    // Check if we have this flight in our mock database
-    const flightData = this.MOCK_FLIGHTS[lookupKey];
-
-    if (flightData) {
-      logger.info('Mock flight lookup: SUCCESS', {
-        flightNumber: normalizedFlightNumber,
-        date: normalizedDate,
-        route: `${flightData.fromCity} → ${flightData.toCity}`
-      });
-      return flightData;
-    }
-
-    // Flight not found in mock database
-    logger.debug('Mock flight lookup: NOT FOUND', {
+    logger.info('Mock flight lookup: SUCCESS (dynamic generation)', {
       flightNumber: normalizedFlightNumber,
       date: normalizedDate,
-      hint: 'Add this flight to MOCK_FLIGHTS if you want mock data for it'
+      route: `${flightData.fromCity} → ${flightData.toCity}`
     });
-    return null;
+
+    return flightData;
   }
 }
 

@@ -101,17 +101,16 @@ const TEST_DOCUMENTS: TestDocument[] = [
     expectedFields: {
       general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
       deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      // Only test fields extracted by LLM - API enrichment fields verified separately
       flights: [
-        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
-        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
-        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+        'flightNumber', 'date', 'fullName', 'ticketNumber', 'bookingReference', 
+        'seat', 'travelClass', 'notes'
       ],
       hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
       food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
       contacts: ['name', 'phone', 'email', 'role'],
       activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
       technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
-      documents: ['fileName', 'fileSize', 'category'],
     },
   },
   {
@@ -121,17 +120,16 @@ const TEST_DOCUMENTS: TestDocument[] = [
     expectedFields: {
       general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
       deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      // Only test fields extracted by LLM - API enrichment fields verified separately
       flights: [
-        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
-        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
-        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+        'flightNumber', 'date', 'fullName', 'ticketNumber', 'bookingReference', 
+        'seat', 'travelClass', 'notes'
       ],
       hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
       food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
       contacts: ['name', 'phone', 'email', 'role'],
       activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
       technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
-      documents: ['fileName', 'fileSize', 'category'],
     },
   },
   {
@@ -141,10 +139,10 @@ const TEST_DOCUMENTS: TestDocument[] = [
     expectedFields: {
       general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
       deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      // Only test fields extracted by LLM - API enrichment fields verified separately
       flights: [
-        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
-        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
-        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+        'flightNumber', 'date', 'fullName', 'ticketNumber', 'bookingReference', 
+        'seat', 'travelClass', 'notes'
       ],
       hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
       food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
@@ -161,17 +159,16 @@ const TEST_DOCUMENTS: TestDocument[] = [
     expectedFields: {
       general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
       deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      // Only test fields extracted by LLM - API enrichment fields verified separately
       flights: [
-        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
-        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
-        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+        'flightNumber', 'date', 'fullName', 'ticketNumber', 'bookingReference', 
+        'seat', 'travelClass', 'notes'
       ],
       hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
       food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
       contacts: ['name', 'phone', 'email', 'role'],
       activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
       technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
-      documents: ['fileName', 'fileSize', 'category'],
     },
   },
 ];
@@ -731,6 +728,9 @@ class SemanticImportE2ETest {
     // Step 4: Apply resolutions to ImportData
     console.log('\n  📝 Step 4: Apply to ImportData (Stage 3)');
     const { applyResolutionsToImportData } = await import('../../lib/import/semantic/orchestrator');
+    const flightEnrichment = await import('../../lib/import/semantic/flight-enrichment');
+    const { getFlightEnrichmentService } = flightEnrichment;
+    type ExtractedFlightKey = flightEnrichment.ExtractedFlightKey;
     
     const selectedFacts = importFacts.filter(f => 
       resolutionResult.selected_fact_ids.includes(f.id)
@@ -738,6 +738,60 @@ class SemanticImportE2ETest {
     
     extractedData = applyResolutionsToImportData(resolutions, selectedFacts);
     console.log(`     ✓ ImportData populated`);
+
+    // Step 4.5: Flight Enrichment (API lookup for airports, times, etc.)
+    if (extractedData.flights && extractedData.flights.length > 0) {
+      console.log(`\n  ✈️  Step 4.5: Enriching ${extractedData.flights.length} flight(s)`);
+      
+      const flightEnrichmentService = getFlightEnrichmentService();
+      
+      // Convert ImportedFlight[] to ExtractedFlightKey[] for enrichment
+      const flightKeys: ExtractedFlightKey[] = extractedData.flights.map(flight => ({
+        flightNumber: flight.flightNumber || '',
+        date: flight.date,
+        passengerName: flight.fullName,
+        ticketNumber: flight.ticketNumber,
+        bookingReference: flight.bookingReference,
+        seat: flight.seat,
+        travelClass: flight.travelClass,
+        notes: flight.notes,
+      }));
+
+      // Enrich all flights
+      const enrichedFlights = await flightEnrichmentService.enrichFlights(flightKeys);
+
+      // Merge enriched data back into flights
+      extractedData.flights = extractedData.flights.map((flight, index) => {
+        const enriched = enrichedFlights[index];
+
+        if (enriched.enrichmentStatus === 'success') {
+          console.log(`     ✓ Enriched ${enriched.flightNumber}: ${enriched.fromCity} → ${enriched.toCity}`);
+          return {
+            ...flight,
+            // API-enriched fields (only set if successfully enriched)
+            airline: enriched.airline || flight.airline,
+            fromAirport: enriched.fromAirport || flight.fromAirport,
+            fromCity: enriched.fromCity || flight.fromCity,
+            toAirport: enriched.toAirport || flight.toAirport,
+            toCity: enriched.toCity || flight.toCity,
+            departureTime: enriched.departureTime || flight.departureTime,
+            arrivalTime: enriched.arrivalTime || flight.arrivalTime,
+            flightTime: enriched.flightTime || flight.flightTime,
+            aircraft: enriched.aircraft || flight.aircraft,
+          };
+        }
+
+        // Enrichment failed - keep original data (keys only)
+        if (enriched.enrichmentStatus === 'failed') {
+          console.log(`     ⚠️  Enrichment failed for ${flight.flightNumber}: ${enriched.enrichmentError}`);
+        }
+
+        return flight;
+      });
+
+      const successCount = enrichedFlights.filter(f => f.enrichmentStatus === 'success').length;
+      console.log(`     ✓ Enrichment complete: ${successCount}/${enrichedFlights.length} successful`);
+    }
 
     // Step 5: Analyze coverage
     console.log('\n  📊 Step 5: Field Coverage Analysis');

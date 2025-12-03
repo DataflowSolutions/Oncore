@@ -1,0 +1,5875 @@
+{
+  "summary": {
+    "timestamp": "2025-12-03T15-16-03",
+    "totalDocuments": 4,
+    "totalFacts": 87,
+    "totalResolutions": 66,
+    "totalExpectedFields": 292,
+    "totalExtractedFields": 25,
+    "totalMissingFields": 267,
+    "overallCoveragePercent": 9,
+    "totalErrors": 0,
+    "coverageBySection": {
+      "general": {
+        "expected": 28,
+        "extracted": 7,
+        "percent": 25
+      },
+      "deal": {
+        "expected": 20,
+        "extracted": 1,
+        "percent": 5
+      },
+      "flights": {
+        "expected": 68,
+        "extracted": 5,
+        "percent": 7
+      },
+      "hotels": {
+        "expected": 48,
+        "extracted": 1,
+        "percent": 2
+      },
+      "contacts": {
+        "expected": 16,
+        "extracted": 6,
+        "percent": 38
+      },
+      "activities": {
+        "expected": 32,
+        "extracted": 0,
+        "percent": 0
+      },
+      "technical": {
+        "expected": 24,
+        "extracted": 3,
+        "percent": 13
+      },
+      "food": {
+        "expected": 44,
+        "extracted": 2,
+        "percent": 5
+      },
+      "documents": {
+        "expected": 12,
+        "extracted": 0,
+        "percent": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "document": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+      "timestamp": "2025-12-03T15:16:16.931Z",
+      "facts": [
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_flightNumber",
+          "fact_domain": "flight_1",
+          "value_text": "TK67",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Turkish Airlines - TK67"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_date",
+          "fact_domain": "flight_1",
+          "value_date": "2026-03-21",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "extraction_reason": "[Status upgraded: confirmation document]",
+          "raw_snippet": "21 Mar Saturday 2026"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_travelClass",
+          "fact_domain": "flight_1",
+          "value_text": "Economy",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Economy Class"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_flightNumber",
+          "fact_domain": "flight_2",
+          "value_text": "TK1793",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Turkish Airlines - TK1793"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_date",
+          "fact_domain": "flight_2",
+          "value_date": "2026-03-22",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "extraction_reason": "[Status upgraded: confirmation document]",
+          "raw_snippet": "Sunday, March 22"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_fullName",
+          "fact_domain": "flight_1",
+          "value_text": "Mr. JEANANDRE MORENO",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Mr. JEANANDRE MORENO"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_ticketNumber",
+          "fact_domain": "flight_1",
+          "value_text": "2352279024704",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Ticket no 2352279024704"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_seat",
+          "fact_domain": "flight_1",
+          "value_text": "11K",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "extraction_reason": "[Status upgraded: confirmation document]",
+          "raw_snippet": "11K"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774964523",
+          "source_file_name": "Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf",
+          "source_scope": "confirmation",
+          "speaker_role": "unknown",
+          "fact_type": "flight_seat",
+          "fact_domain": "flight_2",
+          "value_text": "07F",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "extraction_reason": "[Status upgraded: confirmation document]",
+          "raw_snippet": "07F"
+        }
+      ],
+      "resolutions": [
+        {
+          "fact_type": "flight_flightNumber",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-0",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6984999999999999
+        },
+        {
+          "fact_type": "flight_date",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-1",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.8985
+        },
+        {
+          "fact_type": "flight_travelClass",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-2",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6984999999999999
+        },
+        {
+          "fact_type": "flight_flightNumber",
+          "fact_domain": "flight_leg_2",
+          "selected_fact_id": "fact-3",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6984999999999999
+        },
+        {
+          "fact_type": "flight_date",
+          "fact_domain": "flight_leg_2",
+          "selected_fact_id": "fact-4",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.8985
+        },
+        {
+          "fact_type": "flight_fullName",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-5",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6984999999999999
+        },
+        {
+          "fact_type": "flight_ticketNumber",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-6",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6984999999999999
+        },
+        {
+          "fact_type": "flight_seat",
+          "fact_domain": "flight_leg_1",
+          "selected_fact_id": "fact-7",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.8985
+        },
+        {
+          "fact_type": "flight_seat",
+          "fact_domain": "flight_leg_2",
+          "selected_fact_id": "fact-8",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.8985
+        }
+      ],
+      "extractedData": {
+        "general": {
+          "artist": "",
+          "eventName": "",
+          "venue": "",
+          "date": "",
+          "setTime": "",
+          "city": "",
+          "country": ""
+        },
+        "deal": {
+          "fee": "",
+          "paymentTerms": "",
+          "dealType": "",
+          "currency": "",
+          "notes": ""
+        },
+        "hotels": [],
+        "food": [],
+        "flights": [
+          {
+            "id": "cb62b4d9-3e03-45b4-a5ea-12111ac9d73d",
+            "flightNumber": "TK67",
+            "_domain": "flight_leg_1",
+            "_source_scope": "confirmation",
+            "date": "2026-03-21",
+            "travelClass": "Economy",
+            "fullName": "Mr. JEANANDRE MORENO",
+            "ticketNumber": "2352279024704",
+            "seat": "11K"
+          },
+          {
+            "id": "997a15dd-7082-442b-975a-19f2b0c93a33",
+            "flightNumber": "TK1793",
+            "_domain": "flight_leg_2",
+            "_source_scope": "confirmation",
+            "date": "2026-03-22",
+            "seat": "07F"
+          }
+        ],
+        "activities": [],
+        "documents": [],
+        "contacts": [],
+        "technical": {
+          "equipment": "",
+          "backline": "",
+          "stageSetup": "",
+          "lightingRequirements": "",
+          "soundcheck": "",
+          "other": ""
+        },
+        "warnings": []
+      },
+      "coverage": [
+        {
+          "section": "general",
+          "field": "artist",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "eventName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "venue",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "date",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "setTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "fee",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "paymentTerms",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "dealType",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "currency",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "flights",
+          "field": "airline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightNumber",
+          "expected": true,
+          "extracted": true,
+          "value": "TK67",
+          "factType": "flight_flightNumber",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "flights",
+          "field": "aircraft",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fullName",
+          "expected": true,
+          "extracted": true,
+          "value": "Mr. JEANANDRE MORENO",
+          "factType": "flight_fullName",
+          "status": "pass",
+          "coveragePercent": 50
+        },
+        {
+          "section": "flights",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "ticketNumber",
+          "expected": true,
+          "extracted": true,
+          "value": "2352279024704",
+          "factType": "flight_ticketNumber",
+          "status": "pass",
+          "coveragePercent": 50
+        },
+        {
+          "section": "flights",
+          "field": "fromCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "departureTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "arrivalTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "seat",
+          "expected": true,
+          "extracted": true,
+          "value": "11K",
+          "factType": "flight_seat",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "flights",
+          "field": "travelClass",
+          "expected": true,
+          "extracted": true,
+          "value": "Economy",
+          "factType": "flight_travelClass",
+          "status": "pass",
+          "coveragePercent": 50
+        },
+        {
+          "section": "flights",
+          "field": "flightTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "direction",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "role",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "location",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "startTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "endTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "hasDestination",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationLocation",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "technical",
+          "field": "equipment",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "backline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "stageSetup",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "lightingRequirements",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "soundcheck",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "other",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "food",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "guestCount",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileSize",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "category",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        }
+      ],
+      "errors": [],
+      "stats": {
+        "factsExtracted": 9,
+        "factsPostProcessed": 9,
+        "resolutionsGenerated": 9,
+        "resolvedCount": 4,
+        "informationalCount": 5,
+        "unagreedCount": 0,
+        "missingCount": 0,
+        "expectedFields": 73,
+        "extractedFields": 5,
+        "missingFields": 68,
+        "coveragePercent": 7
+      }
+    },
+    {
+      "document": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+      "timestamp": "2025-12-03T15:16:49.290Z",
+      "facts": [
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "contact_name",
+          "fact_domain": "contact_1",
+          "value_text": "Harald Wilm",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Harald Wilm"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_1",
+          "value_text": "+49[0]16096791192",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Phone: +49[0]16096791192"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "contact_email",
+          "fact_domain": "contact_1",
+          "value_text": "harald@mfm-booking.de",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "E-Mail: harald@mfm-booking.de"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "deal_fee",
+          "fact_domain": "deal",
+          "value_text": "EUR 6750,-",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Fee : EUR 6750,-"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The organizer agrees to pay the fee EUR 6750,- straight away",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The organizer agrees to pay the fee EUR 6750,- straight away"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "Artist shall not be required to leave if no deposit has been received",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Artist shall not be required to leave if no deposit has been received"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "Artist’s fee shall be net of any withholding and/or other tax",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Artist’s fee shall be net of any withholding and/or other tax"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The organizer pays the agency commission of EUR 750,-",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The organizer pays the agency commission of EUR 750,-"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The invitation for VISA [if necessary] must be arranged and paid by the promoter",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The invitation for VISA [if necessary] must be arranged and paid by the promoter"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The driver at the airport must ALWAYS pick up the artist with a name list",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The driver at the airport must ALWAYS pick up the artist with a name list"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The organizer guarantees the security of the whole equipment",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The organizer guarantees the security of the whole equipment"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The artistic design of the performance is only affair of the artist",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The artistic design of the performance is only affair of the artist"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "For the organizer it is not allowed to make any kind of recordings",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "For the organizer it is not allowed to make any kind of recordings"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The costs and reservations of the accommodation of the artist will be bearded by the organizer",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The costs and reservations of the accommodation of the artist will be bearded by the organizer"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The organizer must take care for the transfer from the arrival place to the hotel",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The organizer must take care for the transfer from the arrival place to the hotel"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "value_text": "The organizer cares for catering and during the performance he cares especially for the fact that the artist gets beverages whenever he needs",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "The organizer cares for catering and during the performance he cares especially for the fact that the artist gets beverages whenever he needs"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "general_artist",
+          "fact_domain": "general",
+          "value_text": "Son of Son [DJ]",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Son of Son [DJ]"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "general_date",
+          "fact_domain": "general",
+          "value_date": "2024-12-31",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Date : 31.12.2024"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "general_venue",
+          "fact_domain": "general",
+          "value_text": "Soho, Dubai, UAE",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Place of arrangement : Soho, Dubai, UAE"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "general",
+          "value_time": "00:30",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Start : starting 00.30"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "general",
+          "value_text": "Co- Headline support for Argy",
+          "direction": "unknown",
+          "status": "final",
+          "confidence": 0.5,
+          "raw_snippet": "Billing : Co- Headline support for Argy"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "hotel_name",
+          "fact_domain": "hotel_1",
+          "value_text": "2 double rooms[at least 5 stars and late-check-out not earlier than 4 pm] for 3 Nights.",
+          "direction": "unknown",
+          "status": "offer",
+          "confidence": 0.5,
+          "raw_snippet": "Hotel : 2 double rooms[at least 5 stars and late-check-out not earlier than 4 pm] for 3 Nights."
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "hotel_notes",
+          "fact_domain": "hotel_1",
+          "value_text": "in the name of – Alec Eklow and Jean Moreno",
+          "direction": "unknown",
+          "status": "offer",
+          "confidence": 0.5,
+          "raw_snippet": "Hotelreservation : in the name of – Alec Eklow and Jean Moreno"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical",
+          "value_text": "3x Pioneer CDJ-3000 [Linked to each other]",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "3x Pioneer CDJ-3000 [Linked to each other]"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical",
+          "value_text": "Pioneer V10 or DJM-900",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Pioneer V10 or DJM-900"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical",
+          "value_text": "2x High power monitor speakers pointed towards ear level [Within range 2 meters]",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "2x High power monitor speakers pointed towards ear level [Within range 2 meters]"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical",
+          "value_text": "Monitor volume adjustment must be accessible to DJ",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Monitor volume adjustment must be accessible to DJ"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x Premium Vodka",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x Premium Vodka"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "Cranberry juice",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Cranberry juice"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "Bucket of ice",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Bucket of ice"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "4x Still water",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "4x Still water"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x Tea pot to bring on stage (Important)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x Tea pot to bring on stage (Important)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x Tea cup to bring on stage (Important)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x Tea cup to bring on stage (Important)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "5x Tea bags (red, green or black. Very important)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "5x Tea bags (red, green or black. Very important)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "6x Sugar free Red Bulls",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "6x Sugar free Red Bulls"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "Bags of cashew nuts and peanuts",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Bags of cashew nuts and peanuts"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "Staff must always be close and ready at all times",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Staff must always be close and ready at all times"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "Full body mirror backstage",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Full body mirror backstage"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x iPhone 14 charger (Lightning)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x iPhone 14 charger (Lightning)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x iPhone 15 Charger (USB)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x iPhone 15 Charger (USB)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "2x local to EU power outlet adapter (if local is not EU)",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "2x local to EU power outlet adapter (if local is not EU)"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "50cl of hand sanitizer",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "50cl of hand sanitizer"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1x Fan under the table",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1x Fan under the table"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "1 Small and 1 Medium Sized Towel",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1 Small and 1 Medium Sized Towel"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764774977035",
+          "source_file_name": "Son of Son @ Sohho, Dubai - 31.12.2024.pdf",
+          "source_scope": "contract_main",
+          "speaker_role": "unknown",
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "value_text": "A warm dinner on the night of performance for 2 Persons",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "A warm dinner on the night of performance for 2 Persons"
+        }
+      ],
+      "resolutions": [
+        {
+          "fact_type": "contact_name",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-0",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.7135
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-1",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.7135
+        },
+        {
+          "fact_type": "contact_email",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-2",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.7135
+        },
+        {
+          "fact_type": "deal_fee",
+          "fact_domain": "deal",
+          "selected_fact_id": "fact-3",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.9135
+        },
+        {
+          "fact_type": "general_artist",
+          "fact_domain": "general",
+          "selected_fact_id": "fact-16",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.9135
+        },
+        {
+          "fact_type": "general_date",
+          "fact_domain": "general",
+          "selected_fact_id": "fact-17",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.9135
+        },
+        {
+          "fact_type": "general_venue",
+          "fact_domain": "general",
+          "selected_fact_id": "fact-18",
+          "state": "resolved",
+          "reason": "Explicit acceptance found",
+          "confidence": 0.9135
+        },
+        {
+          "fact_type": "hotel_name",
+          "fact_domain": "hotel_1",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "Single offer fact, no negotiation context",
+          "confidence": 0.6
+        },
+        {
+          "fact_type": "hotel_notes",
+          "fact_domain": "hotel_1",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "Single offer fact, no negotiation context",
+          "confidence": 0.6
+        },
+        {
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical",
+          "selected_fact_id": "fact-23",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6135
+        },
+        {
+          "fact_type": "technical_other",
+          "fact_domain": "technical",
+          "selected_fact_id": "fact-27",
+          "state": "informational",
+          "reason": "Single info fact, no negotiation context",
+          "confidence": 0.6135
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "deal",
+          "selected_fact_id": "fact-4",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "The organizer agrees to pay the fee EUR 6750,- straight away",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 12 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "12 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.61)",
+              "conclusion": "Informational value: The organizer agrees to pay the fee EUR 6750,- straight away"
+            }
+          ],
+          "confidence": 0.6135
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "general",
+          "selected_fact_id": "fact-19",
+          "state": "resolved",
+          "reason": "Accepted/final fact from unknown (authority: 9)",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 2 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "2 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Found accepted/final fact(s)",
+              "observation": "Selected fact fact-19 (speaker: unknown, authority: 9, confidence: 0.81)",
+              "conclusion": "Final value: undefined"
+            }
+          ],
+          "confidence": 0.8135
+        }
+      ],
+      "extractedData": {
+        "general": {
+          "artist": "Son of Son [DJ]",
+          "eventName": "Son of Son [DJ] @ Soho, Dubai, UAE",
+          "venue": "Soho, Dubai, UAE",
+          "date": "2024-12-31",
+          "setTime": "",
+          "city": "",
+          "country": "UAE"
+        },
+        "deal": {
+          "fee": "EUR 6750,-",
+          "paymentTerms": "",
+          "dealType": "",
+          "currency": "",
+          "notes": ""
+        },
+        "hotels": [],
+        "food": [],
+        "flights": [],
+        "activities": [],
+        "documents": [],
+        "contacts": [
+          {
+            "id": "d0425a69-34be-4a22-922f-7d53a565b232",
+            "name": "Harald Wilm",
+            "phone": "+49[0]16096791192",
+            "email": "harald@mfm-booking.de",
+            "role": "",
+            "_domain": "contact_1",
+            "_source_scope": "contract_main"
+          }
+        ],
+        "technical": {
+          "equipment": "3x Pioneer CDJ-3000 [Linked to each other]",
+          "backline": "",
+          "stageSetup": "",
+          "lightingRequirements": "",
+          "soundcheck": "",
+          "other": "1x Premium Vodka"
+        },
+        "warnings": [],
+        "notes": "The organizer agrees to pay the fee EUR 6750,- straight away"
+      },
+      "coverage": [
+        {
+          "section": "general",
+          "field": "artist",
+          "expected": true,
+          "extracted": true,
+          "value": "Son of Son [DJ]",
+          "factType": "general_artist",
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "eventName",
+          "expected": true,
+          "extracted": true,
+          "value": "Son of Son [DJ] @ Soho, Dubai, UAE",
+          "factType": null,
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "venue",
+          "expected": true,
+          "extracted": true,
+          "value": "Soho, Dubai, UAE",
+          "factType": "general_venue",
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "date",
+          "expected": true,
+          "extracted": true,
+          "value": "2024-12-31",
+          "factType": "general_date",
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "setTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "country",
+          "expected": true,
+          "extracted": true,
+          "value": "UAE",
+          "factType": null,
+          "status": "pass"
+        },
+        {
+          "section": "deal",
+          "field": "fee",
+          "expected": true,
+          "extracted": true,
+          "value": "EUR 6750,-",
+          "factType": "deal_fee",
+          "status": "pass"
+        },
+        {
+          "section": "deal",
+          "field": "paymentTerms",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "dealType",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "currency",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "flights",
+          "field": "airline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "aircraft",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fullName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "ticketNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "departureTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "arrivalTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "seat",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "travelClass",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "direction",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": "hotel_name",
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": "hotel_notes",
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "name",
+          "expected": true,
+          "extracted": true,
+          "value": "Harald Wilm",
+          "factType": "contact_name",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "contacts",
+          "field": "phone",
+          "expected": true,
+          "extracted": true,
+          "value": "+49[0]16096791192",
+          "factType": "contact_phone",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "contacts",
+          "field": "email",
+          "expected": true,
+          "extracted": true,
+          "value": "harald@mfm-booking.de",
+          "factType": "contact_email",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "contacts",
+          "field": "role",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "location",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "startTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "endTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "hasDestination",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationLocation",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "technical",
+          "field": "equipment",
+          "expected": true,
+          "extracted": true,
+          "value": "3x Pioneer CDJ-3000 [Linked to each other]",
+          "factType": "technical_equipment",
+          "status": "pass"
+        },
+        {
+          "section": "technical",
+          "field": "backline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "stageSetup",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "lightingRequirements",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "soundcheck",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "other",
+          "expected": true,
+          "extracted": true,
+          "value": "1x Premium Vodka",
+          "factType": "technical_other",
+          "status": "pass"
+        },
+        {
+          "section": "food",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "guestCount",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileSize",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "category",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        }
+      ],
+      "errors": [],
+      "stats": {
+        "factsExtracted": 45,
+        "factsPostProcessed": 45,
+        "resolutionsGenerated": 13,
+        "resolvedCount": 5,
+        "informationalCount": 8,
+        "unagreedCount": 0,
+        "missingCount": 0,
+        "expectedFields": 73,
+        "extractedFields": 11,
+        "missingFields": 62,
+        "coveragePercent": 15
+      }
+    },
+    {
+      "document": "Son of Son @ Isle of Summer, München - 10.05.2025.pdf",
+      "timestamp": "2025-12-03T15:16:49.892Z",
+      "facts": [],
+      "resolutions": [],
+      "extractedData": {
+        "general": {
+          "artist": "",
+          "eventName": "",
+          "venue": "",
+          "date": "",
+          "setTime": "",
+          "city": "",
+          "country": ""
+        },
+        "deal": {
+          "fee": "",
+          "paymentTerms": "",
+          "dealType": "",
+          "currency": "",
+          "notes": ""
+        },
+        "hotels": [],
+        "food": [],
+        "flights": [],
+        "activities": [],
+        "documents": [],
+        "contacts": [],
+        "technical": {
+          "equipment": "",
+          "backline": "",
+          "stageSetup": "",
+          "lightingRequirements": "",
+          "soundcheck": "",
+          "other": ""
+        },
+        "warnings": []
+      },
+      "coverage": [
+        {
+          "section": "general",
+          "field": "artist",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "eventName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "venue",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "date",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "setTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "fee",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "paymentTerms",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "dealType",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "currency",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "flights",
+          "field": "airline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "aircraft",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fullName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "ticketNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "departureTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "arrivalTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "seat",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "travelClass",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "direction",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "role",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "location",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "startTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "endTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "hasDestination",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationLocation",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "technical",
+          "field": "equipment",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "backline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "stageSetup",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "lightingRequirements",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "soundcheck",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "other",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "food",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "guestCount",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileSize",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "category",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        }
+      ],
+      "errors": [],
+      "stats": {
+        "factsExtracted": 0,
+        "factsPostProcessed": 0,
+        "resolutionsGenerated": 0,
+        "resolvedCount": 0,
+        "informationalCount": 0,
+        "unagreedCount": 0,
+        "missingCount": 0,
+        "expectedFields": 73,
+        "extractedFields": 0,
+        "missingFields": 73,
+        "coveragePercent": 0
+      }
+    },
+    {
+      "document": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+      "timestamp": "2025-12-03T15:17:18.346Z",
+      "facts": [
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_name",
+          "fact_domain": "contact_1",
+          "value_text": "Harald Wilm",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Harald Wilm"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_1",
+          "value_text": "+49 160 96791192",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+49 160 96791192"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_email",
+          "fact_domain": "contact_1",
+          "value_text": "harald@mfm-booking.de",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "harald@mfm-booking.de"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_name",
+          "fact_domain": "contact_2",
+          "value_text": "Alec Eklow",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Alec Eklow"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_2",
+          "value_text": "+46 70 215 23 20",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+46 70 215 23 20"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_name",
+          "fact_domain": "contact_3",
+          "value_text": "Jean Moreno",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Jean Moreno"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_3",
+          "value_text": "+46 735660738",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+46 735660738"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_name",
+          "fact_domain": "contact_4",
+          "value_text": "Harald Wilm",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Harald Wilm"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_4",
+          "value_text": "+4916096791192",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+4916096791192"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_1",
+          "value_text": "Premium Vodka Cranberry Juice",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Premium Vodka Cranberry Juice"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_2",
+          "value_text": "S$ll water",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "S$ll water"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_3",
+          "value_text": "Tea pot",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Tea pot"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_4",
+          "value_text": "Tea cup",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Tea cup"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_5",
+          "value_text": "Tea bags",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Tea bags"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_6",
+          "value_text": "Sugar free Red Bulls",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Sugar free Red Bulls"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_name",
+          "fact_domain": "food_7",
+          "value_text": "cashew nuts and peanuts",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "cashew nuts and peanuts"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "food_notes",
+          "fact_domain": "food_7",
+          "value_text": "Staff must always be close and ready at all $mes",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Staff must always be close and ready at all $mes"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical_1",
+          "value_text": "3 PIONEER CDJS 3000",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "3 PIONEER CDJS 3000"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical_1",
+          "value_text": "1 PIONEER DJM 900 or V10",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "1 PIONEER DJM 900 or V10"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "general_1",
+          "value_text": "21:30 - 23:30",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "21:30 - 23:30"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "general_2",
+          "value_text": "23:30 01:00",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "23:30 01:00"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "general_3",
+          "value_text": "01:00 - 02:00",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "01:00 - 02:00"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "general_venue",
+          "fact_domain": "general_1",
+          "value_text": "W Shanghai - The Bund",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "W Shanghai - The Bund"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "general_city",
+          "fact_domain": "general_1",
+          "value_text": "Shanghai, China",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Shanghai, China"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_5",
+          "value_text": "+8613162034203",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+8613162034203"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_6",
+          "value_text": "+36204806573",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "+36204806573"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "hotel_name",
+          "fact_domain": "hotel_1",
+          "value_text": "W Shanghai - The Bund",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "W Shanghai - The Bund"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "hotel_city",
+          "fact_domain": "hotel_1",
+          "value_text": "Shanghai, China",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Shanghai, China"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "hotel_notes",
+          "fact_domain": "hotel_1",
+          "value_text": "Late Check-Out [min. 4.00 P.M.]",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "Late Check-Out [min. 4.00 P.M.]"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "activity_1",
+          "value_date": "2024-11-22",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "2024/11/22"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "activity_2",
+          "value_time": "15:20",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "15:20"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "activity_3",
+          "value_date": "2024-11-24",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "2024/11/24"
+        },
+        {
+          "message_index": 0,
+          "chunk_index": 0,
+          "source_id": "test-source-1764775009926",
+          "source_file_name": "8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf",
+          "source_scope": "unknown",
+          "speaker_role": "unknown",
+          "fact_type": "other",
+          "fact_domain": "activity_4",
+          "value_time": "20:00",
+          "direction": "unknown",
+          "status": "info",
+          "confidence": 0.5,
+          "raw_snippet": "20:00"
+        }
+      ],
+      "resolutions": [
+        {
+          "fact_type": "contact_name",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "contact_phone",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "contact_email",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "food_name",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "food_notes",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "technical_equipment",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "other",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "general_venue",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "general_city",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "hotel_name",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "hotel_city",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "hotel_notes",
+          "selected_fact_id": null,
+          "state": "informational",
+          "reason": "All facts are informational with no negotiation context"
+        },
+        {
+          "fact_type": "contact_name",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-0",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Harald Wilm",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Harald Wilm"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-1",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+49 160 96791192",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +49 160 96791192"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_email",
+          "fact_domain": "contact_1",
+          "selected_fact_id": "fact-2",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "harald@mfm-booking.de",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_email"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: harald@mfm-booking.de"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_name",
+          "fact_domain": "contact_2",
+          "selected_fact_id": "fact-3",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Alec Eklow",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Alec Eklow"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_2",
+          "selected_fact_id": "fact-4",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+46 70 215 23 20",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +46 70 215 23 20"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_name",
+          "fact_domain": "contact_3",
+          "selected_fact_id": "fact-5",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Jean Moreno",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Jean Moreno"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_3",
+          "selected_fact_id": "fact-6",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+46 735660738",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +46 735660738"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_name",
+          "fact_domain": "contact_4",
+          "selected_fact_id": "fact-7",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Harald Wilm",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Harald Wilm"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_4",
+          "selected_fact_id": "fact-8",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+4916096791192",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +4916096791192"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_1",
+          "selected_fact_id": "fact-9",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Premium Vodka Cranberry Juice",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Premium Vodka Cranberry Juice"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_2",
+          "selected_fact_id": "fact-10",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "S$ll water",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: S$ll water"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_3",
+          "selected_fact_id": "fact-11",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Tea pot",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Tea pot"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_4",
+          "selected_fact_id": "fact-12",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Tea cup",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Tea cup"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_5",
+          "selected_fact_id": "fact-13",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Tea bags",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Tea bags"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_6",
+          "selected_fact_id": "fact-14",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Sugar free Red Bulls",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Sugar free Red Bulls"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_name",
+          "fact_domain": "food_7",
+          "selected_fact_id": "fact-15",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "cashew nuts and peanuts",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: cashew nuts and peanuts"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "food_notes",
+          "fact_domain": "food_7",
+          "selected_fact_id": "fact-16",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Staff must always be close and ready at all $mes",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type food_notes"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Staff must always be close and ready at all $mes"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "technical_equipment",
+          "fact_domain": "technical_1",
+          "selected_fact_id": "fact-17",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "3 PIONEER CDJS 3000",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 2 facts of type technical_equipment"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "2 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: 3 PIONEER CDJS 3000"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "general_1",
+          "selected_fact_id": "fact-19",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "21:30 - 23:30",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: 21:30 - 23:30"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "general_2",
+          "selected_fact_id": "fact-20",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "23:30 01:00",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: 23:30 01:00"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "general_3",
+          "selected_fact_id": "fact-21",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "01:00 - 02:00",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: 01:00 - 02:00"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "general_venue",
+          "fact_domain": "general_1",
+          "selected_fact_id": "fact-22",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "W Shanghai - The Bund",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type general_venue"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: W Shanghai - The Bund"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "general_city",
+          "fact_domain": "general_1",
+          "selected_fact_id": "fact-23",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Shanghai, China",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type general_city"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Shanghai, China"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_5",
+          "selected_fact_id": "fact-24",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+8613162034203",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +8613162034203"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "contact_phone",
+          "fact_domain": "contact_6",
+          "selected_fact_id": "fact-25",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "+36204806573",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type contact_phone"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: +36204806573"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "hotel_name",
+          "fact_domain": "hotel_1",
+          "selected_fact_id": "fact-26",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "W Shanghai - The Bund",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type hotel_name"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: W Shanghai - The Bund"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "hotel_city",
+          "fact_domain": "hotel_1",
+          "selected_fact_id": "fact-27",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Shanghai, China",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type hotel_city"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Shanghai, China"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "hotel_notes",
+          "fact_domain": "hotel_1",
+          "selected_fact_id": "fact-28",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_text": "Late Check-Out [min. 4.00 P.M.]",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type hotel_notes"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: Late Check-Out [min. 4.00 P.M.]"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "activity_1",
+          "selected_fact_id": "fact-29",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_date": "2024-11-22",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: undefined"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "activity_2",
+          "selected_fact_id": "fact-30",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: undefined"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "activity_3",
+          "selected_fact_id": "fact-31",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "final_value_date": "2024-11-24",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: undefined"
+            }
+          ],
+          "confidence": 0.5235
+        },
+        {
+          "fact_type": "other",
+          "fact_domain": "activity_4",
+          "selected_fact_id": "fact-32",
+          "state": "informational",
+          "reason": "Informational fact selected (no negotiation involved)",
+          "reasoning_trace": [
+            {
+              "step": 1,
+              "action": "Analyzing fact group",
+              "observation": "Found 1 facts of type other"
+            },
+            {
+              "step": 2,
+              "action": "Filter to selectable facts",
+              "observation": "1 selectable facts remain"
+            },
+            {
+              "step": 3,
+              "action": "Check for accepted facts",
+              "observation": "No accepted/final facts found"
+            },
+            {
+              "step": 4,
+              "action": "Found informational facts",
+              "observation": "Selecting highest computed confidence fact (status: info, confidence: 0.52)",
+              "conclusion": "Informational value: undefined"
+            }
+          ],
+          "confidence": 0.5235
+        }
+      ],
+      "extractedData": {
+        "general": {
+          "artist": "",
+          "eventName": "",
+          "venue": "W Shanghai - The Bund",
+          "date": "",
+          "setTime": "",
+          "city": "Shanghai, China",
+          "country": ""
+        },
+        "deal": {
+          "fee": "",
+          "paymentTerms": "",
+          "dealType": "",
+          "currency": "",
+          "notes": ""
+        },
+        "hotels": [
+          {
+            "id": "c0d9d7e0-e423-4a44-b761-dcc48fdb93f8",
+            "name": "W Shanghai - The Bund",
+            "address": "",
+            "city": "",
+            "country": "",
+            "checkInDate": "",
+            "checkInTime": "",
+            "checkOutDate": "",
+            "checkOutTime": "",
+            "bookingReference": "",
+            "phone": "",
+            "email": "",
+            "notes": "",
+            "_domain": "hotel_1",
+            "_source_scope": "unknown"
+          }
+        ],
+        "food": [
+          {
+            "id": "b0f970dd-87b4-4402-b688-a8865917e0f7",
+            "name": "Premium Vodka Cranberry Juice",
+            "address": "",
+            "city": "",
+            "country": "",
+            "bookingReference": "",
+            "phone": "",
+            "email": "",
+            "notes": "Staff must always be close and ready at all $mes",
+            "_domain": "food_1"
+          }
+        ],
+        "flights": [],
+        "activities": [],
+        "documents": [],
+        "contacts": [
+          {
+            "id": "ba47b646-04d5-403b-9f99-cd8b413ab919",
+            "name": "Harald Wilm",
+            "phone": "+49 160 96791192",
+            "email": "harald@mfm-booking.de",
+            "role": "",
+            "_domain": "contact_1",
+            "_source_scope": "unknown"
+          },
+          {
+            "id": "b5853fe1-f6c6-4053-a033-b735694f4edb",
+            "name": "Alec Eklow",
+            "phone": "+46 70 215 23 20",
+            "email": "",
+            "role": "",
+            "_domain": "contact_2",
+            "_source_scope": "unknown"
+          },
+          {
+            "id": "3334176e-f7c3-48a8-8cb1-ee4acb379960",
+            "name": "Jean Moreno",
+            "phone": "+46 735660738",
+            "email": "",
+            "role": "",
+            "_domain": "contact_3",
+            "_source_scope": "unknown"
+          },
+          {
+            "id": "960f41e4-c02e-4fa0-b9f1-9cb5e624ce9d",
+            "name": "Harald Wilm",
+            "phone": "+4916096791192",
+            "email": "",
+            "role": "",
+            "_domain": "contact_4",
+            "_source_scope": "unknown"
+          },
+          {
+            "id": "2d50747c-7120-424a-87e0-a938925889d0",
+            "name": "",
+            "phone": "+8613162034203",
+            "email": "",
+            "role": "",
+            "_domain": "contact_5",
+            "_source_scope": "unknown"
+          },
+          {
+            "id": "144cfd35-83f2-4b22-a80a-37019be83972",
+            "name": "",
+            "phone": "+36204806573",
+            "email": "",
+            "role": "",
+            "_domain": "contact_6",
+            "_source_scope": "unknown"
+          }
+        ],
+        "technical": {
+          "equipment": "3 PIONEER CDJS 3000",
+          "backline": "",
+          "stageSetup": "",
+          "lightingRequirements": "",
+          "soundcheck": "",
+          "other": ""
+        },
+        "warnings": [],
+        "notes": "21:30 - 23:30"
+      },
+      "coverage": [
+        {
+          "section": "general",
+          "field": "artist",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "eventName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "venue",
+          "expected": true,
+          "extracted": true,
+          "value": "W Shanghai - The Bund",
+          "factType": "general_venue",
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "date",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "setTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "general",
+          "field": "city",
+          "expected": true,
+          "extracted": true,
+          "value": "Shanghai, China",
+          "factType": "general_city",
+          "status": "pass"
+        },
+        {
+          "section": "general",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "fee",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "paymentTerms",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "dealType",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "currency",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "deal",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "flights",
+          "field": "airline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "aircraft",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fullName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "ticketNumber",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "fromAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "departureTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toCity",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "toAirport",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "arrivalTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "seat",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "travelClass",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "flightTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "direction",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "flights",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "name",
+          "expected": true,
+          "extracted": true,
+          "value": "W Shanghai - The Bund",
+          "factType": "hotel_name",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "hotels",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": "hotel_city",
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkInTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "checkOutTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "hotels",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": "hotel_notes",
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "contacts",
+          "field": "name",
+          "expected": true,
+          "extracted": true,
+          "value": "Harald Wilm",
+          "factType": "contact_name",
+          "status": "pass",
+          "coveragePercent": 67
+        },
+        {
+          "section": "contacts",
+          "field": "phone",
+          "expected": true,
+          "extracted": true,
+          "value": "+49 160 96791192",
+          "factType": "contact_phone",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "contacts",
+          "field": "email",
+          "expected": true,
+          "extracted": true,
+          "value": "harald@mfm-booking.de",
+          "factType": "contact_email",
+          "status": "pass",
+          "coveragePercent": 17
+        },
+        {
+          "section": "contacts",
+          "field": "role",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "name",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "location",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "startTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "endTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "notes",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "hasDestination",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "activities",
+          "field": "destinationLocation",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "technical",
+          "field": "equipment",
+          "expected": true,
+          "extracted": true,
+          "value": "3 PIONEER CDJS 3000",
+          "factType": "technical_equipment",
+          "status": "pass"
+        },
+        {
+          "section": "technical",
+          "field": "backline",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "stageSetup",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "lightingRequirements",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "soundcheck",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "technical",
+          "field": "other",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail"
+        },
+        {
+          "section": "food",
+          "field": "name",
+          "expected": true,
+          "extracted": true,
+          "value": "Premium Vodka Cranberry Juice",
+          "factType": "food_name",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "food",
+          "field": "address",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "city",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "country",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "bookingReference",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "phone",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "email",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "notes",
+          "expected": true,
+          "extracted": true,
+          "value": "Staff must always be close and ready at all $mes",
+          "factType": "food_notes",
+          "status": "pass",
+          "coveragePercent": 100
+        },
+        {
+          "section": "food",
+          "field": "serviceDate",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "serviceTime",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "food",
+          "field": "guestCount",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileName",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "fileSize",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        },
+        {
+          "section": "documents",
+          "field": "category",
+          "expected": true,
+          "extracted": false,
+          "value": null,
+          "factType": null,
+          "status": "fail",
+          "coveragePercent": 0
+        }
+      ],
+      "errors": [],
+      "stats": {
+        "factsExtracted": 33,
+        "factsPostProcessed": 33,
+        "resolutionsGenerated": 44,
+        "resolvedCount": 0,
+        "informationalCount": 44,
+        "unagreedCount": 0,
+        "missingCount": 0,
+        "expectedFields": 73,
+        "extractedFields": 9,
+        "missingFields": 64,
+        "coveragePercent": 12
+      }
+    }
+  ]
+}
