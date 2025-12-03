@@ -157,12 +157,12 @@ final showCateringProvider = FutureProvider.family<List<CateringInfo>, String>((
   return data.map((json) => CateringInfo.fromJson(json as Map<String, dynamic>)).toList();
 });
 
-/// Provider for fetching documents for a show
+/// Provider for fetching documents/files for a show
 final showDocumentsProvider = FutureProvider.family<List<DocumentInfo>, String>((ref, showId) async {
   final supabase = ref.watch(supabaseClientProvider);
   
   final response = await supabase
-      .from('advancing_documents')
+      .from('files')
       .select()
       .eq('show_id', showId)
       .order('created_at', ascending: false);
@@ -189,4 +189,34 @@ final showContactsProvider = FutureProvider.family<List<ContactInfo>, String>((r
     final List<dynamic> data = response as List<dynamic>;
     return data.map((json) => ContactInfo.fromJson(json as Map<String, dynamic>)).toList();
   }
+});
+
+/// Provider for fetching guestlist for a show
+final showGuestlistProvider = FutureProvider.family<List<GuestInfo>, String>((ref, showId) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  final response = await supabase
+      .from('show_guestlist')
+      .select()
+      .eq('show_id', showId)
+      .order('name', ascending: true);
+  
+  final List<dynamic> data = response as List<dynamic>;
+  return data.map((json) => GuestInfo.fromJson(json as Map<String, dynamic>)).toList();
+});
+
+/// Provider for fetching notes for a show
+final showNotesProvider = FutureProvider.family<String?, String>((ref, showId) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  // Get general notes for the show
+  final response = await supabase
+      .from('advancing_notes')
+      .select('body')
+      .eq('show_id', showId)
+      .eq('scope', 'general')
+      .maybeSingle();
+  
+  if (response == null) return null;
+  return response['body'] as String?;
 });

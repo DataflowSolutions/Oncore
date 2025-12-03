@@ -150,6 +150,8 @@ class _ShowDayBody extends ConsumerWidget {
     final cateringAsync = ref.watch(showCateringProvider(showId));
     final documentsAsync = ref.watch(showDocumentsProvider(showId));
     final contactsAsync = ref.watch(showContactsProvider(showId));
+    final guestlistAsync = ref.watch(showGuestlistProvider(showId));
+    final notesAsync = ref.watch(showNotesProvider(showId));
 
     // Get artist name
     final artists = assignments.where((a) => a.isArtist).toList();
@@ -280,9 +282,14 @@ class _ShowDayBody extends ConsumerWidget {
           _InfoCardsGrid(
             documents: documentsAsync.value ?? [],
             contacts: contactsAsync.value ?? [],
+            guests: guestlistAsync.value ?? [],
+            notes: notesAsync.value,
             showId: showId,
             orgId: show.orgId,
             onContactAdded: () => ref.invalidate(showContactsProvider(showId)),
+            onDocumentAdded: () => ref.invalidate(showDocumentsProvider(showId)),
+            onGuestAdded: () => ref.invalidate(showGuestlistProvider(showId)),
+            onNotesChanged: () => ref.invalidate(showNotesProvider(showId)),
           ),
 
           const SizedBox(height: 32),
@@ -780,21 +787,34 @@ class _LodgingCateringSection extends StatelessWidget {
 class _InfoCardsGrid extends StatelessWidget {
   final List<DocumentInfo> documents;
   final List<ContactInfo> contacts;
+  final List<GuestInfo> guests;
+  final String? notes;
   final String showId;
   final String orgId;
   final VoidCallback? onContactAdded;
+  final VoidCallback? onDocumentAdded;
+  final VoidCallback? onGuestAdded;
+  final VoidCallback? onNotesChanged;
 
   const _InfoCardsGrid({
     required this.documents,
     required this.contacts,
+    required this.guests,
+    this.notes,
     required this.showId,
     required this.orgId,
     this.onContactAdded,
+    this.onDocumentAdded,
+    this.onGuestAdded,
+    this.onNotesChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    // Calculate total guest count
+    final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -817,12 +837,15 @@ class _InfoCardsGrid extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoTile(
-                  context,
-                  'Documents',
-                  documents.isEmpty ? 'Not Added' : '${documents.length} files',
-                  colorScheme,
-                  Icons.description,
+                child: GestureDetector(
+                  onTap: () => _openDocumentsScreen(context),
+                  child: _buildInfoTile(
+                    context,
+                    'Documents',
+                    documents.isEmpty ? 'Not Added' : '${documents.length} files',
+                    colorScheme,
+                    Icons.description,
+                  ),
                 ),
               ),
             ],
@@ -832,11 +855,29 @@ class _InfoCardsGrid extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildInfoTile(context, 'Guestlist', 'Not Added', colorScheme, Icons.list_alt),
+                child: GestureDetector(
+                  onTap: () => _openGuestlistScreen(context),
+                  child: _buildInfoTile(
+                    context,
+                    'Guestlist',
+                    guests.isEmpty ? 'Not Added' : '$totalGuests guests',
+                    colorScheme,
+                    Icons.list_alt,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoTile(context, 'Notes', 'Not Added', colorScheme, Icons.note),
+                child: GestureDetector(
+                  onTap: () => _openNotesScreen(context),
+                  child: _buildInfoTile(
+                    context,
+                    'Notes',
+                    notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
+                    colorScheme,
+                    Icons.note,
+                  ),
+                ),
               ),
             ],
           ),
@@ -892,6 +933,45 @@ class _InfoCardsGrid extends StatelessWidget {
           showId: showId,
           orgId: orgId,
           onContactAdded: onContactAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openDocumentsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DocumentsScreen(
+          documents: documents,
+          showId: showId,
+          orgId: orgId,
+          onDocumentAdded: onDocumentAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openGuestlistScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => GuestlistScreen(
+          guests: guests,
+          showId: showId,
+          orgId: orgId,
+          onGuestAdded: onGuestAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openNotesScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => NotesScreen(
+          initialNotes: notes,
+          showId: showId,
+          orgId: orgId,
+          onNotesChanged: onNotesChanged,
         ),
       ),
     );

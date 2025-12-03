@@ -736,18 +736,21 @@ class _InfoCardsGrid extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.description, color: Color(0xFFA78BFA)),
+                        Icon(
+                          doc.isPdf ? Icons.picture_as_pdf : Icons.description,
+                          color: const Color(0xFFA78BFA),
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                doc.label ?? 'Document',
+                                doc.displayName,
                                 style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                               ),
                               Text(
-                                '${doc.fileCount} file${doc.fileCount != 1 ? 's' : ''} • ${doc.partyType == 'from_us' ? 'From Us' : 'From You'}',
+                                doc.formattedSize,
                                 style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                               ),
                             ],

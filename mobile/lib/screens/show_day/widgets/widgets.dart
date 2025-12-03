@@ -14,6 +14,9 @@ export 'contacts_screen.dart';
 export 'hotels_screen.dart';
 export 'flights_screen.dart';
 export 'catering_screen.dart';
+export 'documents_screen.dart';
+export 'guestlist_screen.dart';
+export 'notes_screen.dart';
 
 // Layer 3 add/edit forms
 export 'add_contact_screen.dart';
@@ -21,3 +24,4 @@ export 'add_hotel_screen.dart';
 export 'add_flight_screen.dart';
 export 'add_schedule_item_screen.dart';
 export 'add_catering_screen.dart';
+export 'add_guest_screen.dart';

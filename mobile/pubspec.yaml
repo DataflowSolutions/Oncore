@@ -2,7 +2,7 @@ name: mobile
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -34,33 +34,39 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  
+
   # Supabase Flutter SDK - Direct database access
   supabase_flutter: ^2.5.0
-  
+
   # HTTP for any additional API calls
   http: ^1.2.0
-  
+
   # JSON serialization
   json_annotation: ^4.8.1
-  
+
   # Loading state management
   flutter_hooks: ^0.20.5
-  
+
   # Routing with auth guards
   go_router: ^14.2.0
-  
+
   # State management for auth
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
-  
+
   # Environment variables
   flutter_dotenv: ^5.1.0
   url_launcher: ^6.3.2
-  
+
   # Local storage for persisting last viewed show
   shared_preferences: ^2.2.3
-  
+
+  # File picker for document uploads
+  file_picker: ^8.0.0
+
+  # PDF viewer for documents
+  syncfusion_flutter_pdfviewer: ^27.1.58
+
   # Note: google_fonts package added for future use when Special Gothic Expanded One
   # becomes available. Currently not used as the font isn't in the package yet.
   # google_fonts: ^6.2.1
@@ -75,7 +81,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  
+
   # Code generation for riverpod
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.8
@@ -85,7 +91,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

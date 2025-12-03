@@ -313,27 +313,85 @@ class ContactInfo {
   }
 }
 
-/// Document information
+/// Document/File information (from files table)
 class DocumentInfo {
   final String id;
-  final String? label;
-  final String partyType; // 'from_us' or 'from_you'
-  final int fileCount;
+  final String storagePath;
+  final String? originalName;
+  final String? contentType;
+  final int? sizeBytes;
 
   DocumentInfo({
     required this.id,
-    this.label,
-    required this.partyType,
-    this.fileCount = 0,
+    required this.storagePath,
+    this.originalName,
+    this.contentType,
+    this.sizeBytes,
   });
 
   factory DocumentInfo.fromJson(Map<String, dynamic> json) {
-    final files = json['files'] as List<dynamic>? ?? [];
     return DocumentInfo(
       id: json['id'] as String,
-      label: json['label'] as String?,
-      partyType: json['party_type'] as String? ?? 'from_us',
-      fileCount: files.length,
+      storagePath: json['storage_path'] as String,
+      originalName: json['original_name'] as String?,
+      contentType: json['content_type'] as String?,
+      sizeBytes: json['size_bytes'] as int?,
+    );
+  }
+  
+  /// Check if this is an image file
+  bool get isImage {
+    final ct = contentType?.toLowerCase() ?? '';
+    return ct.startsWith('image/');
+  }
+  
+  /// Check if this is a PDF file
+  bool get isPdf {
+    final ct = contentType?.toLowerCase() ?? '';
+    return ct.contains('pdf');
+  }
+  
+  /// Get display name
+  String get displayName => originalName ?? 'Document';
+  
+  /// Format file size for display
+  String get formattedSize {
+    if (sizeBytes == null) return '';
+    if (sizeBytes! < 1024) return '$sizeBytes B';
+    if (sizeBytes! < 1024 * 1024) return '${(sizeBytes! / 1024).toStringAsFixed(1)} KB';
+    return '${(sizeBytes! / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+}
+
+/// Guestlist entry information
+class GuestInfo {
+  final String id;
+  final String name;
+  final String? phone;
+  final String? email;
+  final int guestCount;
+  final String? passType;
+  final String? notes;
+
+  GuestInfo({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.email,
+    this.guestCount = 1,
+    this.passType,
+    this.notes,
+  });
+
+  factory GuestInfo.fromJson(Map<String, dynamic> json) {
+    return GuestInfo(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      phone: json['phone'] as String?,
+      email: json['email'] as String?,
+      guestCount: json['guest_count'] as int? ?? 1,
+      passType: json['pass_type'] as String?,
+      notes: json['notes'] as String?,
     );
   }
 }
