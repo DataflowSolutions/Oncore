@@ -7,3 +7,17 @@ export 'info_card.dart';
 export 'section_header.dart';
 export 'upcoming_schedule_card.dart';
 export 'full_schedule_screen.dart';
+export 'form_widgets.dart';
+
+// Layer 2 detail screens
+export 'contacts_screen.dart';
+export 'hotels_screen.dart';
+export 'flights_screen.dart';
+export 'catering_screen.dart';
+
+// Layer 3 add/edit forms
+export 'add_contact_screen.dart';
+export 'add_hotel_screen.dart';
+export 'add_flight_screen.dart';
+export 'add_schedule_item_screen.dart';
+export 'add_catering_screen.dart';

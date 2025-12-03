@@ -169,6 +169,9 @@ class _ShowDayBody extends ConsumerWidget {
             items: scheduleItems,
             showTitle: show.title,
             showDate: show.date,
+            showId: showId,
+            orgId: show.orgId,
+            onItemAdded: () => ref.invalidate(showScheduleProvider(showId)),
           ),
         ),
       );
@@ -252,9 +255,12 @@ class _ShowDayBody extends ConsumerWidget {
           flightsAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
-            data: (flights) => flights.isNotEmpty
-                ? _FlightsSection(flights: flights)
-                : const SizedBox.shrink(),
+            data: (flights) => _FlightsSection(
+              flights: flights,
+              showId: showId,
+              orgId: show.orgId,
+              onFlightAdded: () => ref.invalidate(showFlightsProvider(showId)),
+            ),
           ),
 
           // Lodging & Catering section (Combined grid)
@@ -262,6 +268,10 @@ class _ShowDayBody extends ConsumerWidget {
             _LodgingCateringSection(
               lodging: lodgingAsync.value ?? [],
               catering: cateringAsync.value ?? [],
+              showId: showId,
+              orgId: show.orgId,
+              onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
+              onCateringAdded: () => ref.invalidate(showCateringProvider(showId)),
             ),
 
           const SizedBox(height: 24),
@@ -270,6 +280,9 @@ class _ShowDayBody extends ConsumerWidget {
           _InfoCardsGrid(
             documents: documentsAsync.value ?? [],
             contacts: contactsAsync.value ?? [],
+            showId: showId,
+            orgId: show.orgId,
+            onContactAdded: () => ref.invalidate(showContactsProvider(showId)),
           ),
 
           const SizedBox(height: 32),
@@ -379,42 +392,106 @@ class _UpcomingScheduleSection extends StatelessWidget {
 /// Flights section with horizontal scroll
 class _FlightsSection extends StatelessWidget {
   final List<FlightInfo> flights;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onFlightAdded;
 
-  const _FlightsSection({required this.flights});
+  const _FlightsSection({
+    required this.flights,
+    required this.showId,
+    required this.orgId,
+    this.onFlightAdded,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: colorScheme.outline, width: 1),
-          bottom: BorderSide(color: colorScheme.outline, width: 1),
+    return GestureDetector(
+      onTap: () => _openFlightsScreen(context),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: colorScheme.outline, width: 1),
+            bottom: BorderSide(color: colorScheme.outline, width: 1),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        margin: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (flights.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.flight, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Flights',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Not Added',
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              HorizontalCardList(
+                height: 160,
+                children: flights.map((flight) => GestureDetector(
+                  onTap: () => _showFlightDetails(context, flight),
+                  child: FlightCard(
+                    flightNumber: flight.displayFlightNumber,
+                    departure: flight.departAirportCode ?? '???',
+                    departureCity: flight.departCity,
+                    arrival: flight.arrivalAirportCode ?? '???',
+                    arrivalCity: flight.arrivalCity,
+                    departureTime: flight.formattedDepartTime ?? '--:--',
+                    arrivalTime: flight.formattedArrivalTime ?? '--:--',
+                    duration: flight.duration,
+                  ),
+                )).toList(),
+              ),
+          ],
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      margin: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HorizontalCardList(
-            height: 160,
-            children: flights.map((flight) => GestureDetector(
-              onTap: () => _showFlightDetails(context, flight),
-              child: FlightCard(
-                flightNumber: flight.displayFlightNumber,
-                departure: flight.departAirportCode ?? '???',
-                departureCity: flight.departCity,
-                arrival: flight.arrivalAirportCode ?? '???',
-                arrivalCity: flight.arrivalCity,
-                departureTime: flight.formattedDepartTime ?? '--:--',
-                arrivalTime: flight.formattedArrivalTime ?? '--:--',
-                duration: flight.duration,
-              ),
-            )).toList(),
-          ),
-        ],
+    );
+  }
+
+  void _openFlightsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => FlightsScreen(
+          flights: flights,
+          showId: showId,
+          orgId: orgId,
+          onFlightAdded: onFlightAdded,
+        ),
       ),
     );
   }
@@ -476,16 +553,22 @@ class _FlightsSection extends StatelessWidget {
 class _LodgingCateringSection extends StatelessWidget {
   final List<LodgingInfo> lodging;
   final List<CateringInfo> catering;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onLodgingAdded;
+  final VoidCallback? onCateringAdded;
 
   const _LodgingCateringSection({
     required this.lodging,
     required this.catering,
+    required this.showId,
+    required this.orgId,
+    this.onLodgingAdded,
+    this.onCateringAdded,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (lodging.isEmpty && catering.isEmpty) return const SizedBox.shrink();
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -497,29 +580,104 @@ class _LodgingCateringSection extends StatelessWidget {
   }
 
   List<Widget> _buildRows(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final widgets = <Widget>[];
 
-    for (final hotel in lodging) {
-      widgets.add(GestureDetector(
-        onTap: () => _showLodgingDetails(context, hotel),
-        child: InfoCard(
-          title: hotel.hotelName ?? 'Hotel',
-          subtitle: hotel.timeRange,
-          type: InfoCardType.hotel,
-        ),
-      ));
-    }
+    // Hotels tile - always show, with navigation to full list
+    widgets.add(GestureDetector(
+      onTap: () => _openHotelsScreen(context),
+      child: lodging.isNotEmpty
+          ? InfoCard(
+              title: lodging.first.hotelName ?? 'Hotel',
+              subtitle: lodging.length > 1 
+                  ? '${lodging.length} hotels' 
+                  : lodging.first.timeRange,
+              type: InfoCardType.hotel,
+            )
+          : Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colorScheme.outline),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.hotel, size: 16, color: const Color(0xFF60A5FA)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Hotels',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Not Added',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    ));
 
-    for (final restaurant in catering) {
-      widgets.add(GestureDetector(
-        onTap: () => _showCateringDetails(context, restaurant),
-        child: InfoCard(
-          title: restaurant.providerName ?? 'Restaurant',
-          subtitle: restaurant.formattedServiceTime,
-          type: InfoCardType.restaurant,
-        ),
-      ));
-    }
+    // Catering tile - always show, with navigation to full list
+    widgets.add(GestureDetector(
+      onTap: () => _openCateringScreen(context),
+      child: catering.isNotEmpty
+          ? InfoCard(
+              title: catering.first.providerName ?? 'Catering',
+              subtitle: catering.length > 1 
+                  ? '${catering.length} restaurants' 
+                  : catering.first.formattedServiceTime,
+              type: InfoCardType.restaurant,
+            )
+          : Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colorScheme.outline),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.restaurant, size: 16, color: const Color(0xFFFB923C)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Catering',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Not Added',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    ));
 
     final rows = <Widget>[];
     for (var i = 0; i < widgets.length; i += 2) {
@@ -541,64 +699,27 @@ class _LodgingCateringSection extends StatelessWidget {
     return rows;
   }
 
-  void _showLodgingDetails(BuildContext context, LodgingInfo hotel) {
-    final actions = <DetailAction>[];
-    if (hotel.phone != null) actions.add(DetailAction.phone(hotel.phone!));
-    if (hotel.email != null) actions.add(DetailAction.email(hotel.email!));
-
+  void _openHotelsScreen(BuildContext context) {
     Navigator.of(context).push(
       SwipeablePageRoute(
-        builder: (context) => DetailModal(
-          title: hotel.hotelName ?? 'Hotel',
-          subtitle: 'LODGING',
-          address: hotel.address,
-          content: [
-            DetailSplitCard(
-              label1: 'Check In',
-              value1: hotel.formattedCheckIn ?? '-',
-              label2: 'Check Out',
-              value2: hotel.formattedCheckOut ?? '-',
-            ),
-            if (hotel.bookingRefs != null && hotel.bookingRefs!.isNotEmpty)
-              DetailValueCard(
-                label: 'Booking Reference',
-                value: hotel.bookingRefs!.join(', '),
-              ),
-            if (hotel.notes != null && hotel.notes!.isNotEmpty)
-              DetailValueCard(
-                label: 'Notes',
-                value: hotel.notes!,
-              ),
-          ],
-          actions: actions,
+        builder: (context) => HotelsScreen(
+          hotels: lodging,
+          showId: showId,
+          orgId: orgId,
+          onHotelAdded: onLodgingAdded,
         ),
       ),
     );
   }
 
-  void _showCateringDetails(BuildContext context, CateringInfo restaurant) {
-    final actions = <DetailAction>[];
-    if (restaurant.phone != null) actions.add(DetailAction.phone(restaurant.phone!));
-    if (restaurant.email != null) actions.add(DetailAction.email(restaurant.email!));
-
+  void _openCateringScreen(BuildContext context) {
     Navigator.of(context).push(
       SwipeablePageRoute(
-        builder: (context) => DetailModal(
-          title: restaurant.providerName ?? 'Restaurant',
-          subtitle: 'CATERING',
-          address: restaurant.address,
-          content: [
-            DetailValueCard(
-              label: 'Service Time',
-              value: restaurant.formattedServiceTime ?? '-',
-            ),
-            if (restaurant.notes != null && restaurant.notes!.isNotEmpty)
-              DetailValueCard(
-                label: 'Notes',
-                value: restaurant.notes!,
-              ),
-          ],
-          actions: actions,
+        builder: (context) => CateringScreen(
+          catering: catering,
+          showId: showId,
+          orgId: orgId,
+          onCateringAdded: onCateringAdded,
         ),
       ),
     );
@@ -609,10 +730,16 @@ class _LodgingCateringSection extends StatelessWidget {
 class _InfoCardsGrid extends StatelessWidget {
   final List<DocumentInfo> documents;
   final List<ContactInfo> contacts;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onContactAdded;
 
   const _InfoCardsGrid({
     required this.documents,
     required this.contacts,
+    required this.showId,
+    required this.orgId,
+    this.onContactAdded,
   });
 
   @override
@@ -623,24 +750,29 @@ class _InfoCardsGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // First row: Documents & Contacts
+          // First row: Contacts & Documents
           Row(
             children: [
               Expanded(
-                child: _buildInfoTile(
-                  context,
-                  'Documents',
-                  documents.isEmpty ? 'Not Added' : '${documents.length} files',
-                  colorScheme,
+                child: GestureDetector(
+                  onTap: () => _openContactsScreen(context),
+                  child: _buildInfoTile(
+                    context,
+                    'Contacts',
+                    contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
+                    colorScheme,
+                    Icons.people,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInfoTile(
                   context,
-                  'Contacts',
-                  contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
+                  'Documents',
+                  documents.isEmpty ? 'Not Added' : '${documents.length} files',
                   colorScheme,
+                  Icons.description,
                 ),
               ),
             ],
@@ -650,11 +782,11 @@ class _InfoCardsGrid extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildInfoTile(context, 'Guestlist', 'Not Added', colorScheme),
+                child: _buildInfoTile(context, 'Guestlist', 'Not Added', colorScheme, Icons.list_alt),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoTile(context, 'Notes', 'Not Added', colorScheme),
+                child: _buildInfoTile(context, 'Notes', 'Not Added', colorScheme, Icons.note),
               ),
             ],
           ),
@@ -663,7 +795,7 @@ class _InfoCardsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(BuildContext context, String title, String subtitle, ColorScheme colorScheme) {
+  Widget _buildInfoTile(BuildContext context, String title, String subtitle, ColorScheme colorScheme, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -673,13 +805,21 @@ class _InfoCardsGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -690,6 +830,19 @@ class _InfoCardsGrid extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openContactsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => ContactsScreen(
+          contacts: contacts,
+          showId: showId,
+          orgId: orgId,
+          onContactAdded: onContactAdded,
+        ),
       ),
     );
   }

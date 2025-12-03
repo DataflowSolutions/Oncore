@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import 'detail_modal.dart';
+import 'add_schedule_item_screen.dart';
+import 'form_widgets.dart';
 
 /// Full schedule screen showing a timeline view of all schedule items
 /// Similar to the desktop ScheduleTimeline component
@@ -9,12 +11,18 @@ class FullScheduleScreen extends StatefulWidget {
   final List<ScheduleItem> items;
   final String showTitle;
   final DateTime showDate;
+  final String? showId;
+  final String? orgId;
+  final VoidCallback? onItemAdded;
 
   const FullScheduleScreen({
     super.key,
     required this.items,
     required this.showTitle,
     required this.showDate,
+    this.showId,
+    this.orgId,
+    this.onItemAdded,
   });
 
   @override
@@ -30,7 +38,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   static const int startHour = 0;
   static const int endHour = 24;
   static const double timelineHeight = (endHour - startHour) * pixelsPerHour;
-  static const double leftPadding = 56.0; // Space for time labels
+  static const double leftPadding = 40.0; // Space for time labels
   static const double rightPadding = 16.0;
   
   @override
@@ -83,89 +91,34 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    // Format date for header
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final dateStr = '${days[widget.showDate.weekday - 1]}, ${widget.showDate.day} ${months[widget.showDate.month - 1]}';
-    
     return LayerScaffold(
       title: 'Schedule',
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with show info
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.showTitle,
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          dateStr,
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Item count badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      '${widget.items.length} items',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      body: Column(
+        children: [
+          // Timeline - fills remaining space
+          Expanded(
+            child: _buildTimeline(colorScheme),
+          ),
+          // Add button at bottom
+          if (widget.showId != null && widget.orgId != null)
+            AddButton(
+              onPressed: () => _openAddScheduleItem(context),
             ),
-            
-            // Timeline card - fills remaining space
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: widget.items.isEmpty
-                    ? _buildEmptyState(colorScheme)
-                    : _buildTimeline(colorScheme),
-              ),
-            ),
-          ],
+        ],
+      ),
+    );
+  }
+
+  void _openAddScheduleItem(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => AddScheduleItemScreen(
+          showId: widget.showId!,
+          orgId: widget.orgId!,
+          onItemAdded: () {
+            widget.onItemAdded?.call();
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );
@@ -195,6 +148,10 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildTimeline(ColorScheme colorScheme) {
+    if (widget.items.isEmpty) {
+      return _buildEmptyState(colorScheme);
+    }
+    
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.only(top: 8, bottom: 24),
@@ -202,7 +159,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
         height: timelineHeight,
         child: Stack(
           children: [
-            // Time intervals (background)
+            // Time intervals (background) - 30 minute intervals
             ..._buildTimeIntervals(colorScheme),
             
             // Schedule items
@@ -216,10 +173,13 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   List<Widget> _buildTimeIntervals(ColorScheme colorScheme) {
     final widgets = <Widget>[];
     
+    // Build 30-minute intervals
     for (int hour = startHour; hour < endHour; hour++) {
       final topPosition = (hour - startHour) * pixelsPerHour;
-      final label = '${hour.toString().padLeft(2, '0')}:00';
+      // Just show the hour number like "08", "09", etc.
+      final label = hour.toString().padLeft(2, '0');
       
+      // Hour line with label
       widgets.add(
         Positioned(
           left: 0,
@@ -232,12 +192,12 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
               SizedBox(
                 width: leftPadding,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 0),
+                  padding: const EdgeInsets.only(left: 16, top: 0),
                   child: Text(
                     label,
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -247,11 +207,25 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
               Expanded(
                 child: Container(
                   height: 1,
-                  margin: const EdgeInsets.only(top: 6, right: 12),
-                  color: colorScheme.outline.withValues(alpha: 0.1),
+                  margin: const EdgeInsets.only(top: 6, right: 16),
+                  color: colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
             ],
+          ),
+        ),
+      );
+      
+      // 30-minute line (no label, just line)
+      final halfHourPosition = topPosition + (pixelsPerHour / 2);
+      widgets.add(
+        Positioned(
+          left: leftPadding,
+          top: halfHourPosition,
+          right: 16,
+          child: Container(
+            height: 1,
+            color: colorScheme.outline.withValues(alpha: 0.1),
           ),
         ),
       );
