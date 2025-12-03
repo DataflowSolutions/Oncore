@@ -4,6 +4,7 @@ import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import 'form_widgets.dart';
 import 'add_guest_screen.dart';
+import 'detail_screen.dart';
 
 /// Layer 2: Guestlist screen showing all guests for a show
 class GuestlistScreen extends ConsumerWidget {
@@ -63,7 +64,10 @@ class GuestlistScreen extends ConsumerWidget {
                     itemCount: guests.length,
                     itemBuilder: (context, index) {
                       final guest = guests[index];
-                      return _GuestCard(guest: guest);
+                      return _GuestCard(
+                        guest: guest,
+                        onTap: () => _openGuestDetail(context, guest),
+                      );
                     },
                   ),
           ),
@@ -121,70 +125,130 @@ class GuestlistScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _openGuestDetail(BuildContext context, GuestInfo guest) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailScreen(
+          title: guest.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: guest.name,
+              icon: Icons.person_outline,
+            ),
+            DetailItem(
+              label: 'Guest Count',
+              value: '${guest.guestCount}',
+              icon: Icons.group_outlined,
+            ),
+            if (guest.passType != null)
+              DetailItem(
+                label: 'Pass Type',
+                value: guest.passType,
+                icon: Icons.badge_outlined,
+              ),
+            if (guest.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: guest.phone,
+                icon: Icons.phone_outlined,
+                type: DetailItemType.phone,
+              ),
+            if (guest.email != null)
+              DetailItem(
+                label: 'Email',
+                value: guest.email,
+                icon: Icons.email_outlined,
+                type: DetailItemType.email,
+              ),
+            if (guest.notes != null)
+              DetailItem(
+                label: 'Notes',
+                value: guest.notes,
+                icon: Icons.notes_outlined,
+                type: DetailItemType.multiline,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Guest card showing name on left and count on right
 class _GuestCard extends StatelessWidget {
   final GuestInfo guest;
+  final VoidCallback? onTap;
 
-  const _GuestCard({required this.guest});
+  const _GuestCard({required this.guest, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Name
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  guest.name,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (guest.passType != null) ...[
-                  const SizedBox(height: 4),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Name
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    guest.passType!,
+                    guest.name,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (guest.passType != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      guest.passType!,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ),
-          // Guest count
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '${guest.guestCount}',
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
+            // Guest count
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '${guest.guestCount}',
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Chevron
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

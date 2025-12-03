@@ -5,6 +5,7 @@ import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import 'form_widgets.dart';
 import 'add_contact_screen.dart';
+import 'detail_screen.dart';
 
 /// Layer 2: Contacts list screen showing all contacts for a show
 class ContactsScreen extends ConsumerWidget {
@@ -42,6 +43,7 @@ class ContactsScreen extends ConsumerWidget {
                         role: contact.role,
                         phone: contact.phone,
                         email: contact.email,
+                        onTap: () => _openContactDetail(context, contact),
                         onPhoneTap: contact.phone != null
                             ? () => _launchPhone(contact.phone!)
                             : null,
@@ -102,6 +104,49 @@ class ContactsScreen extends ConsumerWidget {
             onContactAdded?.call();
             Navigator.of(context).pop();
           },
+        ),
+      ),
+    );
+  }
+
+  void _openContactDetail(BuildContext context, ContactInfo contact) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailScreen(
+          title: contact.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: contact.name,
+              icon: Icons.person_outline,
+            ),
+            if (contact.role != null)
+              DetailItem(
+                label: 'Role',
+                value: contact.role,
+                icon: Icons.work_outline,
+              ),
+            if (contact.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: contact.phone,
+                icon: Icons.phone_outlined,
+                type: DetailItemType.phone,
+              ),
+            if (contact.email != null)
+              DetailItem(
+                label: 'Email',
+                value: contact.email,
+                icon: Icons.email_outlined,
+                type: DetailItemType.email,
+              ),
+            if (contact.isPromoter)
+              const DetailItem(
+                label: 'Type',
+                value: 'Promoter',
+                icon: Icons.star_outline,
+              ),
+          ],
         ),
       ),
     );

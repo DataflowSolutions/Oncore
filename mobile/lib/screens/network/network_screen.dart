@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../components/components.dart';
+import '../show_day/widgets/detail_screen.dart';
 
 /// Network tab types
 enum NetworkTab { team, promoters, venues }
@@ -281,92 +283,144 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
     );
   }
 
+  void _openTeamMemberDetail(TeamMember member) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailScreen(
+          title: member.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: member.name,
+              icon: Icons.person_outline,
+            ),
+            if (member.memberType != null)
+              DetailItem(
+                label: 'Member Type',
+                value: member.memberType,
+                icon: Icons.badge_outlined,
+              ),
+            if (member.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: member.phone,
+                icon: Icons.phone_outlined,
+                type: DetailItemType.phone,
+              ),
+            if (member.email != null)
+              DetailItem(
+                label: 'Email',
+                value: member.email,
+                icon: Icons.email_outlined,
+                type: DetailItemType.email,
+              ),
+            DetailItem(
+              label: 'Status',
+              value: member.isActive ? 'Active (has account)' : 'Pending',
+              icon: Icons.info_outline,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTeamCard(TeamMember member) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline),
-      ),
-      child: Row(
-        children: [
-          // Left side: Name, phone, email
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => _openTeamMemberDetail(member),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline),
+        ),
+        child: Row(
+          children: [
+            // Left side: Name, phone, email
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.name,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (member.phone != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      member.phone!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
+                  if (member.email != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      member.email!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Right side: Member type badge and Remove button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  member.name,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                if (member.memberType != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      member.memberType!,
+                      style: TextStyle(
+                        color: colorScheme.surface,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => _showRemoveDialog(member.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Remove',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-                if (member.phone != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    member.phone!,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                  ),
-                ],
-                if (member.email != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    member.email!,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                  ),
-                ],
               ],
             ),
-          ),
-          // Right side: Member type badge and Remove button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (member.memberType != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurface,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    member.memberType!,
-                    style: TextStyle(
-                      color: colorScheme.surface,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => _showRemoveDialog(member.name),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.error,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Remove',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            // Chevron
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -397,94 +451,153 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
     );
   }
 
+  void _openPromoterDetail(Promoter promoter) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailScreen(
+          title: promoter.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: promoter.name,
+              icon: Icons.person_outline,
+            ),
+            if (promoter.company != null)
+              DetailItem(
+                label: 'Company',
+                value: promoter.company,
+                icon: Icons.business_outlined,
+              ),
+            if (promoter.location.isNotEmpty)
+              DetailItem(
+                label: 'Location',
+                value: promoter.location,
+                icon: Icons.location_on_outlined,
+              ),
+            if (promoter.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: promoter.phone,
+                icon: Icons.phone_outlined,
+                type: DetailItemType.phone,
+              ),
+            if (promoter.email != null)
+              DetailItem(
+                label: 'Email',
+                value: promoter.email,
+                icon: Icons.email_outlined,
+                type: DetailItemType.email,
+              ),
+            if (promoter.venueNames.isNotEmpty)
+              DetailItem(
+                label: 'Venues',
+                value: promoter.venueNames.join(', '),
+                icon: Icons.place_outlined,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPromoterCard(Promoter promoter) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline),
-      ),
-      child: Row(
-        children: [
-          // Left side: Name, phone, email
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  promoter.name,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (promoter.phone != null) ...[
-                  const SizedBox(height: 4),
+    return GestureDetector(
+      onTap: () => _openPromoterDetail(promoter),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline),
+        ),
+        child: Row(
+          children: [
+            // Left side: Name, phone, email
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    promoter.phone!,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    promoter.name,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  if (promoter.phone != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      promoter.phone!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
+                  if (promoter.email != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      promoter.email!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
                 ],
-                if (promoter.email != null) ...[
+              ),
+            ),
+            // Right side: Company/Location and Remove button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (promoter.company != null)
+                  Text(
+                    promoter.company!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                if (promoter.location.isNotEmpty) ...[  
                   const SizedBox(height: 2),
                   Text(
-                    promoter.email!,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    promoter.location,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
-              ],
-            ),
-          ),
-          // Right side: Company/Location and Remove button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (promoter.company != null)
-                Text(
-                  promoter.company!,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-              if (promoter.location.isNotEmpty) ...[  
-                const SizedBox(height: 2),
-                Text(
-                  promoter.location,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => _showRemoveDialog(promoter.name),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.error,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Remove',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => _showRemoveDialog(promoter.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Remove',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            // Chevron
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -515,6 +628,67 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
     );
   }
 
+  void _openVenueDetail(Venue venue) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailScreen(
+          title: venue.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: venue.name,
+              icon: Icons.place_outlined,
+            ),
+            if (venue.location.isNotEmpty)
+              DetailItem(
+                label: 'Location',
+                value: venue.location,
+                icon: Icons.location_on_outlined,
+              ),
+            if (venue.address != null)
+              DetailItem(
+                label: 'Address',
+                value: venue.address,
+                icon: Icons.home_outlined,
+              ),
+            if (venue.capacity != null)
+              DetailItem(
+                label: 'Capacity',
+                value: '${venue.capacity}',
+                icon: Icons.people_outline,
+              ),
+            if (venue.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: venue.phone,
+                icon: Icons.phone_outlined,
+                type: DetailItemType.phone,
+              ),
+            if (venue.email != null)
+              DetailItem(
+                label: 'Email',
+                value: venue.email,
+                icon: Icons.email_outlined,
+                type: DetailItemType.email,
+              ),
+            if (venue.promoterNames.isNotEmpty)
+              DetailItem(
+                label: 'Promoters',
+                value: venue.promoterNames.join(', '),
+                icon: Icons.person_outline,
+              ),
+            if (venue.showCount > 0)
+              DetailItem(
+                label: 'Shows',
+                value: '${venue.showCount} shows',
+                icon: Icons.event_outlined,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildVenueCard(Venue venue) {
     final colorScheme = Theme.of(context).colorScheme;
     final hasPromoters = venue.promoterNames.isNotEmpty;
@@ -524,91 +698,101 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
             : venue.promoterNames.first
         : null;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline),
-      ),
-      child: Row(
-        children: [
-          // Left side: Name, location, promoters
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  venue.name,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (venue.location.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+    return GestureDetector(
+      onTap: () => _openVenueDetail(venue),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline),
+        ),
+        child: Row(
+          children: [
+            // Left side: Name, location, promoters
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    venue.location,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    venue.name,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  if (venue.location.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      venue.location,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
+                  if (promoterText != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      promoterText,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
                 ],
-                if (promoterText != null) ...[
+              ),
+            ),
+            // Right side: Contact info and Remove button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (venue.phone != null)
+                  Text(
+                    venue.phone!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                if (venue.email != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    promoterText,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    venue.email!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
-              ],
-            ),
-          ),
-          // Right side: Contact info and Remove button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (venue.phone != null)
-                Text(
-                  venue.phone!,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-              if (venue.email != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  venue.email!,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => _showRemoveDialog(venue.name),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.error,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Remove',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => _showRemoveDialog(venue.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Remove',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            // Chevron
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

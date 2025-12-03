@@ -356,6 +356,7 @@ class ContactCard extends StatelessWidget {
   final String? role;
   final String? phone;
   final String? email;
+  final VoidCallback? onTap;
   final VoidCallback? onPhoneTap;
   final VoidCallback? onEmailTap;
 
@@ -365,6 +366,7 @@ class ContactCard extends StatelessWidget {
     this.role,
     this.phone,
     this.email,
+    this.onTap,
     this.onPhoneTap,
     this.onEmailTap,
   });
@@ -373,64 +375,74 @@ class ContactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Name and role
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (role != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Name and role
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
                   child: Text(
-                    role!,
+                    name,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      color: colorScheme.onSurface,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Phone
-          if (phone != null && phone!.isNotEmpty)
-            _ActionRow(
-              value: phone!,
-              icon: Icons.phone,
-              onTap: onPhoneTap,
+                if (role != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      role!,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                // Chevron to indicate clickable
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ],
             ),
-          // Email
-          if (email != null && email!.isNotEmpty)
-            _ActionRow(
-              value: email!,
-              icon: Icons.email,
-              onTap: onEmailTap,
-            ),
-        ],
+            const SizedBox(height: 16),
+            // Phone
+            if (phone != null && phone!.isNotEmpty)
+              _ActionRow(
+                value: phone!,
+                icon: Icons.phone,
+                onTap: onPhoneTap,
+              ),
+            // Email
+            if (email != null && email!.isNotEmpty)
+              _ActionRow(
+                value: email!,
+                icon: Icons.email,
+                onTap: onEmailTap,
+              ),
+          ],
+        ),
       ),
     );
   }

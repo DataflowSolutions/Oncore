@@ -20,6 +20,7 @@ export 'notes_screen.dart';
 
 // Layer 2 team screen
 export 'team_screen.dart';
+export 'detail_screen.dart';
 
 // Layer 3 add/edit forms
 export 'add_contact_screen.dart';
