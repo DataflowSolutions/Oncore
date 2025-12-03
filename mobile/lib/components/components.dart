@@ -4,5 +4,6 @@
 /// across different screens in the app.
 library;
 
+export 'app_toast.dart';
 export 'back_button.dart';
 export 'profile_dropdown.dart';

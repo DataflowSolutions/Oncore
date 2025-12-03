@@ -102,12 +102,7 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save hotel: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save hotel: $e');
       }
     } finally {
       if (mounted) {

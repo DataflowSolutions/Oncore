@@ -75,12 +75,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
     
     final startsAt = _combineDateTime(_startDate, _startTime);
     if (startsAt == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Start date and time are required'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      AppToast.error(context, 'Start date and time are required');
       return;
     }
     
@@ -108,12 +103,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save schedule item: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save schedule item: $e');
       }
     } finally {
       if (mounted) {

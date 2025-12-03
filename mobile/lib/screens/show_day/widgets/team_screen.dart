@@ -69,12 +69,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove team member: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to remove team member: $e');
       }
     } finally {
       if (mounted) {

@@ -112,12 +112,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save notes: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save notes: $e');
       }
     } finally {
       if (mounted) {

@@ -82,6 +82,10 @@ class FlightInfo {
   final String? seatNumber;
   final String? travelClass;
   final String? personId;
+  final String? gate;
+  final String? boardingGroup;
+  final String? boardingSequence;
+  final String? passengerName;
 
   FlightInfo({
     required this.id,
@@ -100,6 +104,10 @@ class FlightInfo {
     this.seatNumber,
     this.travelClass,
     this.personId,
+    this.gate,
+    this.boardingGroup,
+    this.boardingSequence,
+    this.passengerName,
   });
 
   factory FlightInfo.fromJson(Map<String, dynamic> json) {
@@ -120,6 +128,10 @@ class FlightInfo {
       seatNumber: json['seat_number'] as String?,
       travelClass: json['travel_class'] as String?,
       personId: json['person_id'] as String?,
+      gate: json['gate'] as String?,
+      boardingGroup: json['boarding_group'] as String?,
+      boardingSequence: json['boarding_sequence'] as String?,
+      passengerName: json['passenger_name'] as String?,
     );
   }
 

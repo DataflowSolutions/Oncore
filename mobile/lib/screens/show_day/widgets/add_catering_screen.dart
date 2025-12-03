@@ -102,12 +102,7 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save catering: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save catering: $e');
       }
     } finally {
       if (mounted) {

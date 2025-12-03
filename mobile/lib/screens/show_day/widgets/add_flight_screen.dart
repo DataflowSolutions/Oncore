@@ -40,7 +40,6 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
   TimeOfDay? _arrivalTime;
   
   // Flight details
-  final _flightTimeController = TextEditingController();
   final _gateController = TextEditingController();
   final _boardsController = TextEditingController();
   final _flightNumberController = TextEditingController();
@@ -62,7 +61,6 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
     _departAirportController.dispose();
     _arrivalAirportController.dispose();
     _arrivalCityController.dispose();
-    _flightTimeController.dispose();
     _gateController.dispose();
     _boardsController.dispose();
     _flightNumberController.dispose();
@@ -101,20 +99,8 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
 
       // Build notes from extra fields that don't have direct DB columns
       final notesParts = <String>[];
-      if (_flightTimeController.text.trim().isNotEmpty) {
-        notesParts.add('Flight Time: ${_flightTimeController.text.trim()}');
-      }
-      if (_gateController.text.trim().isNotEmpty) {
-        notesParts.add('Gate: ${_gateController.text.trim()}');
-      }
       if (_boardsController.text.trim().isNotEmpty) {
         notesParts.add('Boards: ${_boardsController.text.trim()}');
-      }
-      if (_sequenceController.text.trim().isNotEmpty) {
-        notesParts.add('Sequence: ${_sequenceController.text.trim()}');
-      }
-      if (_groupController.text.trim().isNotEmpty) {
-        notesParts.add('Group: ${_groupController.text.trim()}');
       }
 
       await supabase.from('advancing_flights').insert({
@@ -128,6 +114,9 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
         'arrival_airport_code': _arrivalAirportController.text.trim().isEmpty ? null : _arrivalAirportController.text.trim().toUpperCase(),
         'arrival_city': _arrivalCityController.text.trim().isEmpty ? null : _arrivalCityController.text.trim(),
         'arrival_at': arrivalAt?.toIso8601String(),
+        'gate': _gateController.text.trim().isEmpty ? null : _gateController.text.trim(),
+        'boarding_group': _groupController.text.trim().isEmpty ? null : _groupController.text.trim(),
+        'boarding_sequence': _sequenceController.text.trim().isEmpty ? null : _sequenceController.text.trim(),
         'passenger_name': _passengerController.text.trim().isEmpty ? null : _passengerController.text.trim(),
         'seat_number': _seatController.text.trim().isEmpty ? null : _seatController.text.trim(),
         'travel_class': _classController.text.trim().isEmpty ? null : _classController.text.trim(),
@@ -142,12 +131,7 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save flight: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save flight: $e');
       }
     } finally {
       if (mounted) {
@@ -189,6 +173,12 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                       hint: 'Airport',
                       controller: _departAirportController,
                     ),
+                    FormDateField(
+                      label: '',
+                      value: _departDate,
+                      onChanged: (date) => setState(() => _departDate = date),
+                      hint: 'Date',
+                    ),
                     FormTimeField(
                       label: '',
                       value: _departTime,
@@ -201,6 +191,11 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                     _buildSectionHeader(context, 'Arrival'),
                     FormTextField(
                       label: '',
+                      hint: 'City',
+                      controller: _arrivalCityController,
+                    ),
+                    FormTextField(
+                      label: '',
                       hint: 'Airport',
                       controller: _arrivalAirportController,
                     ),
@@ -208,7 +203,7 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                       label: '',
                       value: _arrivalDate,
                       onChanged: (date) => setState(() => _arrivalDate = date),
-                      hint: 'End Time',
+                      hint: 'Date',
                     ),
                     FormTimeField(
                       label: '',
@@ -219,11 +214,6 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                     const SizedBox(height: 8),
                     
                     // Flight details
-                    FormTextField(
-                      label: 'Flight Time',
-                      hint: 'Flight Time',
-                      controller: _flightTimeController,
-                    ),
                     FormTextField(
                       label: 'Gate',
                       hint: 'Gate',

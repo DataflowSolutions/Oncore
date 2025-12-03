@@ -544,6 +544,26 @@ class _FlightsSection extends StatelessWidget {
                 label: 'Duration',
                 value: flight.duration!,
               ),
+            if (flight.gate != null)
+              DetailValueCard(
+                label: 'Gate',
+                value: flight.gate!,
+              ),
+            if (flight.boardingGroup != null)
+              DetailValueCard(
+                label: 'Boarding Group',
+                value: flight.boardingGroup!,
+              ),
+            if (flight.boardingSequence != null)
+              DetailValueCard(
+                label: 'Boarding Sequence',
+                value: flight.boardingSequence!,
+              ),
+            if (flight.passengerName != null)
+              DetailValueCard(
+                label: 'Passenger',
+                value: flight.passengerName!,
+              ),
             if (flight.travelClass != null)
               DetailValueCard(
                 label: 'Travel Class',

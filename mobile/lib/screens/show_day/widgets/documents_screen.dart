@@ -68,9 +68,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load files: $e')),
-        );
+        AppToast.error(context, 'Failed to load files: $e');
       }
     }
   }
@@ -106,9 +104,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       final file = result.files.first;
       if (file.bytes == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not read file data')),
-          );
+          AppToast.error(context, 'Could not read file data');
         }
         return;
       }
@@ -123,9 +119,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick file: $e')),
-        );
+        AppToast.error(context, 'Failed to pick file: $e');
       }
     } finally {
       if (mounted) {
@@ -200,15 +194,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       widget.onDocumentAdded?.call();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File uploaded successfully')),
-        );
+        AppToast.success(context, 'File uploaded successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload file: $e')),
-        );
+        AppToast.error(context, 'Failed to upload file: $e');
       }
     }
   }
@@ -263,15 +253,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       widget.onDocumentAdded?.call();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File deleted')),
-        );
+        AppToast.success(context, 'File deleted');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete file: $e')),
-        );
+        AppToast.error(context, 'Failed to delete file: $e');
       }
     }
   }
@@ -388,18 +374,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       // Copy button
                       IconButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Copy coming soon')),
-                          );
+                          AppToast.info(context, 'Copy coming soon');
                         },
                         icon: Icon(Icons.copy, color: colorScheme.onSurface),
                       ),
                       // Share button
                       IconButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Share coming soon')),
-                          );
+                          AppToast.info(context, 'Share coming soon');
                         },
                         icon: Icon(Icons.ios_share, color: colorScheme.onSurface),
                       ),

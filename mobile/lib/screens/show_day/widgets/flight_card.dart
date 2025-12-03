@@ -164,7 +164,7 @@ class FlightCard extends StatelessWidget {
                 Text(
                   arrivalTime,
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurface,
                     fontSize: 12,
                   ),
                 ),

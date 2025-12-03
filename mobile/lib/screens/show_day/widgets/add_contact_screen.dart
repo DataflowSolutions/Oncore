@@ -65,12 +65,7 @@ class _AddContactScreenState extends ConsumerState<AddContactScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save contact: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to save contact: $e');
       }
     } finally {
       if (mounted) {

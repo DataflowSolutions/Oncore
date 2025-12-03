@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
+import '../screens/home/create_organization_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/main/main_shell.dart';
 import '../screens/settings/settings_screen.dart';
@@ -67,6 +68,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      
+      // Create organization page (protected)
+      GoRoute(
+        path: '/create-org',
+        name: 'create-org',
+        pageBuilder: (context, state) {
+          return const CupertinoPage(
+            child: CreateOrganizationScreen(),
+          );
+        },
       ),
       
       // Main shell with Day, Shows (list/calendar toggle), and Network tabs (protected)

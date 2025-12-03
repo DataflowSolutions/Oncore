@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import 'app_toast.dart';
 
 /// Profile dropdown widget that shows user info and account options
 class ProfileDropdown extends ConsumerWidget {
@@ -141,9 +142,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
             onTap: () {
               Navigator.of(context).pop();
               // TODO: Implement add account functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Add account coming soon')),
-              );
+              AppToast.info(context, 'Add account coming soon');
             },
             colorScheme: colorScheme,
           ),

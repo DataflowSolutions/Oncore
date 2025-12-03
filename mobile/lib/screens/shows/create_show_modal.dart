@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
 import '../main/main_shell.dart' show saveLastShow;
 import 'shows_list_screen.dart';
@@ -184,12 +185,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create show: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, 'Failed to create show: ${e.toString()}');
       }
     } finally {
       if (mounted) {

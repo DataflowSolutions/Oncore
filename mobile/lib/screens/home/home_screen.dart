@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
 
 /// Organization model matching the RPC response
@@ -140,12 +141,7 @@ class HomeScreen extends ConsumerWidget {
           if (organizations.isEmpty) {
             return _EmptyState(
               onCreateOrg: () {
-                // TODO: Navigate to create org screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Create organization coming soon!'),
-                  ),
-                );
+                context.push('/create-org');
               },
             );
           }
@@ -192,12 +188,7 @@ class HomeScreen extends ConsumerWidget {
       floatingActionButton: organizationsAsync.maybeWhen(
         data: (_) => FloatingActionButton.extended(
           onPressed: () {
-            // TODO: Navigate to create org screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Create organization coming soon!'),
-              ),
-            );
+            context.push('/create-org');
           },
           icon: const Icon(Icons.add),
           label: const Text('New Organization'),

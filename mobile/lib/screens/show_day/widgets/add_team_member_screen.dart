@@ -105,9 +105,7 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load people: $e')),
-        );
+        AppToast.error(context, 'Failed to load people: $e');
       }
     }
   }
@@ -145,12 +143,7 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to add team member: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AppToast.error(context, 'Failed to add team member: $e');
       }
     } finally {
       if (mounted) {

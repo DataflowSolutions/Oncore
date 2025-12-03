@@ -346,7 +346,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(width: 12),
             // Add New button
             GestureDetector(
-              onTap: () => _showSnackBar('Creating organization will be coming soon!'),
+              onTap: () => context.push('/create-org'),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
@@ -438,9 +438,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
       
-      _showSnackBar('Profile updated successfully!');
+      _showSnackBar('Profile updated successfully!', isSuccess: true);
     } catch (e) {
-      _showSnackBar('Failed to update profile');
+      _showSnackBar('Failed to update profile', isError: true);
     } finally {
       setState(() => _savingProfile = false);
     }
@@ -448,17 +448,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _savePassword() async {
     if (_currentPasswordController.text.isEmpty) {
-      _showSnackBar('Current password is required');
+      _showSnackBar('Current password is required', isError: true);
       return;
     }
     
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      _showSnackBar('Passwords do not match');
+      _showSnackBar('Passwords do not match', isError: true);
       return;
     }
     
     if (_newPasswordController.text.length < 6) {
-      _showSnackBar('Password must be at least 6 characters');
+      _showSnackBar('Password must be at least 6 characters', isError: true);
       return;
     }
     
@@ -475,7 +475,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
       
       if (verifyResult.user == null) {
-        _showSnackBar('Current password is incorrect');
+        _showSnackBar('Current password is incorrect', isError: true);
         return;
       }
       
@@ -484,12 +484,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         UserAttributes(password: _newPasswordController.text),
       );
       
-      _showSnackBar('Password changed successfully!');
+      _showSnackBar('Password changed successfully!', isSuccess: true);
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _confirmPasswordController.clear();
     } catch (e) {
-      _showSnackBar('Failed to change password');
+      _showSnackBar('Failed to change password', isError: true);
     } finally {
       setState(() => _savingPassword = false);
     }
@@ -511,17 +511,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     
     if (mounted) {
       context.go('/org/${org['org_id']}/shows');
-      _showSnackBar('Switched to organization: ${org['name']}');
+      _showSnackBar('Switched to organization: ${org['name']}', isSuccess: true);
     }
   }
 
-  void _showSnackBar(String message) {
-    final colorScheme = Theme.of(context).colorScheme;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-      ),
-    );
+  void _showSnackBar(String message, {bool isError = false, bool isSuccess = false}) {
+    if (isError) {
+      AppToast.error(context, message);
+    } else if (isSuccess) {
+      AppToast.success(context, message);
+    } else {
+      AppToast.info(context, message);
+    }
   }
 }
