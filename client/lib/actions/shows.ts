@@ -174,12 +174,18 @@ export async function createShow(formData: FormData) {
 export async function updateShow(showId: string, updates: ShowUpdate) {
   const supabase = await getSupabaseServer();
 
-  const { data, error } = await supabase
-    .from("shows")
-    .update(updates)
-    .eq("id", showId)
-    .select()
-    .single();
+  // Use RPC function to update show (bypasses RLS issues with PostgREST)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("app_update_show", {
+    p_show_id: showId,
+    p_title: updates.title || null,
+    p_date: updates.date || null,
+    p_venue_id: updates.venue_id || null,
+    p_set_time: updates.set_time || null,
+    p_doors_at: updates.doors_at || null,
+    p_notes: updates.notes || null,
+    p_status: updates.status || null,
+  });
 
   if (error) {
     logger.error("Error updating show", error);
@@ -195,7 +201,11 @@ export async function updateShow(showId: string, updates: ShowUpdate) {
 export async function deleteShow(showId: string) {
   const supabase = await getSupabaseServer();
 
-  const { error } = await supabase.from("shows").delete().eq("id", showId);
+  // Use RPC function to delete show (bypasses RLS issues with PostgREST)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("app_delete_show", {
+    p_show_id: showId,
+  });
 
   if (error) {
     logger.error("Error deleting show", error);
