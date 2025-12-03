@@ -165,6 +165,19 @@ class _ShowDayContent extends ConsumerWidget {
       );
     }
 
+    void openTeamScreen() {
+      Navigator.of(context).push(
+        SwipeablePageRoute(
+          builder: (_) => TeamScreen(
+            assignments: assignments,
+            showId: showId,
+            orgId: show.orgId,
+            onMemberAdded: () => ref.invalidate(showAssignmentsProvider(showId)),
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +194,7 @@ class _ShowDayContent extends ConsumerWidget {
           // Action bar
           ActionBar(
             actions: [
-              ActionItem(icon: Icons.people_outline, onTap: () {}),
+              ActionItem(icon: Icons.people_outline, onTap: openTeamScreen),
               ActionItem(icon: Icons.schedule, onTap: openFullSchedule),
               ActionItem(icon: Icons.fullscreen, onTap: () {}),
               ActionItem(icon: Icons.refresh, onTap: () => _refresh(ref)),
