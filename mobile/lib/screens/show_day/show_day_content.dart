@@ -463,19 +463,26 @@ class _FlightsSection extends StatelessWidget {
             else
               HorizontalCardList(
                 height: 160,
-                children: flights.map((flight) => GestureDetector(
-                  onTap: () => _showFlightDetails(context, flight),
-                  child: FlightCard(
-                    flightNumber: flight.displayFlightNumber,
-                    departure: flight.departAirportCode ?? '???',
-                    departureCity: flight.departCity,
-                    arrival: flight.arrivalAirportCode ?? '???',
-                    arrivalCity: flight.arrivalCity,
-                    departureTime: flight.formattedDepartTime ?? '--:--',
-                    arrivalTime: flight.formattedArrivalTime ?? '--:--',
-                    duration: flight.duration,
+                children: [
+                  ...flights.map((flight) => GestureDetector(
+                    onTap: () => _showFlightDetails(context, flight),
+                    child: FlightCard(
+                      flightNumber: flight.displayFlightNumber,
+                      departure: flight.departAirportCode ?? '???',
+                      departureCity: flight.departCity,
+                      arrival: flight.arrivalAirportCode ?? '???',
+                      arrivalCity: flight.arrivalCity,
+                      departureTime: flight.formattedDepartTime ?? '--:--',
+                      arrivalTime: flight.formattedArrivalTime ?? '--:--',
+                      duration: flight.duration,
+                    ),
+                  )),
+                  // Add "Create New" card at the end
+                  GestureDetector(
+                    onTap: () => _openAddFlight(context),
+                    child: _CreateNewFlightCard(),
                   ),
-                )).toList(),
+                ],
               ),
           ],
         ),
@@ -543,6 +550,49 @@ class _FlightsSection extends StatelessWidget {
                 value: flight.ticketNumber!,
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openAddFlight(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => AddFlightScreen(
+          showId: showId,
+          orgId: orgId,
+          onFlightAdded: () {
+            onFlightAdded?.call();
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// "Create New" flight card matching FlightCard dimensions
+class _CreateNewFlightCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 280,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.add,
+          color: colorScheme.onSurfaceVariant,
+          size: 32,
         ),
       ),
     );

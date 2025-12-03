@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
-import 'form_widgets.dart';
 import 'add_flight_screen.dart';
+import 'form_widgets.dart';
 
 /// Layer 2: Flights list screen showing all flights for a show
 class FlightsScreen extends ConsumerWidget {

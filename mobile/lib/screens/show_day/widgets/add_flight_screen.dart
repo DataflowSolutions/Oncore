@@ -23,39 +23,56 @@ class AddFlightScreen extends ConsumerStatefulWidget {
 
 class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _airlineController = TextEditingController();
-  final _flightNumberController = TextEditingController();
-  final _departAirportController = TextEditingController();
-  final _departCityController = TextEditingController();
-  final _arrivalAirportController = TextEditingController();
-  final _arrivalCityController = TextEditingController();
-  final _bookingRefController = TextEditingController();
-  final _ticketNumberController = TextEditingController();
-  final _seatNumberController = TextEditingController();
-  final _travelClassController = TextEditingController();
-  final _notesController = TextEditingController();
   
-  String _direction = 'arrival';
+  // Airline
+  final _airlineController = TextEditingController();
+  
+  // Departure
+  final _departCityController = TextEditingController();
+  final _departAirportController = TextEditingController();
   DateTime? _departDate;
   TimeOfDay? _departTime;
+  
+  // Arrival
+  final _arrivalAirportController = TextEditingController();
+  final _arrivalCityController = TextEditingController();
   DateTime? _arrivalDate;
   TimeOfDay? _arrivalTime;
   
+  // Flight details
+  final _flightTimeController = TextEditingController();
+  final _gateController = TextEditingController();
+  final _boardsController = TextEditingController();
+  final _flightNumberController = TextEditingController();
+  final _seatController = TextEditingController();
+  final _sequenceController = TextEditingController();
+  final _groupController = TextEditingController();
+  final _passengerController = TextEditingController();
+  final _classController = TextEditingController();
+  final _ticketNumberController = TextEditingController();
+  final _bookingRefController = TextEditingController();
+  
+  final String _direction = 'arrival';
   bool _isLoading = false;
 
   @override
   void dispose() {
     _airlineController.dispose();
-    _flightNumberController.dispose();
-    _departAirportController.dispose();
     _departCityController.dispose();
+    _departAirportController.dispose();
     _arrivalAirportController.dispose();
     _arrivalCityController.dispose();
-    _bookingRefController.dispose();
+    _flightTimeController.dispose();
+    _gateController.dispose();
+    _boardsController.dispose();
+    _flightNumberController.dispose();
+    _seatController.dispose();
+    _sequenceController.dispose();
+    _groupController.dispose();
+    _passengerController.dispose();
+    _classController.dispose();
     _ticketNumberController.dispose();
-    _seatNumberController.dispose();
-    _travelClassController.dispose();
-    _notesController.dispose();
+    _bookingRefController.dispose();
     super.dispose();
   }
 
@@ -82,6 +99,24 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
       final departAt = _combineDateTime(_departDate, _departTime);
       final arrivalAt = _combineDateTime(_arrivalDate, _arrivalTime);
 
+      // Build notes from extra fields that don't have direct DB columns
+      final notesParts = <String>[];
+      if (_flightTimeController.text.trim().isNotEmpty) {
+        notesParts.add('Flight Time: ${_flightTimeController.text.trim()}');
+      }
+      if (_gateController.text.trim().isNotEmpty) {
+        notesParts.add('Gate: ${_gateController.text.trim()}');
+      }
+      if (_boardsController.text.trim().isNotEmpty) {
+        notesParts.add('Boards: ${_boardsController.text.trim()}');
+      }
+      if (_sequenceController.text.trim().isNotEmpty) {
+        notesParts.add('Sequence: ${_sequenceController.text.trim()}');
+      }
+      if (_groupController.text.trim().isNotEmpty) {
+        notesParts.add('Group: ${_groupController.text.trim()}');
+      }
+
       await supabase.from('advancing_flights').insert({
         'show_id': widget.showId,
         'direction': _direction,
@@ -93,11 +128,12 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
         'arrival_airport_code': _arrivalAirportController.text.trim().isEmpty ? null : _arrivalAirportController.text.trim().toUpperCase(),
         'arrival_city': _arrivalCityController.text.trim().isEmpty ? null : _arrivalCityController.text.trim(),
         'arrival_at': arrivalAt?.toIso8601String(),
-        'booking_ref': _bookingRefController.text.trim().isEmpty ? null : _bookingRefController.text.trim(),
+        'passenger_name': _passengerController.text.trim().isEmpty ? null : _passengerController.text.trim(),
+        'seat_number': _seatController.text.trim().isEmpty ? null : _seatController.text.trim(),
+        'travel_class': _classController.text.trim().isEmpty ? null : _classController.text.trim(),
         'ticket_number': _ticketNumberController.text.trim().isEmpty ? null : _ticketNumberController.text.trim(),
-        'seat_number': _seatNumberController.text.trim().isEmpty ? null : _seatNumberController.text.trim(),
-        'travel_class': _travelClassController.text.trim().isEmpty ? null : _travelClassController.text.trim(),
-        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        'booking_ref': _bookingRefController.text.trim().isEmpty ? null : _bookingRefController.text.trim(),
+        'notes': notesParts.isEmpty ? null : notesParts.join('\n'),
         'source': 'artist',
       });
 
@@ -122,8 +158,6 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return LayerScaffold(
       title: 'Add Flight',
       body: Form(
@@ -135,158 +169,110 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Direction toggle
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            'Direction',
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: SegmentedButton<String>(
-                            segments: const [
-                              ButtonSegment(value: 'arrival', label: Text('Arrival')),
-                              ButtonSegment(value: 'departure', label: Text('Departure')),
-                            ],
-                            selected: {_direction},
-                            onSelectionChanged: (values) {
-                              setState(() => _direction = values.first);
-                            },
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return colorScheme.onSurface;
-                                }
-                                return colorScheme.surfaceContainer;
-                              }),
-                              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return colorScheme.surface;
-                                }
-                                return colorScheme.onSurface;
-                              }),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    // Airline
                     FormTextField(
                       label: 'Airline',
-                      hint: 'Airline',
+                      hint: 'Name',
                       controller: _airlineController,
                     ),
-                    FormTextField(
-                      label: 'Flight No.',
-                      hint: 'Flight Number',
-                      controller: _flightNumberController,
-                    ),
                     const SizedBox(height: 16),
-                    // Departure section
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'DEPARTURE',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    
+                    // Departure section header
+                    _buildSectionHeader(context, 'Departure'),
                     FormTextField(
-                      label: 'Airport',
-                      hint: 'Airport Code (e.g. JFK)',
-                      controller: _departAirportController,
-                    ),
-                    FormTextField(
-                      label: 'City',
+                      label: '',
                       hint: 'City',
                       controller: _departCityController,
                     ),
-                    FormDateField(
-                      label: 'Date',
-                      value: _departDate,
-                      onChanged: (date) => setState(() => _departDate = date),
+                    FormTextField(
+                      label: '',
+                      hint: 'Airport',
+                      controller: _departAirportController,
                     ),
                     FormTimeField(
-                      label: 'Time',
+                      label: '',
                       value: _departTime,
                       onChanged: (time) => setState(() => _departTime = time),
+                      hint: 'Time',
                     ),
                     const SizedBox(height: 16),
-                    // Arrival section
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'ARRIVAL',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    
+                    // Arrival section header
+                    _buildSectionHeader(context, 'Arrival'),
                     FormTextField(
-                      label: 'Airport',
-                      hint: 'Airport Code (e.g. LAX)',
+                      label: '',
+                      hint: 'Airport',
                       controller: _arrivalAirportController,
                     ),
-                    FormTextField(
-                      label: 'City',
-                      hint: 'City',
-                      controller: _arrivalCityController,
-                    ),
                     FormDateField(
-                      label: 'Date',
+                      label: '',
                       value: _arrivalDate,
                       onChanged: (date) => setState(() => _arrivalDate = date),
+                      hint: 'End Time',
                     ),
                     FormTimeField(
-                      label: 'Time',
+                      label: '',
                       value: _arrivalTime,
                       onChanged: (time) => setState(() => _arrivalTime = time),
+                      hint: 'Time',
                     ),
-                    const SizedBox(height: 16),
-                    // Booking details
+                    const SizedBox(height: 8),
+                    
+                    // Flight details
                     FormTextField(
-                      label: 'Booking',
-                      hint: 'Booking Reference',
-                      controller: _bookingRefController,
+                      label: 'Flight Time',
+                      hint: 'Flight Time',
+                      controller: _flightTimeController,
                     ),
                     FormTextField(
-                      label: 'Ticket',
+                      label: 'Gate',
+                      hint: 'Gate',
+                      controller: _gateController,
+                    ),
+                    FormTextField(
+                      label: 'Boards',
+                      hint: 'Boards',
+                      controller: _boardsController,
+                    ),
+                    FormTextField(
+                      label: 'Flight #',
+                      hint: 'Flight Number',
+                      controller: _flightNumberController,
+                    ),
+                    FormTextField(
+                      label: 'Seat',
+                      hint: 'Seat',
+                      controller: _seatController,
+                    ),
+                    FormTextField(
+                      label: 'Seq',
+                      hint: 'Sequence',
+                      controller: _sequenceController,
+                    ),
+                    FormTextField(
+                      label: 'Group',
+                      hint: 'Group',
+                      controller: _groupController,
+                    ),
+                    FormTextField(
+                      label: 'Passenger',
+                      hint: 'Full Name',
+                      controller: _passengerController,
+                    ),
+                    FormTextField(
+                      label: 'Class',
+                      hint: 'Class',
+                      controller: _classController,
+                    ),
+                    FormTextField(
+                      label: 'Ticket#',
                       hint: 'Ticket Number',
                       controller: _ticketNumberController,
                     ),
                     FormTextField(
-                      label: 'Seat',
-                      hint: 'Seat Number',
-                      controller: _seatNumberController,
-                    ),
-                    FormTextField(
-                      label: 'Class',
-                      hint: 'Travel Class',
-                      controller: _travelClassController,
-                    ),
-                    FormTextField(
-                      label: 'Notes',
-                      hint: 'Notes',
-                      controller: _notesController,
-                      maxLines: 3,
+                      label: 'Book. No.',
+                      hint: 'Booking Number',
+                      controller: _bookingRefController,
                     ),
                   ],
                 ),
@@ -299,6 +285,28 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

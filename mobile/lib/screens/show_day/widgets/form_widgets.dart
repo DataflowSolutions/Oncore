@@ -87,6 +87,7 @@ class FormTextField extends StatelessWidget {
 /// Date picker field for forms
 class FormDateField extends StatelessWidget {
   final String label;
+  final String? hint;
   final DateTime? value;
   final void Function(DateTime?)? onChanged;
   final bool enabled;
@@ -94,6 +95,7 @@ class FormDateField extends StatelessWidget {
   const FormDateField({
     super.key,
     required this.label,
+    this.hint,
     this.value,
     this.onChanged,
     this.enabled = true,
@@ -105,7 +107,7 @@ class FormDateField extends StatelessWidget {
     
     final displayText = value != null
         ? '${value!.day}/${value!.month}/${value!.year}'
-        : 'Date';
+        : (hint ?? 'Date');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -173,6 +175,7 @@ class FormDateField extends StatelessWidget {
 /// Time picker field for forms
 class FormTimeField extends StatelessWidget {
   final String label;
+  final String? hint;
   final TimeOfDay? value;
   final void Function(TimeOfDay?)? onChanged;
   final bool enabled;
@@ -180,6 +183,7 @@ class FormTimeField extends StatelessWidget {
   const FormTimeField({
     super.key,
     required this.label,
+    this.hint,
     this.value,
     this.onChanged,
     this.enabled = true,
@@ -191,7 +195,7 @@ class FormTimeField extends StatelessWidget {
     
     final displayText = value != null
         ? '${value!.hour.toString().padLeft(2, '0')}:${value!.minute.toString().padLeft(2, '0')}'
-        : 'Time';
+        : (hint ?? 'Time');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
