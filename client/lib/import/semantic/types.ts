@@ -64,24 +64,20 @@ export type ImportFactType =
   | 'food_serviceTime'
   | 'food_guestCount'
   
-  // Flight section (ImportedFlight[])
-  | 'flight_airline'
-  | 'flight_flightNumber'
-  | 'flight_aircraft'
-  | 'flight_fullName'
-  | 'flight_bookingReference'
-  | 'flight_ticketNumber'
-  | 'flight_fromCity'
-  | 'flight_fromAirport'
-  | 'flight_departureTime'
-  | 'flight_toCity'
-  | 'flight_toAirport'
-  | 'flight_arrivalTime'
-  | 'flight_seat'
-  | 'flight_travelClass'
-  | 'flight_flightTime'
-  | 'flight_direction'
-  | 'flight_notes'
+  // Flight section (ImportedFlight[]) - KEYS ONLY (enrichment via API)
+  // ✅ Extract with AI (document-specific, not in APIs)
+  | 'flight_flightNumber'        // Primary key: "TK67", "LH1234"
+  | 'flight_date'                // Flight date (required for API lookup)
+  | 'flight_fullName'            // Passenger name
+  | 'flight_ticketNumber'        // Ticket/e-ticket number
+  | 'flight_bookingReference'    // PNR / booking reference
+  | 'flight_seat'                // Seat assignment (sometimes in API, often not)
+  | 'flight_travelClass'         // Economy/Business/First
+  | 'flight_notes'               // Additional notes
+  // ❌ NO LONGER EXTRACT (fetched via API in Stage F3):
+  // flight_airline, flight_fromAirport, flight_toAirport, 
+  // flight_fromCity, flight_toCity, flight_departureTime, 
+  // flight_arrivalTime, flight_flightTime, flight_aircraft
   
   // Activity section (ImportedActivity[])
   | 'activity_name'
@@ -406,24 +402,18 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string> = {
   food_serviceTime: 'food[].serviceTime',
   food_guestCount: 'food[].guestCount',
   
-  // Flight section (array)
-  flight_airline: 'flights[].airline',
+  // Flight section (array) - KEYS ONLY
   flight_flightNumber: 'flights[].flightNumber',
-  flight_aircraft: 'flights[].aircraft',
+  flight_date: 'flights[].date',
   flight_fullName: 'flights[].fullName',
-  flight_bookingReference: 'flights[].bookingReference',
   flight_ticketNumber: 'flights[].ticketNumber',
-  flight_fromCity: 'flights[].fromCity',
-  flight_fromAirport: 'flights[].fromAirport',
-  flight_departureTime: 'flights[].departureTime',
-  flight_toCity: 'flights[].toCity',
-  flight_toAirport: 'flights[].toAirport',
-  flight_arrivalTime: 'flights[].arrivalTime',
+  flight_bookingReference: 'flights[].bookingReference',
   flight_seat: 'flights[].seat',
   flight_travelClass: 'flights[].travelClass',
-  flight_flightTime: 'flights[].flightTime',
-  flight_direction: 'flights[].direction',
   flight_notes: 'flights[].notes',
+  // API-enriched fields (populated in Stage F3, not extracted):
+  // airline, fromAirport, toAirport, fromCity, toCity,
+  // departureTime, arrivalTime, flightTime, aircraft
   
   // Activity section (array)
   activity_name: 'activities[].name',

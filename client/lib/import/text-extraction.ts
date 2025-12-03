@@ -3,11 +3,12 @@
 import "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
+import { createWorker } from "tesseract.js";
 import { logger } from "@/lib/logger";
 
 /**
  * Enterprise-grade text extraction service supporting multiple file formats.
- * Handles PDFs, DOCX, TXT, HTML, and other common formats.
+ * Handles PDFs, DOCX, TXT, HTML, and Images (via OCR).
  * Returns extracted text or empty string on failure (with logging).
  */
 
@@ -45,6 +46,10 @@ export async function extractText(options: ExtractTextOptions): Promise<ExtractT
       return await extractFromDOCX(buffer, fileName);
     }
 
+    if (mime.startsWith("image/") || ["jpg", "jpeg", "png", "bmp", "webp"].includes(ext)) {
+      return await extractFromImage(buffer, fileName);
+    }
+
     if (mime.startsWith("text/") || ["txt", "md", "csv", "json", "html", "xml"].includes(ext)) {
       return extractFromText(buffer, fileName);
     }
@@ -76,6 +81,16 @@ async function extractFromPDF(buffer: Buffer, fileName: string): Promise<Extract
 
     const wordCount = countWords(result.text);
     const isLowText = isLowTextDocument(wordCount, result.total);
+
+    if (isLowText) {
+      logger.warn("PDF has low text content - likely image-based", {
+        fileName,
+        pages: result.total,
+        words: wordCount,
+        hint: "OCR may be required but is not supported for PDFs in this environment (requires PDF-to-Image conversion)"
+      });
+    }
+
     logger.info("PDF text extracted", {
       fileName,
       pages: result.total,
@@ -104,6 +119,39 @@ async function extractFromPDF(buffer: Buffer, fileName: string): Promise<Extract
         // Ignore cleanup errors
       }
     }
+  }
+}
+
+/**
+ * Extract text from Images using Tesseract.js OCR.
+ */
+async function extractFromImage(buffer: Buffer, fileName: string): Promise<ExtractTextResult> {
+  try {
+    logger.info("Starting OCR for image", { fileName });
+
+    const worker = await createWorker('eng');
+    const ret = await worker.recognize(buffer);
+    const text = ret.data.text;
+    await worker.terminate();
+
+    const wordCount = countWords(text);
+
+    logger.info("OCR complete", {
+      fileName,
+      words: wordCount,
+    });
+
+    return {
+      text,
+      wordCount,
+      isLowText: false, // Assume OCR text is valuable even if short
+    };
+  } catch (error) {
+    logger.error("OCR extraction failed", { fileName, error });
+    return {
+      text: "",
+      error: error instanceof Error ? error.message : "OCR error",
+    };
   }
 }
 

@@ -39,6 +39,7 @@ import {
   getConsumedFlightFactTypes,
 } from './flight-reconstruction';
 import { enrichImportData, getEnrichmentStats } from './enrichment';
+import { getFlightEnrichmentService, type ExtractedFlightKey } from './flight-enrichment';
 import {
   insertImportFacts,
   getImportFacts,
@@ -112,10 +113,10 @@ async function runFactExtraction(
 
   for (let sourceIdx = 0; sourceIdx < sources.length; sourceIdx++) {
     const source = sources[sourceIdx];
-    
+
     // Build chunks for this source (using full text, not section-specific)
     const chunks = buildAllChunks(source, 1000); // 1000 words per chunk
-    
+
     logger.info('Extracting facts from source', {
       jobId,
       sourceId: source.id,
@@ -140,7 +141,7 @@ async function runFactExtraction(
 
       // Diagnostic: Log chunk details
       logChunk(source.id, source.fileName, chunkIdx, chunk.text);
-      
+
       const result = await extractFactsFromChunk({
         job_id: jobId,
         source_id: source.id,
@@ -173,20 +174,20 @@ async function runFactExtraction(
 
   // Diagnostic: Dump raw extracted facts before post-processing
   dumpFacts('stage1_normalized', jobId, allFacts);
-  
+
   // Post-process all facts before marking extraction complete
   logger.info('Running post-processing on extracted facts', {
     jobId,
     factsBeforePostProcessing: allFacts.length,
   });
-  
+
   allFacts = postProcessAllFacts(allFacts, jobId);
-  
+
   logger.info('Post-processing complete', {
     jobId,
     factsAfterPostProcessing: allFacts.length,
   });
-  
+
   // Diagnostic: Dump post-processing changes (already called inside postProcessAllFacts)
   dumpFacts('stage1_postprocessed', jobId, allFacts);
 
@@ -215,7 +216,7 @@ function buildAllChunks(source: ImportSource, maxWords: number): TextChunk[] {
 
   const words = text.split(/\s+/).filter(Boolean);
   const chunks: TextChunk[] = [];
-  
+
   for (let i = 0; i < words.length; i += maxWords) {
     const chunkWords = words.slice(i, i + maxWords);
     chunks.push({
@@ -251,7 +252,7 @@ async function runFactResolution(
 
   // Get all facts from database
   const { facts, error } = await getImportFacts(supabase, jobId);
-  
+
   if (error) {
     return {
       resolutions: [],
@@ -276,7 +277,7 @@ async function runFactResolution(
 
   // Save selections to database
   const selectResult = await selectImportFacts(supabase, jobId, result.resolutions);
-  
+
   const warnings = [...(result.warnings || [])];
   if (selectResult.error) {
     warnings.push(`Failed to save selections: ${selectResult.error}`);
@@ -341,10 +342,10 @@ function applyResolutionsToImportData(
   selectedFacts: ImportFact[]
 ): ImportData {
   const data = createEmptyImportData();
-  
+
   // Build map of selected facts by ID
   const factsById = new Map(selectedFacts.map(f => [f.id, f]));
-  
+
   // Build fact count map for singleton detection
   const factCounts = buildFactCountMap(selectedFacts);
 
@@ -380,6 +381,7 @@ function applyResolutionsToImportData(
       continue;
     }
 
+    // Allow 'informational' state to proceed (it acts like resolved for data application)
     if (resolution.state !== 'resolved' && resolution.state !== 'informational') {
       logger.warn(
         `[Semantic] Unexpected resolution state '${resolution.state}' for ${resolution.fact_type} - skipping`
@@ -483,16 +485,7 @@ function applyFactToImportData(
       fact?.value_date;
   }
 
-  // Handle datetime fields for flights (flight_departureTime, flight_arrivalTime)
-  // The LLM may put datetime values into value_datetime instead of value_text
-  if (
-    !value &&
-    (factType === 'flight_departureTime' || factType === 'flight_arrivalTime')
-  ) {
-    if (fact?.value_datetime) {
-      value = fact.value_datetime;
-    }
-  }
+  // No special datetime handling for flights anymore (deprecated fact types removed)
 
   if (!value) return;
 
@@ -500,7 +493,7 @@ function applyFactToImportData(
   const factSourceScope = (fact?.source_scope as ImportSourceScope | undefined) ?? 'unknown';
 
   const fieldPath = FACT_TYPE_TO_IMPORT_FIELD[factType];
-  
+
   if (fieldPath) {
     applyValueToField(data, fieldPath, value, factType, factDomain, factSourceScope);
   }
@@ -539,7 +532,7 @@ function applyValueToField(
         array.push(item);
       }
     }
-    
+
     if (property) {
       // Hotel scoping: prefer higher source_scope; skip rider_example if better data exists
       if (arrayKey === 'hotels' && shouldSkipHotelField(item, sourceScope)) {
@@ -562,7 +555,7 @@ function applyValueToField(
   // Handle nested fields (e.g., "deal.fee")
   const parts = fieldPath.split('.');
   let target: any = data;
-  
+
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
     if (!target[part]) {
@@ -572,7 +565,7 @@ function applyValueToField(
   }
 
   const lastPart = parts[parts.length - 1];
-  
+
   // Only set if not already set (first value wins for resolved facts)
   if (!target[lastPart]) {
     target[lastPart] = value;
@@ -760,15 +753,15 @@ export async function runSemanticImportExtraction(
 
   // Stage 2.5: Flight Instance Reconstruction
   logger.info('Stage 2.5: Reconstructing flight instances', { jobId });
-  
+
   // Get all facts for reconstruction
   const { facts: allFactsForReconstruction } = await getImportFacts(supabase, jobId);
-  
+
   const flightGroups = reconstructFlightInstances(
     resolutionResult.resolutions,
     allFactsForReconstruction
   );
-  
+
   logger.info('Flight reconstruction complete', {
     jobId,
     flightGroupsFound: flightGroups.length,
@@ -792,7 +785,7 @@ export async function runSemanticImportExtraction(
 
   // Apply flight groups first
   let data = createEmptyImportData();
-  
+
   if (flightGroups.length > 0) {
     data = applyFlightGroupsToImportData(data, flightGroups);
     logger.info('Flight groups applied', {
@@ -806,7 +799,7 @@ export async function runSemanticImportExtraction(
   const nonFlightResolutions = resolutionResult.resolutions.filter(
     r => !consumedFlightTypes.has(r.fact_type)
   );
-  
+
   logger.info('Applying non-flight resolutions', {
     jobId,
     totalResolutions: resolutionResult.resolutions.length,
@@ -818,28 +811,96 @@ export async function runSemanticImportExtraction(
     nonFlightResolutions,
     selectedFacts
   );
-  
+
   // Merge non-flight data (preserve flights array)
   data = {
     ...nonFlightData,
     flights: data.flights,
   };
-  
+
   // =============================================================================
-  // STAGE 3.5: Data Enrichment
+  // STAGE F3: Flight Enrichment (API lookup for airports, times, etc.)
   // =============================================================================
-  
+
+  logger.info('Stage F3: Enriching flights with external API data', { jobId });
+
+  if (data.flights && data.flights.length > 0) {
+    const flightEnrichmentService = getFlightEnrichmentService();
+
+    // Convert ImportedFlight[] to ExtractedFlightKey[] for enrichment
+    const flightKeys: ExtractedFlightKey[] = data.flights.map(flight => ({
+      flightNumber: flight.flightNumber || '',
+      date: flight.date,
+      passengerName: flight.fullName,
+      ticketNumber: flight.ticketNumber,
+      bookingReference: flight.bookingReference,
+      seat: flight.seat,
+      travelClass: flight.travelClass,
+      notes: flight.notes,
+    }));
+
+    // Enrich all flights
+    const enrichedFlights = await flightEnrichmentService.enrichFlights(flightKeys);
+
+    // Merge enriched data back into flights
+    data.flights = data.flights.map((flight, index) => {
+      const enriched = enrichedFlights[index];
+
+      if (enriched.enrichmentStatus === 'success') {
+        return {
+          ...flight,
+          // API-enriched fields (only set if successfully enriched)
+          airline: enriched.airline || flight.airline,
+          fromAirport: enriched.fromAirport || flight.fromAirport,
+          fromCity: enriched.fromCity || flight.fromCity,
+          toAirport: enriched.toAirport || flight.toAirport,
+          toCity: enriched.toCity || flight.toCity,
+          departureTime: enriched.departureTime || flight.departureTime,
+          arrivalTime: enriched.arrivalTime || flight.arrivalTime,
+          flightTime: enriched.flightTime || flight.flightTime,
+          aircraft: enriched.aircraft || flight.aircraft,
+          // Add enrichment metadata to notes if enriched
+          notes: flight.notes
+            ? `${flight.notes}\n[Enriched via ${enriched.enrichmentSource}]`
+            : `[Enriched via ${enriched.enrichmentSource}]`,
+        };
+      }
+
+      // Enrichment failed - keep original data (keys only)
+      if (enriched.enrichmentStatus === 'failed') {
+        logger.warn('Flight enrichment failed', {
+          flightNumber: flight.flightNumber,
+          error: enriched.enrichmentError,
+        });
+      }
+
+      return flight;
+    });
+
+    const successCount = enrichedFlights.filter(f => f.enrichmentStatus === 'success').length;
+    logger.info('Flight enrichment complete', {
+      jobId,
+      total: enrichedFlights.length,
+      successful: successCount,
+      failed: enrichedFlights.length - successCount,
+    });
+  }
+
+  // =============================================================================
+  // STAGE 3.5: Data Enrichment (other fields)
+  // =============================================================================
+
   logger.info('Stage 3.5: Enriching data with derived fields', { jobId });
-  
+
   const beforeEnrichment = { ...data };
   data = enrichImportData(data);
-  
+
   const enrichmentStats = getEnrichmentStats(beforeEnrichment, data);
   logger.info('Enrichment complete', {
     jobId,
     ...enrichmentStats,
   });
-  
+
   // Diagnostic: Dump application results and final ImportData
   dumpApplication(jobId, data);
 

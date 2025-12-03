@@ -33,7 +33,31 @@ if (fs.existsSync(envTestPath)) dotenvConfig({ path: envTestPath });
 // =============================================================================
 
 const TEST_DOCS_DIR = path.resolve(__dirname, 'docs');
+const TEST_RESULTS_DIR = path.resolve(__dirname, 'results');
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+interface TestResult {
+  document: string;
+  timestamp: string;
+  facts: ExtractedFact[];
+  resolutions: FactResolution[];
+  extractedData: ImportData;
+  coverage: FieldCoverageResult[];
+  errors: string[];
+  stats: {
+    factsExtracted: number;
+    factsPostProcessed: number;
+    resolutionsGenerated: number;
+    resolvedCount: number;
+    informationalCount: number;
+    unagreedCount: number;
+    missingCount: number;
+    expectedFields: number;
+    extractedFields: number;
+    missingFields: number;
+    coveragePercent: number;
+  };
+}
 
 interface TestDocument {
   fileName: string;
@@ -47,9 +71,11 @@ interface ExpectedFieldCoverage {
   deal: (keyof ImportedDeal)[];
   flights: (keyof ImportedFlight)[];
   hotels: (keyof ImportedHotel)[];
+  food: string[]; // Using string[] since ImportedFood has optional fields
   contacts: (keyof ImportedContact)[];
-  activities: (keyof ImportedActivity)[];
+  activities: string[]; // Using string[] since ImportedActivity has optional fields
   technical: (keyof ImportedTechnical)[];
+  documents: string[]; // Using string[] since ImportedDocument has optional fields
 }
 
 interface FieldCoverageResult {
@@ -60,6 +86,7 @@ interface FieldCoverageResult {
   value: string | null;
   factType: ImportFactType | null;
   status: 'pass' | 'fail' | 'unexpected';
+  coveragePercent?: number; // For array fields (flights, hotels, etc.)
 }
 
 // =============================================================================
@@ -72,24 +99,19 @@ const TEST_DOCUMENTS: TestDocument[] = [
     filePath: path.join(TEST_DOCS_DIR, 'Dashboard _ Manage Booking _ Flights _ Turkish Airlines.pdf'),
     description: 'Turkish Airlines flight booking confirmation with multiple legs',
     expectedFields: {
+      general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
+      deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
       flights: [
-        'airline',
-        'flightNumber',
-        'fromCity',
-        'fromAirport', 
-        'toCity',
-        'toAirport',
-        'departureTime',
-        'arrivalTime',
-        'fullName',
-        'bookingReference',
-        'ticketNumber',
-        'seat',
-        'travelClass',
-        'aircraft',
-        'flightTime',
+        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
+        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
+        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
       ],
-      contacts: ['name'],
+      hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
+      food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
+      contacts: ['name', 'phone', 'email', 'role'],
+      activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
+      technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
+      documents: ['fileName', 'fileSize', 'category'],
     },
   },
   {
@@ -97,10 +119,19 @@ const TEST_DOCUMENTS: TestDocument[] = [
     filePath: path.join(TEST_DOCS_DIR, 'Son of Son @ Sohho, Dubai - 31.12.2024.pdf'),
     description: 'Show contract/confirmation with artist, venue, date, deal info',
     expectedFields: {
-      general: ['artist', 'venue', 'date', 'city', 'country', 'setTime', 'eventName'],
-      deal: ['fee', 'currency', 'paymentTerms', 'dealType'],
-      hotels: ['name', 'city'], // Removed checkInDate/checkOutDate as they are not in doc
-      contacts: ['name', 'email', 'phone', 'role'],
+      general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
+      deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      flights: [
+        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
+        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
+        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+      ],
+      hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
+      food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
+      contacts: ['name', 'phone', 'email', 'role'],
+      activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
+      technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
+      documents: ['fileName', 'fileSize', 'category'],
     },
   },
   {
@@ -108,17 +139,39 @@ const TEST_DOCUMENTS: TestDocument[] = [
     filePath: path.join(TEST_DOCS_DIR, 'Son of Son @ Isle of Summer, München - 10.05.2025.pdf'),
     description: 'Festival show with event details (Image-based PDF - requires OCR)',
     expectedFields: {
-      // Empty expectations as this doc requires OCR which is not yet implemented
-      general: [],
-      deal: [],
+      general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
+      deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      flights: [
+        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
+        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
+        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+      ],
+      hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
+      food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
+      contacts: ['name', 'phone', 'email', 'role'],
+      activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
+      technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
+      documents: ['fileName', 'fileSize', 'category'],
     },
   },
   {
     fileName: '8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf',
     filePath: path.join(TEST_DOCS_DIR, '8e72bd26-3a09-42d9-8482-fe5839b1b101.pdf'),
-    description: 'Shanghai Rider - analyzing content',
+    description: 'Shanghai Rider - full schema validation',
     expectedFields: {
-      general: ['artist', 'venue', 'date'],
+      general: ['artist', 'eventName', 'venue', 'date', 'setTime', 'city', 'country'],
+      deal: ['fee', 'paymentTerms', 'dealType', 'currency', 'notes'],
+      flights: [
+        'airline', 'flightNumber', 'aircraft', 'fullName', 'bookingReference', 
+        'ticketNumber', 'fromCity', 'fromAirport', 'departureTime', 'toCity', 
+        'toAirport', 'arrivalTime', 'seat', 'travelClass', 'flightTime', 'direction', 'notes'
+      ],
+      hotels: ['name', 'address', 'city', 'country', 'checkInDate', 'checkInTime', 'checkOutDate', 'checkOutTime', 'bookingReference', 'phone', 'email', 'notes'],
+      food: ['name', 'address', 'city', 'country', 'bookingReference', 'phone', 'email', 'notes', 'serviceDate', 'serviceTime', 'guestCount'],
+      contacts: ['name', 'phone', 'email', 'role'],
+      activities: ['name', 'location', 'startTime', 'endTime', 'notes', 'hasDestination', 'destinationName', 'destinationLocation'],
+      technical: ['equipment', 'backline', 'stageSetup', 'lightingRequirements', 'soundcheck', 'other'],
+      documents: ['fileName', 'fileSize', 'category'],
     },
   },
 ];
@@ -286,6 +339,11 @@ function analyzeFieldCoverage(
       const fieldPath = `flights[].${field}`;
       const facts = factsByFieldPath.get(fieldPath) || [];
       const firstValue = flights.find(f => (f as any)[field])?.[field as keyof ImportedFlight];
+      
+      // Calculate coverage percent: how many flights have this field populated
+      const populatedCount = flights.filter(f => !!(f as any)[field]).length;
+      const coveragePercent = flights.length > 0 ? Math.round((populatedCount / flights.length) * 100) : 0;
+      
       results.push({
         section: 'flights',
         field,
@@ -294,6 +352,7 @@ function analyzeFieldCoverage(
         value: firstValue as string || null,
         factType: facts.length > 0 ? facts[0].fact_type : null,
         status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
       });
     }
   }
@@ -306,6 +365,11 @@ function analyzeFieldCoverage(
       const fieldPath = `hotels[].${field}`;
       const facts = factsByFieldPath.get(fieldPath) || [];
       const firstValue = hotels.find(h => (h as any)[field])?.[field as keyof ImportedHotel];
+      
+      // Calculate coverage percent: how many hotels have this field populated
+      const populatedCount = hotels.filter(h => !!(h as any)[field]).length;
+      const coveragePercent = hotels.length > 0 ? Math.round((populatedCount / hotels.length) * 100) : 0;
+      
       results.push({
         section: 'hotels',
         field,
@@ -314,6 +378,7 @@ function analyzeFieldCoverage(
         value: firstValue as string || null,
         factType: facts.length > 0 ? facts[0].fact_type : null,
         status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
       });
     }
   }
@@ -326,6 +391,11 @@ function analyzeFieldCoverage(
       const fieldPath = `contacts[].${field}`;
       const facts = factsByFieldPath.get(fieldPath) || [];
       const firstValue = contacts.find(c => (c as any)[field])?.[field as keyof ImportedContact];
+      
+      // Calculate coverage percent: how many contacts have this field populated
+      const populatedCount = contacts.filter(c => !!(c as any)[field]).length;
+      const coveragePercent = contacts.length > 0 ? Math.round((populatedCount / contacts.length) * 100) : 0;
+      
       results.push({
         section: 'contacts',
         field,
@@ -334,6 +404,7 @@ function analyzeFieldCoverage(
         value: firstValue as string || null,
         factType: facts.length > 0 ? facts[0].fact_type : null,
         status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
       });
     }
   }
@@ -346,6 +417,11 @@ function analyzeFieldCoverage(
       const fieldPath = `activities[].${field}`;
       const facts = factsByFieldPath.get(fieldPath) || [];
       const firstValue = activities.find(a => (a as any)[field])?.[field as keyof ImportedActivity];
+      
+      // Calculate coverage percent: how many activities have this field populated
+      const populatedCount = activities.filter(a => !!(a as any)[field]).length;
+      const coveragePercent = activities.length > 0 ? Math.round((populatedCount / activities.length) * 100) : 0;
+      
       results.push({
         section: 'activities',
         field,
@@ -354,6 +430,7 @@ function analyzeFieldCoverage(
         value: firstValue as string || null,
         factType: facts.length > 0 ? facts[0].fact_type : null,
         status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
       });
     }
   }
@@ -376,7 +453,132 @@ function analyzeFieldCoverage(
     }
   }
 
+  // Check food (array)
+  if (expectedFields.food) {
+    const food = extractedData.food || [];
+    for (const field of expectedFields.food) {
+      const hasValue = food.some(f => !!(f as any)[field]);
+      const fieldPath = `food[].${field}`;
+      const facts = factsByFieldPath.get(fieldPath) || [];
+      const firstItem = food.find(f => (f as any)[field]);
+      const firstValue = firstItem ? (firstItem as any)[field] : null;
+      
+      // Calculate coverage percent: how many food items have this field populated
+      const populatedCount = food.filter(f => !!(f as any)[field]).length;
+      const coveragePercent = food.length > 0 ? Math.round((populatedCount / food.length) * 100) : 0;
+      
+      results.push({
+        section: 'food',
+        field,
+        expected: true,
+        extracted: hasValue,
+        value: firstValue ? String(firstValue) : null,
+        factType: facts.length > 0 ? facts[0].fact_type : null,
+        status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
+      });
+    }
+  }
+
+  // Check documents (array)
+  if (expectedFields.documents) {
+    const documents = extractedData.documents || [];
+    for (const field of expectedFields.documents) {
+      const hasValue = documents.some(d => !!(d as any)[field]);
+      const fieldPath = `documents[].${field}`;
+      const facts = factsByFieldPath.get(fieldPath) || [];
+      const firstItem = documents.find(d => (d as any)[field]);
+      const firstValue = firstItem ? (firstItem as any)[field] : null;
+      
+      // Calculate coverage percent: how many documents have this field populated
+      const populatedCount = documents.filter(d => !!(d as any)[field]).length;
+      const coveragePercent = documents.length > 0 ? Math.round((populatedCount / documents.length) * 100) : 0;
+      
+      results.push({
+        section: 'documents',
+        field,
+        expected: true,
+        extracted: hasValue,
+        value: firstValue ? String(firstValue) : null,
+        factType: facts.length > 0 ? facts[0].fact_type : null,
+        status: hasValue ? 'pass' : 'fail',
+        coveragePercent,
+      });
+    }
+  }
+
   return results;
+}
+
+// =============================================================================
+// Test Results Export
+// =============================================================================
+
+function saveTestResults(results: TestResult[], timestamp: string): string {
+  // Ensure results directory exists
+  if (!fs.existsSync(TEST_RESULTS_DIR)) {
+    fs.mkdirSync(TEST_RESULTS_DIR, { recursive: true });
+  }
+
+  // Create filename with timestamp
+  const fileName = `test-results-${timestamp}.json`;
+  const filePath = path.join(TEST_RESULTS_DIR, fileName);
+
+  // Calculate summary stats
+  const summary = {
+    timestamp,
+    totalDocuments: results.length,
+    totalFacts: results.reduce((sum, r) => sum + r.stats.factsExtracted, 0),
+    totalResolutions: results.reduce((sum, r) => sum + r.stats.resolutionsGenerated, 0),
+    totalExpectedFields: results.reduce((sum, r) => sum + r.stats.expectedFields, 0),
+    totalExtractedFields: results.reduce((sum, r) => sum + r.stats.extractedFields, 0),
+    totalMissingFields: results.reduce((sum, r) => sum + r.stats.missingFields, 0),
+    overallCoveragePercent: results.length > 0 
+      ? Math.round(results.reduce((sum, r) => sum + r.stats.coveragePercent, 0) / results.length)
+      : 0,
+    totalErrors: results.reduce((sum, r) => sum + r.errors.length, 0),
+    
+    // Coverage by section
+    coverageBySection: calculateSectionCoverage(results),
+  };
+
+  // Create output structure
+  const output = {
+    summary,
+    results,
+  };
+
+  // Write to file
+  fs.writeFileSync(filePath, JSON.stringify(output, null, 2), 'utf-8');
+
+  return filePath;
+}
+
+function calculateSectionCoverage(results: TestResult[]): Record<string, { expected: number; extracted: number; percent: number }> {
+  const sectionStats = new Map<string, { expected: number; extracted: number }>();
+  
+  for (const result of results) {
+    for (const field of result.coverage) {
+      if (!sectionStats.has(field.section)) {
+        sectionStats.set(field.section, { expected: 0, extracted: 0 });
+      }
+      const stats = sectionStats.get(field.section)!;
+      stats.expected++;
+      if (field.extracted) {
+        stats.extracted++;
+      }
+    }
+  }
+  
+  const output: Record<string, { expected: number; extracted: number; percent: number }> = {};
+  for (const [section, stats] of sectionStats) {
+    output[section] = {
+      ...stats,
+      percent: stats.expected > 0 ? Math.round((stats.extracted / stats.expected) * 100) : 0,
+    };
+  }
+  
+  return output;
 }
 
 // =============================================================================
@@ -392,8 +594,13 @@ class SemanticImportE2ETest {
     coverage: FieldCoverageResult[];
     errors: string[];
   }> = new Map();
+  
+  private testResults: TestResult[] = [];
+  private timestamp: string = '';
 
   async run() {
+    this.timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    
     console.log('\n' + '═'.repeat(80));
     console.log('🧪 SEMANTIC IMPORT END-TO-END TEST');
     console.log('═'.repeat(80));
@@ -550,6 +757,32 @@ class SemanticImportE2ETest {
       }
     }
 
+    // Collect test result
+    const testResult: TestResult = {
+      document: doc.fileName,
+      timestamp: new Date().toISOString(),
+      facts,
+      resolutions,
+      extractedData,
+      coverage,
+      errors,
+      stats: {
+        factsExtracted: facts.length,
+        factsPostProcessed: facts.length,
+        resolutionsGenerated: resolutions.length,
+        resolvedCount: resolved.length,
+        informationalCount: informational.length,
+        unagreedCount: unagreed.length,
+        missingCount: missing.length,
+        expectedFields: coverage.length,
+        extractedFields: passed.length,
+        missingFields: failed.length,
+        coveragePercent: coverage.length > 0 ? Math.round(passed.length / coverage.length * 100) : 0,
+      },
+    };
+    
+    this.testResults.push(testResult);
+
     // Store results
     this.results.set(doc.fileName, {
       document: doc,
@@ -604,15 +837,51 @@ class SemanticImportE2ETest {
       }
       if (data.hotels.length > 0) {
         console.log(`    Hotels: ${data.hotels.length} hotel(s)`);
-        for (const hotel of data.hotels) {
+        for (const hotel of data.hotels.slice(0, 2)) {
           console.log(`      • ${hotel.name || '?'} (${hotel.checkInDate || '?'} - ${hotel.checkOutDate || '?'})`);
+        }
+        if (data.hotels.length > 2) {
+          console.log(`      ... and ${data.hotels.length - 2} more`);
+        }
+      }
+      if (data.food.length > 0) {
+        console.log(`    Food: ${data.food.length} item(s)`);
+        for (const food of data.food.slice(0, 2)) {
+          console.log(`      • ${food.name || '?'} (${food.city || '?'}) - ${food.serviceDate || '?'}`);
+        }
+        if (data.food.length > 2) {
+          console.log(`      ... and ${data.food.length - 2} more`);
+        }
+      }
+      if (data.activities.length > 0) {
+        console.log(`    Activities: ${data.activities.length} item(s)`);
+        for (const activity of data.activities.slice(0, 2)) {
+          console.log(`      • ${activity.name || '?'} at ${activity.location || '?'} (${activity.startTime || '?'})`);
+        }
+        if (data.activities.length > 2) {
+          console.log(`      ... and ${data.activities.length - 2} more`);
         }
       }
       if (data.contacts.length > 0) {
         console.log(`    Contacts: ${data.contacts.length} contact(s)`);
-        for (const contact of data.contacts) {
+        for (const contact of data.contacts.slice(0, 2)) {
           console.log(`      • ${contact.name || '?'} (${contact.role || '?'}): ${contact.email || contact.phone || '?'}`);
         }
+        if (data.contacts.length > 2) {
+          console.log(`      ... and ${data.contacts.length - 2} more`);
+        }
+      }
+      if (data.documents.length > 0) {
+        console.log(`    Documents: ${data.documents.length} document(s)`);
+        for (const doc of data.documents.slice(0, 2)) {
+          console.log(`      • ${doc.fileName || '?'} (${doc.category || '?'})`);
+        }
+        if (data.documents.length > 2) {
+          console.log(`      ... and ${data.documents.length - 2} more`);
+        }
+      }
+      if (data.technical.equipment || data.technical.backline || data.technical.other) {
+        console.log(`    Technical: ${[data.technical.equipment, data.technical.backline, data.technical.other].filter(Boolean).join(', ') || 'None'}`);
       }
 
       // Show coverage details
@@ -664,6 +933,37 @@ class SemanticImportE2ETest {
     console.log(`  ❌ Missing: ${totalMissing}`);
     console.log(`  📊 Overall Coverage: ${overallCoverage}%`);
 
+    // Coverage breakdown by section across all documents
+    console.log('\n  Coverage by Section (across all documents):');
+    const sectionStats = new Map<string, { expected: number; extracted: number }>();
+    
+    for (const result of this.results.values()) {
+      for (const field of result.coverage) {
+        if (!sectionStats.has(field.section)) {
+          sectionStats.set(field.section, { expected: 0, extracted: 0 });
+        }
+        const stats = sectionStats.get(field.section)!;
+        stats.expected++;
+        if (field.extracted) {
+          stats.extracted++;
+        }
+      }
+    }
+    
+    // Sort by coverage percentage
+    const sortedSections = Array.from(sectionStats.entries())
+      .map(([section, stats]) => ({
+        section,
+        ...stats,
+        percent: stats.expected > 0 ? Math.round((stats.extracted / stats.expected) * 100) : 0,
+      }))
+      .sort((a, b) => b.percent - a.percent);
+    
+    for (const { section, extracted, expected, percent } of sortedSections) {
+      const emoji = percent >= 75 ? '✅' : percent >= 50 ? '⚠️' : '❌';
+      console.log(`    ${emoji} ${section.padEnd(12)}: ${extracted}/${expected} (${percent}%)`);
+    }
+
     if (missingBySection.size > 0) {
       console.log('\n  Most Commonly Missing Fields:');
       for (const [section, fields] of missingBySection) {
@@ -691,6 +991,12 @@ class SemanticImportE2ETest {
     }
 
     console.log('\n' + '═'.repeat(80));
+
+    // Save test results to JSON
+    console.log('\n💾 Saving test results...');
+    const resultsPath = saveTestResults(this.testResults, this.timestamp);
+    console.log(`   ✓ Results saved to: ${resultsPath}`);
+    console.log(`   📊 View detailed results in JSON format\n`);
   }
 }
 

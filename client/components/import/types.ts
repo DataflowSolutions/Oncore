@@ -52,21 +52,24 @@ export interface ImportedFood {
 
 export interface ImportedFlight {
   id?: string;
-  airline: string;
-  flightNumber: string;
-  aircraft: string;
-  fullName: string;
-  bookingReference: string;
-  ticketNumber: string;
-  fromCity: string;
-  fromAirport: string;
-  departureTime: string;
-  toCity: string;
-  toAirport: string;
-  arrivalTime: string;
-  seat: string;
-  travelClass: string;
-  flightTime: string;
+  // Flight Keys (extracted from documents)
+  flightNumber: string;          // PRIMARY KEY: "TK67", "LH1234"
+  date?: string;                  // Flight date (ISO, required for API enrichment)
+  fullName?: string;              // Passenger name
+  ticketNumber?: string;
+  bookingReference?: string;
+  seat?: string;
+  travelClass?: string;
+  // API-Enriched Fields (populated in Stage F3, not extracted)
+  airline?: string;               // Fetched from flight APIs
+  fromAirport?: string;           // IATA code (IST, DXB, etc.)
+  fromCity?: string;
+  toAirport?: string;
+  toCity?: string;
+  departureTime?: string;         // ISO datetime
+  arrivalTime?: string;           // ISO datetime
+  flightTime?: string;            // Duration string
+  aircraft?: string;
   // Extended fields for full persistence
   direction?: "arrival" | "departure";
   notes?: string;
@@ -230,21 +233,8 @@ export function createEmptyFood(): ImportedFood {
 export function createEmptyFlight(): ImportedFlight {
   return {
     id: crypto.randomUUID(),
-    airline: "",
     flightNumber: "",
-    aircraft: "",
-    fullName: "",
-    bookingReference: "",
-    ticketNumber: "",
-    fromCity: "",
-    fromAirport: "",
-    departureTime: "",
-    toCity: "",
-    toAirport: "",
-    arrivalTime: "",
-    seat: "",
-    travelClass: "",
-    flightTime: "",
+    // All other fields are optional and will be filled by extraction or enrichment
   };
 }
 
