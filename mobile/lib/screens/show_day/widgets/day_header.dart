@@ -7,6 +7,7 @@ class DayHeader extends StatelessWidget {
   final String artist;
   final String dayTime; // e.g., "Thurs 19:30"
   final String date; // e.g., "22 July 2025"
+  final VoidCallback? onScheduleTap;
 
   const DayHeader({
     super.key,
@@ -14,6 +15,7 @@ class DayHeader extends StatelessWidget {
     required this.artist,
     required this.dayTime,
     required this.date,
+    this.onScheduleTap,
   });
 
   @override

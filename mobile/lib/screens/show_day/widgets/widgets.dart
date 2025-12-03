@@ -6,3 +6,4 @@ export 'flight_card.dart';
 export 'info_card.dart';
 export 'section_header.dart';
 export 'upcoming_schedule_card.dart';
+export 'full_schedule_screen.dart';

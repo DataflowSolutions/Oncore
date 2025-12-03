@@ -71,12 +71,16 @@ class FlightInfo {
   final String? airline;
   final String? flightNumber;
   final String? bookingRef;
+  final String? ticketNumber;
+  final String? aircraftModel;
   final String? departAirportCode;
   final String? departCity;
   final String? departAt;
   final String? arrivalAirportCode;
   final String? arrivalCity;
   final String? arrivalAt;
+  final String? seatNumber;
+  final String? travelClass;
   final String? personId;
 
   FlightInfo({
@@ -85,12 +89,16 @@ class FlightInfo {
     this.airline,
     this.flightNumber,
     this.bookingRef,
+    this.ticketNumber,
+    this.aircraftModel,
     this.departAirportCode,
     this.departCity,
     this.departAt,
     this.arrivalAirportCode,
     this.arrivalCity,
     this.arrivalAt,
+    this.seatNumber,
+    this.travelClass,
     this.personId,
   });
 
@@ -101,12 +109,16 @@ class FlightInfo {
       airline: json['airline'] as String?,
       flightNumber: json['flight_number'] as String?,
       bookingRef: json['booking_ref'] as String?,
+      ticketNumber: json['ticket_number'] as String?,
+      aircraftModel: json['aircraft_model'] as String?,
       departAirportCode: json['depart_airport_code'] as String?,
       departCity: json['depart_city'] as String?,
       departAt: json['depart_at'] as String?,
       arrivalAirportCode: json['arrival_airport_code'] as String?,
       arrivalCity: json['arrival_city'] as String?,
       arrivalAt: json['arrival_at'] as String?,
+      seatNumber: json['seat_number'] as String?,
+      travelClass: json['travel_class'] as String?,
       personId: json['person_id'] as String?,
     );
   }

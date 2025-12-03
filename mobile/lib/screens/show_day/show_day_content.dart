@@ -158,6 +158,21 @@ class _ShowDayBody extends ConsumerWidget {
     // Format day and date
     final dayTime = _formatDayTime(show);
     final date = _formatDate(show.date);
+    
+    // Get schedule items for navigation
+    final scheduleItems = scheduleAsync.valueOrNull ?? [];
+
+    void openFullSchedule() {
+      Navigator.of(context).push(
+        SwipeablePageRoute(
+          builder: (_) => FullScheduleScreen(
+            items: scheduleItems,
+            showTitle: show.title,
+            showDate: show.date,
+          ),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       child: Column(
@@ -175,7 +190,7 @@ class _ShowDayBody extends ConsumerWidget {
           ActionBar(
             actions: [
               ActionItem(icon: Icons.people_outline, onTap: () {}),
-              ActionItem(icon: Icons.schedule, onTap: () {}),
+              ActionItem(icon: Icons.schedule, onTap: openFullSchedule),
               ActionItem(icon: Icons.fullscreen, onTap: () {}),
               ActionItem(icon: Icons.refresh, onTap: () => _refresh(ref)),
               ActionItem(icon: Icons.download_outlined, onTap: () {}),
@@ -384,13 +399,15 @@ class _FlightsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           HorizontalCardList(
-            height: 140,
+            height: 160,
             children: flights.map((flight) => GestureDetector(
               onTap: () => _showFlightDetails(context, flight),
               child: FlightCard(
                 flightNumber: flight.displayFlightNumber,
                 departure: flight.departAirportCode ?? '???',
+                departureCity: flight.departCity,
                 arrival: flight.arrivalAirportCode ?? '???',
+                arrivalCity: flight.arrivalCity,
                 departureTime: flight.formattedDepartTime ?? '--:--',
                 arrivalTime: flight.formattedArrivalTime ?? '--:--',
                 duration: flight.duration,
@@ -409,23 +426,44 @@ class _FlightsSection extends StatelessWidget {
           title: flight.airline ?? 'Flight',
           subtitle: flight.flightNumber,
           content: [
-            DetailSplitCard(
-              label1: 'Departure',
-              value1: flight.formattedDepartTime ?? '--:--',
-              subValue1: flight.departAirportCode,
-              label2: 'Arrival',
-              value2: flight.formattedArrivalTime ?? '--:--',
-              subValue2: flight.arrivalAirportCode,
+            // Combined route card with city, airport code, and time
+            FlightRouteCard(
+              departCity: flight.departCity,
+              departAirportCode: flight.departAirportCode,
+              departTime: flight.formattedDepartTime,
+              arrivalCity: flight.arrivalCity,
+              arrivalAirportCode: flight.arrivalAirportCode,
+              arrivalTime: flight.formattedArrivalTime,
             ),
             if (flight.duration != null)
               DetailValueCard(
                 label: 'Duration',
                 value: flight.duration!,
               ),
+            if (flight.travelClass != null)
+              DetailValueCard(
+                label: 'Travel Class',
+                value: flight.travelClass!,
+              ),
+            if (flight.seatNumber != null)
+              DetailValueCard(
+                label: 'Seat',
+                value: flight.seatNumber!,
+              ),
+            if (flight.aircraftModel != null)
+              DetailValueCard(
+                label: 'Aircraft',
+                value: flight.aircraftModel!,
+              ),
             if (flight.bookingRef != null)
               DetailValueCard(
                 label: 'Booking Reference',
                 value: flight.bookingRef!,
+              ),
+            if (flight.ticketNumber != null)
+              DetailValueCard(
+                label: 'Ticket Number',
+                value: flight.ticketNumber!,
               ),
           ],
         ),

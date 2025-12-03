@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 class FlightCard extends StatelessWidget {
   final String flightNumber;
   final String departure;
+  final String? departureCity;
   final String arrival;
+  final String? arrivalCity;
   final String departureTime;
   final String arrivalTime;
   final String? duration;
@@ -15,7 +17,9 @@ class FlightCard extends StatelessWidget {
     super.key,
     required this.flightNumber,
     required this.departure,
+    this.departureCity,
     required this.arrival,
+    this.arrivalCity,
     required this.departureTime,
     required this.arrivalTime,
     this.duration,
@@ -29,7 +33,7 @@ class FlightCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 240, // Wider card
+        width: 260,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
@@ -45,7 +49,7 @@ class FlightCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Flight', // Generic label or could be passed in
+                  'Flight',
                   style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
                 Text(
@@ -57,27 +61,43 @@ class FlightCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // Middle row: Route with big codes
+            // Middle row: Route with big codes - fixed proportions
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
-                  child: Text(
-                    departure,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // Departure column
+                SizedBox(
+                  width: 60,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        departure,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (departureCity != null)
+                        Text(
+                          departureCity!,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
+                
+                // Duration column - flexible to take remaining space
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       children: [
                         if (duration != null)
@@ -85,7 +105,7 @@ class FlightCard extends StatelessWidget {
                             duration!,
                             style: TextStyle(
                               color: colorScheme.onSurfaceVariant,
-                              fontSize: 10,
+                              fontSize: 11,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -99,22 +119,39 @@ class FlightCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Flexible(
-                  child: Text(
-                    arrival,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                
+                // Arrival column
+                SizedBox(
+                  width: 60,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        arrival,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (arrivalCity != null)
+                        Text(
+                          arrivalCity!,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             // Bottom row: Times
             Row(

@@ -47,11 +47,11 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return InkWell(
+    return GestureDetector(
       onTap: action.onTap,
-      borderRadius: BorderRadius.circular(4),
+      behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

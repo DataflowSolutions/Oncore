@@ -258,6 +258,153 @@ class DetailValueCard extends StatelessWidget {
   }
 }
 
+/// Flight route card combining city, airport code, and time in one card
+class FlightRouteCard extends StatelessWidget {
+  final String? departCity;
+  final String? departAirportCode;
+  final String? departTime;
+  final String? arrivalCity;
+  final String? arrivalAirportCode;
+  final String? arrivalTime;
+
+  const FlightRouteCard({
+    super.key,
+    this.departCity,
+    this.departAirportCode,
+    this.departTime,
+    this.arrivalCity,
+    this.arrivalAirportCode,
+    this.arrivalTime,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          // Departure Side
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Departure',
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  departAirportCode ?? '---',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (departCity != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    departCity!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  departTime ?? '--:--',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Divider with plane icon
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.flight,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+          ),
+          
+          // Arrival Side
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Arrival',
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  arrivalAirportCode ?? '---',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (arrivalCity != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    arrivalCity!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  arrivalTime ?? '--:--',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Action data model
 class DetailAction {
   final IconData icon;
