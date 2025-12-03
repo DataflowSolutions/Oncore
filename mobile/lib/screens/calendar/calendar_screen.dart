@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
+import '../../components/profile_dropdown.dart';
 import '../shows/shows_list_screen.dart';
 import '../shows/create_show_modal.dart';
 
@@ -83,15 +84,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          // Left: Profile icon
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
+          // Left: Profile icon (tappable)
+          GestureDetector(
+            onTap: () => ProfileDropdown.show(context, ref),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
+              ),
+              child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
             ),
-            child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
           ),
           // Center: View toggle (list/calendar)
           Expanded(

@@ -7,6 +7,7 @@ import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
 import '../calendar/calendar_content.dart';
 import '../show_day/show_day_content.dart';
+import '../../components/profile_dropdown.dart';
 
 /// Storage key for last viewed show
 const String _lastShowKey = 'oncore_last_show';
@@ -226,15 +227,18 @@ class _MainShellState extends ConsumerState<MainShell> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          // Left: Profile icon
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
+          // Left: Profile icon (tappable)
+          GestureDetector(
+            onTap: () => ProfileDropdown.show(context, ref),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
+              ),
+              child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
             ),
-            child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
           ),
           // Center: View toggle (Shows list/calendar or Network tabs)
           Expanded(
