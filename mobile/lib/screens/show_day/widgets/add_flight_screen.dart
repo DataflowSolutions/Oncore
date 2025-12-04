@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
 import 'form_widgets.dart';
@@ -103,33 +104,55 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
         notesParts.add('Boards: ${_boardsController.text.trim()}');
       }
 
-      await supabase.from('advancing_flights').insert({
-        'show_id': widget.showId,
-        'direction': _direction,
-        'airline': _airlineController.text.trim().isEmpty ? null : _airlineController.text.trim(),
-        'flight_number': _flightNumberController.text.trim().isEmpty ? null : _flightNumberController.text.trim(),
-        'depart_airport_code': _departAirportController.text.trim().isEmpty ? null : _departAirportController.text.trim().toUpperCase(),
-        'depart_city': _departCityController.text.trim().isEmpty ? null : _departCityController.text.trim(),
-        'depart_at': departAt?.toIso8601String(),
-        'arrival_airport_code': _arrivalAirportController.text.trim().isEmpty ? null : _arrivalAirportController.text.trim().toUpperCase(),
-        'arrival_city': _arrivalCityController.text.trim().isEmpty ? null : _arrivalCityController.text.trim(),
-        'arrival_at': arrivalAt?.toIso8601String(),
-        'gate': _gateController.text.trim().isEmpty ? null : _gateController.text.trim(),
-        'boarding_group': _groupController.text.trim().isEmpty ? null : _groupController.text.trim(),
-        'boarding_sequence': _sequenceController.text.trim().isEmpty ? null : _sequenceController.text.trim(),
-        'passenger_name': _passengerController.text.trim().isEmpty ? null : _passengerController.text.trim(),
-        'seat_number': _seatController.text.trim().isEmpty ? null : _seatController.text.trim(),
-        'travel_class': _classController.text.trim().isEmpty ? null : _classController.text.trim(),
-        'ticket_number': _ticketNumberController.text.trim().isEmpty ? null : _ticketNumberController.text.trim(),
-        'booking_ref': _bookingRefController.text.trim().isEmpty ? null : _bookingRefController.text.trim(),
-        'notes': notesParts.isEmpty ? null : notesParts.join('\n'),
-        'source': 'artist',
+      // Use RPC function instead of direct insert
+      final response = await supabase.rpc('create_flight', params: {
+        'p_show_id': widget.showId,
+        'p_direction': _direction,
+        'p_airline': _airlineController.text.trim().isEmpty ? null : _airlineController.text.trim(),
+        'p_flight_number': _flightNumberController.text.trim().isEmpty ? null : _flightNumberController.text.trim(),
+        'p_depart_airport_code': _departAirportController.text.trim().isEmpty ? null : _departAirportController.text.trim().toUpperCase(),
+        'p_depart_city': _departCityController.text.trim().isEmpty ? null : _departCityController.text.trim(),
+        'p_depart_at': departAt?.toIso8601String(),
+        'p_arrival_airport_code': _arrivalAirportController.text.trim().isEmpty ? null : _arrivalAirportController.text.trim().toUpperCase(),
+        'p_arrival_city': _arrivalCityController.text.trim().isEmpty ? null : _arrivalCityController.text.trim(),
+        'p_arrival_at': arrivalAt?.toIso8601String(),
+        'p_passenger_name': _passengerController.text.trim().isEmpty ? null : _passengerController.text.trim(),
+        'p_seat_number': _seatController.text.trim().isEmpty ? null : _seatController.text.trim(),
+        'p_travel_class': _classController.text.trim().isEmpty ? null : _classController.text.trim(),
+        'p_ticket_number': _ticketNumberController.text.trim().isEmpty ? null : _ticketNumberController.text.trim(),
+        'p_booking_ref': _bookingRefController.text.trim().isEmpty ? null : _bookingRefController.text.trim(),
+        'p_notes': notesParts.isEmpty ? null : notesParts.join('\n'),
+        'p_source': 'artist',
+        'p_auto_schedule': true,
       });
+
+      // Sync to schedule if auto_schedule is true and times are valid
+      if (response != null && departAt != null && arrivalAt != null) {
+        final flightId = response['id'] as String?;
+        if (flightId != null) {
+          await _syncFlightToSchedule(
+            supabase: supabase,
+            flightId: flightId,
+            flightNumber: _flightNumberController.text.trim(),
+            airline: _airlineController.text.trim(),
+            departAirport: _departAirportController.text.trim().toUpperCase(),
+            departCity: _departCityController.text.trim(),
+            arrivalAirport: _arrivalAirportController.text.trim().toUpperCase(),
+            arrivalCity: _arrivalCityController.text.trim(),
+            departAt: departAt,
+            arrivalAt: arrivalAt,
+            direction: _direction,
+          );
+        }
+      }
 
       if (mounted) {
         widget.onFlightAdded?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR saving flight: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to save flight: $e');
       }
@@ -137,6 +160,62 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _syncFlightToSchedule({
+    required SupabaseClient supabase,
+    required String flightId,
+    required String flightNumber,
+    required String airline,
+    required String departAirport,
+    required String departCity,
+    required String arrivalAirport,
+    required String arrivalCity,
+    required DateTime departAt,
+    required DateTime arrivalAt,
+    required String direction,
+  }) async {
+    try {
+      // Delete any existing schedule items for this flight
+      final existingItems = await supabase
+          .rpc('get_schedule_items_for_show', params: {'p_show_id': widget.showId});
+      
+      if (existingItems != null) {
+        final List<dynamic> items = existingItems as List<dynamic>;
+        for (final item in items) {
+          if (item['source'] == 'advancing_flight' && item['source_ref'] == flightId) {
+            await supabase.rpc('delete_schedule_item', params: {
+              'p_item_id': item['id'],
+            });
+          }
+        }
+      }
+
+      // Create new schedule item
+      final location = '${departAirport.isEmpty ? 'DEP' : departAirport} → ${arrivalAirport.isEmpty ? 'ARR' : arrivalAirport}';
+      final notesParts = <String>[];
+      if (departCity.isNotEmpty) notesParts.add('From $departCity');
+      if (arrivalCity.isNotEmpty) notesParts.add('to $arrivalCity');
+
+      await supabase.rpc('create_schedule_item', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_title': 'Flight ${flightNumber.isEmpty ? '' : flightNumber} - ${airline.isEmpty ? 'Flight' : airline}'.trim(),
+        'p_starts_at': departAt.toIso8601String(),
+        'p_ends_at': arrivalAt.toIso8601String(),
+        'p_location': location,
+        'p_notes': notesParts.isEmpty ? null : notesParts.join(' '),
+        'p_item_type': direction == 'arrival' ? 'arrival' : 'departure',
+        'p_auto_generated': true,
+        'p_source': 'advancing_flight',
+        'p_source_ref': flightId,
+      });
+    } catch (e) {
+      print('═══════════════════════════════════════');
+      print('⚠️  WARNING: Failed to sync flight to schedule: $e');
+      print('═══════════════════════════════════════');
+      // Don't throw - schedule sync is optional
     }
   }
 

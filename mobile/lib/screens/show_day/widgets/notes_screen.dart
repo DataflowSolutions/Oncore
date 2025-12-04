@@ -77,33 +77,22 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       final supabase = ref.read(supabaseClientProvider);
       final body = _notesController.text.trim();
 
-      if (_existingNoteId != null) {
-        // Update existing note
-        if (body.isEmpty) {
-          // Delete if empty
-          await supabase
-              .from('advancing_notes')
-              .delete()
-              .eq('id', _existingNoteId!);
-          _existingNoteId = null;
-        } else {
-          await supabase
-              .from('advancing_notes')
-              .update({'body': body})
-              .eq('id', _existingNoteId!);
-        }
-      } else if (body.isNotEmpty) {
-        // Create new note
-        final response = await supabase
-            .from('advancing_notes')
-            .insert({
-              'show_id': widget.showId,
-              'scope': 'general',
-              'body': body,
-            })
-            .select('id')
-            .single();
-        _existingNoteId = response['id'] as String?;
+      // Use RPC function to create or update notes
+      if (body.isNotEmpty) {
+        final response = await supabase.rpc('create_or_update_notes', params: {
+          'p_show_id': widget.showId,
+          'p_scope': 'general',
+          'p_body': body,
+        });
+        _existingNoteId = response?['id'] as String?;
+      } else if (_existingNoteId != null) {
+        // Delete by setting empty body
+        await supabase.rpc('create_or_update_notes', params: {
+          'p_show_id': widget.showId,
+          'p_scope': 'general',
+          'p_body': null,
+        });
+        _existingNoteId = null;
       }
 
       if (mounted) {
@@ -111,6 +100,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         widget.onNotesChanged?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR saving notes: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to save notes: $e');
       }

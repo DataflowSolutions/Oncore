@@ -86,22 +86,26 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
       
       final endsAt = _combineDateTime(_endDate, _endTime);
 
-      await supabase.from('schedule_items').insert({
-        'org_id': widget.orgId,
-        'show_id': widget.showId,
-        'title': _titleController.text.trim(),
-        'starts_at': startsAt.toIso8601String(),
-        'ends_at': endsAt?.toIso8601String(),
-        'location': _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-        'item_type': _itemType,
-        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        'auto_generated': false,
+      // Use RPC function instead of direct insert
+      await supabase.rpc('create_schedule_item', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_title': _titleController.text.trim(),
+        'p_starts_at': startsAt.toIso8601String(),
+        'p_ends_at': endsAt?.toIso8601String(),
+        'p_location': _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+        'p_item_type': _itemType,
+        'p_notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        'p_auto_generated': false,
       });
 
       if (mounted) {
         widget.onItemAdded?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR saving schedule item: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to save schedule item: $e');
       }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
 import 'form_widgets.dart';
@@ -83,24 +84,42 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
         guestCount = int.tryParse(_guestCountController.text.trim());
       }
 
-      await supabase.from('advancing_catering').insert({
-        'show_id': widget.showId,
-        'provider_name': _providerNameController.text.trim().isEmpty ? null : _providerNameController.text.trim(),
-        'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-        'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
-        'service_at': serviceAt?.toIso8601String(),
-        'guest_count': guestCount,
-        'booking_refs': bookingRefs.isEmpty ? null : bookingRefs,
-        'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        'source': 'artist',
+      // Use RPC function instead of direct insert
+      final response = await supabase.rpc('create_catering', params: {
+        'p_show_id': widget.showId,
+        'p_provider_name': _providerNameController.text.trim().isEmpty ? null : _providerNameController.text.trim(),
+        'p_address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        'p_city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+        'p_service_at': serviceAt?.toIso8601String(),
+        'p_guest_count': guestCount,
+        'p_booking_refs': bookingRefs.isEmpty ? null : bookingRefs,
+        'p_phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'p_email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        'p_notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        'p_source': 'artist',
       });
+
+      // Sync to schedule if service time is set
+      if (response != null && serviceAt != null) {
+        final cateringId = response['id'] as String?;
+        if (cateringId != null) {
+          await _syncCateringToSchedule(
+            supabase: supabase,
+            cateringId: cateringId,
+            providerName: _providerNameController.text.trim(),
+            city: _cityController.text.trim(),
+            serviceAt: serviceAt,
+          );
+        }
+      }
 
       if (mounted) {
         widget.onCateringAdded?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR saving catering: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to save catering: $e');
       }
@@ -108,6 +127,51 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _syncCateringToSchedule({
+    required SupabaseClient supabase,
+    required String cateringId,
+    required String providerName,
+    required String city,
+    required DateTime serviceAt,
+  }) async {
+    try {
+      // Delete any existing schedule items for this catering
+      final existingItems = await supabase
+          .rpc('get_schedule_items_for_show', params: {'p_show_id': widget.showId});
+      
+      if (existingItems != null) {
+        final List<dynamic> items = existingItems as List<dynamic>;
+        for (final item in items) {
+          if (item['source'] == 'advancing_catering' && item['source_ref'] == cateringId) {
+            await supabase.rpc('delete_schedule_item', params: {
+              'p_item_id': item['id'],
+            });
+          }
+        }
+      }
+
+      // Create new schedule item
+      final location = city.isEmpty ? null : city;
+
+      await supabase.rpc('create_schedule_item', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_title': 'Catering${providerName.isEmpty ? '' : ' - $providerName'}',
+        'p_starts_at': serviceAt.toIso8601String(),
+        'p_location': location,
+        'p_item_type': 'catering',
+        'p_auto_generated': true,
+        'p_source': 'advancing_catering',
+        'p_source_ref': cateringId,
+      });
+    } catch (e) {
+      print('═══════════════════════════════════════');
+      print('⚠️  WARNING: Failed to sync catering to schedule: $e');
+      print('═══════════════════════════════════════');
+      // Don't throw - schedule sync is optional
     }
   }
 

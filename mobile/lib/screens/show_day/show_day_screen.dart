@@ -29,45 +29,90 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
   @override
   void initState() {
     super.initState();
+    print('═══════════════════════════════════════');
+    print('[DEBUG] ShowDayScreen initState() called');
+    print('[DEBUG] orgId: ${widget.orgId}');
+    print('[DEBUG] showId: ${widget.showId}');
+    print('═══════════════════════════════════════');
     // Save this show as the last viewed show for quick access from Day button
     saveLastShow(widget.orgId, widget.showId);
   }
 
   @override
+  void didUpdateWidget(ShowDayScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    print('═══════════════════════════════════════');
+    print('[DEBUG] ShowDayScreen didUpdateWidget() called - SHOW SWITCHED!');
+    print('[DEBUG] Old showId: ${oldWidget.showId}');
+    print('[DEBUG] New showId: ${widget.showId}');
+    print('[DEBUG] Show changed: ${oldWidget.showId != widget.showId}');
+    print('═══════════════════════════════════════');
+    
+    if (oldWidget.showId != widget.showId) {
+      print('🔄 SHOW CHANGE DETECTED - Updating to new show');
+      saveLastShow(widget.orgId, widget.showId);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print('═══════════════════════════════════════');
+    print('[DEBUG] ShowDayScreen.build() called');
+    print('[DEBUG] Building for showId: ${widget.showId}');
+    print('═══════════════════════════════════════');
+    
     final colorScheme = Theme.of(context).colorScheme;
     final showAsync = ref.watch(showDetailProvider(widget.showId));
     final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
     
+    print('[DEBUG] Providers watched:');
+    print('[DEBUG] - showDetailProvider state: ${showAsync.state.toString().substring(0, 50)}...');
+    print('[DEBUG] - assignmentsAsync state: ${assignmentsAsync.state.toString().substring(0, 50)}...');
+    
     return LayerScaffold(
       title: 'Day View',
       body: showAsync.when(
-        loading: () => Center(
-          child: CircularProgressIndicator(color: colorScheme.onSurface),
-        ),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load show',
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => ref.invalidate(showDetailProvider(widget.showId)),
-                child: Text(
-                  'Retry',
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+        loading: () {
+          print('[DEBUG] showDetailProvider is LOADING');
+          return Center(
+            child: CircularProgressIndicator(color: colorScheme.onSurface),
+          );
+        },
+        error: (error, stack) {
+          print('═══════════════════════════════════════');
+          print('❌ showDetailProvider ERROR: $error');
+          print('[ERROR] Stack: $stack');
+          print('═══════════════════════════════════════');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load show: $error',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
-          ),
-        ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    print('[DEBUG] Retry button pressed for showDetailProvider');
+                    ref.invalidate(showDetailProvider(widget.showId));
+                  },
+                  child: Text(
+                    'Retry',
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
         data: (show) {
+          print('[DEBUG] showDetailProvider DATA received');
           if (show == null) {
+            print('⚠️ Show data is null');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +125,10 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () {
+                      print('[DEBUG] Going back from null show');
+                      context.pop();
+                    },
                     child: Text(
                       'Go back',
                       style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
@@ -90,33 +138,65 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
               ),
             );
           }
+          
+          print('[DEBUG] Show loaded: ${show.title}');
           return assignmentsAsync.when(
-            loading: () => Center(
-              child: CircularProgressIndicator(color: colorScheme.onSurface),
-            ),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load show data',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            data: (assignments) => _ShowDayContent(
-              show: show,
-              assignments: assignments,
-              showId: widget.showId,
-            ),
+            loading: () {
+              print('[DEBUG] assignmentsAsync is LOADING');
+              return Center(
+                child: CircularProgressIndicator(color: colorScheme.onSurface),
+              );
+            },
+            error: (error, stack) {
+              print('═══════════════════════════════════════');
+              print('❌ assignmentsAsync ERROR: $error');
+              print('[ERROR] Stack: $stack');
+              print('═══════════════════════════════════════');
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load assignments: $error',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        print('[DEBUG] Retry button pressed for assignmentsAsync');
+                        ref.invalidate(showAssignmentsProvider(widget.showId));
+                      },
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            data: (assignments) {
+              print('[DEBUG] assignmentsAsync DATA received: ${assignments.length} assignments');
+              print('═══════════════════════════════════════');
+              print('✅ ShowDayScreen FULLY LOADED');
+              print('[DEBUG] Show: ${show.title}');
+              print('[DEBUG] Assignments: ${assignments.length}');
+              print('═══════════════════════════════════════');
+              return _ShowDayContent(
+                show: show,
+                assignments: assignments,
+                showId: widget.showId,
+              );
+            },
           );
         },
       ),
     );
   }
+}
 }
 
 /// Content widget with all show day data
@@ -133,6 +213,12 @@ class _ShowDayContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print('═══════════════════════════════════════');
+    print('[DEBUG] _ShowDayContent.build() called');
+    print('[DEBUG] Show: ${show.title}');
+    print('[DEBUG] showId: $showId');
+    print('═══════════════════════════════════════');
+    
     // Watch all data providers
     final scheduleAsync = ref.watch(showScheduleProvider(showId));
     final flightsAsync = ref.watch(showFlightsProvider(showId));
@@ -140,6 +226,10 @@ class _ShowDayContent extends ConsumerWidget {
     final cateringAsync = ref.watch(showCateringProvider(showId));
     final documentsAsync = ref.watch(showDocumentsProvider(showId));
     final contactsAsync = ref.watch(showContactsProvider(showId));
+
+    print('[DEBUG] Providers watched:');
+    print('[DEBUG] - scheduleAsync: ${scheduleAsync.state.toString().substring(0, 50)}...');
+    print('[DEBUG] - flightsAsync: ${flightsAsync.state.toString().substring(0, 50)}...');
 
     // Get artist name
     final artists = assignments.where((a) => a.isArtist).toList();
@@ -153,7 +243,7 @@ class _ShowDayContent extends ConsumerWidget {
     final scheduleItems = scheduleAsync.valueOrNull ?? [];
 
     void openFullSchedule() {
-      debugPrint('openFullSchedule called with ${scheduleItems.length} items');
+      print('[DEBUG] openFullSchedule called with ${scheduleItems.length} items');
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => FullScheduleScreen(
@@ -166,6 +256,7 @@ class _ShowDayContent extends ConsumerWidget {
     }
 
     void openTeamScreen() {
+      print('[DEBUG] openTeamScreen called');
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => TeamScreen(
@@ -313,14 +404,38 @@ class _ShowDayContent extends ConsumerWidget {
   }
 
   void _refresh(WidgetRef ref) {
+    print('═══════════════════════════════════════');
+    print('[DEBUG] _refresh() called for showId: $showId');
+    print('[DEBUG] Invalidating all providers...');
+    print('═══════════════════════════════════════');
+    
     ref.invalidate(showDetailProvider(showId));
+    print('[DEBUG] ✓ Invalidated showDetailProvider');
+    
     ref.invalidate(showAssignmentsProvider(showId));
+    print('[DEBUG] ✓ Invalidated showAssignmentsProvider');
+    
     ref.invalidate(showScheduleProvider(showId));
+    print('[DEBUG] ✓ Invalidated showScheduleProvider');
+    
     ref.invalidate(showFlightsProvider(showId));
+    print('[DEBUG] ✓ Invalidated showFlightsProvider');
+    
     ref.invalidate(showLodgingProvider(showId));
+    print('[DEBUG] ✓ Invalidated showLodgingProvider');
+    
     ref.invalidate(showCateringProvider(showId));
+    print('[DEBUG] ✓ Invalidated showCateringProvider');
+    
     ref.invalidate(showDocumentsProvider(showId));
+    print('[DEBUG] ✓ Invalidated showDocumentsProvider');
+    
     ref.invalidate(showContactsProvider(showId));
+    print('[DEBUG] ✓ Invalidated showContactsProvider');
+    
+    print('═══════════════════════════════════════');
+    print('✅ All providers refreshed');
+    print('═══════════════════════════════════════');
   }
 }
 

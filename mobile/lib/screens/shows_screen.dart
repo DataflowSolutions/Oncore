@@ -24,25 +24,62 @@ class _ShowsScreenState extends State<ShowsScreen> {
   @override
   void initState() {
     super.initState();
+    print('[DEBUG] ShowsScreen initState() called');
     _initializeAndFetchShows();
   }
 
   /// Initialize by signing in as test user, then fetch shows
   Future<void> _initializeAndFetchShows() async {
+    print('═══════════════════════════════════════');
+    print('[DEBUG] _initializeAndFetchShows() started');
+    print('═══════════════════════════════════════');
+    
+    print('[DEBUG] Setting loading state');
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      print('[DEBUG] ───────────────────────────────');
+      print('[DEBUG] Step 1: Signing in as test user...');
+      print('[DEBUG] ───────────────────────────────');
+      
       // Step 1: Sign in as test user (matches your seed data)
       await _supabaseService.signInAsTestUser();
       
+      print('✅ Step 1 COMPLETE: Test user signed in');
+      print('[DEBUG] Current user: ${_supabaseService._supabase.auth.currentUser?.email}');
+      
+      print('[DEBUG] ───────────────────────────────');
+      print('[DEBUG] Step 2: Fetching shows...');
+      print('[DEBUG] ───────────────────────────────');
+      
       // Step 2: Fetch shows
       await _fetchShows();
-    } catch (e) {
+      
+      print('═══════════════════════════════════════');
+      print('✅ Step 2 COMPLETE: Shows fetched');
+      print('═══════════════════════════════════════');
+    } on Exception catch (e, stackTrace) {
+      print('═══════════════════════════════════════');
+      print('❌ EXCEPTION in _initializeAndFetchShows: $e');
+      print('[ERROR] Exception type: ${e.runtimeType}');
+      print('[ERROR] Stack trace: $stackTrace');
+      print('═══════════════════════════════════════');
       setState(() {
         _error = 'Failed to initialize: $e';
+        _isLoading = false;
+      });
+      print('[DEBUG] Updated state with error: $_error');
+    } catch (e, stackTrace) {
+      print('═══════════════════════════════════════');
+      print('❌ UNEXPECTED ERROR in _initializeAndFetchShows: $e');
+      print('[ERROR] Exception type: ${e.runtimeType}');
+      print('[ERROR] Stack trace: $stackTrace');
+      print('═══════════════════════════════════════');
+      setState(() {
+        _error = 'Unexpected error: $e';
         _isLoading = false;
       });
     }
@@ -55,28 +92,66 @@ class _ShowsScreenState extends State<ShowsScreen> {
   /// 2. Automatic RLS security (just like web)
   /// 3. JSON to Dart object mapping
   Future<void> _fetchShows() async {
+    print('═══════════════════════════════════════');
+    print('[DEBUG] _fetchShows() started');
+    print('═══════════════════════════════════════');
+    
+    print('[DEBUG] Setting loading state');
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      print('[DEBUG] Calling _supabaseService.getShows()...');
+      print('[DEBUG] Supabase client: ${_supabaseService.supabaseClient}');
+      print('[DEBUG] Current auth user: ${_supabaseService.supabaseClient.auth.currentUser?.email}');
+      
       // 🎯 This is the key line! Direct Supabase query
       // Same as your Next.js: supabase.from('shows').select('*')
       final shows = await _supabaseService.getShows();
       
+      print('[DEBUG] ✅ getShows() returned successfully');
+      print('[DEBUG] Received ${shows.length} shows');
+      print('[DEBUG] Show details:');
+      for (var show in shows) {
+        print('  - ID: ${show.id}, Title: ${show.title}, Date: ${show.date}');
+        print('    Venue: ${show.venueName}, City: ${show.venueCity}');
+      }
+      
+      print('[DEBUG] Updating state with shows');
       setState(() {
         _shows = shows;
         _isLoading = false;
       });
 
+      print('═══════════════════════════════════════');
       print('📊 Loaded ${shows.length} shows from Supabase');
-    } catch (e) {
+      print('═══════════════════════════════════════');
+    } on Exception catch (e, stackTrace) {
+      print('═══════════════════════════════════════');
+      print('❌ EXCEPTION in _fetchShows: $e');
+      print('[ERROR] Exception type: ${e.runtimeType}');
+      print('[ERROR] Stack trace:\n$stackTrace');
+      print('[ERROR] Error toString(): ${e.toString()}');
+      print('═══════════════════════════════════════');
+      
       setState(() {
         _error = 'Failed to load shows: $e';
         _isLoading = false;
       });
-      print('❌ Error: $e');
+      print('[DEBUG] Updated state with error: $_error');
+    } catch (e, stackTrace) {
+      print('═══════════════════════════════════════');
+      print('❌ UNEXPECTED ERROR in _fetchShows: $e');
+      print('[ERROR] Exception type: ${e.runtimeType}');
+      print('[ERROR] Stack trace:\n$stackTrace');
+      print('═══════════════════════════════════════');
+      
+      setState(() {
+        _error = 'Unexpected error: $e';
+        _isLoading = false;
+      });
     }
   }
 
@@ -100,8 +175,11 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
   /// Build the main body content based on loading state
   Widget _buildBody() {
+    print('[DEBUG] _buildBody() called - isLoading: $_isLoading, error: $_error, showCount: ${_shows.length}');
+    
     // Loading state
     if (_isLoading) {
+      print('[DEBUG] Rendering loading state');
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -121,6 +199,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
     // Error state
     if (_error != null) {
+      print('[DEBUG] Rendering error state: $_error');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -144,6 +223,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
     // Empty state
     if (_shows.isEmpty) {
+      print('[DEBUG] Rendering empty state');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -171,7 +251,9 @@ class _ShowsScreenState extends State<ShowsScreen> {
     }
 
     // Success state - show list grouped by month (matches Next.js)
+    print('[DEBUG] Rendering success state with ${_shows.length} shows');
     final showsByMonth = _groupShowsByMonth(_shows);
+    print('[DEBUG] Grouped into ${showsByMonth.length} months');
     
     return RefreshIndicator(
       onRefresh: _initializeAndFetchShows,
@@ -182,6 +264,8 @@ class _ShowsScreenState extends State<ShowsScreen> {
           final entry = showsByMonth.entries.elementAt(index);
           final monthYear = entry.key;
           final shows = entry.value;
+          
+          print('[DEBUG] Building month section: $monthYear with ${shows.length} shows');
           
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +308,10 @@ class _ShowsScreenState extends State<ShowsScreen> {
                 ),
               ),
               // Shows list
-              ...shows.map((show) => _buildShowCard(show)),
+              ...shows.map((show) {
+                print('[DEBUG] Building card for show: ${show.title} (${show.id})');
+                return _buildShowCard(show);
+              }),
             ],
           );
         },
@@ -234,15 +321,19 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
   /// Group shows by month (matches Next.js getShowsByMonth function)
   Map<String, List<Show>> _groupShowsByMonth(List<Show> shows) {
+    print('[DEBUG] _groupShowsByMonth() called with ${shows.length} shows');
     final Map<String, List<Show>> grouped = {};
     
     for (final show in shows) {
       final monthYear = show.monthYear;
+      print('[DEBUG] Grouping show ${show.title} into month: $monthYear');
       if (!grouped.containsKey(monthYear)) {
         grouped[monthYear] = [];
       }
       grouped[monthYear]!.add(show);
     }
+    
+    print('[DEBUG] Created ${grouped.length} month groups');
     
     // Sort shows within each month
     for (final monthShows in grouped.values) {
@@ -257,6 +348,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
         return firstDateA.compareTo(firstDateB);
       });
     
+    print('[DEBUG] Sorted month groups chronologically');
     return Map.fromEntries(sortedEntries);
   }
 
@@ -285,7 +377,10 @@ class _ShowsScreenState extends State<ShowsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () => _showDetailsDialog(show),
+          onTap: () {
+            print('[DEBUG] Tapped show card: ${show.id} - ${show.title}');
+            _showDetailsDialog(show);
+          },
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -362,6 +457,9 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
   /// Show details dialog
   void _showDetailsDialog(Show show) {
+    print('[DEBUG] _showDetailsDialog() called for show: ${show.id}');
+    print('[DEBUG] Show details - Title: ${show.title}, Venue: ${show.venueName}, City: ${show.venueCity}');
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -393,7 +491,10 @@ class _ShowsScreenState extends State<ShowsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              print('[DEBUG] Closing details dialog');
+              Navigator.pop(context);
+            },
             child: const Text('Close'),
           ),
         ],

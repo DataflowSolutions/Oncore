@@ -58,11 +58,12 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
 
-      await supabase
-          .from('show_assignments')
-          .delete()
-          .eq('show_id', widget.showId)
-          .eq('person_id', person.personId);
+      // Use RPC function instead of direct delete
+      await supabase.rpc('delete_assignment', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_person_id': person.personId,
+      });
 
       if (mounted) {
         widget.onMemberAdded?.call(); // Refresh the list

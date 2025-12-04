@@ -50,20 +50,24 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
 
-      await supabase.from('show_guestlist').insert({
-        'show_id': widget.showId,
-        'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        'guest_count': _guestCount,
-        'pass_type': _passTypeController.text.trim().isEmpty ? null : _passTypeController.text.trim(),
-        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      // Use RPC function instead of direct insert
+      await supabase.rpc('create_guest', params: {
+        'p_show_id': widget.showId,
+        'p_name': _nameController.text.trim(),
+        'p_phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'p_email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        'p_guest_count': _guestCount,
+        'p_pass_type': _passTypeController.text.trim().isEmpty ? null : _passTypeController.text.trim(),
+        'p_notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       });
 
       if (mounted) {
         widget.onGuestAdded?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR saving guest: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to save guest: $e');
       }

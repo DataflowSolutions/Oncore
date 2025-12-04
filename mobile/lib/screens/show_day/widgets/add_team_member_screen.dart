@@ -79,12 +79,10 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
 
-      // Fetch all people in the organization
-      final response = await supabase
-          .from('people')
-          .select('id, name, email, phone, member_type, role_title')
-          .eq('org_id', widget.orgId)
-          .order('name', ascending: true);
+      // Use RPC function to bypass RLS
+      final response = await supabase.rpc('get_org_people', params: {
+        'p_org_id': widget.orgId,
+      });
 
       final List<dynamic> data = response as List<dynamic>;
       final allPeople = data
@@ -132,16 +130,21 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
 
-      await supabase.from('show_assignments').insert({
-        'org_id': widget.orgId,
-        'show_id': widget.showId,
-        'person_id': person.id,
+      // Use RPC function instead of direct insert
+      await supabase.rpc('create_assignment', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_person_id': person.id,
+        'p_duty': null,
       });
 
       if (mounted) {
         widget.onMemberAdded?.call();
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR adding team member: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to add team member: $e');
       }

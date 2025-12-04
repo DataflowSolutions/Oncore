@@ -48,26 +48,92 @@ class Show {
   /// Create Show from get_shows_by_org RPC response
   /// The RPC returns flattened venue data (venue_name, venue_city, etc.)
   factory Show.fromJson(Map<String, dynamic> json) {
-    return Show(
-      id: json['id'] as String,
-      title: json['title'] as String? ?? 'Untitled Show',
-      date: DateTime.parse(json['date'] as String),
-      venueId: json['venue_id'] as String?,
-      orgId: json['org_id'] as String,
-      // RPC returns flat venue fields
-      venueName: json['venue_name'] as String?,
-      venueCity: json['venue_city'] as String?,
-      venueCountry: json['venue_country'] as String?,
-      venueAddress: json['venue_address'] as String?,
-      venueCapacity: json['venue_capacity'] as int?,
-      setTime: json['set_time'] as String?,
-      doorsAt: json['doors_at'] as String?,
-      notes: json['notes'] as String?,
-      status: json['status'] as String?,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'] as String)
-          : null,
-    );
+    try {
+      print('[DEBUG] Show.fromJson() parsing started');
+      print('[DEBUG] JSON keys: ${json.keys.toList()}');
+      
+      // Parse core show fields
+      final id = json['id'] as String?;
+      print('[DEBUG] Parsing id: $id');
+      if (id == null) throw Exception('Missing required field: id');
+
+      final title = json['title'] as String? ?? 'Untitled Show';
+      print('[DEBUG] Parsing title: $title');
+
+      final dateStr = json['date'] as String?;
+      print('[DEBUG] Parsing date string: $dateStr');
+      if (dateStr == null) throw Exception('Missing required field: date');
+      
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+        print('[DEBUG] Parsed date: $date');
+      } catch (e) {
+        print('❌ ERROR parsing date: $e');
+        print('[DEBUG] Date string was: $dateStr');
+        rethrow;
+      }
+
+      final venueId = json['venue_id'] as String?;
+      print('[DEBUG] Parsing venue_id: $venueId');
+
+      final orgId = json['org_id'] as String?;
+      print('[DEBUG] Parsing org_id: $orgId');
+      if (orgId == null) throw Exception('Missing required field: org_id');
+
+      // Venue fields (may be null)
+      final venueName = json['venue_name'] as String?;
+      final venueCity = json['venue_city'] as String?;
+      final venueCountry = json['venue_country'] as String?;
+      final venueAddress = json['venue_address'] as String?;
+      final venueCapacity = json['venue_capacity'] as int?;
+      
+      print('[DEBUG] Venue info - Name: $venueName, City: $venueCity, Country: $venueCountry');
+
+      final setTime = json['set_time'] as String?;
+      final doorsAt = json['doors_at'] as String?;
+      final notes = json['notes'] as String?;
+      final status = json['status'] as String?;
+      
+      print('[DEBUG] Show metadata - SetTime: $setTime, DoorsAt: $doorsAt, Status: $status');
+
+      final createdAtStr = json['created_at'] as String?;
+      DateTime? createdAt;
+      if (createdAtStr != null) {
+        try {
+          createdAt = DateTime.parse(createdAtStr);
+          print('[DEBUG] Parsed createdAt: $createdAt');
+        } catch (e) {
+          print('⚠️ Warning: Could not parse createdAt: $e');
+        }
+      }
+
+      print('✅ Successfully parsed Show: id=$id, title=$title, date=$date');
+      return Show(
+        id: id,
+        title: title,
+        date: date,
+        venueId: venueId,
+        orgId: orgId,
+        // RPC returns flat venue fields
+        venueName: venueName,
+        venueCity: venueCity,
+        venueCountry: venueCountry,
+        venueAddress: venueAddress,
+        venueCapacity: venueCapacity,
+        setTime: setTime,
+        doorsAt: doorsAt,
+        notes: notes,
+        status: status,
+        createdAt: createdAt,
+      );
+    } catch (e, stackTrace) {
+      print('❌ ERROR in Show.fromJson: $e');
+      print('[ERROR] Stack trace: $stackTrace');
+      print('[ERROR] Exception type: ${e.runtimeType}');
+      print('[DEBUG] Full JSON data: $json');
+      rethrow;
+    }
   }
 
   /// Convert Show to JSON (for creating/updating)

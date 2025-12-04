@@ -53,12 +53,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
       
-      // Fetch files for this show
-      final response = await supabase
-          .from('files')
-          .select()
-          .eq('show_id', widget.showId)
-          .order('created_at', ascending: false);
+      // Use RPC function to bypass RLS
+      final response = await supabase.rpc('get_show_files', params: {
+        'p_show_id': widget.showId,
+      });
       
       final List<dynamic> data = response as List<dynamic>;
       setState(() {
@@ -176,15 +174,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           .from('advancing-files')
           .uploadBinary(storagePath, fileBytes, fileOptions: FileOptions(contentType: contentType));
       
-      // Create file record in database
-      await supabase.from('files').insert({
-        'org_id': widget.orgId,
-        'show_id': widget.showId,
-        'storage_path': storagePath,
-        'original_name': fileName,
-        'content_type': contentType,
-        'size_bytes': fileBytes.length,
-        'uploaded_by': user?.id,
+      // Create file record in database using RPC function
+      await supabase.rpc('create_file', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_storage_path': storagePath,
+        'p_original_name': fileName,
+        'p_content_type': contentType,
+        'p_size_bytes': fileBytes.length,
       });
 
       // Reload files
@@ -197,6 +194,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         AppToast.success(context, 'File uploaded successfully');
       }
     } catch (e) {
+      print('═══════════════════════════════════════');
+      print('❌ ERROR uploading file: $e');
+      print('═══════════════════════════════════════');
       if (mounted) {
         AppToast.error(context, 'Failed to upload file: $e');
       }
@@ -238,8 +238,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           .from('advancing-files')
           .remove([file.storagePath]);
       
-      // Delete from database
-      await supabase.from('files').delete().eq('id', file.id);
+      // Delete from database using RPC function
+      await supabase.rpc('delete_file', params: {
+        'p_file_id': file.id,
+        'p_show_id': widget.showId,
+      });
 
       // Update state
       setState(() {
