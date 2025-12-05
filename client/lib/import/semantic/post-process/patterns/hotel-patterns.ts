@@ -19,9 +19,9 @@ export function matchHotelPatterns(fact: ExtractedFact): boolean {
 
     // Hotel booking reference
     if (/^[A-Z0-9]{6,10}$/i.test(text) && /(hotel|accommodation|room)/i.test(snippet)) {
-        logPostProcessUpgrade('hotel_booking_pattern', originalType, 'hotel_bookingReference', text, snippet);
-        fact.fact_type = 'hotel_bookingReference';
-        logger.debug('Upgraded other → hotel_bookingReference', { value: text });
+        logPostProcessUpgrade('hotel_booking_pattern', originalType, 'hotel_booking_reference', text, snippet);
+        fact.fact_type = 'hotel_booking_reference';
+        logger.debug('Upgraded other → hotel_booking_reference', { value: text });
         return true;
     }
 

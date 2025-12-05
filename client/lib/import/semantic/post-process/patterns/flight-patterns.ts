@@ -21,25 +21,25 @@ export function matchFlightPatterns(fact: ExtractedFact): boolean {
 
     // 1) Flight number pattern: TK67, LH1234, AA123, etc.
     if (/^[A-Z]{2}\d{2,4}$/i.test(text)) {
-        logPostProcessUpgrade('flight_number_pattern', originalType, 'flight_flightNumber', text, snippet);
-        fact.fact_type = 'flight_flightNumber';
-        logger.debug('Upgraded other → flight_flightNumber', { value: text });
+        logPostProcessUpgrade('flight_number_pattern', originalType, 'flight_number', text, snippet);
+        fact.fact_type = 'flight_number';
+        logger.debug('Upgraded other → flight_number', { value: text });
         return true;
     }
 
     // 2) Ticket number (long digit sequence with "ticket" context)
     if (/^\d{8,}$/.test(text) && /ticket/i.test(snippet)) {
-        logPostProcessUpgrade('ticket_number_pattern', originalType, 'flight_ticketNumber', text, snippet);
-        fact.fact_type = 'flight_ticketNumber';
-        logger.debug('Upgraded other → flight_ticketNumber', { value: text });
+        logPostProcessUpgrade('ticket_number_pattern', originalType, 'flight_ticket_number', text, snippet);
+        fact.fact_type = 'flight_ticket_number';
+        logger.debug('Upgraded other → flight_ticket_number', { value: text });
         return true;
     }
 
     // 3) Booking reference / PNR (5-8 char alphanumeric with booking context)
     if (/^[A-Z0-9]{5,8}$/i.test(text) && /(booking|reservation|pnr|confirmation)/i.test(snippet)) {
-        logPostProcessUpgrade('booking_reference_pattern', originalType, 'flight_bookingReference', text, snippet);
-        fact.fact_type = 'flight_bookingReference';
-        logger.debug('Upgraded other → flight_bookingReference', { value: text });
+        logPostProcessUpgrade('booking_reference_pattern', originalType, 'flight_booking_reference', text, snippet);
+        fact.fact_type = 'flight_booking_reference';
+        logger.debug('Upgraded other → flight_booking_reference', { value: text });
         return true;
     }
 
@@ -49,18 +49,18 @@ export function matchFlightPatterns(fact: ExtractedFact): boolean {
             .replace(/\s+class\s*$/i, '') // Remove " Class" suffix
             .trim();
         const capitalizedClass = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
-        logPostProcessUpgrade('travel_class_pattern', originalType, 'flight_travelClass', capitalizedClass, snippet);
-        fact.fact_type = 'flight_travelClass';
+        logPostProcessUpgrade('travel_class_pattern', originalType, 'flight_travel_class', capitalizedClass, snippet);
+        fact.fact_type = 'flight_travel_class';
         fact.value_text = capitalizedClass;
-        logger.debug('Upgraded other → flight_travelClass', { value: text });
+        logger.debug('Upgraded other → flight_travel_class', { value: text });
         return true;
     }
 
     // 4b) Passenger name (starts with title prefix like Mr., Ms., Mrs., Dr.)
     if (/^(mr|ms|mrs|miss|dr|prof)\./i.test(text) || /^(mr|ms|mrs|miss|dr)\s+[a-z]/i.test(text)) {
-        logPostProcessUpgrade('passenger_name_pattern', originalType, 'flight_fullName', text, snippet);
-        fact.fact_type = 'flight_fullName';
-        logger.debug('Upgraded other → flight_fullName', { value: text });
+        logPostProcessUpgrade('passenger_name_pattern', originalType, 'flight_passenger_name', text, snippet);
+        fact.fact_type = 'flight_passenger_name';
+        logger.debug('Upgraded other → flight_passenger_name', { value: text });
         return true;
     }
 

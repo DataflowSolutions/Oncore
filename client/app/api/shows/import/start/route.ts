@@ -6,7 +6,7 @@ import {
   createImportJob,
   updateImportJobExtracted,
 } from "@/lib/import/jobs";
-import { runSemanticImportExtraction } from "@/lib/import/semantic";
+import { runSemanticImport } from "@/lib/import/semantic";
 import { ImportSource } from "@/lib/import/chunking";
 import { shouldBackgroundImport } from "@/lib/import/background";
 import type { ImportedDocument, ImportWarning } from "@/components/import/types";
@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
 
       // Use the semantic extraction pipeline (same as background worker)
       const supabase = getSupabaseServiceClient();
-      const result = await runSemanticImportExtraction(
+      const result = await runSemanticImport(
         supabase,
         jobId,
         extractionSources

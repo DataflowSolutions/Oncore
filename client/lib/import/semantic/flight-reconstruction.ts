@@ -49,6 +49,8 @@ export interface FlightGroup {
   fullName?: string;
   bookingReference?: string;
   ticketNumber?: string;
+  date?: string; // Flight date (YYYY-MM-DD)
+  notes?: string; // Additional notes
   
   direction?: string; // e.g., "DPS to IST via ARN"
   
@@ -58,23 +60,17 @@ export interface FlightGroup {
 }
 
 // Flight-related fact types
+// NOTE: Only includes types that are extracted from documents
+// Types like flight_airline, flight_aircraft, etc. are fetched via API in Stage F3
 const FLIGHT_FACT_TYPES: Set<ImportFactType> = new Set([
-  'flight_airline',
-  'flight_flightNumber',
-  'flight_aircraft',
-  'flight_fullName',
-  'flight_bookingReference',
-  'flight_ticketNumber',
-  'flight_fromCity',
-  'flight_fromAirport',
-  'flight_departureTime',
-  'flight_toCity',
-  'flight_toAirport',
-  'flight_arrivalTime',
+  'flight_number',
+  'flight_date',
+  'flight_passenger_name',
+  'flight_booking_reference',
+  'flight_ticket_number',
   'flight_seat',
-  'flight_travelClass',
-  'flight_flightTime',
-  'flight_direction',
+  'flight_travel_class',
+  'flight_notes',
 ]);
 
 // =============================================================================
@@ -102,7 +98,7 @@ function extractFlightDomain(
  * Extract flight number from resolution for proximity grouping
  */
 function extractFlightNumber(resolution: FactResolution): string | null {
-  if (resolution.fact_type !== 'flight_flightNumber') {
+  if (resolution.fact_type !== 'flight_number') {
     return null;
   }
   
@@ -136,9 +132,9 @@ export function reconstructFlightInstances(
   // Build fact map for lookups
   const factsById = new Map(allFacts.map(f => [f.id, f]));
   
-  // Filter to flight-related resolutions
+  // Filter to flight-related resolutions (resolved OR informational)
   const flightResolutions = resolutions.filter(r => 
-    FLIGHT_FACT_TYPES.has(r.fact_type) && r.state === 'resolved'
+    FLIGHT_FACT_TYPES.has(r.fact_type) && (r.state === 'resolved' || r.state === 'informational')
   );
   
   if (flightResolutions.length === 0) {
@@ -179,7 +175,7 @@ export function reconstructFlightInstances(
     
     // Find flight number in same chunk
     const sameChunkFlightNumbers = ungrouped.filter(r => 
-      r.fact_type === 'flight_flightNumber' && 
+      r.fact_type === 'flight_number' && 
       getChunkId(r, getSelectedFact) === chunkId
     );
     
@@ -273,53 +269,29 @@ function buildFlightGroup(
     if (!value) continue;
     
     switch (resolution.fact_type) {
-      case 'flight_airline':
-        group.airline = value;
-        break;
-      case 'flight_flightNumber':
+      case 'flight_number':
         group.flightNumber = value;
-        break;
-      case 'flight_aircraft':
-        group.aircraft = value;
-        break;
-      case 'flight_fromCity':
-        group.fromCity = value;
-        break;
-      case 'flight_fromAirport':
-        group.fromAirport = value;
-        break;
-      case 'flight_departureTime':
-        group.departureTime = value;
-        break;
-      case 'flight_toCity':
-        group.toCity = value;
-        break;
-      case 'flight_toAirport':
-        group.toAirport = value;
-        break;
-      case 'flight_arrivalTime':
-        group.arrivalTime = value;
         break;
       case 'flight_seat':
         group.seat = value;
         break;
-      case 'flight_travelClass':
+      case 'flight_travel_class':
         group.travelClass = value;
         break;
-      case 'flight_flightTime':
-        group.flightTime = value;
-        break;
-      case 'flight_fullName':
+      case 'flight_passenger_name':
         group.fullName = value;
         break;
-      case 'flight_bookingReference':
+      case 'flight_booking_reference':
         group.bookingReference = value;
         break;
-      case 'flight_ticketNumber':
+      case 'flight_ticket_number':
         group.ticketNumber = value;
         break;
-      case 'flight_direction':
-        group.direction = value;
+      case 'flight_date':
+        group.date = value;
+        break;
+      case 'flight_notes':
+        group.notes = value;
         break;
     }
   }
@@ -371,6 +343,8 @@ export function applyFlightGroupsToImportData(
       fullName: group.fullName ?? '',
       bookingReference: group.bookingReference ?? '',
       ticketNumber: group.ticketNumber ?? '',
+      date: group.date ?? '',
+      notes: group.notes ?? '',
     })
   }
   

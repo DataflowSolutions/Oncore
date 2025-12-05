@@ -36,10 +36,10 @@ export function matchGeneralPatterns(fact: ExtractedFact, allFacts: ExtractedFac
     }
 
     // 3) Set time (HH:MM with "set" or "start" context)
-    if (isTimeFormat(text) && /(set\s*time|start|beginning)/i.test(snippet) && !hasFact(allFacts, 'general_setTime')) {
-        logPostProcessUpgrade('set_time_pattern', originalType, 'general_setTime', text, snippet);
-        fact.fact_type = 'general_setTime';
-        logger.debug('Upgraded other → general_setTime', { value: text });
+    if (isTimeFormat(text) && /(set\s*time|start|beginning)/i.test(snippet) && !hasFact(allFacts, 'general_set_time')) {
+        logPostProcessUpgrade('set_time_pattern', originalType, 'general_set_time', text, snippet);
+        fact.fact_type = 'general_set_time';
+        logger.debug('Upgraded other → general_set_time', { value: text });
         return true;
     }
 

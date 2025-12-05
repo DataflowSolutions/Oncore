@@ -33,36 +33,88 @@ async function callResolutionLLM(
         return { content: null, error: 'OPENAI_API_KEY not set' };
     }
 
-    try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                model: process.env.OPENAI_MODEL || 'gpt-4o',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt },
-                ],
-                temperature: 0,
-                response_format: { type: 'json_object' },
-            }),
-        });
+    const maxRetries = 3;
+    let lastError = '';
 
-        if (!response.ok) {
-            const message = await response.text();
-            return { content: null, error: `LLM HTTP error: ${response.status} ${message}` };
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            // Use gpt-4o-mini for resolution (cheaper, faster)
+            // Can override with OPENAI_RESOLUTION_MODEL env var for complex cases
+            const model = process.env.OPENAI_RESOLUTION_MODEL || 'gpt-4o-mini';
+            
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt },
+                    ],
+                    temperature: 0,
+                    response_format: { type: 'json_object' },
+                }),
+            });
+
+            if (!response.ok) {
+                const message = await response.text();
+                
+                // Handle rate limiting with exponential backoff + parse retry-after
+                if (response.status === 429) {
+                    if (attempt < maxRetries) {
+                        // Parse retry-after from response if available
+                        let waitTime = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+                        const retryMatch = message.match(/try again in ([\d.]+)s/i);
+                        if (retryMatch) {
+                            waitTime = Math.ceil(parseFloat(retryMatch[1]) * 1000) + 500;
+                        }
+                        const jitter = Math.random() * 500;
+                        waitTime += jitter;
+                        
+                        logger.warn(`Resolution LLM rate limited, waiting ${Math.round(waitTime)}ms`, {
+                            attempt: attempt + 1,
+                            maxRetries,
+                        });
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue;
+                    }
+                }
+                
+                lastError = `LLM HTTP ${response.status}: ${message}`;
+                if (attempt === maxRetries) {
+                    return { content: null, error: lastError };
+                }
+                continue;
+            }
+
+            const json = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+            const content = json.choices?.[0]?.message?.content ?? null;
+            
+            if (attempt > 0) {
+                logger.info('LLM request succeeded after retry', { attempts: attempt + 1 });
+            }
+            
+            return { content };
+        } catch (error) {
+            lastError = error instanceof Error ? error.message : 'Unknown LLM error';
+            
+            if (attempt < maxRetries) {
+                const waitTime = Math.pow(2, attempt + 1) * 1000 + Math.random() * 500;
+                logger.warn(`Resolution LLM request failed, retrying in ${Math.round(waitTime)}ms`, {
+                    error: lastError,
+                    attempt: attempt + 1,
+                    maxRetries,
+                });
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                continue;
+            }
         }
-
-        const json = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-        const content = json.choices?.[0]?.message?.content ?? null;
-        return { content };
-    } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown LLM error';
-        return { content: null, error: message };
     }
+
+    return { content: null, error: lastError || 'LLM call failed after all retries' };
 }
 
 // =============================================================================

@@ -50,45 +50,43 @@ export async function resolveImportFacts(
     // Normalize flight domains up front so grouping and prompts stay consistent
     const factsForResolution = normalizeFlightFactDomains(facts);
 
-    // Group facts by type and domain
-    const groups = groupFactsForResolution(factsForResolution);
+    // Batch facts by section for smaller LLM requests
+    const sections = ['general', 'deal', 'flights', 'hotels', 'food', 'activities', 'contacts', 'technical', 'documents'];
+    const sectionBatches = new Map<string, typeof factsForResolution>();
+    
+    for (const section of sections) {
+        const sectionFacts = factsForResolution.filter(f => f.section === section || (f.section === undefined && section === 'general'));
+        if (sectionFacts.length > 0) {
+            sectionBatches.set(section, sectionFacts);
+        }
+    }
 
-    logger.info('Facts grouped for resolution', {
+    // Try LLM resolution per section (smaller token requests)
+    logger.info('📞 Calling LLM for semantic resolution (per-section batching)...', { 
         job_id,
-        groups: groups.map(g => ({
-            type: g.fact_type,
-            domain: g.fact_domain,
-            count: g.facts.length,
-        })),
+        sections: Array.from(sectionBatches.keys()),
     });
-
-    // Try LLM resolution first
-    const llmResult = await resolveFactsWithLLM(factsForResolution, job_id);
-
+    
     let resolutions: FactResolution[] = [];
     const warnings: string[] = [];
 
-    if (llmResult.error) {
-        warnings.push(`LLM resolution failed: ${llmResult.error}`);
-        
-        // Fall back to rule-based resolution
-        resolutions = groups.map(group => resolveFactGroupByRules(group));
-    } else {
-        resolutions = llmResult.resolutions;
+    for (const [section, sectionFacts] of sectionBatches) {
+        logger.info(`Resolving ${section} section (${sectionFacts.length} facts)...`, { job_id, section });
+        const llmResult = await resolveFactsWithLLM(sectionFacts, job_id);
 
-        // Fill in any missing groups with rule-based resolution
-        const resolvedTypes = new Set(resolutions.map(r => `${r.fact_type}|${r.fact_domain || ''}`));
-
-        for (const group of groups) {
-            const key = `${group.fact_type}|${group.fact_domain || ''}`;
-            if (!resolvedTypes.has(key)) {
-                logger.info('LLM missed fact group, applying rules', {
-                    job_id,
-                    fact_type: group.fact_type,
-                    fact_domain: group.fact_domain,
-                });
-                resolutions.push(resolveFactGroupByRules(group));
-            }
+        if (llmResult.error) {
+            logger.warn(`⚠️  LLM resolution failed for section ${section}, using rules`, {
+                job_id,
+                section,
+                error: llmResult.error,
+            });
+            warnings.push(`LLM resolution failed for ${section}: ${llmResult.error}`);
+            
+            // Fall back to rule-based for this section
+            const sectionGroups = groupFactsForResolution(sectionFacts);
+            resolutions.push(...sectionGroups.map(group => resolveFactGroupByRules(group)));
+        } else {
+            resolutions.push(...llmResult.resolutions);
         }
     }
 

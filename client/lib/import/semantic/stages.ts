@@ -42,56 +42,149 @@ export interface FactExtractionResult {
 
 /**
  * Extract facts from all sources
+ * 
+ * @param options.maxWordsPerChunk - Optional override for max words per chunk (defaults to env SEMANTIC_IMPORT_MAX_WORDS or 800)
+ * @param options.minWordsPerChunk - Optional override for min words per chunk (defaults to env SEMANTIC_IMPORT_MIN_WORDS or 300)
  */
 export async function runFactExtraction(
   supabase: SupabaseClientLike,
   jobId: string,
   sources: ImportSource[],
-  onProgress?: SemanticProgressCallback
+  onProgress?: SemanticProgressCallback,
+  options?: {
+    maxWordsPerChunk?: number;
+    minWordsPerChunk?: number;
+  }
 ): Promise<FactExtractionResult> {
   logger.info('Stage 1: Fact extraction starting', { jobId, sources: sources.length });
   await updateImportJobStage(supabase, jobId, 'extracting_facts');
 
   const allFacts: ExtractedFact[] = [];
-  const maxWordsPerChunk = 800;
+  
+  // Load chunk size config from param, env, or defaults
+  const maxWordsPerChunk =
+    options?.maxWordsPerChunk ||
+    (typeof process !== 'undefined' && process.env?.SEMANTIC_IMPORT_MAX_WORDS
+      ? parseInt(process.env.SEMANTIC_IMPORT_MAX_WORDS, 10)
+      : null) ||
+    800;
+  
+  const minWordsPerChunk =
+    options?.minWordsPerChunk ||
+    (typeof process !== 'undefined' && process.env?.SEMANTIC_IMPORT_MIN_WORDS
+      ? parseInt(process.env.SEMANTIC_IMPORT_MIN_WORDS, 10)
+      : null) ||
+    300;
 
-  for (let sourceIdx = 0; sourceIdx < sources.length; sourceIdx++) {
-    const source = sources[sourceIdx];
+  logger.info('Chunk size config', { jobId, maxWordsPerChunk, minWordsPerChunk });
 
-    logger.info(`Extracting facts from source: ${source.file_name}`, {
+  // Build unified chunks across all sources once
+  const allChunks = buildAllChunksAcrossSources(sources, maxWordsPerChunk, minWordsPerChunk);
+  logger.info('Built unified chunks', {
+    jobId,
+    totalChunks: allChunks.length,
+  });
+
+  // Define section order for extraction passes
+  // NOTE: 'documents' section is skipped - document categorization happens at upload time
+  const sections: ImportSection[] = [
+    'general',
+    'deal',
+    'flights',
+    'hotels',
+    'food',
+    'activities',
+    'contacts',
+    'technical',
+    // 'documents' - skipped, handled by upload system
+  ];
+
+    // Per-section extraction pass: iterate sections, then iterate chunks per section
+  for (let sectionIdx = 0; sectionIdx < sections.length; sectionIdx++) {
+    const section = sections[sectionIdx];
+    const sectionProgress = `${sectionIdx + 1}/${sections.length}`;
+    const beforeCount = allFacts.length;
+    
+    logger.info(`🔍 [Section ${sectionProgress}] Analyzing ${section} facts...`, {
       jobId,
-      source: source.id,
+      section,
+      totalChunks: allChunks.length,
+      factsFoundSoFar: beforeCount,
     });
 
-    const chunks = buildAllChunks(source, maxWordsPerChunk);
+    if (onProgress) {
+      await onProgress({
+        stage: 'extracting_facts',
+        current_source: `section: ${section} (${sectionProgress})`,
+        current_chunk: 0,
+        total_chunks: allChunks.length,
+        facts_extracted: beforeCount,
+      });
+    }
 
-    for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
-      const chunk = chunks[chunkIdx];
+    // Iterate all chunks for this section
+    for (let chunkIdx = 0; chunkIdx < allChunks.length; chunkIdx++) {
+      const chunk = allChunks[chunkIdx];
+      const sourceId = chunk.sourceId;
+      const sourceFile = sources.find(s => s.id === sourceId);
+      const chunkProgress = `${chunkIdx + 1}/${allChunks.length}`;
 
+      // Log each chunk being processed
+      logger.info(`   📄 [${section}] Processing chunk ${chunkProgress} from ${sourceFile?.fileName || 'unknown'}`, {
+        jobId,
+        section,
+        chunkIdx: chunkIdx + 1,
+        totalChunks: allChunks.length,
+        sourceFile: sourceFile?.fileName,
+      });
+
+      if (isDiagnosticsEnabled()) {
+        logChunk(sourceId, sourceFile?.fileName || 'unknown', chunk.chunkIndex, chunk.text);
+      }
+
+      // Update progress for each chunk
       if (onProgress) {
         await onProgress({
           stage: 'extracting_facts',
-          current_source: source.file_name,
+          current_source: `section: ${section} (${sectionProgress})`,
           current_chunk: chunkIdx + 1,
-          total_chunks: chunks.length,
-          sources_completed: sourceIdx,
-          total_sources: sources.length,
+          total_chunks: allChunks.length,
+          facts_extracted: allFacts.length,
         });
       }
 
-      if (isDiagnosticsEnabled()) {
-        logChunk(jobId, source, chunk);
-      }
-
-      logger.info(`Extracting from chunk ${chunkIdx + 1}/${chunks.length}`, {
-        jobId,
-        source: source.id,
-        chunk: chunkIdx + 1,
+      // Call extraction with section hint
+      const chunkFacts = await extractFactsFromChunk({
+        job_id: jobId,
+        source_id: sourceId,
+        source_file_name: sourceFile?.fileName || 'unknown',
+        chunk_index: chunk.chunkIndex,
+        chunk_text: chunk.text,
+        message_index: chunkIdx,
+        current_section: section,
       });
 
-      const chunkFacts = await extractFactsFromChunk(jobId, source, chunk);
-      allFacts.push(...chunkFacts);
+      if (chunkFacts.facts.length > 0) {
+        logger.info(`   ✨ Found ${chunkFacts.facts.length} ${section} fact(s) in chunk ${chunkProgress}`, {
+          jobId,
+          section,
+          chunkIdx: chunkIdx + 1,
+          factsFound: chunkFacts.facts.length,
+        });
+      }
+
+      allFacts.push(...chunkFacts.facts);
     }
+
+    const sectionFacts = allFacts.filter(f => f.fact_type.startsWith(`${section}_`)).length;
+    const newFacts = allFacts.length - beforeCount;
+    logger.info(`✅ [Section ${sectionProgress}] ${section} complete: +${newFacts} facts`, {
+      jobId,
+      section,
+      newFactsThisSection: newFacts,
+      totalSectionFacts: sectionFacts,
+      totalFactsSoFar: allFacts.length,
+    });
   }
 
   logger.info('Stage 1 complete: Extracted facts (before post-processing)', {
@@ -108,15 +201,15 @@ export async function runFactExtraction(
   });
 
   if (isDiagnosticsEnabled()) {
-    dumpFacts(jobId, processedFacts);
-    dumpPostProcessing(jobId, allFacts, processedFacts);
+    dumpFacts('post-extraction', jobId, processedFacts);
+    dumpPostProcessing(jobId);
   }
 
   // Insert facts into database
   const importFacts = await insertImportFacts(supabase, jobId, processedFacts);
   logger.info('Facts inserted into database', {
     jobId,
-    count: importFacts.length,
+    count: importFacts.count,
   });
 
   return {
@@ -126,24 +219,30 @@ export async function runFactExtraction(
 }
 
 /**
+ * Build all chunks across ALL sources (unified, unordered by section)
+ * 
+ * This is used by the per-section extraction pass strategy:
+ * - Chunks are built once, purely for size control
+ * - Same chunks are iterated multiple times (once per section)
+ * - Section filtering happens in prompts, not in chunking
+ */
+export function buildAllChunksAcrossSources(
+  sources: ImportSource[],
+  maxWords: number,
+  minWords: number = 800
+): TextChunk[] {
+  // Use buildChunksForSection with a dummy section; it ignores the section anyway
+  // and just chunks all sources uniformly by word count
+  return buildChunksForSection('general', sources, maxWords, minWords);
+}
+
+/**
  * Build all chunks for a source across all sections
+ * NOTE: This is legacy; use buildAllChunksAcrossSources for the section-pass strategy
  */
 function buildAllChunks(source: ImportSource, maxWords: number): TextChunk[] {
-  const sections: ImportSection[] = [
-    'confirmation',
-    'contract',
-    'itinerary',
-    'rider',
-    'general',
-  ];
-
-  const allChunks: TextChunk[] = [];
-  for (const section of sections) {
-    const sectionChunks = buildChunksForSection(source, section, maxWords);
-    allChunks.push(...sectionChunks);
-  }
-
-  return allChunks;
+  // Return chunks uniformly without section filtering
+  return buildChunksForSection('general', [source], maxWords);
 }
 
 // =============================================================================
@@ -173,7 +272,8 @@ export async function runFactResolution(
   }
 
   // Fetch all facts
-  const facts = await getImportFacts(supabase, jobId);
+  const factsResult = await getImportFacts(supabase, jobId);
+  const facts = factsResult.facts || [];
   logger.info('Fetched facts for resolution', { jobId, count: facts.length });
 
   if (facts.length === 0) {
@@ -181,29 +281,50 @@ export async function runFactResolution(
     return { resolutions: [], selected_fact_ids: [] };
   }
 
-  // Run resolution
-  const resolutions = await resolveImportFacts(facts);
-  logger.info('Resolution complete', { jobId, resolutions: resolutions.length });
+  // Run resolution with progress
+  logger.info('🧠 Starting LLM semantic resolution...', {
+    jobId,
+    totalFacts: facts.length,
+  });
+  
+  const resolutions = await resolveImportFacts({ job_id: jobId, facts });
+  
+  const resolved = resolutions.resolutions.filter(r => r.state === 'resolved').length;
+  const unresolved = resolutions.resolutions.filter(r => r.state === 'unagreed').length;
+  const informational = resolutions.resolutions.filter(r => r.state === 'informational').length;
+  
+  logger.info('✅ LLM resolution complete', {
+    jobId,
+    total: resolutions.resolutions.length,
+    resolved,
+    unresolved,
+    informational,
+    selected: resolutions.selected_fact_ids.length,
+  });
 
   if (isDiagnosticsEnabled()) {
-    dumpResolutions(jobId, resolutions);
+    dumpResolutions(jobId, resolutions.resolutions, facts);
   }
 
   // Extract selected fact IDs
-  const selectedIds = resolutions
-    .filter(r => r.selected_fact_id)
+  const selectedIds = resolutions.resolutions
+    .filter(r => r.selected_fact_id !== null && r.selected_fact_id !== undefined)
     .map(r => r.selected_fact_id as string);
+  
+  if (selectedIds.length === 0) {
+    logger.warn('No facts selected after resolution', { jobId });
+  }
 
   // Mark selected facts in database
   if (selectedIds.length > 0) {
-    await selectImportFacts(supabase, selectedIds);
+    await selectImportFacts(supabase, jobId, resolutions.resolutions);
     logger.info('Marked facts as selected', { jobId, count: selectedIds.length });
   }
 
   await updateImportJobStage(supabase, jobId, 'applying');
 
   return {
-    resolutions,
-    selected_fact_ids: selectedIds,
+    resolutions: resolutions.resolutions,
+    selected_fact_ids: resolutions.selected_fact_ids || selectedIds,
   };
 }

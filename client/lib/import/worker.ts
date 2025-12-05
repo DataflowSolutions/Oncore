@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 import { getSupabaseServiceClient } from "./worker-client";
 import { claimPendingImportJobs, updateImportJobExtracted, ImportJobRecord } from "./jobs";
 import { ImportSource } from "./chunking";
-import { runSemanticImportExtraction } from "./semantic";
+import { runSemanticImport } from "./semantic";
 import { countWords } from "./background";
 import type { Database } from "../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -167,18 +167,19 @@ async function processSemanticJob(
     // Run semantic extraction with progress callbacks
     console.log(`   [${shortId}] 🔬 Stage 1: Extracting candidate facts...`);
     
-    const result = await runSemanticImportExtraction(
+    const result = await runSemanticImport(
       supabase,
       jobId,
       extractionSources,
-      async (progress) => {
+      async (progress: any) => {
         const stage = progress.stage;
         
         if (stage === 'extracting_facts') {
+          const chunkInfo = progress.current_chunk && progress.total_chunks 
+            ? `chunk ${progress.current_chunk}/${progress.total_chunks}` 
+            : 'starting';
           console.log(
-            `   [${shortId}] Extracting: ${progress.current_source} ` +
-            `(chunk ${progress.current_chunk}/${progress.total_chunks}, ` +
-            `${progress.facts_extracted} facts so far)`
+            `   [${shortId}] 📄 ${progress.current_source} - ${chunkInfo}, ${progress.facts_extracted || 0} facts`
           );
         } else if (stage === 'resolving') {
           console.log(`   [${shortId}] 🧠 Stage 2: Resolving facts...`);
@@ -200,16 +201,16 @@ async function processSemanticJob(
 
     // Log resolution summary
     console.log(`   [${shortId}] Resolution summary:`);
-    const resolved = result.resolutions.filter(r => r.state === 'resolved');
-    const unagreed = result.resolutions.filter(r => r.state === 'unagreed');
-    const info = result.resolutions.filter(r => r.state === 'informational');
+    const resolved = result.resolutions.filter((r: any) => r.state === 'resolved');
+    const unagreed = result.resolutions.filter((r: any) => r.state === 'unagreed');
+    const info = result.resolutions.filter((r: any) => r.state === 'informational');
     console.log(`      • Resolved: ${resolved.length}`);
     console.log(`      • Unagreed: ${unagreed.length}`);
     console.log(`      • Informational: ${info.length}`);
 
     if (result.warnings && result.warnings.length > 0) {
       console.log(`   [${shortId}] ⚠️ Warnings:`);
-      result.warnings.forEach(w => console.log(`      • ${w}`));
+      result.warnings.forEach((w: any) => console.log(`      • ${w}`));
     }
 
     const lowTextSources = extractionSources.filter((src) => isLowTextSource(src));

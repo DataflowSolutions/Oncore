@@ -39,12 +39,12 @@ const SINGLETON_INFORMATIONAL_FIELDS = new Set<ImportFactType>([
   'general_artist',
   'general_venue',
   'general_date',
-  'general_eventName',
+  'general_event_name',
   'general_city',
   'general_country',
   'deal_fee',
   'deal_currency',
-  'deal_dealType',
+  'deal_deal_type',
 ]);
 
 // =============================================================================
@@ -244,20 +244,14 @@ function applyValueToField(
   factDomain: string | null,
   factSourceScope: ImportSourceScope
 ): void {
-  const parts = fieldPath.split('.');
-  if (parts.length === 2) {
-    const [section, field] = parts;
-    if (section === 'general' || section === 'deal' || section === 'technical') {
-      (data[section] as any)[field] = value;
-      return;
-    }
-  }
-
-  if (parts.length === 3) {
-    const [arrayKey, arrayField, itemField] = parts;
+  // Handle array paths like 'contacts[].name' or 'hotels[].checkInDate'
+  if (fieldPath.includes('[]')) {
+    const [arrayPart, itemField] = fieldPath.split('[].');
+    const arrayKey = arrayPart; // e.g., 'contacts', 'hotels', 'flights'
     const array = (data as any)[arrayKey];
+    
     if (!Array.isArray(array)) {
-      logger.warn(`Field path ${fieldPath} does not point to an array`);
+      logger.warn(`Field path ${fieldPath} does not point to an array`, { arrayKey });
       return;
     }
 
@@ -292,7 +286,21 @@ function applyValueToField(
 
     // Set the field value
     (item as any)[itemField] = value;
+    return;
   }
+
+  // Handle non-array paths like 'general.artist' or 'deal.fee'
+  const parts = fieldPath.split('.');
+  if (parts.length === 2) {
+    const [section, field] = parts;
+    if (section === 'general' || section === 'deal' || section === 'technical') {
+      (data[section] as any)[field] = value;
+      return;
+    }
+  }
+
+  // Fallback: unknown field path format
+  logger.warn(`Unrecognized field path format: ${fieldPath}`, { factType });
 }
 
 /**
@@ -379,7 +387,7 @@ function resolveArrayIndex(
       return array.length;
     }
     // No domain: if this is a flight number, try to place by unique number
-    if (factType === 'flight_flightNumber' && value) {
+    if (factType === 'flight_number' && value) {
       const existingIdx = array.findIndex((f: any) => (f.flightNumber || '').toLowerCase() === value.toLowerCase());
       if (existingIdx >= 0) return existingIdx;
       return array.length; // new flight leg

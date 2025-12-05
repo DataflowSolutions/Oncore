@@ -12,6 +12,51 @@ import {
     normalizeStatus,
 } from './normalization';
 
+/**
+ * Validate time format (HH:MM or HH:MM:SS)
+ */
+function validateTimeValue(value: string | undefined): string | undefined {
+    if (!value) return undefined;
+    // Accept HH:MM or HH:MM:SS format only
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+    if (timeRegex.test(value)) {
+        return value;
+    }
+    // Try to extract time from string like "10:00 AM" or "14:30"
+    const extractedTime = value.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (extractedTime) {
+        const [, hours, minutes, seconds] = extractedTime;
+        const h = parseInt(hours, 10);
+        const m = parseInt(minutes, 10);
+        if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+            return seconds ? `${hours.padStart(2, '0')}:${minutes}:${seconds}` : `${hours.padStart(2, '0')}:${minutes}`;
+        }
+    }
+    // Invalid time format - return undefined
+    logger.debug('Invalid time value rejected', { value });
+    return undefined;
+}
+
+/**
+ * Validate date format (YYYY-MM-DD)
+ */
+function validateDateValue(value: string | undefined): string | undefined {
+    if (!value) return undefined;
+    // Accept YYYY-MM-DD format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRegex.test(value)) {
+        return value;
+    }
+    // Try to parse and reformat
+    const parsed = Date.parse(value);
+    if (!isNaN(parsed)) {
+        const date = new Date(parsed);
+        return date.toISOString().split('T')[0];
+    }
+    logger.debug('Invalid date value rejected', { value });
+    return undefined;
+}
+
 interface RawFactFromLLM {
     fact_type?: string;
     fact_domain?: string;
@@ -62,8 +107,8 @@ export function parseLLMFacts(
             value_text: raw.value_text,
             value_number: typeof raw.value_number === 'number' ? raw.value_number : undefined,
             value_boolean: typeof raw.value_boolean === 'boolean' ? raw.value_boolean : undefined,
-            value_date: raw.value_date,
-            value_time: raw.value_time,
+            value_date: validateDateValue(raw.value_date),
+            value_time: validateTimeValue(raw.value_time),
             value_datetime: raw.value_datetime,
 
             currency: raw.currency,

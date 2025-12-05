@@ -44,12 +44,19 @@ export { applyResolutionsToImportData } from './application';
 
 /**
  * Run the complete semantic import pipeline
+ * 
+ * @param options.maxWordsPerChunk - Optional override for chunk size (default: env SEMANTIC_IMPORT_MAX_WORDS or 800)
+ * @param options.minWordsPerChunk - Optional override for min chunk size (default: env SEMANTIC_IMPORT_MIN_WORDS or 300)
  */
 export async function runSemanticImport(
   supabase: SupabaseClientLike,
   jobId: string,
   sources: ImportSource[],
-  onProgress?: SemanticProgressCallback
+  onProgress?: SemanticProgressCallback,
+  options?: {
+    maxWordsPerChunk?: number;
+    minWordsPerChunk?: number;
+  }
 ): Promise<SemanticExtractionResult> {
   logger.info('Semantic import starting', { jobId, sources: sources.length });
 
@@ -57,7 +64,7 @@ export async function runSemanticImport(
   // STAGE 1: Fact Extraction
   // =============================================================================
 
-  const extractionResult = await runFactExtraction(supabase, jobId, sources, onProgress);
+  const extractionResult = await runFactExtraction(supabase, jobId, sources, onProgress, options);
 
   // =============================================================================
   // STAGE 2: Fact Resolution
@@ -81,7 +88,8 @@ export async function runSemanticImport(
   let data = createEmptyImportData();
 
   // Fetch selected facts from database
-  const selectedFacts = await getImportFacts(supabase, jobId);
+  const factsResult = await getImportFacts(supabase, jobId);
+  const selectedFacts = factsResult.facts || [];
   const selectedFactsFiltered = selectedFacts.filter(f =>
     resolutionResult.selected_fact_ids.includes(f.id)
   );
@@ -97,6 +105,20 @@ export async function runSemanticImport(
 
   logger.info('Stage F1-F2: Reconstructing flight instances', { jobId });
 
+  // Debug: Log flight-related resolutions
+  const flightFactTypes = ['flight_number', 'flight_date', 'flight_passenger_name', 'flight_booking_reference', 'flight_ticket_number', 'flight_seat', 'flight_travel_class', 'flight_notes'];
+  const flightResolutions = resolutionResult.resolutions.filter(r => flightFactTypes.includes(r.fact_type));
+  logger.info('Flight-related resolutions', {
+    jobId,
+    count: flightResolutions.length,
+    details: flightResolutions.map(r => ({
+      type: r.fact_type,
+      state: r.state,
+      value: r.final_value_text || r.final_value_number || r.final_value_date,
+      factId: r.selected_fact_id,
+    })),
+  });
+
   const flightGroups = reconstructFlightInstances(
     resolutionResult.resolutions,
     selectedFactsFiltered
@@ -105,6 +127,12 @@ export async function runSemanticImport(
   logger.info('Flight reconstruction complete', {
     jobId,
     flightLegs: flightGroups.length,
+    groups: flightGroups.map(g => ({
+      id: g.groupId,
+      flightNumber: g.flightNumber,
+      date: g.date,
+      passenger: g.fullName,
+    })),
   });
 
   // Apply flight groups to ImportData
@@ -118,17 +146,35 @@ export async function runSemanticImport(
     r => !consumedFlightFactTypes.has(r.fact_type)
   );
 
+  // Debug: Log what resolutions we're applying
+  const resolvedNonFlight = nonFlightResolutions.filter(r => r.state === 'resolved' || r.state === 'informational');
   logger.info('Applying non-flight resolutions', {
     jobId,
     totalResolutions: resolutionResult.resolutions.length,
     flightResolutions: resolutionResult.resolutions.length - nonFlightResolutions.length,
     nonFlightResolutions: nonFlightResolutions.length,
+    resolvedOrInfoNonFlight: resolvedNonFlight.length,
+    byType: resolvedNonFlight.reduce((acc, r) => {
+      acc[r.fact_type] = (acc[r.fact_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
   });
 
   const nonFlightData = applyResolutionsToImportData(
     nonFlightResolutions,
     selectedFactsFiltered
   );
+
+  // Debug: Log what data was populated
+  logger.info('Non-flight data populated', {
+    jobId,
+    general: Object.entries(nonFlightData.general).filter(([_, v]) => v).length,
+    deal: Object.entries(nonFlightData.deal).filter(([_, v]) => v).length,
+    hotels: nonFlightData.hotels?.length || 0,
+    contacts: nonFlightData.contacts?.length || 0,
+    food: nonFlightData.food?.length || 0,
+    activities: nonFlightData.activities?.length || 0,
+  });
 
   // Merge non-flight data (preserve flights array)
   data = {

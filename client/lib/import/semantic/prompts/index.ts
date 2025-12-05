@@ -2,6 +2,6 @@
  * Prompts Module - Re-exports
  */
 
-export * from './extraction-prompts';
+export * from './fact-extraction-system';
+export * from './fact-extraction-user';
 export * from './resolution-prompts';
-export * from './post-process-prompts';

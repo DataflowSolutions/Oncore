@@ -73,7 +73,7 @@ function factPositionValue(fact: ImportFact): number {
  */
 export function normalizeFlightFactDomains(facts: ImportFact[]): ImportFact[] {
     const flightNumberFacts = facts
-        .filter(f => f.fact_type === 'flight_flightNumber' && f.value_text)
+        .filter(f => f.fact_type === 'flight_number' && f.value_text)
         .sort((a, b) => {
             if (a.message_index !== b.message_index) return a.message_index - b.message_index;
             return a.chunk_index - b.chunk_index;
@@ -164,7 +164,7 @@ export function normalizeFlightFactDomains(facts: ImportFact[]): ImportFact[] {
         if (!fact.fact_type.startsWith('flight_')) return fact;
         const normalizedFact = { ...fact };
 
-        if (normalizedFact.fact_type === 'flight_flightNumber') {
+        if (normalizedFact.fact_type === 'flight_number') {
             const normalizedNumber = normalizeFlightNumberValue(normalizedFact.value_text);
             if (normalizedNumber && domainByFlightNumber.has(normalizedNumber)) {
                 normalizedFact.fact_domain = domainByFlightNumber.get(normalizedNumber) || normalizedFact.fact_domain;

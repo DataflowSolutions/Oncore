@@ -66,8 +66,9 @@ export type {
   SemanticExtractionProgress,
   SemanticProgressCallback,
   SemanticExtractionResult,
-} from './orchestrator';
+} from './types-public';
 
 export {
-  runSemanticImportExtraction,
+  runSemanticImport,
+  applyResolutionsToImportData,
 } from './orchestrator';

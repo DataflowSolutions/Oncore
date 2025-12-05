@@ -10,103 +10,101 @@
  * confirmation UI should be extractable by the AI.
  */
 
+import type { ImportSection } from '@/components/import/types';
+
 // =============================================================================
 // Fact Types - Derived from ImportData fields
 // =============================================================================
 
 /**
  * Fact types map 1:1 with ImportData fields.
- * Format: {section}_{fieldName} in snake_case
+ * Format: {section}_{field_name} in snake_case
  * 
- * This ensures every field in the import confirmation UI can be extracted.
+ * IMPORTANT: These MUST match the database enum exactly.
+ * See migration: 20251204143114_reset_import_fact_type_enum.sql
  */
 export type ImportFactType =
-  // General section (ImportedGeneral)
+  // General section
   | 'general_artist'
-  | 'general_eventName'
+  | 'general_event_name'
   | 'general_venue'
   | 'general_date'
-  | 'general_setTime'
+  | 'general_set_time'
   | 'general_city'
   | 'general_country'
   
-  // Deal section (ImportedDeal)
+  // Deal section
   | 'deal_fee'
-  | 'deal_paymentTerms'
-  | 'deal_dealType'
   | 'deal_currency'
+  | 'deal_payment_terms'
+  | 'deal_deal_type'
   | 'deal_notes'
   
-  // Hotel section (ImportedHotel[])
+  // Hotel section
   | 'hotel_name'
   | 'hotel_address'
   | 'hotel_city'
   | 'hotel_country'
-  | 'hotel_checkInDate'
-  | 'hotel_checkInTime'
-  | 'hotel_checkOutDate'
-  | 'hotel_checkOutTime'
-  | 'hotel_bookingReference'
+  | 'hotel_checkin_date'
+  | 'hotel_checkin_time'
+  | 'hotel_checkout_date'
+  | 'hotel_checkout_time'
+  | 'hotel_booking_reference'
   | 'hotel_phone'
   | 'hotel_email'
   | 'hotel_notes'
   
-  // Food/Catering section (ImportedFood[])
+  // Flight section (keys only - API enrichment handles details)
+  | 'flight_number'
+  | 'flight_date'
+  | 'flight_passenger_name'
+  | 'flight_ticket_number'
+  | 'flight_booking_reference'
+  | 'flight_seat'
+  | 'flight_travel_class'
+  | 'flight_notes'
+  
+  // Food/Catering section
   | 'food_name'
   | 'food_address'
   | 'food_city'
   | 'food_country'
-  | 'food_bookingReference'
+  | 'food_booking_reference'
   | 'food_phone'
   | 'food_email'
+  | 'food_service_date'
+  | 'food_service_time'
+  | 'food_guest_count'
   | 'food_notes'
-  | 'food_serviceDate'
-  | 'food_serviceTime'
-  | 'food_guestCount'
   
-  // Flight section (ImportedFlight[]) - KEYS ONLY (enrichment via API)
-  // ✅ Extract with AI (document-specific, not in APIs)
-  | 'flight_flightNumber'        // Primary key: "TK67", "LH1234"
-  | 'flight_date'                // Flight date (required for API lookup)
-  | 'flight_fullName'            // Passenger name
-  | 'flight_ticketNumber'        // Ticket/e-ticket number
-  | 'flight_bookingReference'    // PNR / booking reference
-  | 'flight_seat'                // Seat assignment (sometimes in API, often not)
-  | 'flight_travelClass'         // Economy/Business/First
-  | 'flight_notes'               // Additional notes
-  // ❌ NO LONGER EXTRACT (fetched via API in Stage F3):
-  // flight_airline, flight_fromAirport, flight_toAirport, 
-  // flight_fromCity, flight_toCity, flight_departureTime, 
-  // flight_arrivalTime, flight_flightTime, flight_aircraft
-  
-  // Activity section (ImportedActivity[])
+  // Activity section
   | 'activity_name'
   | 'activity_location'
-  | 'activity_startTime'
-  | 'activity_endTime'
+  | 'activity_start_time'
+  | 'activity_end_time'
+  | 'activity_has_destination'
+  | 'activity_destination_name'
+  | 'activity_destination_location'
   | 'activity_notes'
-  | 'activity_hasDestination'
-  | 'activity_destinationName'
-  | 'activity_destinationLocation'
   
-  // Contact section (ImportedContact[])
+  // Contact section
   | 'contact_name'
   | 'contact_phone'
   | 'contact_email'
   | 'contact_role'
   
-  // Technical section (ImportedTechnical)
+  // Technical section
   | 'technical_equipment'
   | 'technical_backline'
-  | 'technical_stageSetup'
-  | 'technical_lightingRequirements'
+  | 'technical_stage_setup'
+  | 'technical_lighting'
   | 'technical_soundcheck'
   | 'technical_other'
   
-  // Document category (we don't extract file content, just categorize uploaded files)
+  // Document section
   | 'document_category'
   
-  // Fallback for unknown fact types
+  // Fallback
   | 'other';
 
 export type ImportFactDirection =
@@ -176,6 +174,9 @@ export interface ExtractedFact {
   source_file_name?: string;
   /** Provenance classification for the source document */
   source_scope?: ImportSourceScope;
+  
+  /** Which section this fact was extracted from */
+  section?: ImportSection;
   
   /** Who made this statement */
   speaker_role: ImportFactSpeaker;
@@ -262,6 +263,8 @@ export interface FactExtractionRequest {
   previous_facts?: ExtractedFact[];
   /** Message index for ordering */
   message_index: number;
+  /** Current section being extracted (for section-focused passes) */
+  current_section?: ImportSection;
 }
 
 /**
@@ -361,18 +364,18 @@ export interface ResolutionResult {
 export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string> = {
   // General section
   general_artist: 'general.artist',
-  general_eventName: 'general.eventName',
+  general_event_name: 'general.eventName',
   general_venue: 'general.venue',
   general_date: 'general.date',
-  general_setTime: 'general.setTime',
+  general_set_time: 'general.setTime',
   general_city: 'general.city',
   general_country: 'general.country',
   
   // Deal section
   deal_fee: 'deal.fee',
-  deal_paymentTerms: 'deal.paymentTerms',
-  deal_dealType: 'deal.dealType',
   deal_currency: 'deal.currency',
+  deal_payment_terms: 'deal.paymentTerms',
+  deal_deal_type: 'deal.dealType',
   deal_notes: 'deal.notes',
   
   // Hotel section (array)
@@ -380,50 +383,47 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string> = {
   hotel_address: 'hotels[].address',
   hotel_city: 'hotels[].city',
   hotel_country: 'hotels[].country',
-  hotel_checkInDate: 'hotels[].checkInDate',
-  hotel_checkInTime: 'hotels[].checkInTime',
-  hotel_checkOutDate: 'hotels[].checkOutDate',
-  hotel_checkOutTime: 'hotels[].checkOutTime',
-  hotel_bookingReference: 'hotels[].bookingReference',
+  hotel_checkin_date: 'hotels[].checkInDate',
+  hotel_checkin_time: 'hotels[].checkInTime',
+  hotel_checkout_date: 'hotels[].checkOutDate',
+  hotel_checkout_time: 'hotels[].checkOutTime',
+  hotel_booking_reference: 'hotels[].bookingReference',
   hotel_phone: 'hotels[].phone',
   hotel_email: 'hotels[].email',
   hotel_notes: 'hotels[].notes',
+  
+  // Flight section (array) - keys only, API enrichment handles details
+  flight_number: 'flights[].flightNumber',
+  flight_date: 'flights[].date',
+  flight_passenger_name: 'flights[].fullName',
+  flight_ticket_number: 'flights[].ticketNumber',
+  flight_booking_reference: 'flights[].bookingReference',
+  flight_seat: 'flights[].seat',
+  flight_travel_class: 'flights[].travelClass',
+  flight_notes: 'flights[].notes',
   
   // Food/Catering section (array)
   food_name: 'food[].name',
   food_address: 'food[].address',
   food_city: 'food[].city',
   food_country: 'food[].country',
-  food_bookingReference: 'food[].bookingReference',
+  food_booking_reference: 'food[].bookingReference',
   food_phone: 'food[].phone',
   food_email: 'food[].email',
+  food_service_date: 'food[].serviceDate',
+  food_service_time: 'food[].serviceTime',
+  food_guest_count: 'food[].guestCount',
   food_notes: 'food[].notes',
-  food_serviceDate: 'food[].serviceDate',
-  food_serviceTime: 'food[].serviceTime',
-  food_guestCount: 'food[].guestCount',
-  
-  // Flight section (array) - KEYS ONLY
-  flight_flightNumber: 'flights[].flightNumber',
-  flight_date: 'flights[].date',
-  flight_fullName: 'flights[].fullName',
-  flight_ticketNumber: 'flights[].ticketNumber',
-  flight_bookingReference: 'flights[].bookingReference',
-  flight_seat: 'flights[].seat',
-  flight_travelClass: 'flights[].travelClass',
-  flight_notes: 'flights[].notes',
-  // API-enriched fields (populated in Stage F3, not extracted):
-  // airline, fromAirport, toAirport, fromCity, toCity,
-  // departureTime, arrivalTime, flightTime, aircraft
   
   // Activity section (array)
   activity_name: 'activities[].name',
   activity_location: 'activities[].location',
-  activity_startTime: 'activities[].startTime',
-  activity_endTime: 'activities[].endTime',
+  activity_start_time: 'activities[].startTime',
+  activity_end_time: 'activities[].endTime',
+  activity_has_destination: 'activities[].hasDestination',
+  activity_destination_name: 'activities[].destinationName',
+  activity_destination_location: 'activities[].destinationLocation',
   activity_notes: 'activities[].notes',
-  activity_hasDestination: 'activities[].hasDestination',
-  activity_destinationName: 'activities[].destinationName',
-  activity_destinationLocation: 'activities[].destinationLocation',
   
   // Contact section (array)
   contact_name: 'contacts[].name',
@@ -434,15 +434,15 @@ export const FACT_TYPE_TO_IMPORT_FIELD: Record<ImportFactType, string> = {
   // Technical section
   technical_equipment: 'technical.equipment',
   technical_backline: 'technical.backline',
-  technical_stageSetup: 'technical.stageSetup',
-  technical_lightingRequirements: 'technical.lightingRequirements',
+  technical_stage_setup: 'technical.stageSetup',
+  technical_lighting: 'technical.lightingRequirements',
   technical_soundcheck: 'technical.soundcheck',
   technical_other: 'technical.other',
   
-  // Document category (just category, files are uploaded separately)
+  // Document section
   document_category: 'documents[].category',
   
-  // Fallback for unknown fact types (mapped to notes if used)
+  // Fallback
   other: 'notes',
 };
 

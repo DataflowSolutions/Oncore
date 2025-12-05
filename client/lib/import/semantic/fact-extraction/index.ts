@@ -32,11 +32,14 @@ export async function extractFactsFromChunk(
     });
 
     // Generate prompts from centralized prompt module
-    const systemPrompt = PROMPTS.factExtraction.system();
+    // Default to 'general' if no section specified (backward compatibility)
+    const currentSection = request.current_section || 'general';
+    const systemPrompt = PROMPTS.factExtraction.system(currentSection);
     const userPrompt = PROMPTS.factExtraction.user({
         source_file_name: request.source_file_name,
         chunk_index: request.chunk_index,
         chunk_text: request.chunk_text,
+        current_section: request.current_section,
     });
 
     // Call LLM
@@ -60,6 +63,12 @@ export async function extractFactsFromChunk(
 
     // Parse facts
     let facts = parseLLMFacts(llmResponse.content || '{"facts": []}', request);
+
+    // Tag facts with their section
+    facts = facts.map(fact => ({
+        ...fact,
+        section: request.current_section,
+    }));
 
     // Apply filename-based source_scope fallback when model did not set one
     const inferredScope = inferSourceScopeFromFilename(request.source_file_name);
