@@ -10,42 +10,6 @@ enum InfoCardType {
   notes,
 }
 
-extension InfoCardTypeExtension on InfoCardType {
-  IconData get icon {
-    switch (this) {
-      case InfoCardType.hotel:
-        return Icons.hotel;
-      case InfoCardType.restaurant:
-        return Icons.restaurant;
-      case InfoCardType.documents:
-        return Icons.description;
-      case InfoCardType.contacts:
-        return Icons.people;
-      case InfoCardType.guestlist:
-        return Icons.list_alt;
-      case InfoCardType.notes:
-        return Icons.note;
-    }
-  }
-
-  Color get iconColor {
-    switch (this) {
-      case InfoCardType.hotel:
-        return const Color(0xFF60A5FA); // Blue
-      case InfoCardType.restaurant:
-        return const Color(0xFFFB923C); // Orange
-      case InfoCardType.documents:
-        return const Color(0xFFA78BFA); // Purple
-      case InfoCardType.contacts:
-        return const Color(0xFF34D399); // Green
-      case InfoCardType.guestlist:
-        return const Color(0xFFFBBF24); // Yellow
-      case InfoCardType.notes:
-        return const Color(0xFFF472B6); // Pink
-    }
-  }
-}
-
 /// Generic info card for hotel, restaurant, documents, contacts, etc.
 class InfoCard extends StatelessWidget {
   final String title;
@@ -85,7 +49,7 @@ class InfoCard extends StatelessWidget {
               title,
               style: TextStyle(
                 color: colorScheme.onSurface,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
@@ -95,7 +59,7 @@ class InfoCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle!,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

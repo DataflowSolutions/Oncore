@@ -278,27 +278,20 @@ class _ShowDayBody extends ConsumerWidget {
             ),
           ),
 
-          // Lodging & Catering section (Combined grid)
-          if (lodgingAsync.hasValue || cateringAsync.hasValue)
-            _LodgingCateringSection(
-              lodging: lodgingAsync.value ?? [],
-              catering: cateringAsync.value ?? [],
-              showId: showId,
-              orgId: show.orgId,
-              onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
-              onCateringAdded: () => ref.invalidate(showCateringProvider(showId)),
-            ),
-
           const SizedBox(height: 24),
 
-          // Info cards grid
-          _InfoCardsGrid(
+          // Unified 2x3 grid: Hotel, Food, Contacts, Documents, Guestlist, Notes
+          _UnifiedInfoGrid(
+            lodging: lodgingAsync.value ?? [],
+            catering: cateringAsync.value ?? [],
             documents: documentsAsync.value ?? [],
             contacts: contactsAsync.value ?? [],
             guests: guestlistAsync.value ?? [],
             notes: notesAsync.value,
             showId: showId,
             orgId: show.orgId,
+            onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
+            onCateringAdded: () => ref.invalidate(showCateringProvider(showId)),
             onContactAdded: () => ref.invalidate(showContactsProvider(showId)),
             onDocumentAdded: () => ref.invalidate(showDocumentsProvider(showId)),
             onGuestAdded: () => ref.invalidate(showGuestlistProvider(showId)),
@@ -326,8 +319,8 @@ class _ShowDayBody extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -352,6 +345,47 @@ class _UpcomingScheduleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // Empty state when no schedule items
+    if (items.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colorScheme.outline),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.event_note_outlined,
+                    size: 32,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Schedule Not Added Yet',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      );
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -373,6 +407,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
               child: UpcomingScheduleCard(
                 title: item.title,
                 time: item.formattedStartTime,
+                endTime: item.formattedEndTime,
                 date: dateStr,
               ),
             );
@@ -448,8 +483,9 @@ class _FlightsSection extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colorScheme.outline),
                   ),
                   child: Row(
                     children: [
@@ -621,18 +657,278 @@ class _CreateNewFlightCard extends StatelessWidget {
       width: 280,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Center(
         child: Icon(
           Icons.add,
           color: colorScheme.onSurfaceVariant,
           size: 32,
+        ),
+      ),
+    );
+  }
+}
+
+/// Unified 2x3 grid for Hotel, Food, Contacts, Documents, Guestlist, Notes
+class _UnifiedInfoGrid extends StatelessWidget {
+  final List<LodgingInfo> lodging;
+  final List<CateringInfo> catering;
+  final List<DocumentInfo> documents;
+  final List<ContactInfo> contacts;
+  final List<GuestInfo> guests;
+  final String? notes;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onLodgingAdded;
+  final VoidCallback? onCateringAdded;
+  final VoidCallback? onContactAdded;
+  final VoidCallback? onDocumentAdded;
+  final VoidCallback? onGuestAdded;
+  final VoidCallback? onNotesChanged;
+
+  const _UnifiedInfoGrid({
+    required this.lodging,
+    required this.catering,
+    required this.documents,
+    required this.contacts,
+    required this.guests,
+    this.notes,
+    required this.showId,
+    required this.orgId,
+    this.onLodgingAdded,
+    this.onCateringAdded,
+    this.onContactAdded,
+    this.onDocumentAdded,
+    this.onGuestAdded,
+    this.onNotesChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          // Row 1: Hotel, Food
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openHotelsScreen(context),
+                  child: lodging.isNotEmpty
+                      ? InfoCard(
+                          title: lodging.first.hotelName ?? 'Hotel',
+                          subtitle: lodging.length > 1
+                              ? '${lodging.length} hotels'
+                              : lodging.first.timeRange,
+                          type: InfoCardType.hotel,
+                        )
+                      : _buildEmptyCard(context, 'Hotel', Icons.hotel, colorScheme),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openCateringScreen(context),
+                  child: catering.isNotEmpty
+                      ? InfoCard(
+                          title: catering.first.providerName ?? 'Food',
+                          subtitle: catering.length > 1
+                              ? '${catering.length} restaurants'
+                              : catering.first.formattedServiceTime,
+                          type: InfoCardType.restaurant,
+                        )
+                      : _buildEmptyCard(context, 'Food', Icons.restaurant, colorScheme),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Row 2: Contacts, Documents
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openContactsScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Contacts',
+                    Icons.people,
+                    colorScheme,
+                    subtitle: contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openDocumentsScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Documents',
+                    Icons.description,
+                    colorScheme,
+                    subtitle: documents.isEmpty ? 'Not Added' : '${documents.length} files',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Row 3: Guestlist, Notes
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openGuestlistScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Guestlist',
+                    Icons.list_alt,
+                    colorScheme,
+                    subtitle: guests.isEmpty ? 'Not Added' : '$totalGuests guests',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openNotesScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Notes',
+                    Icons.note,
+                    colorScheme,
+                    subtitle: notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard(BuildContext context, String title, IconData icon, ColorScheme colorScheme, {String? subtitle}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle ?? 'Not Added',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openHotelsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => HotelsScreen(
+          hotels: lodging,
+          showId: showId,
+          orgId: orgId,
+          onHotelAdded: onLodgingAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openCateringScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => CateringScreen(
+          catering: catering,
+          showId: showId,
+          orgId: orgId,
+          onCateringAdded: onCateringAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openContactsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => ContactsScreen(
+          contacts: contacts,
+          showId: showId,
+          orgId: orgId,
+          onContactAdded: onContactAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openDocumentsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DocumentsScreen(
+          documents: documents,
+          showId: showId,
+          orgId: orgId,
+          onDocumentAdded: onDocumentAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openGuestlistScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => GuestlistScreen(
+          guests: guests,
+          showId: showId,
+          orgId: orgId,
+          onGuestAdded: onGuestAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openNotesScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => NotesScreen(
+          initialNotes: notes,
+          showId: showId,
+          orgId: orgId,
+          onNotesChanged: onNotesChanged,
         ),
       ),
     );
@@ -696,13 +992,13 @@ class _LodgingCateringSection extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.hotel, size: 16, color: const Color(0xFF60A5FA)),
+                      Icon(Icons.hotel, size: 16, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
-                        'Hotels',
+                        'Hotel',
                         style: TextStyle(
                           color: colorScheme.onSurface,
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -713,7 +1009,7 @@ class _LodgingCateringSection extends StatelessWidget {
                     'Not Added',
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -721,12 +1017,12 @@ class _LodgingCateringSection extends StatelessWidget {
             ),
     ));
 
-    // Catering tile - always show, with navigation to full list
+    // Food tile - always show, with navigation to full list
     widgets.add(GestureDetector(
       onTap: () => _openCateringScreen(context),
       child: catering.isNotEmpty
           ? InfoCard(
-              title: catering.first.providerName ?? 'Catering',
+              title: catering.first.providerName ?? 'Food',
               subtitle: catering.length > 1 
                   ? '${catering.length} restaurants' 
                   : catering.first.formattedServiceTime,
@@ -744,13 +1040,13 @@ class _LodgingCateringSection extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.restaurant, size: 16, color: const Color(0xFFFB923C)),
+                      Icon(Icons.restaurant, size: 16, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
-                        'Catering',
+                        'Food',
                         style: TextStyle(
                           color: colorScheme.onSurface,
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -761,7 +1057,7 @@ class _LodgingCateringSection extends StatelessWidget {
                     'Not Added',
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -923,8 +1219,9 @@ class _InfoCardsGrid extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

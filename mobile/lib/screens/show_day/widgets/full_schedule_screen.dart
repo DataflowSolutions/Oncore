@@ -315,6 +315,10 @@ class _ScheduleEventCard extends StatelessWidget {
     // Determine color based on type
     final (backgroundColor, borderColor) = _getEventColors(colorScheme);
     
+    // Adjust padding based on height - smaller padding for small items
+    final verticalPadding = height < 32 ? 2.0 : (height < 45 ? 4.0 : 6.0);
+    final horizontalPadding = height < 32 ? 8.0 : 12.0;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -323,62 +327,90 @@ class _ScheduleEventCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: borderColor, width: 1),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Title
-            Text(
-              item.title,
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: height > 50 ? 2 : 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            // Time range (only if there's enough height)
-            if (height > 40) ...[
-              const SizedBox(height: 2),
-              Text(
-                item.timeRange,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            // Location (only if there's enough height and location exists)
-            if (height > 60 && item.location != null) ...[
-              const SizedBox(height: 2),
-              Row(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+        clipBehavior: Clip.hardEdge,
+        child: height < 32
+            // Very small items - single line with overflow hidden
+            ? Row(
                 children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 12,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      item.location!,
+                      item.title,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        color: colorScheme.onSurface,
                         fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  Text(
+                    item.formattedStartTime,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title
+                  Flexible(
+                    child: Text(
+                      item.title,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: height > 50 ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Time range (only if there's enough height)
+                  if (height > 45) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      item.timeRange,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  // Location (only if there's enough height and location exists)
+                  if (height > 65 && item.location != null) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item.location!,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
-            ],
-          ],
-        ),
       ),
     );
   }

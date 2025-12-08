@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class UpcomingScheduleCard extends StatelessWidget {
   final String title;
   final String time;
+  final String? endTime;
   final String date;
   final VoidCallback? onTap;
 
@@ -11,6 +12,7 @@ class UpcomingScheduleCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.time,
+    this.endTime,
     required this.date,
     this.onTap,
   });
@@ -22,8 +24,8 @@ class UpcomingScheduleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(16),
+        width: 180, // Reduced from 200
+        padding: const EdgeInsets.all(12), // Reduced from 16
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
@@ -33,43 +35,31 @@ class UpcomingScheduleCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Title at top
             Text(
               title,
               style: TextStyle(
                 color: colorScheme.onSurface,
-                fontSize: 14,
+                fontSize: 13, // Reduced from 14
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6), // Reduced from 8
+            // Bottom row: Time on left, Date on right (no icons)
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14,
-                  color: colorScheme.onSurfaceVariant,
+                // Time (start-end) on left
+                Text(
+                  endTime != null ? '$time - $endTime' : time,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
                 ),
-                const SizedBox(width: 4),
+                // Date on right
                 Text(
                   date,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  time,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
                 ),
               ],
             ),

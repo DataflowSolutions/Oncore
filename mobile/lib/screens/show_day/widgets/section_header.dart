@@ -51,7 +51,7 @@ class SectionHeader extends StatelessWidget {
 }
 
 /// Horizontal scroll list for cards like flights
-class HorizontalCardList extends StatelessWidget {
+class HorizontalCardList extends StatefulWidget {
   final List<Widget> children;
   final double height;
   final EdgeInsets padding;
@@ -64,15 +64,37 @@ class HorizontalCardList extends StatelessWidget {
   });
 
   @override
+  State<HorizontalCardList> createState() => _HorizontalCardListState();
+}
+
+class _HorizontalCardListState extends State<HorizontalCardList> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return SizedBox(
-      height: height,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: padding,
-        itemCount: children.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 16),
-        itemBuilder: (context, index) => children[index],
+      height: widget.height,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        thickness: 3,
+        radius: const Radius.circular(4),
+        child: ListView.separated(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          padding: widget.padding,
+          itemCount: widget.children.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 16),
+          itemBuilder: (context, index) => widget.children[index],
+        ),
       ),
     );
   }

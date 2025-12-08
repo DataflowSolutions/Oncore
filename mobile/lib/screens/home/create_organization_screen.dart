@@ -130,7 +130,8 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
         
         // Navigate to the new organization's shows page
         final orgId = result['id'] as String;
-        context.go('/org/$orgId/shows');
+        final orgName = result['name'] as String? ?? 'Organization';
+        context.go('/org/$orgId/shows', extra: orgName);
       }
     } catch (e) {
       if (mounted) {
@@ -338,19 +339,6 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Cancel Button
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: _isSubmitting ? null : () => context.go('/'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Cancel'),
                   ),
                 ),
               ],

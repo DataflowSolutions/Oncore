@@ -79,9 +79,22 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     }
   }
 
+  /// Check if the person is the current user (owner cannot remove themselves)
+  bool _isCurrentUser(AssignedPerson person) {
+    final supabase = ref.read(supabaseClientProvider);
+    final currentUserId = supabase.auth.currentUser?.id;
+    // The person_id in assignments corresponds to the people table, not auth users
+    // We need to check if this person's linked user matches the current user
+    // For now, we'll allow deletion since we can't directly check without an additional RPC
+    // The backend should enforce this rule as well
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final supabase = ref.read(supabaseClientProvider);
+    final currentUserEmail = supabase.auth.currentUser?.email;
 
     return LayerScaffold(
       title: 'Team',
@@ -97,11 +110,16 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                         itemCount: widget.assignments.length,
                         itemBuilder: (context, index) {
                           final person = widget.assignments[index];
+                          // Check if this is the first artist (owner) - they cannot be removed
+                          final isOwner = index == 0 && person.isArtist;
                           return TeamMemberCard(
                             name: person.name,
                             memberType: person.memberType,
                             duty: person.duty,
-                            onDelete: () => _deleteMember(person),
+                            isOwner: isOwner,
+                            onDelete: isOwner 
+                                ? null  // Owner cannot be deleted
+                                : () => _deleteMember(person),
                           );
                         },
                       ),
@@ -178,6 +196,7 @@ class TeamMemberCard extends StatelessWidget {
   final String? memberType;
   final String? duty;
   final VoidCallback? onDelete;
+  final bool isOwner;
 
   const TeamMemberCard({
     super.key,
@@ -185,6 +204,7 @@ class TeamMemberCard extends StatelessWidget {
     this.memberType,
     this.duty,
     this.onDelete,
+    this.isOwner = false,
   });
 
   @override
@@ -220,7 +240,7 @@ class TeamMemberCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Info
+          // Info - name and type/duty as small text below
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,33 +259,15 @@ class TeamMemberCard extends StatelessWidget {
                     _buildSubtitle(),
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          // Member type badge
-          if (memberType != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getMemberTypeColor(memberType!, colorScheme).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _formatMemberType(memberType!),
-                style: TextStyle(
-                  color: _getMemberTypeColor(memberType!, colorScheme),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          // Delete button
-          if (onDelete != null) ...[
-            const SizedBox(width: 8),
+          // Delete button only (removed duplicate badge)
+          if (onDelete != null)
             IconButton(
               onPressed: onDelete,
               icon: Icon(
@@ -275,7 +277,6 @@ class TeamMemberCard extends StatelessWidget {
               ),
               tooltip: 'Remove from show',
             ),
-          ],
         ],
       ),
     );

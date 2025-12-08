@@ -33,8 +33,8 @@ class FlightCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 260,
-        padding: const EdgeInsets.all(16),
+        width: 200, // Reduced from 260
+        padding: const EdgeInsets.all(12), // Reduced from 16
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
@@ -50,54 +50,39 @@ class FlightCard extends StatelessWidget {
               children: [
                 Text(
                   'Flight',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
                 ),
                 Text(
                   flightNumber,
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8), // Reduced from 12
             
-            // Middle row: Route with big codes - fixed proportions
+            // Middle row: Route with big codes - fixed proportions (no city names)
             Row(
               children: [
-                // Departure column
+                // Departure column - just code, no city
                 SizedBox(
-                  width: 60,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        departure,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (departureCity != null)
-                        Text(
-                          departureCity!,
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 10,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
+                  width: 50, // Reduced from 60
+                  child: Text(
+                    departure,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 18, // Reduced from 20
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 
                 // Duration column - flexible to take remaining space
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6), // Reduced from 8
                     child: Column(
                       children: [
                         if (duration != null)
@@ -105,7 +90,7 @@ class FlightCard extends StatelessWidget {
                             duration!,
                             style: TextStyle(
                               color: colorScheme.onSurfaceVariant,
-                              fontSize: 11,
+                              fontSize: 10, // Reduced from 11
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -120,38 +105,23 @@ class FlightCard extends StatelessWidget {
                   ),
                 ),
                 
-                // Arrival column
+                // Arrival column - just code, no city
                 SizedBox(
-                  width: 60,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        arrival,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (arrivalCity != null)
-                        Text(
-                          arrivalCity!,
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 10,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                        ),
-                    ],
+                  width: 50, // Reduced from 60
+                  child: Text(
+                    arrival,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 18, // Reduced from 20
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 8), // Reduced from 12
             
             // Bottom row: Times
             Row(
@@ -159,13 +129,13 @@ class FlightCard extends StatelessWidget {
               children: [
                 Text(
                   departureTime,
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 12),
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 11), // Reduced from 12
                 ),
                 Text(
                   arrivalTime,
                   style: TextStyle(
                     color: colorScheme.onSurface,
-                    fontSize: 12,
+                    fontSize: 11, // Reduced from 12
                   ),
                 ),
               ],
