@@ -230,11 +230,11 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
               {selectedType === "manager" && (
                 <>
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Experience (Years)
+                    Agency Name
                   </label>
                   <Input
-                    name="experience"
-                    placeholder="Years of experience"
+                    name="roleDescription"
+                    placeholder="e.g., Elite Talent Agency"
                     disabled={isSubmitting || success}
                     className="transition-all duration-200 focus:scale-[1.02]"
                   />
@@ -242,21 +242,6 @@ export default function AddPersonButton({ orgId }: AddPersonButtonProps) {
               )}
             </div>
           </div>
-
-          {/* Experience field for crew members */}
-          {selectedType === "crew" && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Experience (Years)
-              </label>
-              <Input
-                name="experience"
-                placeholder="Years of experience"
-                disabled={isSubmitting || success}
-                className="transition-all duration-200 focus:scale-[1.02]"
-              />
-            </div>
-          )}
 
           {/* Bio/Notes */}
           <div className="space-y-2">
