@@ -2,23 +2,61 @@
 
 import * as React from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { 
+  Search, 
+  Calendar, 
+  Users, 
+  MapPin, 
+  UserCheck, 
+  FileText, 
+  File,
+  CalendarClock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getGroupedNavigationItems } from "@/lib/constants/navigation";
 import { Button } from "@/components/ui/button";
+import { useGlobalSearch, groupSearchResults, getResultTypeLabel } from "@/lib/hooks/use-global-search";
+import type { GlobalSearchResult } from "@/lib/database.types";
 
 interface ExpandingSearchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  orgId?: string;
 }
 
-export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
+export function ExpandingSearch({ open, onOpenChange, orgId }: ExpandingSearchProps) {
   const router = useRouter();
   const params = useParams();
   const orgSlug = params?.org as string;
   const [searchQuery, setSearchQuery] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Use global search hook
+  const { data: searchResults = [], isLoading } = useGlobalSearch(
+    orgId || '',
+    searchQuery,
+    !!orgId && open
+  );
+
+  // Group results by type
+  const groupedResults = React.useMemo(() => {
+    return groupSearchResults(searchResults);
+  }, [searchResults]);
+
+  // Get icon for result type
+  const getResultIcon = (type: string) => {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+      show: Calendar,
+      venue: MapPin,
+      person: Users,
+      promoter: UserCheck,
+      contact: Users,
+      event: CalendarClock,
+      document: FileText,
+      file: File,
+    };
+    return icons[type] || FileText;
+  };
 
   // Focus input when opened
   React.useEffect(() => {
@@ -63,33 +101,9 @@ export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
     return () => document.removeEventListener("keydown", down);
   }, [open, onOpenChange]);
 
-  const navigationItems = React.useMemo(() => {
-    if (!orgSlug) return [];
-
-    const groups = getGroupedNavigationItems(orgSlug);
-    return groups.flatMap((group) =>
-      group.items.map((item) => ({
-        group: group.group,
-        icon: item.icon,
-        label: item.label,
-        href: item.href,
-      }))
-    );
-  }, [orgSlug]);
-
-  const filteredItems = React.useMemo(() => {
-    if (!searchQuery.trim()) return navigationItems;
-
-    const query = searchQuery.toLowerCase();
-    return navigationItems.filter(
-      (item) =>
-        item.label.toLowerCase().includes(query) ||
-        item.group.toLowerCase().includes(query)
-    );
-  }, [navigationItems, searchQuery]);
-
-  const handleItemClick = (href: string) => {
-    router.push(href);
+  const handleResultClick = (result: GlobalSearchResult) => {
+    const fullUrl = `/${orgSlug}${result.url}`;
+    router.push(fullUrl);
     onOpenChange(false);
     setSearchQuery("");
   };
@@ -131,32 +145,48 @@ export function ExpandingSearch({ open, onOpenChange }: ExpandingSearchProps) {
       {/* Expanded Results */}
       {open && (
         <div className="absolute top-full mt-1 w-full bg-background border rounded-md shadow-lg max-h-[400px] overflow-y-auto z-50 animate-in fade-in-0 slide-in-from-top-2">
-          {filteredItems.length === 0 ? (
+          {isLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Searching...
+            </div>
+          ) : searchResults.length === 0 && searchQuery.trim() ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
               No results found
             </div>
+          ) : searchQuery.trim() === '' ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Start typing to search shows, venues, people, and more...
+            </div>
           ) : (
             <div className="py-2">
-              {filteredItems.map((item, index) => {
-                const Icon = item.icon;
-                const showGroupHeader =
-                  index === 0 || filteredItems[index - 1].group !== item.group;
-
+              {Object.entries(groupedResults).map(([type, results]) => {
+                if (results.length === 0) return null;
+                
                 return (
-                  <React.Fragment key={`${item.group}-${item.label}`}>
-                    {showGroupHeader && (
-                      <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                        {item.group}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handleItemClick(item.href)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
-                    >
-                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span>{item.label}</span>
-                    </button>
-                  </React.Fragment>
+                  <div key={type}>
+                    <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                      {getResultTypeLabel(type, results.length)}
+                    </div>
+                    {results.map((result) => {
+                      const Icon = getResultIcon(result.type);
+                      
+                      return (
+                        <button
+                          key={result.id}
+                          onClick={() => handleResultClick(result)}
+                          className="w-full flex items-start gap-3 px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                        >
+                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="font-medium truncate">{result.title}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {result.subtitle}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>

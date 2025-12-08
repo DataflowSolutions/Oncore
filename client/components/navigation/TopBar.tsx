@@ -44,7 +44,7 @@ export function TopBar({ orgSlug: providedSlug, orgId }: TopBarProps) {
         {/* Center search area */}
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-md lg:max-w-lg">
-            <ExpandingSearch open={open} onOpenChange={setOpen} />
+            <ExpandingSearch open={open} onOpenChange={setOpen} orgId={orgId} />
           </div>
         </div>
 
