@@ -81,6 +81,14 @@ interface RawFactFromLLM {
 }
 
 /**
+ * Check if semantic import debug logging is enabled
+ */
+function isDebugEnabled(): boolean {
+    // always true
+    return process.env.SEMANTIC_IMPORT_DEBUG === 'true' || process.env.IMPORT_DEBUG === 'true';
+}
+
+/**
  * Parse and validate facts from LLM response
  */
 export function parseLLMFacts(
@@ -91,7 +99,39 @@ export function parseLLMFacts(
         const parsed = JSON.parse(content);
         const rawFacts: RawFactFromLLM[] = parsed.facts || [];
 
-        return rawFacts.map((raw, index): ExtractedFact => ({
+        // ==========================================================================
+        // LOG 1: Raw LLM output (before ANY processing)
+        // This is the truth the model gave us - non-negotiable visibility
+        // ==========================================================================
+        if (isDebugEnabled()) {
+            logger.debug('🔬 [AI BOUNDARY] Raw LLM output', {
+                job_id: request.job_id,
+                section: request.current_section,
+                chunk_index: request.chunk_index,
+                model: process.env.OPENAI_EXTRACTION_MODEL || 'gpt-4o-mini',
+                raw_content: content.slice(0, 2000), // Truncate for log sanity
+                raw_facts_count: rawFacts.length,
+            });
+        }
+
+        // ==========================================================================
+        // LOG 2: Parsed JSON (after JSON.parse, before normalization)
+        // This catches camelCase, spacing, pluralization, hallucinated keys
+        // ==========================================================================
+        if (isDebugEnabled() && rawFacts.length > 0) {
+            logger.debug('🔬 [AI BOUNDARY] Parsed JSON before normalization', {
+                job_id: request.job_id,
+                section: request.current_section,
+                chunk_index: request.chunk_index,
+                facts: rawFacts.map(f => ({
+                    raw_fact_type: f.fact_type,  // CRITICAL: The raw string from LLM
+                    value: f.value_text || f.value_number || f.value_date,
+                    snippet_preview: f.raw_snippet?.slice(0, 50),
+                })),
+            });
+        }
+
+        const facts = rawFacts.map((raw, index): ExtractedFact => ({
             message_index: request.message_index,
             chunk_index: request.chunk_index,
             source_id: request.source_id,
@@ -126,6 +166,37 @@ export function parseLLMFacts(
             raw_snippet_start: raw.raw_snippet_start,
             raw_snippet_end: raw.raw_snippet_end,
         }));
+
+        // Diagnostic logging: track flight facts vs 'other' for debugging
+        const flightFacts = facts.filter(f => f.fact_type.startsWith('flight_'));
+        const otherFacts = facts.filter(f => f.fact_type === 'other');
+        
+        if (request.current_section === 'flights') {
+            logger.info('Parsed flight section facts', {
+                job_id: request.job_id,
+                chunk_index: request.chunk_index,
+                total: facts.length,
+                flightFacts: flightFacts.length,
+                otherFacts: otherFacts.length,
+                flightFactTypes: flightFacts.map(f => f.fact_type),
+                otherFactsPreview: otherFacts.slice(0, 5).map(f => ({
+                    rawSnippet: f.raw_snippet?.slice(0, 50),
+                    valueText: f.value_text?.slice(0, 30),
+                })),
+            });
+
+            // Warn if we have lots of 'other' facts in the flights section
+            if (otherFacts.length > 0 && flightFacts.length === 0) {
+                logger.warn('Flights section produced only "other" facts - possible LLM fact_type issue', {
+                    job_id: request.job_id,
+                    chunk_index: request.chunk_index,
+                    otherCount: otherFacts.length,
+                    hint: 'Check if LLM is outputting non-standard fact_type strings',
+                });
+            }
+        }
+
+        return facts;
     } catch (error) {
         logger.error('Failed to parse LLM fact extraction response', { error, content });
         return [];

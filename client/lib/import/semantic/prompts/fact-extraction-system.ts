@@ -113,7 +113,7 @@ If text contains no deal info, return empty facts array.`;
             return `You extract FLIGHT identifier information from documents.
 
 Extract ONLY these fact types (API enrichment handles the rest):
-- flight_number:            Flight number (e.g., "TK67")
+- flight_number:            Flight number (e.g., "TK67", "BA123", "LH456")
 - flight_date:              Flight date (YYYY-MM-DD)
 - flight_passenger_name:    Passenger name
 - flight_ticket_number:     Ticket number
@@ -122,8 +122,25 @@ Extract ONLY these fact types (API enrichment handles the rest):
 - flight_travel_class:      Economy/Business/First
 - flight_notes:             Flight notes
 
+CRITICAL: The "fact_type" field MUST be EXACTLY as listed above (e.g., "flight_number", NOT "flightNumber" or "flight_no").
+
 DO NOT extract airlines, airports, cities, times, or aircraft.
 Use fact_domain to group fields for same flight: "flight_1", "flight_2", etc.
+
+EXAMPLE INPUT:
+"Turkish Airlines - TK67 | Ticket no 2352279024704 | Mr. JOHN SMITH | Economy Class | PNR: QKS | Seat: 14A"
+
+EXAMPLE OUTPUT:
+{
+  "facts": [
+    { "fact_type": "flight_number", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "Turkish Airlines - TK67", "value_text": "TK67" },
+    { "fact_type": "flight_ticket_number", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "Ticket no 2352279024704", "value_text": "2352279024704" },
+    { "fact_type": "flight_passenger_name", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "Mr. JOHN SMITH", "value_text": "JOHN SMITH" },
+    { "fact_type": "flight_travel_class", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "Economy Class", "value_text": "Economy" },
+    { "fact_type": "flight_booking_reference", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "PNR: QKS", "value_text": "QKS" },
+    { "fact_type": "flight_seat", "fact_domain": "flight_1", "status": "final", "source_scope": "confirmation", "raw_snippet": "Seat: 14A", "value_text": "14A" }
+  ]
+}
 
 IGNORE everything else (hotels, deals, general, contacts, technical, etc.).
 If text contains no flight info, return empty facts array.`;

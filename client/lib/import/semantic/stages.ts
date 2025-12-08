@@ -176,21 +176,77 @@ export async function runFactExtraction(
       allFacts.push(...chunkFacts.facts);
     }
 
-    const sectionFacts = allFacts.filter(f => f.fact_type.startsWith(`${section}_`)).length;
+    // ==========================================================================
+    // LOG 4: Section summary after Stage 1 (critical for debugging)
+    // Shows exactly what facts survived extraction for this section
+    // ==========================================================================
+    const sectionFacts = allFacts.filter(f => f.section === section);
+    const sectionFactsByType = sectionFacts.reduce((acc, f) => {
+      acc[f.fact_type] = (acc[f.fact_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const otherCount = sectionFactsByType['other'] || 0;
     const newFacts = allFacts.length - beforeCount;
+    
     logger.info(`✅ [Section ${sectionProgress}] ${section} complete: +${newFacts} facts`, {
       jobId,
       section,
       newFactsThisSection: newFacts,
-      totalSectionFacts: sectionFacts,
+      byType: sectionFactsByType,
+      otherDropped: otherCount,
       totalFactsSoFar: allFacts.length,
     });
+
+    // Warn if we got facts but they're all 'other' (strong signal of normalization issue)
+    if (newFacts > 0 && Object.keys(sectionFactsByType).length === 1 && otherCount > 0) {
+      logger.warn(`🚨 [STAGE 1] Section "${section}" produced ONLY 'other' facts!`, {
+        jobId,
+        section,
+        otherCount,
+        hint: 'LLM is outputting non-standard fact_type strings. Check raw output logs.',
+      });
+    }
   }
 
   logger.info('Stage 1 complete: Extracted facts (before post-processing)', {
     jobId,
     count: allFacts.length,
   });
+
+  // ==========================================================================
+  // CRITICAL DEBUG: Flight facts after Stage 1 extraction
+  // This is the smoking gun - if count=0 here, extraction/normalization failed
+  // ==========================================================================
+  const flightFacts = allFacts.filter(f => f.fact_type.startsWith('flight_'));
+  logger.info('✈️ [STAGE 1 DEBUG] Flight facts after extraction', {
+    jobId,
+    count: flightFacts.length,
+    preview: flightFacts.slice(0, 10).map(f => ({
+      type: f.fact_type,
+      value: f.value_text || f.value_number || f.value_date,
+      snippet: f.raw_snippet?.slice(0, 50),
+      source: f.source_file_name,
+    })),
+  });
+
+  if (flightFacts.length === 0) {
+    // Check if we have 'other' facts that might be misclassified flights
+    const suspiciousOthers = allFacts.filter(f => 
+      f.fact_type === 'other' && 
+      f.section === 'flights'
+    );
+    if (suspiciousOthers.length > 0) {
+      logger.warn('🚨 [STAGE 1] No flight_* facts but found "other" facts in flights section!', {
+        jobId,
+        suspiciousCount: suspiciousOthers.length,
+        samples: suspiciousOthers.slice(0, 5).map(f => ({
+          value: f.value_text,
+          snippet: f.raw_snippet?.slice(0, 80),
+        })),
+        hint: 'LLM is outputting wrong fact_type strings. Check FACT_TYPE_ALIASES.',
+      });
+    }
+  }
 
   // Post-process
   const processedFacts = postProcessAllFacts(allFacts);
@@ -301,6 +357,47 @@ export async function runFactResolution(
     informational,
     selected: resolutions.selected_fact_ids.length,
   });
+
+  // ==========================================================================
+  // LOG 5: Resolution discard report
+  // Shows facts that were seen but NOT selected - critical for debugging
+  // ==========================================================================
+  const discardedResolutions = resolutions.resolutions.filter(
+    r => r.selected_fact_id === null || r.selected_fact_id === undefined
+  );
+  
+  if (discardedResolutions.length > 0) {
+    // Group by fact_type for summary
+    const discardedByType = discardedResolutions.reduce((acc, r) => {
+      acc[r.fact_type] = (acc[r.fact_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    logger.warn('🚫 [STAGE 2] Unresolved/discarded facts', {
+      jobId,
+      count: discardedResolutions.length,
+      byType: discardedByType,
+      details: discardedResolutions.slice(0, 10).map(r => ({
+        type: r.fact_type,
+        state: r.state,
+        reason: r.reason?.slice(0, 100),
+      })),
+    });
+
+    // Special warning for flight facts that were discarded
+    const discardedFlights = discardedResolutions.filter(r => r.fact_type.startsWith('flight_'));
+    if (discardedFlights.length > 0) {
+      logger.warn('✈️ [STAGE 2] Flight facts discarded during resolution!', {
+        jobId,
+        count: discardedFlights.length,
+        details: discardedFlights.map(r => ({
+          type: r.fact_type,
+          state: r.state,
+          reason: r.reason,
+        })),
+      });
+    }
+  }
 
   if (isDiagnosticsEnabled()) {
     dumpResolutions(jobId, resolutions.resolutions, facts);

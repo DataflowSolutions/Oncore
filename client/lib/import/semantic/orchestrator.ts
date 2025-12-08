@@ -189,65 +189,90 @@ export async function runSemanticImport(
   logger.info('Stage F3: Enriching flights with external API data', { jobId });
 
   if (data.flights && data.flights.length > 0) {
-    const flightEnrichmentService = getFlightEnrichmentService();
+    // Guard: Filter out flights without a flight number before enrichment
+    const flightsWithNumber = data.flights.filter(f => f.flightNumber && f.flightNumber.trim() !== '');
+    const flightsWithoutNumber = data.flights.filter(f => !f.flightNumber || f.flightNumber.trim() === '');
 
-    // Convert ImportedFlight[] to ExtractedFlightKey[] for enrichment
-    const flightKeys: ExtractedFlightKey[] = data.flights.map(flight => ({
-      flightNumber: flight.flightNumber || '',
-      date: flight.date,
-      passengerName: flight.fullName,
-      ticketNumber: flight.ticketNumber,
-      bookingReference: flight.bookingReference,
-      seat: flight.seat,
-      travelClass: flight.travelClass,
-      notes: flight.notes,
-    }));
+    if (flightsWithoutNumber.length > 0) {
+      logger.warn('Flights missing flightNumber - skipping enrichment for these', {
+        jobId,
+        withNumber: flightsWithNumber.length,
+        withoutNumber: flightsWithoutNumber.length,
+        skippedFlights: flightsWithoutNumber.map(f => ({
+          date: f.date,
+          passenger: f.fullName,
+          bookingRef: f.bookingReference,
+        })),
+      });
+    }
 
-    // Enrich all flights
-    const enrichedFlights = await flightEnrichmentService.enrichFlights(flightKeys);
+    if (flightsWithNumber.length === 0) {
+      logger.info('No flights with valid flightNumber found - skipping enrichment', { jobId });
+    } else {
+      const flightEnrichmentService = getFlightEnrichmentService();
 
-    // Merge enriched data back into flights
-    data.flights = data.flights.map((flight, index) => {
-      const enriched = enrichedFlights[index];
+      // Convert ImportedFlight[] to ExtractedFlightKey[] for enrichment (only valid flights)
+      const flightKeys: ExtractedFlightKey[] = flightsWithNumber.map(flight => ({
+        flightNumber: flight.flightNumber || '',
+        date: flight.date,
+        passengerName: flight.fullName,
+        ticketNumber: flight.ticketNumber,
+        bookingReference: flight.bookingReference,
+        seat: flight.seat,
+        travelClass: flight.travelClass,
+        notes: flight.notes,
+      }));
 
-      if (enriched.enrichmentStatus === 'success') {
-        return {
-          ...flight,
-          // API-enriched fields (only set if successfully enriched)
-          airline: enriched.airline || flight.airline,
-          fromAirport: enriched.fromAirport || flight.fromAirport,
-          fromCity: enriched.fromCity || flight.fromCity,
-          toAirport: enriched.toAirport || flight.toAirport,
-          toCity: enriched.toCity || flight.toCity,
-          departureTime: enriched.departureTime || flight.departureTime,
-          arrivalTime: enriched.arrivalTime || flight.arrivalTime,
-          flightTime: enriched.flightTime || flight.flightTime,
-          aircraft: enriched.aircraft || flight.aircraft,
-          // Add enrichment metadata to notes if enriched
-          notes: flight.notes
-            ? `${flight.notes}\n[Enriched via ${enriched.enrichmentSource}]`
-            : `[Enriched via ${enriched.enrichmentSource}]`,
-        };
-      }
+      // Enrich all flights with valid flight numbers
+      const enrichedFlights = await flightEnrichmentService.enrichFlights(flightKeys);
 
-      // Enrichment failed - keep original data (keys only)
-      if (enriched.enrichmentStatus === 'failed') {
-        logger.warn('Flight enrichment failed', {
-          flightNumber: flight.flightNumber,
-          error: enriched.enrichmentError,
-        });
-      }
+      // Merge enriched data back into flights with valid numbers
+      const mergedFlightsWithNumber = flightsWithNumber.map((flight, index) => {
+        const enriched = enrichedFlights[index];
 
-      return flight;
-    });
+        if (enriched.enrichmentStatus === 'success') {
+          return {
+            ...flight,
+            // API-enriched fields (only set if successfully enriched)
+            airline: enriched.airline || flight.airline,
+            fromAirport: enriched.fromAirport || flight.fromAirport,
+            fromCity: enriched.fromCity || flight.fromCity,
+            toAirport: enriched.toAirport || flight.toAirport,
+            toCity: enriched.toCity || flight.toCity,
+            departureTime: enriched.departureTime || flight.departureTime,
+            arrivalTime: enriched.arrivalTime || flight.arrivalTime,
+            flightTime: enriched.flightTime || flight.flightTime,
+            aircraft: enriched.aircraft || flight.aircraft,
+            // Add enrichment metadata to notes if enriched
+            notes: flight.notes
+              ? `${flight.notes}\n[Enriched via ${enriched.enrichmentSource}]`
+              : `[Enriched via ${enriched.enrichmentSource}]`,
+          };
+        }
 
-    const successCount = enrichedFlights.filter(f => f.enrichmentStatus === 'success').length;
-    logger.info('Flight enrichment complete', {
-      jobId,
-      total: enrichedFlights.length,
-      successful: successCount,
-      failed: enrichedFlights.length - successCount,
-    });
+        // Enrichment failed - keep original data (keys only)
+        if (enriched.enrichmentStatus === 'failed') {
+          logger.warn('Flight enrichment failed', {
+            flightNumber: flight.flightNumber,
+            error: enriched.enrichmentError,
+          });
+        }
+
+        return flight;
+      });
+
+      // Combine enriched flights with the ones that were skipped (no flight number)
+      data.flights = [...mergedFlightsWithNumber, ...flightsWithoutNumber];
+
+      const successCount = enrichedFlights.filter(f => f.enrichmentStatus === 'success').length;
+      logger.info('Flight enrichment complete', {
+        jobId,
+        total: enrichedFlights.length,
+        successful: successCount,
+        failed: enrichedFlights.length - successCount,
+        skipped: flightsWithoutNumber.length,
+      });
+    }
   }
 
   // =============================================================================

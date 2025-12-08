@@ -85,6 +85,49 @@ export function validateResolutions(
             }
         }
 
+        // ==========================================================================
+        // CRITICAL FIX: Always populate final_value_* from the selected fact
+        // The LLM only returns selected_fact_id, we need to copy the actual values
+        // ==========================================================================
+        if (selectedFact && (resolution.state === 'resolved' || resolution.state === 'informational')) {
+            const normalizedDate = resolution.fact_type === 'general_date'
+                ? normalizeEventDateToISO(selectedFact.value_date || selectedFact.value_text)
+                : selectedFact.value_date;
+
+            // Only update if values aren't already set (LLM might provide them in future)
+            const hasExistingValue = 
+                (resolution.final_value_text != null && resolution.final_value_text !== '') ||
+                resolution.final_value_number != null ||
+                (resolution.final_value_date != null && resolution.final_value_date !== '');
+
+            if (!hasExistingValue) {
+                // Priority: value_text > value_number (as string) > value_date
+                const finalValueText = selectedFact.value_text || 
+                    (selectedFact.value_number != null ? String(selectedFact.value_number) : null) ||
+                    selectedFact.value_date ||
+                    null;
+
+                logger.debug('[RESOLUTION FIX] Populated final_value from selected fact', {
+                    fact_type: resolution.fact_type,
+                    value: finalValueText?.slice(0, 50),
+                });
+
+                // Compute confidence if missing
+                let confidence = resolution.confidence;
+                if (confidence === undefined && group) {
+                    confidence = computeResolutionConfidence(resolution, selectedFact, group);
+                }
+
+                return {
+                    ...resolution,
+                    final_value_text: selectedFact.value_text || undefined,
+                    final_value_number: selectedFact.value_number ?? undefined,
+                    final_value_date: normalizedDate || undefined,
+                    confidence,
+                };
+            }
+        }
+
         // Compute confidence if missing
         if (resolution.confidence === undefined && group) {
             const confidence = computeResolutionConfidence(resolution, selectedFact, group);
