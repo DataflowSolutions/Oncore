@@ -104,7 +104,6 @@ const createPersonSchema = z.object({
   phone: z.string().nullable().optional().or(z.literal("")),
   roleTitle: z.string().nullable().optional().or(z.literal("")),
   notes: z.string().nullable().optional().or(z.literal("")),
-  experience: z.string().nullable().optional().or(z.literal("")),
   memberType: z
     .string()
     .optional()
@@ -147,7 +146,6 @@ export async function createPerson(formData: FormData) {
       (formData.get("roleDescription") as string) ||
       (formData.get("roleTitle") as string),
     notes: formData.get("notes") as string,
-    experience: (formData.get("experience") as string) || "",
     memberType: (formData.get("memberType") as string) || "",
   };
 
@@ -167,21 +165,8 @@ export async function createPerson(formData: FormData) {
     );
   }
 
-  // Combine notes and experience information (but not member type - that goes in its own column)
-  let combinedNotes = "";
-
-  // Add experience if provided
-  if (validatedData.experience && validatedData.experience.trim()) {
-    const experienceNote = `Experience: ${validatedData.experience.trim()} years`;
-    combinedNotes = experienceNote;
-  }
-
-  // Add user notes if provided
-  if (validatedData.notes && validatedData.notes.trim()) {
-    combinedNotes = combinedNotes
-      ? `${combinedNotes}\n\n${validatedData.notes.trim()}`
-      : validatedData.notes.trim();
-  }
+  // Use notes as provided
+  const combinedNotes = validatedData.notes?.trim() || "";
 
   const personData: PersonInsert = {
     org_id: validatedData.orgId,

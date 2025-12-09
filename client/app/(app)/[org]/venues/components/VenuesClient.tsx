@@ -197,6 +197,18 @@ export default function VenuesClient({
     return { label: "No Email", variant: "destructive" as const };
   };
 
+  const getMemberTypeLabel = (memberType: string | null) => {
+    if (!memberType) return null;
+    const labels: Record<string, string> = {
+      artist: "Artist",
+      crew: "Crew",
+      management: "Manager",
+      vendor: "Vendor",
+      other: "Other",
+    };
+    return labels[memberType] || memberType;
+  };
+
   return (
     <>
       {view === "team" ? (
@@ -247,7 +259,7 @@ export default function VenuesClient({
                           variant="outline"
                           className="text-xs w-[84px] h-[24px] flex items-center justify-center"
                         >
-                          {person.member_type}
+                          {getMemberTypeLabel(person.member_type)}
                         </Badge>
                       )}
                       <Badge
@@ -305,7 +317,7 @@ export default function VenuesClient({
                     </div>
 
                     {/* Right side: Email and phone */}
-                    <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="flex flex-col items-end justify-center gap-2">
                       {promoter.email && (
                         <div className="flex items-center gap-2 text-sm text-description-foreground">
                           <span className="break-all">{promoter.email}</span>

@@ -637,31 +637,32 @@ const ShowsCalendar = ({ shows, orgSlug }: ShowsCalendarProps) => {
                               ? artists.join(", ")
                               : "No Artist";
 
+                          const venueLabel =
+                            show.venue?.name ||
+                            show.venue?.city ||
+                            "No venue";
+                          const displayLabel = `${artistNames} • ${venueLabel}`;
+
                           return (
                             <Link
                               key={show.id}
                               href={`/${orgSlug}/shows/${show.id}/day`}
                               className="block "
-                              title={`${show.title} - ${artistNames} - ${show.venue?.name}`}
+                              title={displayLabel}
                             >
                               {/* Mobile-optimized view */}
-                              <div className="sm:hidden text-[9px] leading-tight p-1 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer">
-                                <MarqueeText>
-                                  {`${artistNames} • ${
-                                    show.venue?.city || "No city"
-                                  }`}
-                                </MarqueeText>
+                              <div
+                                title={displayLabel}
+                                className="sm:hidden text-[9px] leading-tight p-1 rounded bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer"
+                              >
+                                <MarqueeText>{displayLabel}</MarqueeText>
                               </div>
                               {/* Desktop view */}
                               <div
-                                title={`${artistNames} - ${show.title}`}
+                                title={displayLabel}
                                 className="hidden sm:block text-xs leading-tight py-1.5 px-0.5 rounded-md bg-primary/10 hover:bg-primary/20 active:bg-primary/30 border border-primary/20 transition-colors cursor-pointer"
                               >
-                                <MarqueeText>
-                                  {`${artistNames} • ${
-                                    show.venue?.city || "No city"
-                                  }`}
-                                </MarqueeText>
+                                <MarqueeText>{displayLabel}</MarqueeText>
                               </div>
                             </Link>
                           );

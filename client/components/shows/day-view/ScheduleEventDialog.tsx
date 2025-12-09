@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popup } from "@/components/ui/popup";
@@ -44,6 +45,16 @@ export function ScheduleEventDialog({
   onSubmit,
   onDelete,
 }: ScheduleEventDialogProps) {
+  const [includeDestination, setIncludeDestination] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIncludeDestination(false);
+    }
+  }, [isOpen]);
+
+  const destinationDisabled = !includeDestination;
+
   return (
     <Popup
       title={editingItem ? "Edit Schedule Event" : "Add Schedule Event"}
@@ -118,20 +129,41 @@ export function ScheduleEventDialog({
             <label className="text-sm font-medium text-foreground">
               Going somewhere? Add destination
             </label>
-            <input type="checkbox" className="w-4 h-4" />
+            <input
+              type="checkbox"
+              className="w-4 h-4"
+              checked={includeDestination}
+              onChange={(e) => setIncludeDestination(e.target.checked)}
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Name</label>
-            <Input type="text" placeholder="Enter your name" />
+            <label
+              className={`text-sm font-medium text-foreground ${destinationDisabled ? "opacity-60" : ""}`}
+            >
+              Name
+            </label>
+            <Input
+              type="text"
+              placeholder="Enter your name"
+              disabled={destinationDisabled}
+              className={destinationDisabled ? "opacity-60" : undefined}
+            />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
+            <label
+              className={`text-sm font-medium text-foreground ${destinationDisabled ? "opacity-60" : ""}`}
+            >
               Location
             </label>
-            <Input type="text" placeholder="Enter your location" />
+            <Input
+              type="text"
+              placeholder="Enter your location"
+              disabled={destinationDisabled}
+              className={destinationDisabled ? "opacity-60" : undefined}
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">

@@ -425,6 +425,7 @@ export default function SettingsPage() {
               <CardDescription>Manage your preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Dark Mode Toggle - Commented out
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">Dark Mode</div>
@@ -435,19 +436,19 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   {mounted && (
                     <>
-                      {/* <Sun className="h-4 w-4" /> */}
                       <Switch
                         checked={isDark}
                         onCheckedChange={(checked) =>
                           setTheme(checked ? "dark" : "light")
                         }
                       />
-                      {/* <Moon className="h-4 w-4" /> */}
                     </>
                   )}
                 </div>
               </div>
+              */}
 
+              {/* Email Notifications Toggle - Commented out
               <div className="flex items-center justify-between pt-4">
                 <div>
                   <div className="font-medium">Email Notifications</div>
@@ -463,6 +464,7 @@ export default function SettingsPage() {
                   onCheckedChange={setEmailNotifications}
                 />
               </div>
+              */}
             </CardContent>
           </Card>
         </div>

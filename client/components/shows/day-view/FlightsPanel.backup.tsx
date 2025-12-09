@@ -532,11 +532,9 @@ export function FlightsPanel({
                 }
 
                 // Add the new flight to local state immediately
-                if (result.data) {
-                  setLocalFlights((prev) => [...prev, result.data!]);
-                }
+                setLocalFlights((prev) => [...prev, result.data!]);
 
-                const flightId = result.data?.id;
+                const flightId = result.data.id;
 
                 // Delete existing auto-generated flight schedule items first
                 const existingItems = await getScheduleItemsForShow(showId);
@@ -897,39 +895,9 @@ export function FlightsPanel({
 
                       {/* Full Name */}
                       <div className="flex flex-col ">
-                        {(() => {
-                          // Get the raw flight data to access person_id
-                          const rawFlight = localFlights[index];
-                          const linkedPerson = rawFlight?.person_id 
-                            ? allPeople?.find((p: any) => p.id === rawFlight.person_id)
-                            : null;
-                          const displayName = linkedPerson?.name || rawFlight?.passenger_name || "N/A";
-                          
-                          return (
-                            <EditableText
-                              value={displayName}
-                              onSave={async (v) => {
-                                if (rawFlight?.person_id && linkedPerson) {
-                                  // Update the person's actual name
-                                  await updatePerson(rawFlight.person_id, { name: sanitizeText(v) });
-                                  await queryClient.invalidateQueries({
-                                    queryKey: queryKeys.peopleFull(orgSlug),
-                                  });
-                                } else {
-                                  // Update passenger_name field if no person linked
-                                  await persistFlightUpdate(rawFlight, {
-                                    passengerName: sanitizeText(v),
-                                  });
-                                }
-                              }}
-                              placeholder="N/A"
-                              className={cn(
-                                "text-xs md:text-sm font-header",
-                                inlineEditButtonClasses
-                              )}
-                            />
-                          );
-                        })()}
+                        <div className="text-xs md:text-sm font-header">
+                          {flight.fullName || "N/A"}
+                        </div>
                         <div className="text-xs md:text-xs text-description-foreground">
                           Full Name
                         </div>
@@ -1145,7 +1113,11 @@ export function FlightsPanel({
                         {selectedFlight.person_id ? (
                           // Show linked person's name
                           <EditableText
-                            value={allPeople?.find((p: any) => p.id === selectedFlight.person_id)?.name || ""}
+                            value={
+                              allPeople?.find((p: any) => p.id === selectedFlight.person_id)?.name || 
+                              selectedFlight.passenger_name ||
+                              ""
+                            }
                             onSave={(v) =>
                               persistFlightUpdate(selectedFlight, {
                                 passengerName: sanitizeText(v),
