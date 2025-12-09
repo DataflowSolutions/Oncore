@@ -306,7 +306,7 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
       });
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 140),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final monthYear = sortedKeys[index];

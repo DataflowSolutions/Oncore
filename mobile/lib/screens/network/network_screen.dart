@@ -328,7 +328,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
           itemCount: filtered.length,
           itemBuilder: (context, index) => _buildTeamCard(filtered[index]),
         );
@@ -461,7 +461,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
           itemCount: promoters.length,
           itemBuilder: (context, index) => _buildPromoterCard(promoters[index]),
         );
@@ -584,7 +584,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
           itemCount: venues.length,
           itemBuilder: (context, index) => _buildVenueCard(venues[index]),
         );
