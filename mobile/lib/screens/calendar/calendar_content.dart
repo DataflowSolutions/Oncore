@@ -94,13 +94,16 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
       showsByDate.putIfAbsent(dateKey, () => []).add(show);
     }
 
-    return PageView.builder(
-      controller: _pageController,
-      onPageChanged: _onPageChanged,
-      itemBuilder: (context, page) {
-        final monthDate = _getMonthFromPage(page);
-        return _buildMonthView(monthDate, showsByDate, colorScheme);
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 150),
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        itemBuilder: (context, page) {
+          final monthDate = _getMonthFromPage(page);
+          return _buildMonthView(monthDate, showsByDate, colorScheme);
+        },
+      ),
     );
   }
 

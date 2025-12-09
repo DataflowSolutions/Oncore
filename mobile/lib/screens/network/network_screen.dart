@@ -200,18 +200,58 @@ class NetworkContent extends ConsumerStatefulWidget {
 }
 
 class _NetworkContentState extends ConsumerState<NetworkContent> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Title
         _buildTitle(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        // Search bar
+        _buildSearchBar(),
+        const SizedBox(height: 12),
         // Content
         Expanded(
           child: _buildContent(),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        controller: _searchController,
+        style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
+        decoration: InputDecoration(
+          hintText: 'Search...',
+          hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+          prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+          filled: true,
+          fillColor: colorScheme.surfaceContainerHigh,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value.toLowerCase();
+          });
+        },
+      ),
     );
   }
 
@@ -269,15 +309,28 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         child: Text('Error: $error', style: TextStyle(color: colorScheme.onSurfaceVariant)),
       ),
       data: (members) {
-        if (members.isEmpty) {
+        // Filter by search query
+        final filtered = _searchQuery.isEmpty
+            ? members
+            : members.where((m) =>
+                m.name.toLowerCase().contains(_searchQuery) ||
+                (m.phone?.toLowerCase().contains(_searchQuery) ?? false) ||
+                (m.email?.toLowerCase().contains(_searchQuery) ?? false) ||
+                (m.memberType?.toLowerCase().contains(_searchQuery) ?? false)
+              ).toList();
+
+        if (filtered.isEmpty) {
           return Center(
-            child: Text('No team members', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            child: Text(
+              _searchQuery.isEmpty ? 'No team members' : 'No results match your search',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: members.length,
-          itemBuilder: (context, index) => _buildTeamCard(members[index]),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) => _buildTeamCard(filtered[index]),
         );
       },
     );
@@ -331,11 +384,11 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
     return GestureDetector(
       onTap: () => _openTeamMemberDetail(member),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
@@ -349,76 +402,41 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                     member.name,
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (member.phone != null) ...[
-                    const SizedBox(height: 4),
+                  const SizedBox(height: 3),
+                  if (member.phone != null)
                     Text(
                       member.phone!,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                    ),
-                  ],
-                  if (member.email != null) ...[
-                    const SizedBox(height: 2),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                    )
+                  else if (member.email != null)
                     Text(
                       member.email!,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                     ),
-                  ],
                 ],
               ),
             ),
-            // Right side: Member type badge and Remove button
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (member.memberType != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.onSurface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      member.memberType!,
-                      style: TextStyle(
-                        color: colorScheme.surface,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => _showRemoveDialog(member.name),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Remove',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+            // Right side: Member type badge only
+            if (member.memberType != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  member.memberType!,
+                  style: TextStyle(
+                    color: colorScheme.surface,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-            // Chevron
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
+              ),
           ],
         ),
       ),
@@ -443,7 +461,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
           itemCount: promoters.length,
           itemBuilder: (context, index) => _buildPromoterCard(promoters[index]),
         );
@@ -506,16 +524,16 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
     return GestureDetector(
       onTap: () => _openPromoterDetail(promoter),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
-            // Left side: Name, phone, email
+            // Left side: Name and contact
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,78 +542,24 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                     promoter.name,
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (promoter.phone != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      promoter.phone!,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                    ),
-                  ],
-                  if (promoter.email != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      promoter.email!,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                    ),
-                  ],
+                  const SizedBox(height: 3),
+                  Text(
+                    promoter.company ?? promoter.location,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                  ),
                 ],
               ),
             ),
-            // Right side: Company/Location and Remove button
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (promoter.company != null)
-                  Text(
-                    promoter.company!,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                if (promoter.location.isNotEmpty) ...[  
-                  const SizedBox(height: 2),
-                  Text(
-                    promoter.location,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => _showRemoveDialog(promoter.name),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Remove',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Chevron
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
+            // Right side: Location
+            if (promoter.location.isNotEmpty && promoter.company != null)
+              Text(
+                promoter.location,
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              ),
           ],
         ),
       ),
@@ -620,7 +584,7 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
           itemCount: venues.length,
           itemBuilder: (context, index) => _buildVenueCard(venues[index]),
         );
@@ -691,26 +655,20 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
 
   Widget _buildVenueCard(Venue venue) {
     final colorScheme = Theme.of(context).colorScheme;
-    final hasPromoters = venue.promoterNames.isNotEmpty;
-    final promoterText = hasPromoters
-        ? venue.promoterNames.length > 1
-            ? '${venue.promoterNames.first} +${venue.promoterNames.length - 1} more'
-            : venue.promoterNames.first
-        : null;
 
     return GestureDetector(
       onTap: () => _openVenueDetail(venue),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
-            // Left side: Name, location, promoters
+            // Left side: Name and location
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,78 +677,26 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
                     venue.name,
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   if (venue.location.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       venue.location,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                    ),
-                  ],
-                  if (promoterText != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      promoterText,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                     ),
                   ],
                 ],
               ),
             ),
-            // Right side: Contact info and Remove button
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (venue.phone != null)
-                  Text(
-                    venue.phone!,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                if (venue.email != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    venue.email!,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => _showRemoveDialog(venue.name),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Remove',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Chevron
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
+            // Right side: Show count if available
+            if (venue.showCount > 0)
+              Text(
+                '${venue.showCount} shows',
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              ),
           ],
         ),
       ),

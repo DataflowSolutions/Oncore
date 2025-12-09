@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/show.dart';
@@ -361,37 +362,71 @@ final showDocumentsProvider = FutureProvider.family<List<DocumentInfo>, String>(
   final supabase = ref.watch(supabaseClientProvider);
   
   try {
-    print('[DEBUG] Attempting RPC: get_show_files($showId)');
-    final response = await supabase.rpc('get_show_files', params: {'p_show_id': showId});
-    print('[DEBUG] RPC response type: ${response.runtimeType}');
+    // Step 1: Get or create show_advancing session using RPC (like web client does)
+    print('[DEBUG] Using RPC: get_or_create_show_advancing($showId)');
+    final advancing = await supabase.rpc('get_or_create_show_advancing', params: {
+      'p_show_id': showId,
+      'p_status': 'draft',
+    });
     
-    // Response should be a list
-    late final List<dynamic> data;
-    if (response is List<dynamic>) {
-      data = response;
-    } else {
-      print('⚠️ Unexpected RPC response type: ${response.runtimeType}');
-      data = [];
-    }
-    
-    print('[DEBUG] RPC successful, response: ${data.length} items');
-    return data.map((json) => DocumentInfo.fromJson(json as Map<String, dynamic>)).toList();
-  } catch (rpcError) {
-    print('⚠️ RPC failed: $rpcError, attempting direct query');
-    try {
-      final response = await supabase
-          .from('files')
-          .select()
-          .eq('show_id', showId)
-          .order('created_at', ascending: false);
-      
-      final List<dynamic> data = response as List<dynamic>;
-      print('[DEBUG] Documents loaded via fallback: ${data.length} items');
-      return data.map((json) => DocumentInfo.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (e) {
-      print('⚠️ Error loading documents fallback: $e');
+    if (advancing == null) {
+      print('[DEBUG] Could not get advancing session');
       return [];
     }
+    
+    final sessionId = advancing['id'] as String;
+    print('[DEBUG] Got session_id: $sessionId');
+    
+    // Step 2: Use RPC to get documents with files (like web client)
+    print('[DEBUG] Using RPC: get_advancing_documents($sessionId)');
+    final response = await supabase.rpc('get_advancing_documents', params: {
+      'p_session_id': sessionId,
+    });
+    
+    final List<dynamic> documents = response as List<dynamic>;
+    print('[DEBUG] Documents loaded: ${documents.length} items');
+    
+    // Step 3: Extract all files from all documents
+    final List<DocumentInfo> allFiles = [];
+    for (var i = 0; i < documents.length; i++) {
+      final doc = documents[i];
+      print('[DEBUG] Processing document $i: ${doc['label']}');
+      
+      final filesData = doc['files'];
+      print('[DEBUG] Files data type: ${filesData.runtimeType}');
+      print('[DEBUG] Files data: $filesData');
+      
+      if (filesData is String) {
+        // It might be a JSON string, try parsing it
+        try {
+          final parsed = jsonDecode(filesData);
+          if (parsed is List) {
+            print('[DEBUG] Parsed JSON string to list with ${parsed.length} files');
+            for (var file in parsed) {
+              if (file is Map<String, dynamic>) {
+                allFiles.add(DocumentInfo.fromJson(file));
+              }
+            }
+          }
+        } catch (e) {
+          print('[DEBUG] Failed to parse files as JSON: $e');
+        }
+      } else if (filesData is List) {
+        print('[DEBUG] Files is already a list with ${filesData.length} items');
+        for (var file in filesData) {
+          print('[DEBUG] Processing file: ${file is Map ? file['original_name'] : file.runtimeType}');
+          if (file is Map<String, dynamic>) {
+            allFiles.add(DocumentInfo.fromJson(file));
+          }
+        }
+      }
+    }
+    
+    print('[DEBUG] Total files extracted: ${allFiles.length}');
+    return allFiles;
+  } catch (e) {
+    print('⚠️ Error loading documents: $e');
+    return [];
   }
 });
 
@@ -431,37 +466,15 @@ final showGuestlistProvider = FutureProvider.family<List<GuestInfo>, String>((re
   final supabase = ref.watch(supabaseClientProvider);
   
   try {
-    print('[DEBUG] Attempting RPC: get_show_guestlist($showId)');
+    print('[DEBUG] Using RPC: get_show_guestlist($showId)');
     final response = await supabase.rpc('get_show_guestlist', params: {'p_show_id': showId});
-    print('[DEBUG] RPC response type: ${response.runtimeType}');
     
-    // Response should be a list
-    late final List<dynamic> data;
-    if (response is List<dynamic>) {
-      data = response;
-    } else {
-      print('⚠️ Unexpected RPC response type: ${response.runtimeType}');
-      data = [];
-    }
-    
-    print('[DEBUG] RPC successful, response: ${data.length} items');
+    final List<dynamic> data = response as List<dynamic>;
+    print('[DEBUG] Guestlist loaded: ${data.length} items');
     return data.map((json) => GuestInfo.fromJson(json as Map<String, dynamic>)).toList();
-  } catch (rpcError) {
-    print('⚠️ RPC failed: $rpcError, attempting direct query');
-    try {
-      final response = await supabase
-          .from('show_guestlist')
-          .select()
-          .eq('show_id', showId)
-          .order('name', ascending: true);
-      
-      final List<dynamic> data = response as List<dynamic>;
-      print('[DEBUG] Guestlist loaded via fallback: ${data.length} items');
-      return data.map((json) => GuestInfo.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (e) {
-      print('⚠️ Error loading guestlist fallback: $e');
-      return [];
-    }
+  } catch (e) {
+    print('⚠️ Error loading guestlist: $e');
+    return [];
   }
 });
 
@@ -471,9 +484,8 @@ final showNotesProvider = FutureProvider.family<String?, String>((ref, showId) a
   final supabase = ref.watch(supabaseClientProvider);
   
   try {
-    print('[DEBUG] Attempting RPC: get_show_notes($showId)');
+    print('[DEBUG] Using RPC: get_show_notes($showId)');
     final response = await supabase.rpc('get_show_notes', params: {'p_show_id': showId});
-    print('[DEBUG] RPC response type: ${response.runtimeType}');
     
     // Response should be a list of notes
     if (response is List<dynamic> && response.isNotEmpty) {
@@ -489,27 +501,8 @@ final showNotesProvider = FutureProvider.family<String?, String>((ref, showId) a
     
     print('[DEBUG] No general notes found');
     return null;
-  } catch (rpcError) {
-    print('⚠️ RPC failed: $rpcError, attempting direct query');
-    try {
-      final response = await supabase
-          .from('advancing_notes')
-          .select('body')
-          .eq('show_id', showId)
-          .eq('scope', 'general')
-          .maybeSingle();
-      
-      if (response == null) {
-        print('[DEBUG] No notes found via fallback');
-        return null;
-      }
-      
-      final notes = response['body'] as String?;
-      print('[DEBUG] Notes loaded via fallback: ${notes != null ? 'has content' : 'empty'}');
-      return notes;
-    } catch (e) {
-      print('⚠️ Error loading notes fallback: $e');
-      return null;
-    }
+  } catch (e) {
+    print('⚠️ Error loading notes: $e');
+    return null;
   }
 });

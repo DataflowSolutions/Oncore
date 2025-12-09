@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,7 @@ import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
 
-/// Layer 2: Documents viewer screen with file upload
+/// Layer 2: Documents list screen - shows list of documents
 class DocumentsScreen extends ConsumerStatefulWidget {
   final List<DocumentInfo> documents;
   final String showId;
@@ -28,8 +29,6 @@ class DocumentsScreen extends ConsumerStatefulWidget {
 }
 
 class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
-  late PageController _pageController;
-  int _currentFileIndex = 0;
   List<DocumentInfo> _files = [];
   bool _isLoading = true;
   bool _isUploading = false;
@@ -37,14 +36,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _loadFiles();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadFiles() async {
@@ -53,39 +45,82 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
       
-      // Use RPC function to bypass RLS
-      final response = await supabase.rpc('get_show_files', params: {
+      // Step 1: Get or create show_advancing session using RPC (same as web client)
+      print('[DEBUG] Getting advancing session for show: ${widget.showId}');
+      final advancing = await supabase.rpc('get_or_create_show_advancing', params: {
         'p_show_id': widget.showId,
+        'p_status': 'draft',
       });
       
-      final List<dynamic> data = response as List<dynamic>;
+      if (advancing == null) {
+        print('[DEBUG] No advancing session found');
+        setState(() {
+          _files = [];
+          _isLoading = false;
+        });
+        return;
+      }
+      
+      final sessionId = advancing['id'] as String;
+      print('[DEBUG] Got session_id: $sessionId');
+      
+      // Step 2: Use RPC to get documents with files (same as web client)
+      final response = await supabase.rpc('get_advancing_documents', params: {
+        'p_session_id': sessionId,
+      });
+      
+      final List<dynamic> documents = response as List<dynamic>;
+      print('[DEBUG] Loaded ${documents.length} documents');
+      
+      // Step 3: Extract all files from all documents
+      final List<DocumentInfo> allFiles = [];
+      for (var i = 0; i < documents.length; i++) {
+        final doc = documents[i];
+        print('[DEBUG] Document $i: ${doc['label']}');
+        
+        final filesData = doc['files'];
+        print('[DEBUG] Files data type: ${filesData.runtimeType}');
+        print('[DEBUG] Files data: $filesData');
+        
+        if (filesData is String) {
+          // It might be a JSON string, try parsing it
+          try {
+            final parsed = jsonDecode(filesData);
+            if (parsed is List) {
+              print('[DEBUG] Parsed JSON string to list with ${parsed.length} files');
+              for (var file in parsed) {
+                if (file is Map<String, dynamic>) {
+                  print('[DEBUG] Adding file: ${file['original_name']}');
+                  allFiles.add(DocumentInfo.fromJson(file));
+                }
+              }
+            }
+          } catch (e) {
+            print('[DEBUG] Failed to parse files as JSON: $e');
+          }
+        } else if (filesData is List) {
+          print('[DEBUG] Files is already a list with ${filesData.length} items');
+          for (var file in filesData) {
+            print('[DEBUG] Processing file: ${file is Map ? file['original_name'] : file.runtimeType}');
+            if (file is Map<String, dynamic>) {
+              print('[DEBUG] Adding file: ${file['original_name']}');
+              allFiles.add(DocumentInfo.fromJson(file));
+            }
+          }
+        }
+      }
+      
+      print('[DEBUG] Total files extracted: ${allFiles.length}');
       setState(() {
-        _files = data.map((json) => DocumentInfo.fromJson(json as Map<String, dynamic>)).toList();
+        _files = allFiles;
         _isLoading = false;
       });
     } catch (e) {
+      print('[ERROR] Failed to load files: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         AppToast.error(context, 'Failed to load files: $e');
       }
-    }
-  }
-
-  void _nextFile() {
-    if (_currentFileIndex < _files.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  void _previousFile() {
-    if (_currentFileIndex > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
     }
   }
 
@@ -165,19 +200,44 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       final supabase = ref.read(supabaseClientProvider);
       final user = supabase.auth.currentUser;
       
-      // Generate unique file path: org_id/show_id/timestamp_filename
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final storagePath = '${widget.orgId}/${widget.showId}/${timestamp}_$fileName';
+      // Step 1: Get or create show_advancing session
+      final advancingResponse = await supabase.rpc(
+        'get_or_create_show_advancing',
+        params: {'p_show_id': widget.showId},
+      );
       
-      // Upload to storage
+      final advancingSession = advancingResponse as Map<String, dynamic>;
+      final sessionId = advancingSession['id'] as String;
+      
+      // Step 2: Create an advancing_document to hold this file
+      final documentResponse = await supabase.rpc(
+        'create_advancing_document',
+        params: {
+          'p_session_id': sessionId,
+          'p_party_type': 'artist', // Default to artist, could be made configurable
+          'p_label': fileName, // Use filename as label
+        },
+      );
+      
+      final document = documentResponse as Map<String, dynamic>;
+      final documentId = document['id'] as String;
+      
+      // Step 3: Generate unique file path
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final random = DateTime.now().microsecondsSinceEpoch % 100000;
+      final fileExt = fileName.split('.').last;
+      final uniqueFileName = '$timestamp-$random.$fileExt';
+      final storagePath = '${widget.orgId}/shows/${widget.showId}/advancing/$sessionId/$uniqueFileName';
+      
+      // Step 4: Upload to storage
       await supabase.storage
           .from('advancing-files')
           .uploadBinary(storagePath, fileBytes, fileOptions: FileOptions(contentType: contentType));
       
-      // Create file record in database using RPC function
-      await supabase.rpc('create_file', params: {
+      // Step 5: Create file record linked to advancing_document using RPC
+      await supabase.rpc('upload_advancing_file', params: {
         'p_org_id': widget.orgId,
-        'p_show_id': widget.showId,
+        'p_document_id': documentId,
         'p_storage_path': storagePath,
         'p_original_name': fileName,
         'p_content_type': contentType,
@@ -200,6 +260,242 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       if (mounted) {
         AppToast.error(context, 'Failed to upload file: $e');
       }
+    }
+  }
+
+  void _openDocumentViewer(int initialIndex) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => _DocumentViewerScreen(
+          files: _files,
+          initialIndex: initialIndex,
+          showId: widget.showId,
+          onDocumentDeleted: () {
+            _loadFiles();
+            widget.onDocumentAdded?.call();
+          },
+        ),
+      ),
+    );
+  }
+
+  IconData _getFileIcon(DocumentInfo file) {
+    final contentType = file.contentType?.toLowerCase() ?? '';
+    if (contentType.contains('pdf')) {
+      return Icons.picture_as_pdf;
+    } else if (contentType.startsWith('image/')) {
+      return Icons.image;
+    } else if (contentType.contains('word') || contentType.contains('document')) {
+      return Icons.description;
+    } else if (contentType.contains('excel') || contentType.contains('spreadsheet')) {
+      return Icons.table_chart;
+    } else if (contentType.contains('text')) {
+      return Icons.article;
+    }
+    return Icons.insert_drive_file;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return LayerScaffold(
+      title: 'Documents',
+      body: Column(
+        children: [
+          // Document list
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _files.isEmpty
+                    ? _buildEmptyState(colorScheme)
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(24),
+                        itemCount: _files.length,
+                        itemBuilder: (context, index) {
+                          final file = _files[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Material(
+                              color: colorScheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(12),
+                              child: InkWell(
+                                onTap: () => _openDocumentViewer(index),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _getFileIcon(file),
+                                        color: const Color(0xFFA78BFA),
+                                        size: 32,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              file.displayName,
+                                              style: TextStyle(
+                                                color: colorScheme.onSurface,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              file.formattedSize,
+                                              style: TextStyle(
+                                                color: colorScheme.onSurfaceVariant,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+
+          // Add Document button
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isUploading ? null : _pickAndUploadFile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.onSurface,
+                  foregroundColor: colorScheme.surface,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isUploading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.surface,
+                        ),
+                      )
+                    : const Text(
+                        'Add New',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ColorScheme colorScheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.description_outlined,
+            size: 64,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No documents',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add a document to get started',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Layer 3: Document viewer with swipe navigation
+class _DocumentViewerScreen extends ConsumerStatefulWidget {
+  final List<DocumentInfo> files;
+  final int initialIndex;
+  final String showId;
+  final VoidCallback onDocumentDeleted;
+
+  const _DocumentViewerScreen({
+    required this.files,
+    required this.initialIndex,
+    required this.showId,
+    required this.onDocumentDeleted,
+  });
+
+  @override
+  ConsumerState<_DocumentViewerScreen> createState() => _DocumentViewerScreenState();
+}
+
+class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
+  late PageController _pageController;
+  late int _currentFileIndex;
+  late List<DocumentInfo> _files;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentFileIndex = widget.initialIndex;
+    _files = List.from(widget.files);
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _nextFile() {
+    if (_currentFileIndex < _files.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _previousFile() {
+    if (_currentFileIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -253,10 +549,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       });
 
       // Notify parent
-      widget.onDocumentAdded?.call();
+      widget.onDocumentDeleted();
 
       if (mounted) {
         AppToast.success(context, 'File deleted');
+        
+        // If no files left, go back
+        if (_files.isEmpty) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -280,13 +581,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _files[_currentFileIndex].displayName,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
+                  Expanded(
+                    child: Text(
+                      _files[_currentFileIndex].displayName,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'File ${_currentFileIndex + 1} of ${_files.length}',
@@ -301,22 +604,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           
           // File viewer
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _files.isEmpty
-                    ? _buildEmptyState(colorScheme)
-                    : PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (index) {
-                          setState(() => _currentFileIndex = index);
-                        },
-                        itemCount: _files.length,
-                        itemBuilder: (context, index) {
-                          return _FileViewer(
-                            file: _files[index],
-                          );
-                        },
-                      ),
+            child: _files.isEmpty
+                ? const Center(child: Text('No files'))
+                : PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _currentFileIndex = index);
+                    },
+                    itemCount: _files.length,
+                    itemBuilder: (context, index) {
+                      return _FileViewer(
+                        file: _files[index],
+                      );
+                    },
+                  ),
           ),
 
           // Navigation arrows
@@ -390,72 +691,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       ),
                     ],
                   ),
-                const SizedBox(height: 16),
-                // Add Document button - matches AddButton style
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isUploading ? null : _pickAndUploadFile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.onSurface,
-                      foregroundColor: colorScheme.surface,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isUploading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.surface,
-                            ),
-                          )
-                        : const Text(
-                            'Add',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.description_outlined,
-            size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No documents',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add a document to get started',
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 14,
             ),
           ),
         ],

@@ -6,7 +6,7 @@ class DayHeader extends StatelessWidget {
   final String title;
   final String artist;
   final String dayTime; // e.g., "Thurs 19:30"
-  final String date; // e.g., "22 July 2025"
+  final String date; // e.g., "22 Jul 2025" (abbreviated month)
   final VoidCallback? onScheduleTap;
 
   const DayHeader({
@@ -54,7 +54,7 @@ class DayHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Right: Day/time and date
+          // Right: Day/time and date (both same color now)
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -65,7 +65,7 @@ class DayHeader extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 date,
-                style: TextStyle(color: colorScheme.onSurface, fontSize: 12),
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ],
           ),

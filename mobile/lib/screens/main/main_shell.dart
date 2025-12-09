@@ -163,6 +163,64 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
+  void _showImportDialog(ColorScheme colorScheme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Import',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Import advancing documents, itineraries, or show data files to quickly populate your show details.',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // TODO: Implement file import
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Import feature coming soon')),
+                  );
+                },
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Select File'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -179,39 +237,52 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildTopBar(colorScheme),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: _onPageChanged,
-                children: [
-                  // Tab 0: Day view
-                  ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
-                  // Tab 1: Shows (list or calendar)
-                  _showsViewMode == ShowsViewMode.calendar
-                      ? CalendarContent(
-                          orgId: widget.orgId,
-                          orgName: widget.orgName,
-                          onShowSelected: _onShowSelected,
-                        )
-                      : ShowsContent(
-                          orgId: widget.orgId,
-                          orgName: widget.orgName,
-                          onShowSelected: _onShowSelected,
-                        ),
-                  // Tab 2: Network
-                  NetworkContent(
-                    orgId: widget.orgId,
-                    orgName: widget.orgName,
-                    activeTab: _networkTab,
-                    onTabChanged: (tab) => setState(() => _networkTab = tab),
+            Column(
+              children: [
+                // Brand header
+                _buildBrandHeader(colorScheme),
+                _buildTopBar(colorScheme),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: _onPageChanged,
+                    children: [
+                      // Tab 0: Day view
+                      ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
+                      // Tab 1: Shows (list or calendar)
+                      _showsViewMode == ShowsViewMode.calendar
+                          ? CalendarContent(
+                              orgId: widget.orgId,
+                              orgName: widget.orgName,
+                              onShowSelected: _onShowSelected,
+                            )
+                          : ShowsContent(
+                              orgId: widget.orgId,
+                              orgName: widget.orgName,
+                              onShowSelected: _onShowSelected,
+                            ),
+                      // Tab 2: Network
+                      NetworkContent(
+                        orgId: widget.orgId,
+                        orgName: widget.orgName,
+                        activeTab: _networkTab,
+                        onTabChanged: (tab) => setState(() => _networkTab = tab),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                // Spacer for bottom navigation
+                const SizedBox(),
+              ],
             ),
-            _buildBottomSection(colorScheme),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: _buildBottomSection(colorScheme),
+            ),
           ],
         ),
       ),
@@ -288,10 +359,24 @@ class _MainShellState extends ConsumerState<MainShell> {
                           : const SizedBox.shrink(),
             ),
           ),
-          // Right: Settings icon
-          GestureDetector(
-            onTap: () => context.push('/org/${widget.orgId}/settings'),
-            child: Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
+          // Right: Import button + Settings icon
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Import button
+              GestureDetector(
+                onTap: () => _showImportDialog(colorScheme),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.file_upload_outlined, color: colorScheme.onSurface, size: 22),
+                ),
+              ),
+              // Settings icon
+              GestureDetector(
+                onTap: () => context.push('/org/${widget.orgId}/settings'),
+                child: Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
+              ),
+            ],
           ),
         ],
       ),
@@ -340,14 +425,14 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget _buildBottomSection(ColorScheme colorScheme) {
     final isShowsTab = _currentTabIndex == 1;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Search row - only show for Shows tab
-          if (isShowsTab) ...[
-            Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Search row - only show for Shows tab
+        if (isShowsTab) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Row(
               children: [
                 Expanded(
                   child: Container(
@@ -386,21 +471,27 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-          ],
-          // Bottom navigation - always visible on Layer 1
-          _buildBottomNav(colorScheme),
+          ),
+          const SizedBox(height: 16),
         ],
-      ),
+        // Bottom navigation - always visible on Layer 1
+        ColoredBox(
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0), // (1, 2, 3, 4) = (left, top, right, bottom)
+            child: _buildBottomNav(colorScheme),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildBottomNav(ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF282828),
+        borderRadius: BorderRadius.circular(100),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -409,6 +500,23 @@ class _MainShellState extends ConsumerState<MainShell> {
           _buildNavItem(Icons.format_list_bulleted, 'Shows', 1, colorScheme),
           _buildNavItem(Icons.people_outline, 'Network', 2, colorScheme),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBrandHeader(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Center(
+        child: Text(
+          'Oncore',
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
       ),
     );
   }

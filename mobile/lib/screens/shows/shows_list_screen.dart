@@ -52,7 +52,7 @@ final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId
 
 /// Shows content widget - just the list content, no shell/nav
 /// Used inside MainShell for swipe navigation
-class ShowsContent extends ConsumerWidget {
+class ShowsContent extends ConsumerStatefulWidget {
   final String orgId;
   final String orgName;
   final void Function(String showId)? onShowSelected;
@@ -65,20 +65,190 @@ class ShowsContent extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final showsAsync = ref.watch(showsByOrgProvider(orgId));
+  ConsumerState<ShowsContent> createState() => _ShowsContentState();
+}
+
+class _ShowsContentState extends ConsumerState<ShowsContent> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  // Filter state - can be expanded for more filter options
+  bool _showPastShows = true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Show> _filterShows(List<Show> shows) {
+    var filtered = shows;
+    
+    // Filter by search query
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((show) {
+        return show.title.toLowerCase().contains(query) ||
+            (show.venueName?.toLowerCase().contains(query) ?? false) ||
+            (show.venueCity?.toLowerCase().contains(query) ?? false) ||
+            show.artistNamesDisplay.toLowerCase().contains(query);
+      }).toList();
+    }
+    
+    // Filter past shows
+    if (!_showPastShows) {
+      final now = DateTime.now();
+      filtered = filtered.where((show) => show.date.isAfter(now.subtract(const Duration(days: 1)))).toList();
+    }
+    
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
     final colorScheme = Theme.of(context).colorScheme;
 
-    return showsAsync.when(
-      loading: () => Center(
-        child: CircularProgressIndicator(color: colorScheme.onSurface),
-      ),
-      error: (error, stack) => _buildErrorState(context, ref, error),
-      data: (shows) => shows.isEmpty ? _buildEmptyState(context) : _buildShowsList(context, shows),
+    return Column(
+      children: [
+        // Search bar and filter button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              // Search input
+              Expanded(
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colorScheme.outline),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    decoration: InputDecoration(
+                      hintText: 'Search shows...',
+                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Filter button - enlarged with more spacing
+              GestureDetector(
+                onTap: _showFilterDialog,
+                child: Container(
+                  width: 48,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colorScheme.outline),
+                  ),
+                  child: Icon(
+                    Icons.filter_list,
+                    color: _showPastShows ? colorScheme.onSurfaceVariant : colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Shows list
+        Expanded(
+          child: showsAsync.when(
+            loading: () => Center(
+              child: CircularProgressIndicator(color: colorScheme.onSurface),
+            ),
+            error: (error, stack) => _buildErrorState(context, error),
+            data: (shows) {
+              final filtered = _filterShows(shows);
+              if (shows.isEmpty) {
+                return _buildEmptyState(context);
+              }
+              if (filtered.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(height: 16),
+                      Text('No shows match your search', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                );
+              }
+              return _buildShowsList(context, filtered);
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
+  void _showFilterDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter Shows',
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SwitchListTile(
+                title: Text('Show past shows', style: TextStyle(color: colorScheme.onSurface)),
+                value: _showPastShows,
+                onChanged: (value) {
+                  setModalState(() => _showPastShows = value);
+                  setState(() => _showPastShows = value);
+                },
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, Object error) {
     final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
@@ -89,7 +259,7 @@ class ShowsContent extends ConsumerWidget {
           Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () => ref.invalidate(showsByOrgProvider(orgId)),
+            onPressed: () => ref.invalidate(showsByOrgProvider(widget.orgId)),
             child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
           ),
         ],
@@ -136,7 +306,7 @@ class ShowsContent extends ConsumerWidget {
       });
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 140),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final monthYear = sortedKeys[index];
@@ -161,7 +331,7 @@ class ShowsContent extends ConsumerWidget {
             // Show cards
             ...monthShows.map((show) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: ShowCard(show: show, orgId: orgId, onShowSelected: onShowSelected),
+              child: ShowCard(show: show, orgId: widget.orgId, onShowSelected: widget.onShowSelected),
             )),
           ],
         );

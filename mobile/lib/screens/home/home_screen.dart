@@ -146,6 +146,17 @@ class HomeScreen extends ConsumerWidget {
             );
           }
 
+          // Auto-navigate to single organization
+          if (organizations.length == 1) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final org = organizations.first;
+              context.go('/org/${org.orgId}/shows', extra: org.name);
+            });
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(userOrganizationsProvider);

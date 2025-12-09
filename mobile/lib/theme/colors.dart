@@ -73,12 +73,12 @@ abstract final class AppColors {
   // ============================================
   
   // Core
-  static const darkBackground = Color(0xFF0C0C0C);          // rgba(12, 12, 12, 1)
+  static const darkBackground = Color(0xFF000000);          // rgb(0, 0, 0) - pure black
   static const darkForeground = Color(0xFFF0F0F0);          // rgb(240,240,240)
   static const darkDescriptionForeground = Color(0xFFAFAFAF); // rgb(175,175,175)
   
   // Card
-  static const darkCard = Color(0xFF1E1E1E);                // rgb(30,30,30)
+  static const darkCard = Color(0xFF0F0F0F);                // rgb(15,15,15)
   static const darkCardHover = Color(0xFF282828);           // rgb(40,40,40)
   static const darkCardCell = Color(0xFF323232);            // rgb(50,50,50)
   static const darkCardCellHover = Color(0xFF3C3C3C);       // rgb(60,60,60)
