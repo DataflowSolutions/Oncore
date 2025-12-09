@@ -518,7 +518,6 @@ class _FlightsSection extends StatelessWidget {
               )
             else
               HorizontalCardList(
-                height: 160,
                 children: [
                   ...flights.map((flight) => GestureDetector(
                     onTap: () => _showFlightDetails(context, flight),
@@ -654,7 +653,7 @@ class _CreateNewFlightCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 280,
+      width: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/widgets/marquee_text.dart';
 
 /// Flight card widget for displaying flight information
 /// Designed for horizontal scrolling list
@@ -33,114 +34,125 @@ class FlightCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 200, // Reduced from 260
-        padding: const EdgeInsets.all(12), // Reduced from 16
+        width: 200,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: colorScheme.outline),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: IntrinsicHeight(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             // Top row: Label and Flight Number
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Flight',
                   style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
                 ),
-                Text(
-                  flightNumber,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8), // Reduced from 12
-            
-            // Middle row: Route with big codes - fixed proportions (no city names)
-            Row(
-              children: [
-                // Departure column - just code, no city
-                SizedBox(
-                  width: 50, // Reduced from 60
-                  child: Text(
-                    departure,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 18, // Reduced from 20
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                
-                // Duration column - flexible to take remaining space
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6), // Reduced from 8
-                    child: Column(
-                      children: [
-                        if (duration != null)
-                          Text(
-                            duration!,
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 10, // Reduced from 11
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        const SizedBox(height: 2),
-                        Container(
-                          height: 1,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                // Arrival column - just code, no city
-                SizedBox(
-                  width: 50, // Reduced from 60
-                  child: Text(
-                    arrival,
+                  child: MarqueeText(
+                    flightNumber,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 18, // Reduced from 20
-                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 11,
                     ),
                     textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 12), // Reduced from 12
+            
+              // Middle row: Route with big codes - spans full width
+              Row(
+                children: [
+                  // Departure column - just code, no city
+                  Expanded(
+                    child: MarqueeText(
+                      departure,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  
+                  // Duration column - centered
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (duration != null)
+                          SizedBox(
+                            width: 60,
+                            child: MarqueeText(
+                              duration!,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 10,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        const SizedBox(height: 2),
+                        Container(
+                          width: 60,
+                          height: 1,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Arrival column - just code, no city
+                  Expanded(
+                    child: MarqueeText(
+                      arrival,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
             
             const SizedBox(height: 8), // Reduced from 12
             
-            // Bottom row: Times
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  departureTime,
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 11), // Reduced from 12
-                ),
-                Text(
-                  arrivalTime,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 11, // Reduced from 12
+              // Bottom row: Times
+              Row(
+                children: [
+                  Expanded(
+                    child: MarqueeText(
+                      departureTime,
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 11),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: MarqueeText(
+                      arrivalTime,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
