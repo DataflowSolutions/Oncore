@@ -50,7 +50,7 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
     try {
       final supabase = ref.read(supabaseClientProvider);
 
-      // Use RPC function instead of direct insert
+      // Use RPC function as defined in migration 20251204.sql
       await supabase.rpc('create_guest', params: {
         'p_show_id': widget.showId,
         'p_name': _nameController.text.trim(),
