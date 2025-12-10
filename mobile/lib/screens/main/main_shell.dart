@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../theme/app_theme.dart';
 import '../shows/shows_list_screen.dart';
 import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
@@ -163,14 +164,14 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  void _showImportDialog(ColorScheme colorScheme) {
-    showModalBottomSheet(
+  void _showImportDialog(Brightness brightness) {
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(brightness),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -179,7 +180,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             Text(
               'Import',
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -188,29 +189,32 @@ class _MainShellState extends ConsumerState<MainShell> {
             Text(
               'Import advancing documents, itineraries, or show data files to quickly populate your show details.',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
+              child: CupertinoButton.filled(
                 onPressed: () {
                   Navigator.pop(context);
                   // TODO: Implement file import
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Import feature coming soon')),
-                  );
                 },
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Select File'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(CupertinoIcons.arrow_up_doc, color: CupertinoColors.white),
+                    SizedBox(width: 8),
+                    Text('Select File'),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
+              child: CupertinoButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
@@ -223,27 +227,27 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     if (!_isInitialized) {
-      return Scaffold(
-        backgroundColor: colorScheme.surface,
-        body: Center(
-          child: CircularProgressIndicator(color: colorScheme.onSurface),
+      return CupertinoPageScaffold(
+        backgroundColor: AppTheme.getBackgroundColor(brightness),
+        child: Center(
+          child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
         ),
       );
     }
     
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: SafeArea(
+    return CupertinoPageScaffold(
+      backgroundColor: AppTheme.getBackgroundColor(brightness),
+      child: SafeArea(
         child: Stack(
           children: [
             Column(
               children: [
                 // Brand header
-                _buildBrandHeader(colorScheme),
-                _buildTopBar(colorScheme),
+                _buildBrandHeader(brightness),
+                _buildTopBar(brightness),
                 Expanded(
                   child: PageView(
                     controller: _pageController,
@@ -281,7 +285,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               left: 16,
               right: 16,
               bottom: 16,
-              child: _buildBottomSection(colorScheme),
+              child: _buildBottomSection(brightness),
             ),
           ],
         ),
@@ -289,7 +293,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildTopBar(ColorScheme colorScheme) {
+  Widget _buildTopBar(Brightness brightness) {
     final isDayTab = _currentTabIndex == 0;
     final isShowsTab = _currentTabIndex == 1;
     final isNetworkTab = _currentTabIndex == 2;
@@ -306,9 +310,9 @@ class _MainShellState extends ConsumerState<MainShell> {
               height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
+                border: Border.all(color: AppTheme.getMutedForegroundColor(brightness), width: 1.5),
               ),
-              child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
+              child: Icon(CupertinoIcons.person, color: AppTheme.getForegroundColor(brightness), size: 20),
             ),
           ),
           // Center: View toggle (Shows list/calendar or Network tabs)
@@ -320,22 +324,22 @@ class _MainShellState extends ConsumerState<MainShell> {
                   : isShowsTab
                       ? Container(
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHigh,
+                            color: AppTheme.getInputBackgroundColor(brightness),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _buildViewModeToggle(
-                                Icons.format_list_bulleted,
+                                CupertinoIcons.list_bullet,
                                 _showsViewMode == ShowsViewMode.list,
-                                colorScheme,
+                                brightness,
                                 () => _toggleShowsViewMode(ShowsViewMode.list),
                               ),
                               _buildViewModeToggle(
-                                Icons.calendar_today_outlined,
+                                CupertinoIcons.calendar,
                                 _showsViewMode == ShowsViewMode.calendar,
-                                colorScheme,
+                                brightness,
                                 () => _toggleShowsViewMode(ShowsViewMode.calendar),
                               ),
                             ],
@@ -344,15 +348,15 @@ class _MainShellState extends ConsumerState<MainShell> {
                       : isNetworkTab
                           ? Container(
                               decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainerHigh,
+                                color: AppTheme.getInputBackgroundColor(brightness),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _buildNetworkToggle(Icons.person_outline, NetworkTab.team, colorScheme),
-                                  _buildNetworkToggle(Icons.groups_outlined, NetworkTab.promoters, colorScheme),
-                                  _buildNetworkToggle(Icons.location_on_outlined, NetworkTab.venues, colorScheme),
+                                  _buildNetworkToggle(CupertinoIcons.person, NetworkTab.team, brightness),
+                                  _buildNetworkToggle(CupertinoIcons.person_2, NetworkTab.promoters, brightness),
+                                  _buildNetworkToggle(CupertinoIcons.placemark, NetworkTab.venues, brightness),
                                 ],
                               ),
                             )
@@ -365,16 +369,16 @@ class _MainShellState extends ConsumerState<MainShell> {
             children: [
               // Import button
               GestureDetector(
-                onTap: () => _showImportDialog(colorScheme),
+                onTap: () => _showImportDialog(brightness),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.file_upload_outlined, color: colorScheme.onSurface, size: 22),
+                  child: Icon(CupertinoIcons.arrow_up_doc, color: AppTheme.getForegroundColor(brightness), size: 22),
                 ),
               ),
               // Settings icon
               GestureDetector(
                 onTap: () => context.push('/org/${widget.orgId}/settings'),
-                child: Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
+                child: Icon(CupertinoIcons.settings, color: AppTheme.getForegroundColor(brightness), size: 22),
               ),
             ],
           ),
@@ -383,7 +387,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildNetworkToggle(IconData icon, NetworkTab tab, ColorScheme colorScheme) {
+  Widget _buildNetworkToggle(IconData icon, NetworkTab tab, Brightness brightness) {
     final isSelected = _networkTab == tab;
     return GestureDetector(
       onTap: () => setState(() => _networkTab = tab),
@@ -391,38 +395,38 @@ class _MainShellState extends ConsumerState<MainShell> {
         width: 44,
         height: 36,
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.onSurface : Colors.transparent,
+          color: isSelected ? AppTheme.getForegroundColor(brightness) : CupertinoColors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
-          color: isSelected ? colorScheme.surface : colorScheme.onSurfaceVariant,
+          color: isSelected ? AppTheme.getBackgroundColor(brightness) : AppTheme.getMutedForegroundColor(brightness),
           size: 20,
         ),
       ),
     );
   }
 
-  Widget _buildViewModeToggle(IconData icon, bool isSelected, ColorScheme colorScheme, VoidCallback onTap) {
+  Widget _buildViewModeToggle(IconData icon, bool isSelected, Brightness brightness, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 32,
+        width: 44,
+        height: 36,
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.onSurface : Colors.transparent,
+          color: isSelected ? AppTheme.getForegroundColor(brightness) : CupertinoColors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
-          color: isSelected ? colorScheme.surface : colorScheme.onSurfaceVariant,
+          color: isSelected ? AppTheme.getBackgroundColor(brightness) : AppTheme.getMutedForegroundColor(brightness),
           size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildBottomSection(ColorScheme colorScheme) {
+  Widget _buildBottomSection(Brightness brightness) {
     final isShowsTab = _currentTabIndex == 1;
 
     return Column(
@@ -439,23 +443,23 @@ class _MainShellState extends ConsumerState<MainShell> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
+                      color: AppTheme.getInputBackgroundColor(brightness),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+                        Icon(CupertinoIcons.search, color: AppTheme.getMutedForegroundColor(brightness), size: 20),
                         const SizedBox(width: 12),
                         Text(
                           'Search',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
+                          style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 15),
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.tune, color: colorScheme.onSurfaceVariant, size: 22),
+                Icon(CupertinoIcons.slider_horizontal_3, color: AppTheme.getMutedForegroundColor(brightness), size: 22),
                 const SizedBox(width: 12),
                 GestureDetector(
                   onTap: () => showCreateShowModal(context, widget.orgId),
@@ -463,10 +467,10 @@ class _MainShellState extends ConsumerState<MainShell> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(Icons.add, color: colorScheme.surface, size: 24),
+                    child: Icon(CupertinoIcons.add, color: AppTheme.getBackgroundColor(brightness), size: 24),
                   ),
                 ),
               ],
@@ -476,17 +480,17 @@ class _MainShellState extends ConsumerState<MainShell> {
         ],
         // Bottom navigation - always visible on Layer 1
         ColoredBox(
-          color: Colors.transparent,
+          color: CupertinoColors.systemBackground.withOpacity(0),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 0), // (1, 2, 3, 4) = (left, top, right, bottom)
-            child: _buildBottomNav(colorScheme),
+            child: _buildBottomNav(brightness),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBottomNav(ColorScheme colorScheme) {
+  Widget _buildBottomNav(Brightness brightness) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
@@ -496,22 +500,22 @@ class _MainShellState extends ConsumerState<MainShell> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.play_arrow_outlined, 'Day', 0, colorScheme),
-          _buildNavItem(Icons.format_list_bulleted, 'Shows', 1, colorScheme),
-          _buildNavItem(Icons.people_outline, 'Network', 2, colorScheme),
+          _buildNavItem(CupertinoIcons.play, 'Day', 0, brightness),
+          _buildNavItem(CupertinoIcons.list_bullet, 'Shows', 1, brightness),
+          _buildNavItem(CupertinoIcons.person_2, 'Network', 2, brightness),
         ],
       ),
     );
   }
 
-  Widget _buildBrandHeader(ColorScheme colorScheme) {
+  Widget _buildBrandHeader(Brightness brightness) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Center(
         child: Text(
           'Oncore',
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: AppTheme.getForegroundColor(brightness),
             fontSize: 24,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.5,
@@ -521,9 +525,9 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int navIndex, ColorScheme colorScheme) {
+  Widget _buildNavItem(IconData icon, String label, int navIndex, Brightness brightness) {
     final isSelected = _currentTabIndex == navIndex;
-    final color = isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
+    final color = isSelected ? AppTheme.getForegroundColor(brightness) : AppTheme.getMutedForegroundColor(brightness);
 
     return GestureDetector(
       onTap: () => _onNavTap(navIndex),

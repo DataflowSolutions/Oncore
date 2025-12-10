@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/components.dart';
+import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../main/main_shell.dart' show saveLastShow;
@@ -8,7 +9,7 @@ import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
 import 'widgets/detail_modal.dart';
 
-/// Show Day Content widget - just the content, no scaffold/nav
+/// Show Day Content widget - just the content, no CupertinoPageScaffold/nav
 /// Used inside MainShell for Layer 1 Day view
 /// This is a Layer 1 page - same level as Shows and Network
 class ShowDayContent extends ConsumerStatefulWidget {
@@ -46,11 +47,11 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     // If no showId provided, show empty state
     if (widget.showId == null) {
-      return _buildEmptyState(colorScheme);
+      return _buildEmptyState(brightness);
     }
 
     final showAsync = ref.watch(showDetailProvider(widget.showId!));
@@ -58,24 +59,24 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
 
     return showAsync.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: colorScheme.onSurface),
+        child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
       ),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+            Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
             const SizedBox(height: 16),
             Text(
               'Failed to load show',
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
             ),
             const SizedBox(height: 12),
-            TextButton(
+            CupertinoButton(
               onPressed: () => ref.invalidate(showDetailProvider(widget.showId!)),
               child: Text(
                 'Retry',
-                style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
               ),
             ),
           ],
@@ -83,21 +84,21 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
       ),
       data: (show) {
         if (show == null) {
-          return _buildEmptyState(colorScheme);
+          return _buildEmptyState(brightness);
         }
         return assignmentsAsync.when(
           loading: () => Center(
-            child: CircularProgressIndicator(color: colorScheme.onSurface),
+            child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
           ),
           error: (error, stack) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+                Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load show data',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                 ),
               ],
             ),
@@ -112,17 +113,17 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_note_outlined, size: 56, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+          Icon(CupertinoIcons.calendar, size: 56, color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text('No show selected', style: TextStyle(color: colorScheme.onSurface, fontSize: 17)),
+          Text('No show selected', style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 17)),
           const SizedBox(height: 6),
           Text('Open a show from the Shows tab',
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14)),
         ],
       ),
     );
@@ -208,12 +209,12 @@ class _ShowDayBody extends ConsumerWidget {
           // Action bar
           ActionBar(
             actions: [
-              ActionItem(icon: Icons.people_outline, onTap: openTeamScreen),
-              ActionItem(icon: Icons.schedule, onTap: openFullSchedule),
-              ActionItem(icon: Icons.fullscreen, onTap: () {}),
-              ActionItem(icon: Icons.refresh, onTap: () => _refresh(ref)),
-              ActionItem(icon: Icons.download_outlined, onTap: () {}),
-              ActionItem(icon: Icons.share_outlined, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.person_2, onTap: openTeamScreen),
+              ActionItem(icon: CupertinoIcons.clock, onTap: openFullSchedule),
+              ActionItem(icon: CupertinoIcons.fullscreen, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.refresh, onTap: () => _refresh(ref)),
+              ActionItem(icon: CupertinoIcons.arrow_down_doc, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.share, onTap: () {}),
             ],
           ),
 
@@ -346,7 +347,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     // Empty state when no schedule items
     if (items.isEmpty) {
@@ -359,22 +360,22 @@ class _UpcomingScheduleSection extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Column(
                 children: [
                   Icon(
-                    Icons.event_note_outlined,
+                    CupertinoIcons.calendar,
                     size: 32,
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Schedule Not Added Yet',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -461,15 +462,15 @@ class _FlightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: () => _openFlightsScreen(context),
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(color: colorScheme.outline, width: 1),
-            bottom: BorderSide(color: colorScheme.outline, width: 1),
+            top: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
+            bottom: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
           ),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -484,18 +485,18 @@ class _FlightsSection extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
+                    color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: colorScheme.outline),
+                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.flight, color: colorScheme.onSurfaceVariant),
+                      Icon(CupertinoIcons.airplane, color: AppTheme.getMutedForegroundColor(brightness)),
                       const SizedBox(width: 12),
                       Text(
                         'Flights',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -504,14 +505,14 @@ class _FlightsSection extends StatelessWidget {
                       Text(
                         'Not Added',
                         style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
+                          color: AppTheme.getMutedForegroundColor(brightness),
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Icon(
-                        Icons.chevron_right,
-                        color: colorScheme.onSurfaceVariant,
+                        CupertinoIcons.chevron_right,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                       ),
                     ],
                   ),
@@ -651,20 +652,20 @@ class _FlightsSection extends StatelessWidget {
 class _CreateNewFlightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       width: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: AppTheme.getBorderColor(brightness)),
       ),
       child: Center(
         child: Icon(
-          Icons.add,
-          color: colorScheme.onSurfaceVariant,
+          CupertinoIcons.add,
+          color: AppTheme.getMutedForegroundColor(brightness),
           size: 32,
         ),
       ),
@@ -708,7 +709,7 @@ class _UnifiedInfoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
 
     return Padding(
@@ -729,7 +730,7 @@ class _UnifiedInfoGrid extends StatelessWidget {
                               : lodging.first.timeRange,
                           type: InfoCardType.hotel,
                         )
-                      : _buildEmptyCard(context, 'Hotel', Icons.hotel, colorScheme),
+                      : _buildEmptyCard(context, 'Hotel', CupertinoIcons.bed_double, brightness),
                 ),
               ),
               const SizedBox(width: 12),
@@ -744,7 +745,7 @@ class _UnifiedInfoGrid extends StatelessWidget {
                               : catering.first.formattedServiceTime,
                           type: InfoCardType.restaurant,
                         )
-                      : _buildEmptyCard(context, 'Food', Icons.restaurant, colorScheme),
+                      : _buildEmptyCard(context, 'Food', CupertinoIcons.cart, brightness),
                 ),
               ),
             ],
@@ -759,8 +760,8 @@ class _UnifiedInfoGrid extends StatelessWidget {
                   child: _buildEmptyCard(
                     context,
                     'Contacts',
-                    Icons.people,
-                    colorScheme,
+                    CupertinoIcons.person_3,
+                    brightness,
                     subtitle: contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
                   ),
                 ),
@@ -772,8 +773,8 @@ class _UnifiedInfoGrid extends StatelessWidget {
                   child: _buildEmptyCard(
                     context,
                     'Documents',
-                    Icons.description,
-                    colorScheme,
+                    CupertinoIcons.doc_text,
+                    brightness,
                     subtitle: documents.isEmpty ? 'Not Added' : '${documents.length} files',
                   ),
                 ),
@@ -790,8 +791,8 @@ class _UnifiedInfoGrid extends StatelessWidget {
                   child: _buildEmptyCard(
                     context,
                     'Guestlist',
-                    Icons.list_alt,
-                    colorScheme,
+                    CupertinoIcons.list_bullet,
+                    brightness,
                     subtitle: guests.isEmpty ? 'Not Added' : '$totalGuests guests',
                   ),
                 ),
@@ -803,8 +804,8 @@ class _UnifiedInfoGrid extends StatelessWidget {
                   child: _buildEmptyCard(
                     context,
                     'Notes',
-                    Icons.note,
-                    colorScheme,
+                    CupertinoIcons.doc,
+                    brightness,
                     subtitle: notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
                   ),
                 ),
@@ -816,26 +817,26 @@ class _UnifiedInfoGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCard(BuildContext context, String title, IconData icon, ColorScheme colorScheme, {String? subtitle}) {
+  Widget _buildEmptyCard(BuildContext context, String title, IconData icon, Brightness brightness, {String? subtitle}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: AppTheme.getBorderColor(brightness)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(icon, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -847,7 +848,7 @@ class _UnifiedInfoGrid extends StatelessWidget {
           Text(
             subtitle ?? 'Not Added',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 13,
             ),
           ),
@@ -966,7 +967,7 @@ class _LodgingCateringSection extends StatelessWidget {
   }
 
   List<Widget> _buildRows(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final widgets = <Widget>[];
 
     // Hotels tile - always show, with navigation to full list
@@ -983,21 +984,21 @@ class _LodgingCateringSection extends StatelessWidget {
           : Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.hotel, size: 16, color: colorScheme.onSurfaceVariant),
+                      Icon(CupertinoIcons.bed_double, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
                       const SizedBox(width: 8),
                       Text(
                         'Hotel',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1008,7 +1009,7 @@ class _LodgingCateringSection extends StatelessWidget {
                   Text(
                     'Not Added',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 13,
                     ),
                   ),
@@ -1031,21 +1032,21 @@ class _LodgingCateringSection extends StatelessWidget {
           : Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.restaurant, size: 16, color: colorScheme.onSurfaceVariant),
+                      Icon(CupertinoIcons.cart, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
                       const SizedBox(width: 8),
                       Text(
                         'Food',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1056,7 +1057,7 @@ class _LodgingCateringSection extends StatelessWidget {
                   Text(
                     'Not Added',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 13,
                     ),
                   ),
@@ -1140,7 +1141,7 @@ class _InfoCardsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     // Calculate total guest count
     final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
@@ -1159,8 +1160,8 @@ class _InfoCardsGrid extends StatelessWidget {
                     context,
                     'Contacts',
                     contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
-                    colorScheme,
-                    Icons.people,
+                    brightness,
+                    CupertinoIcons.person_3,
                   ),
                 ),
               ),
@@ -1172,8 +1173,8 @@ class _InfoCardsGrid extends StatelessWidget {
                     context,
                     'Documents',
                     documents.isEmpty ? 'Not Added' : '${documents.length} files',
-                    colorScheme,
-                    Icons.description,
+                    brightness,
+                    CupertinoIcons.doc_text,
                   ),
                 ),
               ),
@@ -1190,8 +1191,8 @@ class _InfoCardsGrid extends StatelessWidget {
                     context,
                     'Guestlist',
                     guests.isEmpty ? 'Not Added' : '$totalGuests guests',
-                    colorScheme,
-                    Icons.list_alt,
+                    brightness,
+                    CupertinoIcons.list_bullet,
                   ),
                 ),
               ),
@@ -1203,8 +1204,8 @@ class _InfoCardsGrid extends StatelessWidget {
                     context,
                     'Notes',
                     notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
-                    colorScheme,
-                    Icons.note,
+                    brightness,
+                    CupertinoIcons.doc,
                   ),
                 ),
               ),
@@ -1215,26 +1216,26 @@ class _InfoCardsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(BuildContext context, String title, String subtitle, ColorScheme colorScheme, IconData icon) {
+  Widget _buildInfoTile(BuildContext context, String title, String subtitle, Brightness brightness, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: AppTheme.getBorderColor(brightness)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(icon, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1246,7 +1247,7 @@ class _InfoCardsGrid extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 13,
             ),
           ),

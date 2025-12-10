@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/show.dart';
@@ -55,9 +55,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
-    return Scaffold(
+    return CupertinoPageScaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
@@ -66,7 +66,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             Expanded(
               child: showsAsync.when(
                 loading: () => Center(
-                  child: CircularProgressIndicator(color: colorScheme.onSurface),
+                  child: CupertinoActivityIndicator(color: colorScheme.onSurface),
                 ),
                 error: (error, stack) => _buildErrorState(colorScheme),
                 data: (shows) => _buildCalendar(shows, colorScheme),
@@ -94,7 +94,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: colorScheme.onSurfaceVariant, width: 1.5),
               ),
-              child: Icon(Icons.person_outline, color: colorScheme.onSurface, size: 20),
+              child: Icon(CupertinoIcons.person_outline, color: colorScheme.onSurface, size: 20),
             ),
           ),
           // Center: View toggle (list/calendar)
@@ -108,10 +108,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildToggle(Icons.format_list_bulleted, false, colorScheme, () {
+                    _buildToggle(CupertinoIcons.format_list_bulleted, false, colorScheme, () {
                       context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
                     }),
-                    _buildToggle(Icons.calendar_today_outlined, true, colorScheme, () {
+                    _buildToggle(CupertinoIcons.calendar_today_outlined, true, colorScheme, () {
                       // Already on calendar
                     }),
                   ],
@@ -120,7 +120,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
           // Right: Settings icon
-          Icon(Icons.settings_outlined, color: colorScheme.onSurface, size: 22),
+          Icon(CupertinoIcons.settings_outlined, color: colorScheme.onSurface, size: 22),
         ],
       ),
     );
@@ -150,11 +150,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+          Icon(CupertinoIcons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
           Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
-          TextButton(
+          CupertinoButton(
             onPressed: () => ref.invalidate(showsByOrgProvider(widget.orgId)),
             child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
           ),
@@ -407,7 +407,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
+                      Icon(CupertinoIcons.search, color: colorScheme.onSurfaceVariant, size: 20),
                       const SizedBox(width: 12),
                       Text(
                         'Search',
@@ -418,7 +418,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(Icons.tune, color: colorScheme.onSurfaceVariant, size: 22),
+              Icon(CupertinoIcons.tune, color: colorScheme.onSurfaceVariant, size: 22),
               const SizedBox(width: 12),
               // Add button
               GestureDetector(
@@ -430,7 +430,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     color: colorScheme.onSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Icon(Icons.add, color: colorScheme.surface, size: 24),
+                  child: Icon(CupertinoIcons.add, color: colorScheme.surface, size: 24),
                 ),
               ),
             ],
@@ -453,13 +453,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.play_arrow_outlined, 'Day', false, () {
+          _buildNavItem(CupertinoIcons.play_arrow_outlined, 'Day', false, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
           }, colorScheme),
-          _buildNavItem(Icons.format_list_bulleted, 'Shows', true, () {
+          _buildNavItem(CupertinoIcons.format_list_bulleted, 'Shows', true, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
           }, colorScheme),
-          _buildNavItem(Icons.people_outline, 'Network', false, () {
+          _buildNavItem(CupertinoIcons.people_outline, 'Network', false, () {
             context.go('/org/${widget.orgId}/shows', extra: widget.orgName);
           }, colorScheme),
         ],

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Section header widget for day view sections
 class SectionHeader extends StatelessWidget {
@@ -15,7 +16,7 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -28,7 +29,7 @@ class SectionHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -39,7 +40,7 @@ class SectionHeader extends StatelessWidget {
               child: Text(
                 actionLabel!,
                 style: TextStyle(
-                  color: colorScheme.primary,
+                  color: AppTheme.getPrimaryColor(brightness),
                   fontSize: 12,
                 ),
               ),
@@ -78,11 +79,11 @@ class _HorizontalCardListState extends State<HorizontalCardList> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return SizedBox(
       height: widget.height,
-      child: Scrollbar(
+      child: CupertinoScrollbar(
         controller: _scrollController,
         thumbVisibility: true,
         thickness: 3,

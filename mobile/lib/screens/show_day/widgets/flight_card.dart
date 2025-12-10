@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:mobile/widgets/marquee_text.dart';
+import '../../../theme/app_theme.dart';
 
 /// Flight card widget for displaying flight information
 /// Designed for horizontal scrolling list
@@ -29,7 +30,7 @@ class FlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: onTap,
@@ -37,9 +38,9 @@ class FlightCard extends StatelessWidget {
         width: 200,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: IntrinsicHeight(
           child: Column(
@@ -52,14 +53,14 @@ class FlightCard extends StatelessWidget {
               children: [
                 Text(
                   'Flight',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 11),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: MarqueeText(
                     flightNumber,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 11,
                     ),
                     textAlign: TextAlign.right,
@@ -77,7 +78,7 @@ class FlightCard extends StatelessWidget {
                     child: MarqueeText(
                       departure,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -96,7 +97,7 @@ class FlightCard extends StatelessWidget {
                             child: MarqueeText(
                               duration!,
                               style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
+                                color: AppTheme.getMutedForegroundColor(brightness),
                                 fontSize: 10,
                               ),
                               textAlign: TextAlign.center,
@@ -106,7 +107,7 @@ class FlightCard extends StatelessWidget {
                         Container(
                           width: 60,
                           height: 1,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
                         ),
                       ],
                     ),
@@ -117,7 +118,7 @@ class FlightCard extends StatelessWidget {
                     child: MarqueeText(
                       arrival,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -135,7 +136,7 @@ class FlightCard extends StatelessWidget {
                   Expanded(
                     child: MarqueeText(
                       departureTime,
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 11),
+                      style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 11),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -143,7 +144,7 @@ class FlightCard extends StatelessWidget {
                     child: MarqueeText(
                       arrivalTime,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 11,
                       ),
                       textAlign: TextAlign.right,

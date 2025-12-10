@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 
 /// Layer 3: Add schedule item form screen
@@ -29,9 +30,9 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
   
   String _itemType = 'custom';
   DateTime? _startDate;
-  TimeOfDay? _startTime;
+  DateTime? _startTime;
   DateTime? _endDate;
-  TimeOfDay? _endTime;
+  DateTime? _endTime;
   
   bool _isLoading = false;
 
@@ -59,7 +60,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
     super.dispose();
   }
 
-  DateTime? _combineDateTime(DateTime? date, TimeOfDay? time) {
+  DateTime? _combineDateTime(DateTime? date, DateTime? time) {
     if (date == null || time == null) return null;
     return DateTime(
       date.year,
@@ -118,7 +119,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Add Schedule Item',
@@ -131,7 +132,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Name',
                       hint: 'Name',
                       controller: _titleController,
@@ -152,45 +153,71 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
                             child: Text(
                               'Type',
                               style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
+                                color: AppTheme.getMutedForegroundColor(brightness),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                           Expanded(
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _itemType,
-                              decoration: InputDecoration(
-                                filled: false,
-                                border: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: colorScheme.outline),
-                                ),
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              dropdownColor: colorScheme.surfaceContainerHighest,
-                              style: TextStyle(
-                                color: colorScheme.onSurface,
-                                fontSize: 14,
-                              ),
-                              items: _itemTypes.map((type) => DropdownMenuItem(
-                                value: type,
-                                child: Text(_formatType(type)),
-                              )).toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() => _itemType = value);
-                                }
+                            child: GestureDetector(
+                              onTap: () {
+                                showCupertinoModalPopup(
+                                  context: context,
+                                  builder: (BuildContext context) => Container(
+                                    height: 216,
+                                    padding: const EdgeInsets.only(top: 6.0),
+                                    margin: EdgeInsets.only(
+                                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                                    ),
+                                    color: CupertinoColors.systemBackground.resolveFrom(context),
+                                    child: SafeArea(
+                                      top: false,
+                                      child: CupertinoPicker(
+                                        itemExtent: 32.0,
+                                        scrollController: FixedExtentScrollController(
+                                          initialItem: _itemTypes.indexOf(_itemType),
+                                        ),
+                                        onSelectedItemChanged: (int index) {
+                                          setState(() => _itemType = _itemTypes[index]);
+                                        },
+                                        children: _itemTypes.map((type) => Center(
+                                          child: Text(
+                                            _formatType(type),
+                                            style: TextStyle(
+                                              color: AppTheme.getForegroundColor(brightness),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        )).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                );
                               },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: AppTheme.getBorderColor(brightness).withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  _formatType(_itemType),
+                                  style: TextStyle(
+                                    color: AppTheme.getForegroundColor(brightness),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Location',
                       hint: 'Location',
                       controller: _locationController,
@@ -204,7 +231,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
                         child: Text(
                           'START',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -230,7 +257,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
                         child: Text(
                           'END (Optional)',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -248,7 +275,7 @@ class _AddScheduleItemScreenState extends ConsumerState<AddScheduleItemScreen> {
                       onChanged: (time) => setState(() => _endTime = time),
                     ),
                     const SizedBox(height: 16),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Notes',
                       hint: 'Notes',
                       controller: _notesController,

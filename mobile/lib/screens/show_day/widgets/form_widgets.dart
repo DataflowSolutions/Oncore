@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// A consistent text field for forms matching the dark theme style
-class FormTextField extends StatelessWidget {
+class FormCupertinoTextField extends StatelessWidget {
   final String label;
   final String? hint;
   final TextEditingController? controller;
@@ -11,7 +12,7 @@ class FormTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
 
-  const FormTextField({
+  const FormCupertinoTextField({
     super.key,
     required this.label,
     this.hint,
@@ -25,7 +26,7 @@ class FormTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -39,7 +40,7 @@ class FormTextField extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
+                  color: AppTheme.getMutedForegroundColor(brightness),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -47,35 +48,29 @@ class FormTextField extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: TextFormField(
+            child: CupertinoTextField(
               controller: controller,
               keyboardType: keyboardType,
               maxLines: maxLines,
               enabled: enabled,
-              validator: validator,
               onChanged: onChanged,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 14,
               ),
-              decoration: InputDecoration(
-                hintText: hint ?? label,
-                hintStyle: TextStyle(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  fontSize: 14,
-                ),
-                filled: false,
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorScheme.onSurface),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              placeholder: hint ?? label,
+              placeholderStyle: TextStyle(
+                color: AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
+                fontSize: 14,
               ),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
+                  ),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ],
@@ -103,7 +98,7 @@ class FormDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     final displayText = value != null
         ? '${value!.day}/${value!.month}/${value!.year}'
@@ -118,7 +113,7 @@ class FormDateField extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -127,30 +122,36 @@ class FormDateField extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: enabled ? () async {
-                final picked = await showDatePicker(
+                DateTime tempDate = value ?? DateTime.now();
+                await showCupertinoModalPopup(
                   context: context,
-                  initialDate: value ?? DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: colorScheme,
+                  builder: (BuildContext context) => Container(
+                    height: 216,
+                    padding: const EdgeInsets.only(top: 6.0),
+                    margin: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    color: CupertinoColors.systemBackground.resolveFrom(context),
+                    child: SafeArea(
+                      top: false,
+                      child: CupertinoDatePicker(
+                        initialDateTime: tempDate,
+                        mode: CupertinoDatePickerMode.date,
+                        onDateTimeChanged: (DateTime newDate) {
+                          tempDate = newDate;
+                        },
                       ),
-                      child: child!,
-                    );
-                  },
+                    ),
+                  ),
                 );
-                if (picked != null) {
-                  onChanged?.call(picked);
-                }
+                onChanged?.call(tempDate);
               } : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: colorScheme.outline.withValues(alpha: 0.5),
+                      color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
                     ),
                   ),
                 ),
@@ -158,8 +159,8 @@ class FormDateField extends StatelessWidget {
                   displayText,
                   style: TextStyle(
                     color: value != null 
-                        ? colorScheme.onSurface 
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ? AppTheme.getForegroundColor(brightness) 
+                        : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
                     fontSize: 14,
                   ),
                 ),
@@ -176,8 +177,8 @@ class FormDateField extends StatelessWidget {
 class FormTimeField extends StatelessWidget {
   final String label;
   final String? hint;
-  final TimeOfDay? value;
-  final void Function(TimeOfDay?)? onChanged;
+  final DateTime? value;
+  final void Function(DateTime?)? onChanged;
   final bool enabled;
 
   const FormTimeField({
@@ -191,7 +192,7 @@ class FormTimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     final displayText = value != null
         ? '${value!.hour.toString().padLeft(2, '0')}:${value!.minute.toString().padLeft(2, '0')}'
@@ -206,7 +207,7 @@ class FormTimeField extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -215,28 +216,48 @@ class FormTimeField extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: enabled ? () async {
-                final picked = await showTimePicker(
-                  context: context,
-                  initialTime: value ?? TimeOfDay.now(),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: colorScheme,
-                      ),
-                      child: child!,
-                    );
-                  },
+                final now = DateTime.now();
+                final initialTime = value ?? now;
+                Duration tempDuration = Duration(
+                  hours: initialTime.hour,
+                  minutes: initialTime.minute,
                 );
-                if (picked != null) {
-                  onChanged?.call(picked);
-                }
+                await showCupertinoModalPopup(
+                  context: context,
+                  builder: (BuildContext context) => Container(
+                    height: 216,
+                    padding: const EdgeInsets.only(top: 6.0),
+                    margin: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    color: CupertinoColors.systemBackground.resolveFrom(context),
+                    child: SafeArea(
+                      top: false,
+                      child: CupertinoTimerPicker(
+                        mode: CupertinoTimerPickerMode.hm,
+                        initialTimerDuration: tempDuration,
+                        onTimerDurationChanged: (Duration newDuration) {
+                          tempDuration = newDuration;
+                        },
+                      ),
+                    ),
+                  ),
+                );
+                final newTime = DateTime(
+                  now.year,
+                  now.month,
+                  now.day,
+                  tempDuration.inHours,
+                  tempDuration.inMinutes % 60,
+                );
+                onChanged?.call(newTime);
               } : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: colorScheme.outline.withValues(alpha: 0.5),
+                      color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
                     ),
                   ),
                 ),
@@ -244,8 +265,8 @@ class FormTimeField extends StatelessWidget {
                   displayText,
                   style: TextStyle(
                     color: value != null 
-                        ? colorScheme.onSurface 
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ? AppTheme.getForegroundColor(brightness) 
+                        : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
                     fontSize: 14,
                   ),
                 ),
@@ -273,30 +294,21 @@ class FormSubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
+        child: CupertinoButton.filled(
           onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colorScheme.onSurface,
-            foregroundColor: colorScheme.surface,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-            elevation: 0,
-          ),
+          borderRadius: BorderRadius.circular(32),
           child: isLoading
-              ? SizedBox(
+              ? const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colorScheme.surface,
+                  child: CupertinoActivityIndicator(
+                    color: CupertinoColors.white,
                   ),
                 )
               : Text(
@@ -320,23 +332,15 @@ class AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
+        child: CupertinoButton.filled(
           onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colorScheme.onSurface,
-            foregroundColor: colorScheme.surface,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-            elevation: 0,
-          ),
+          borderRadius: BorderRadius.circular(32),
           child: const Text(
             'Add',
             style: TextStyle(
@@ -373,7 +377,7 @@ class ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: onTap,
@@ -381,7 +385,7 @@ class ContactCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -395,7 +399,7 @@ class ContactCard extends StatelessWidget {
                   child: Text(
                     name,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -405,13 +409,13 @@ class ContactCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
+                      color: AppTheme.getCardColor(brightness),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       role!,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -420,8 +424,8 @@ class ContactCard extends StatelessWidget {
                 // Chevron to indicate clickable
                 const SizedBox(width: 8),
                 Icon(
-                  Icons.chevron_right,
-                  color: colorScheme.onSurfaceVariant,
+                  CupertinoIcons.chevron_right,
+                  color: AppTheme.getMutedForegroundColor(brightness),
                   size: 20,
                 ),
               ],
@@ -431,14 +435,14 @@ class ContactCard extends StatelessWidget {
             if (phone != null && phone!.isNotEmpty)
               _ActionRow(
                 value: phone!,
-                icon: Icons.phone,
+                icon: CupertinoIcons.phone,
                 onTap: onPhoneTap,
               ),
             // Email
             if (email != null && email!.isNotEmpty)
               _ActionRow(
                 value: email!,
-                icon: Icons.email,
+                icon: CupertinoIcons.mail,
                 onTap: onEmailTap,
               ),
           ],
@@ -461,13 +465,13 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -477,7 +481,7 @@ class _ActionRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
@@ -487,14 +491,14 @@ class _ActionRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: AppTheme.getCardColor(brightness),
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Icon(
                 icon,
                 size: 16,
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
               ),
             ),
           ),
@@ -521,7 +525,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: onTap,
@@ -529,7 +533,7 @@ class ItemCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -538,7 +542,7 @@ class ItemCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -548,7 +552,7 @@ class ItemCard extends StatelessWidget {
               Text(
                 subtitle!,
                 style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
+                  color: AppTheme.getMutedForegroundColor(brightness),
                   fontSize: 14,
                 ),
               ),
@@ -563,14 +567,14 @@ class ItemCard extends StatelessWidget {
                     Text(
                       row.label,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 13,
                       ),
                     ),
                     Text(
                       row.value,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),

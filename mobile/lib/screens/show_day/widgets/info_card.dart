@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Info card types for different content
 enum InfoCardType {
@@ -31,16 +32,16 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +49,7 @@ class InfoCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -59,7 +60,7 @@ class InfoCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle!,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -69,7 +70,7 @@ class InfoCard extends StatelessWidget {
               Text(
                 detail!,
                 style: TextStyle(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
                 maxLines: 1,
@@ -102,16 +103,16 @@ class InfoCardCompact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +120,7 @@ class InfoCardCompact extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -130,19 +131,19 @@ class InfoCardCompact extends StatelessWidget {
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               )
             else if (badgeCount != null && badgeCount! > 0)
               Text(
                 '$badgeCount Attached', // Or "Available" depending on context
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 12),
               )
             else
               Text(
                 'Not Added',
-                style: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5), fontSize: 12),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5), fontSize: 12),
               ),
           ],
         ),

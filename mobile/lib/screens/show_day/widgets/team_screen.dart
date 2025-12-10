@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 import 'add_team_member_screen.dart';
 
@@ -30,22 +31,22 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 
   Future<void> _deleteMember(AssignedPerson person) async {
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: const Text('Remove Team Member'),
         content: Text('Are you sure you want to remove ${person.name} from this show?'),
         actions: [
-          TextButton(
+          CupertinoButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          CupertinoButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
             ),
-            child: const Text('Remove'),
           ),
         ],
       ),
@@ -92,7 +93,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final supabase = ref.read(supabaseClientProvider);
     final currentUserEmail = supabase.auth.currentUser?.email;
 
@@ -104,7 +105,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             children: [
               Expanded(
                 child: widget.assignments.isEmpty
-                    ? _buildEmptyState(colorScheme)
+                    ? _buildEmptyState(brightness)
                     : ListView.builder(
                         padding: const EdgeInsets.all(24),
                         itemCount: widget.assignments.length,
@@ -131,9 +132,9 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           ),
           if (_isDeleting)
             Container(
-              color: colorScheme.surface.withValues(alpha: 0.5),
+              color: AppTheme.getBackgroundColor(brightness).withValues(alpha: 0.5),
               child: Center(
-                child: CircularProgressIndicator(color: colorScheme.onSurface),
+                child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
               ),
             ),
         ],
@@ -141,21 +142,21 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.people_outline,
+            CupertinoIcons.person_3,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No team members',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -164,7 +165,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           Text(
             'Add team members to this show',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -209,13 +210,13 @@ class TeamMemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -225,14 +226,14 @@ class TeamMemberCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.15),
+              color: AppTheme.getPrimaryColor(brightness).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 _getInitials(name),
                 style: TextStyle(
-                  color: colorScheme.primary,
+                  color: AppTheme.getPrimaryColor(brightness),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -248,7 +249,7 @@ class TeamMemberCard extends StatelessWidget {
                 Text(
                   name,
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -258,7 +259,7 @@ class TeamMemberCard extends StatelessWidget {
                   Text(
                     _buildSubtitle(),
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 13,
                     ),
                   ),
@@ -268,14 +269,14 @@ class TeamMemberCard extends StatelessWidget {
           ),
           // Delete button only (removed duplicate badge)
           if (onDelete != null)
-            IconButton(
+            CupertinoButton(
+              padding: EdgeInsets.zero,
               onPressed: onDelete,
-              icon: Icon(
-                Icons.remove_circle_outline,
-                color: colorScheme.error,
+              child: const Icon(
+                CupertinoIcons.minus_circle,
+                color: CupertinoColors.destructiveRed,
                 size: 24,
               ),
-              tooltip: 'Remove from show',
             ),
         ],
       ),
@@ -308,17 +309,17 @@ class TeamMemberCard extends StatelessWidget {
         .join(' ');
   }
 
-  Color _getMemberTypeColor(String type, ColorScheme colorScheme) {
+  Color _getMemberTypeColor(String type, Brightness brightness) {
     switch (type.toLowerCase()) {
       case 'artist':
-        return colorScheme.primary;
+        return AppTheme.getPrimaryColor(brightness);
       case 'tour_manager':
       case 'manager':
-        return colorScheme.tertiary;
+        return AppTheme.getPrimaryColor(brightness);
       case 'crew':
-        return colorScheme.secondary;
+        return AppTheme.getPrimaryColor(brightness);
       default:
-        return colorScheme.onSurfaceVariant;
+        return AppTheme.getMutedForegroundColor(brightness);
     }
   }
 }

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 
 /// Layer 3: Add flight form screen
@@ -32,13 +33,13 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
   final _departCityController = TextEditingController();
   final _departAirportController = TextEditingController();
   DateTime? _departDate;
-  TimeOfDay? _departTime;
+  DateTime? _departTime;
   
   // Arrival
   final _arrivalAirportController = TextEditingController();
   final _arrivalCityController = TextEditingController();
   DateTime? _arrivalDate;
-  TimeOfDay? _arrivalTime;
+  DateTime? _arrivalTime;
   
   // Flight details
   final _gateController = TextEditingController();
@@ -75,9 +76,9 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
     super.dispose();
   }
 
-  DateTime? _combineDateTime(DateTime? date, TimeOfDay? time) {
+  DateTime? _combineDateTime(DateTime? date, DateTime? time) {
     if (date == null) return null;
-    final effectiveTime = time ?? const TimeOfDay(hour: 12, minute: 0);
+    final effectiveTime = time ?? DateTime.now();
     return DateTime(
       date.year,
       date.month,
@@ -233,7 +234,7 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                 child: Column(
                   children: [
                     // Airline
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Airline',
                       hint: 'Name',
                       controller: _airlineController,
@@ -242,12 +243,12 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                     
                     // Departure section header
                     _buildSectionHeader(context, 'Departure'),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: '',
                       hint: 'City',
                       controller: _departCityController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: '',
                       hint: 'Airport',
                       controller: _departAirportController,
@@ -268,12 +269,12 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                     
                     // Arrival section header
                     _buildSectionHeader(context, 'Arrival'),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: '',
                       hint: 'City',
                       controller: _arrivalCityController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: '',
                       hint: 'Airport',
                       controller: _arrivalAirportController,
@@ -293,52 +294,52 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
                     const SizedBox(height: 8),
                     
                     // Flight details
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Gate',
                       hint: 'Gate',
                       controller: _gateController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Boards',
                       hint: 'Boards',
                       controller: _boardsController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Flight #',
                       hint: 'Flight Number',
                       controller: _flightNumberController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Seat',
                       hint: 'Seat',
                       controller: _seatController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Seq',
                       hint: 'Sequence',
                       controller: _sequenceController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Group',
                       hint: 'Group',
                       controller: _groupController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Passenger',
                       hint: 'Full Name',
                       controller: _passengerController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Class',
                       hint: 'Class',
                       controller: _classController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Ticket#',
                       hint: 'Ticket Number',
                       controller: _ticketNumberController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Book. No.',
                       hint: 'Booking Number',
                       controller: _bookingRefController,
@@ -359,7 +360,7 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -369,7 +370,7 @@ class _AddFlightScreenState extends ConsumerState<AddFlightScreen> {
             child: Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),

@@ -67,7 +67,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => CupertinoPage(
+          child: const HomeScreen(),
+        ),
       ),
       
       // Create organization page (protected)
@@ -87,10 +89,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/org/:orgId/shows',
         name: 'shows',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 1);
+          return CupertinoPage(
+            child: MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 1),
+          );
         },
       ),
       
@@ -99,15 +103,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/org/:orgId/shows/:showId/day',
         name: 'show-day',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final showId = state.pathParameters['showId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return MainShell(
-            orgId: orgId, 
-            orgName: orgName, 
-            initialTabIndex: 0,
-            showId: showId,
+          return CupertinoPage(
+            child: MainShell(
+              orgId: orgId, 
+              orgName: orgName, 
+              initialTabIndex: 0,
+              showId: showId,
+            ),
           );
         },
       ),
@@ -116,10 +122,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/org/:orgId/network',
         name: 'network',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final orgId = state.pathParameters['orgId']!;
           final orgName = state.extra as String? ?? 'Organization';
-          return MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 2);
+          return CupertinoPage(
+            child: MainShell(orgId: orgId, orgName: orgName, initialTabIndex: 2),
+          );
         },
       ),
       
@@ -141,48 +149,56 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => const CupertinoPage(
+          child: LoginScreen(),
+        ),
       ),
       
       // Signup page (public)
       GoRoute(
         path: '/signup',
         name: 'signup',
-        builder: (context, state) => const SignupScreen(),
+        pageBuilder: (context, state) => const CupertinoPage(
+          child: SignupScreen(),
+        ),
       ),
     ],
     
     // Error page
     errorBuilder: (context, state) {
-      final colorScheme = Theme.of(context).colorScheme;
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Page not found',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                state.matchedLocation,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+      return CupertinoPageScaffold(
+        navigationBar: const CupertinoNavigationBar(
+          middle: Text('Error'),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  CupertinoIcons.exclamationmark_triangle,
+                  size: 64,
+                  color: CupertinoColors.systemRed,
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.go('/'),
-                child: const Text('Go Home'),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  'Page not found',
+                  style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.matchedLocation,
+                  style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                    color: CupertinoColors.secondaryLabel,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                CupertinoButton.filled(
+                  onPressed: () => context.go('/'),
+                  child: const Text('Go Home'),
+                ),
+              ],
+            ),
           ),
         ),
       );

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Action item data for the action bar
 class ActionItem {
@@ -45,7 +46,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: action.onTap,
@@ -57,7 +58,7 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(
               action.icon,
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               size: 22,
             ),
             if (action.label != null) ...[
@@ -65,7 +66,7 @@ class _ActionButton extends StatelessWidget {
               Text(
                 action.label!,
                 style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
+                  color: AppTheme.getMutedForegroundColor(brightness),
                   fontSize: 10,
                 ),
               ),

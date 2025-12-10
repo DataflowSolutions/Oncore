@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Single source of truth for all colors in the Oncore mobile app.
 /// Matches the web client's color scheme from globals.css.
 /// 
 /// Usage:
-///   - Use `Theme.of(context).colorScheme` for Material theme colors
+///   - Use `CupertinoTheme.of(context)` for Material theme colors
 ///   - Use `AppColors` for custom semantic colors not in ColorScheme
 abstract final class AppColors {
   // ============================================

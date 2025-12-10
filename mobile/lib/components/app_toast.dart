@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Toast notification types with distinct visual styling
 enum ToastType {
@@ -50,22 +50,22 @@ class AppToast {
 
   /// Show a success toast
   static void success(BuildContext context, String message) {
-    show(context, message, type: ToastType.success, icon: Icons.check_circle_rounded);
+    show(context, message, type: ToastType.success, icon: CupertinoIcons.check_mark_circled);
   }
 
   /// Show an error toast
   static void error(BuildContext context, String message) {
-    show(context, message, type: ToastType.error, icon: Icons.error_rounded);
+    show(context, message, type: ToastType.error, icon: CupertinoIcons.exclamationmark_circle);
   }
 
   /// Show an info toast
   static void info(BuildContext context, String message) {
-    show(context, message, type: ToastType.info, icon: Icons.info_rounded);
+    show(context, message, type: ToastType.info, icon: CupertinoIcons.info_circle);
   }
 
   /// Show a warning toast
   static void warning(BuildContext context, String message) {
-    show(context, message, type: ToastType.warning, icon: Icons.warning_rounded);
+    show(context, message, type: ToastType.warning, icon: CupertinoIcons.exclamationmark_triangle);
   }
 
   static void _show(BuildContext context, ToastConfig config) {
@@ -152,8 +152,7 @@ class _ToastWidgetState extends State<_ToastWidget>
   }
 
   Color _getBackgroundColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     switch (widget.config.type) {
       case ToastType.success:
@@ -169,46 +168,50 @@ class _ToastWidgetState extends State<_ToastWidget>
             ? const Color(0xFFE65100).withValues(alpha: 0.95)
             : const Color(0xFFFF9800).withValues(alpha: 0.95);
       case ToastType.info:
-        return colorScheme.surfaceContainerHighest.withValues(alpha: 0.98);
+        return brightness == Brightness.dark
+            ? const Color(0xFF424242).withValues(alpha: 0.98)
+            : const Color(0xFFF5F5F5).withValues(alpha: 0.98);
     }
   }
 
   Color _getIconColor(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     switch (widget.config.type) {
       case ToastType.success:
-        return brightness == Brightness.dark ? Colors.green.shade300 : Colors.white;
+        return brightness == Brightness.dark ? const Color(0xFF81C784) : CupertinoColors.white;
       case ToastType.error:
-        return brightness == Brightness.dark ? Colors.red.shade300 : Colors.white;
+        return brightness == Brightness.dark ? const Color(0xFFE57373) : CupertinoColors.white;
       case ToastType.warning:
-        return brightness == Brightness.dark ? Colors.orange.shade300 : Colors.white;
+        return brightness == Brightness.dark ? const Color(0xFFFFB74D) : CupertinoColors.white;
       case ToastType.info:
-        return Theme.of(context).colorScheme.primary;
+        return CupertinoTheme.of(context).primaryColor;
     }
   }
 
   Color _getTextColor(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    
     switch (widget.config.type) {
       case ToastType.success:
       case ToastType.error:
       case ToastType.warning:
-        return Colors.white;
+        return CupertinoColors.white;
       case ToastType.info:
-        return Theme.of(context).colorScheme.onSurface;
+        return brightness == Brightness.dark ? CupertinoColors.white : CupertinoColors.black;
     }
   }
 
   IconData _getDefaultIcon() {
     switch (widget.config.type) {
       case ToastType.success:
-        return Icons.check_circle_rounded;
+        return CupertinoIcons.check_mark_circled;
       case ToastType.error:
-        return Icons.error_rounded;
+        return CupertinoIcons.exclamationmark_circle;
       case ToastType.warning:
-        return Icons.warning_rounded;
+        return CupertinoIcons.exclamationmark_triangle;
       case ToastType.info:
-        return Icons.info_rounded;
+        return CupertinoIcons.info_circle;
     }
   }
 
@@ -225,57 +228,54 @@ class _ToastWidgetState extends State<_ToastWidget>
         position: _slideAnimation,
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Material(
-            color: Colors.transparent,
-            child: GestureDetector(
-              onTap: widget.onDismiss,
-              onHorizontalDragEnd: (details) {
-                if (details.primaryVelocity != null &&
-                    details.primaryVelocity!.abs() > 100) {
-                  widget.onDismiss();
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: _getBackgroundColor(context),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      widget.config.icon ?? _getDefaultIcon(),
-                      color: _getIconColor(context),
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.config.message,
-                        style: TextStyle(
-                          color: _getTextColor(context),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+          child: GestureDetector(
+            onTap: widget.onDismiss,
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity != null &&
+                  details.primaryVelocity!.abs() > 100) {
+                widget.onDismiss();
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: _getBackgroundColor(context),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: CupertinoColors.black.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.config.icon ?? _getDefaultIcon(),
+                    color: _getIconColor(context),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.config.message,
+                      style: TextStyle(
+                        color: _getTextColor(context),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.close_rounded,
-                      color: _getTextColor(context).withValues(alpha: 0.6),
-                      size: 18,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    CupertinoIcons.xmark,
+                    color: _getTextColor(context).withValues(alpha: 0.6),
+                    size: 18,
+                  ),
+                ],
               ),
             ),
           ),

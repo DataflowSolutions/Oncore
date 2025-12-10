@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 import 'add_guest_screen.dart';
 import 'detail_screen.dart';
@@ -23,7 +24,7 @@ class GuestlistScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     // Calculate total guest count
     final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
@@ -42,14 +43,14 @@ class GuestlistScreen extends ConsumerWidget {
                   Text(
                     '${guests.length} entries',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
                   Text(
                     '$totalGuests total guests',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -58,7 +59,7 @@ class GuestlistScreen extends ConsumerWidget {
             ),
           Expanded(
             child: guests.isEmpty
-                ? _buildEmptyState(colorScheme)
+                ? _buildEmptyState(brightness)
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     itemCount: guests.length,
@@ -79,21 +80,21 @@ class GuestlistScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.list_alt_outlined,
+            CupertinoIcons.list_bullet,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No guests',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -102,7 +103,7 @@ class GuestlistScreen extends ConsumerWidget {
           Text(
             'Add a guest to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -135,38 +136,38 @@ class GuestlistScreen extends ConsumerWidget {
             DetailItem(
               label: 'Name',
               value: guest.name,
-              icon: Icons.person_outline,
+              icon: CupertinoIcons.person,
             ),
             DetailItem(
               label: 'Guest Count',
               value: '${guest.guestCount}',
-              icon: Icons.group_outlined,
+              icon: CupertinoIcons.person_3,
             ),
             if (guest.passType != null)
               DetailItem(
                 label: 'Pass Type',
                 value: guest.passType,
-                icon: Icons.badge_outlined,
+                icon: CupertinoIcons.person_badge_plus,
               ),
             if (guest.phone != null)
               DetailItem(
                 label: 'Phone',
                 value: guest.phone,
-                icon: Icons.phone_outlined,
+                icon: CupertinoIcons.phone,
                 type: DetailItemType.phone,
               ),
             if (guest.email != null)
               DetailItem(
                 label: 'Email',
                 value: guest.email,
-                icon: Icons.email_outlined,
+                icon: CupertinoIcons.mail,
                 type: DetailItemType.email,
               ),
             if (guest.notes != null)
               DetailItem(
                 label: 'Notes',
                 value: guest.notes,
-                icon: Icons.notes_outlined,
+                icon: CupertinoIcons.doc_text,
                 type: DetailItemType.multiline,
               ),
           ],
@@ -185,7 +186,7 @@ class _GuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: onTap,
@@ -193,7 +194,7 @@ class _GuestCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHigh,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -206,7 +207,7 @@ class _GuestCard extends StatelessWidget {
                   Text(
                     guest.name,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -216,7 +217,7 @@ class _GuestCard extends StatelessWidget {
                     Text(
                       guest.passType!,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 13,
                       ),
                     ),
@@ -228,13 +229,13 @@ class _GuestCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 '${guest.guestCount}',
                 style: TextStyle(
-                  color: colorScheme.onSurface,
+                  color: AppTheme.getForegroundColor(brightness),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -243,8 +244,8 @@ class _GuestCard extends StatelessWidget {
             // Chevron
             const SizedBox(width: 8),
             Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurfaceVariant,
+              CupertinoIcons.chevron_right,
+              color: AppTheme.getMutedForegroundColor(brightness),
               size: 20,
             ),
           ],

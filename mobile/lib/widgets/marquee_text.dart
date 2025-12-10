@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 /// A text widget that displays with a fade on the right when content overflows
 class MarqueeText extends StatefulWidget {
@@ -73,15 +73,15 @@ class _MarqueeTextState extends State<MarqueeText> {
         return ClipRect(
           child: ShaderMask(
             shaderCallback: (Rect bounds) {
-              return LinearGradient(
+              return const LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: const [
-                  Colors.black,
-                  Colors.black,
-                  Colors.transparent,
+                colors: [
+                  Color(0xFF000000),
+                  Color(0xFF000000),
+                  Color(0x00000000),
                 ],
-                stops: const [0.0, 0.85, 1.0],
+                stops: [0.0, 0.85, 1.0],
               ).createShader(bounds);
             },
             blendMode: BlendMode.dstIn,

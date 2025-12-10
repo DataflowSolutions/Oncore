@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Header widget for the show day view
 /// Displays: Show title, artist, day/time, and full date
@@ -20,7 +21,7 @@ class DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -38,7 +39,7 @@ class DayHeader extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -48,7 +49,7 @@ class DayHeader extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   artist,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                 ),
               ],
             ),
@@ -60,12 +61,12 @@ class DayHeader extends StatelessWidget {
             children: [
               Text(
                 dayTime,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
               ),
               const SizedBox(height: 2),
               Text(
                 date,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 12),
               ),
             ],
           ),

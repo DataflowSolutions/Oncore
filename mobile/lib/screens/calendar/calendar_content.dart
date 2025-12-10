@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../shows/shows_list_screen.dart';
 import '../main/main_shell.dart' show saveLastShow;
@@ -57,36 +58,36 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
   @override
   Widget build(BuildContext context) {
     final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return showsAsync.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: colorScheme.onSurface),
+        child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
       ),
-      error: (error, stack) => _buildErrorState(colorScheme),
-      data: (shows) => _buildCalendar(shows, colorScheme),
+      error: (error, stack) => _buildErrorState(brightness),
+      data: (shows) => _buildCalendar(shows, brightness),
     );
   }
 
-  Widget _buildErrorState(ColorScheme colorScheme) {
+  Widget _buildErrorState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+          Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
           const SizedBox(height: 16),
-          Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          Text('Failed to load shows', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
           const SizedBox(height: 12),
-          TextButton(
+          CupertinoButton(
             onPressed: () => ref.invalidate(showsByOrgProvider(widget.orgId)),
-            child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
+            child: Text('Retry', style: TextStyle(color: AppTheme.getForegroundColor(brightness))),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCalendar(List<Show> shows, ColorScheme colorScheme) {
+  Widget _buildCalendar(List<Show> shows, Brightness brightness) {
     // Group shows by date string (YYYY-MM-DD)
     final showsByDate = <String, List<Show>>{};
     for (final show in shows) {
@@ -101,13 +102,13 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
         onPageChanged: _onPageChanged,
         itemBuilder: (context, page) {
           final monthDate = _getMonthFromPage(page);
-          return _buildMonthView(monthDate, showsByDate, colorScheme);
+          return _buildMonthView(monthDate, showsByDate, brightness);
         },
       ),
     );
   }
 
-  Widget _buildMonthView(DateTime monthDate, Map<String, List<Show>> showsByDate, ColorScheme colorScheme) {
+  Widget _buildMonthView(DateTime monthDate, Map<String, List<Show>> showsByDate, Brightness brightness) {
     final year = monthDate.year;
     final month = monthDate.month;
     
@@ -176,7 +177,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
             child: Text(
               '$monthName $year',
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -192,7 +193,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
                 child: Text(
                   day,
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -217,7 +218,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
                       final dateKey = '${dayInfo.date.year}-${dayInfo.date.month.toString().padLeft(2, '0')}-${dayInfo.date.day.toString().padLeft(2, '0')}';
                       final dayShows = showsByDate[dateKey] ?? [];
                       return Expanded(
-                        child: _buildDayCell(dayInfo, dayShows, colorScheme),
+                        child: _buildDayCell(dayInfo, dayShows, brightness),
                       );
                     }).toList(),
                   ),
@@ -230,7 +231,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
     );
   }
 
-  Widget _buildDayCell(_CalendarDay dayInfo, List<Show> shows, ColorScheme colorScheme) {
+  Widget _buildDayCell(_CalendarDay dayInfo, List<Show> shows, Brightness brightness) {
     final now = DateTime.now();
     final isToday = dayInfo.date.year == now.year &&
         dayInfo.date.month == now.month &&
@@ -241,7 +242,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3), width: 0.5),
+            bottom: BorderSide(color: AppTheme.getBorderColor(brightness).withValues(alpha: 0.3), width: 0.5),
           ),
         ),
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -253,7 +254,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
               height: 28,
               decoration: isToday
                   ? BoxDecoration(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(14),
                     )
                   : null,
@@ -262,8 +263,8 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
                   '${dayInfo.day}',
                   style: TextStyle(
                     color: dayInfo.isCurrentMonth
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        ? AppTheme.getForegroundColor(brightness)
+                        : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.4),
                     fontSize: 14,
                     fontWeight: dayInfo.isCurrentMonth ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -277,7 +278,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: shows.take(3).map((show) => _buildShowBadge(show, colorScheme)).toList(),
+                  children: shows.take(3).map((show) => _buildShowBadge(show, brightness)).toList(),
                 ),
               ),
             ],
@@ -297,21 +298,21 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
     }
   }
 
-  Widget _buildShowBadge(Show show, ColorScheme colorScheme) {
+  Widget _buildShowBadge(Show show, Brightness brightness) {
     return GestureDetector(
       onTap: () => _onDayTap(show),
       child: Container(
         margin: const EdgeInsets.only(bottom: 2, left: 2, right: 2),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
+          color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3), width: 0.5),
+          border: Border.all(color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3), width: 0.5),
         ),
         child: Text(
           show.venueCity ?? show.title,
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: AppTheme.getForegroundColor(brightness),
             fontSize: 8,
             fontWeight: FontWeight.w500,
           ),

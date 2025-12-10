@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Card for displaying upcoming schedule items
 class UpcomingScheduleCard extends StatelessWidget {
@@ -19,7 +20,7 @@ class UpcomingScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: onTap,
@@ -27,9 +28,9 @@ class UpcomingScheduleCard extends StatelessWidget {
         width: 180, // Reduced from 200
         padding: const EdgeInsets.all(12), // Reduced from 16
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +40,7 @@ class UpcomingScheduleCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 13, // Reduced from 14
                 fontWeight: FontWeight.w600,
               ),
@@ -54,12 +55,12 @@ class UpcomingScheduleCard extends StatelessWidget {
                 // Time (start-end) on left
                 Text(
                   endTime != null ? '$time - $endTime' : time,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 11),
                 ),
                 // Date on right
                 Text(
                   date,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 11),
                 ),
               ],
             ),

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 
 /// Layer 3: Add guest form screen
@@ -80,7 +81,7 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Add Guest',
@@ -93,7 +94,7 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Name',
                       hint: 'Full Name',
                       controller: _nameController,
@@ -114,7 +115,7 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
                             child: Text(
                               'Guests',
                               style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
+                                color: AppTheme.getMutedForegroundColor(brightness),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -123,32 +124,32 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
                           Expanded(
                             child: Row(
                               children: [
-                                IconButton(
+                                CupertinoButton(
                                   onPressed: _guestCount > 1
                                       ? () => setState(() => _guestCount--)
                                       : null,
-                                  icon: Icon(
-                                    Icons.remove_circle_outline,
+                                  child: Icon(
+                                    CupertinoIcons.minus_circle,
                                     color: _guestCount > 1
-                                        ? colorScheme.onSurface
-                                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                                        ? AppTheme.getForegroundColor(brightness)
+                                        : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '$_guestCount',
                                   style: TextStyle(
-                                    color: colorScheme.onSurface,
+                                    color: AppTheme.getForegroundColor(brightness),
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                IconButton(
+                                CupertinoButton(
                                   onPressed: () => setState(() => _guestCount++),
-                                  icon: Icon(
-                                    Icons.add_circle_outline,
-                                    color: colorScheme.onSurface,
+                                  child: Icon(
+                                    CupertinoIcons.plus_circle,
+                                    color: AppTheme.getForegroundColor(brightness),
                                   ),
                                 ),
                               ],
@@ -157,24 +158,24 @@ class _AddGuestScreenState extends ConsumerState<AddGuestScreen> {
                         ],
                       ),
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Pass Type',
                       hint: 'e.g. VIP, Guest, AAA',
                       controller: _passTypeController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Phone',
                       hint: 'Phone Number',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Email',
                       hint: 'Email',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Notes',
                       hint: 'Notes',
                       controller: _notesController,

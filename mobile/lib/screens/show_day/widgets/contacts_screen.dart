@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 import 'add_contact_screen.dart';
 import 'detail_screen.dart';
@@ -24,7 +25,7 @@ class ContactsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Contacts',
@@ -32,7 +33,7 @@ class ContactsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: contacts.isEmpty
-                ? _buildEmptyState(colorScheme)
+                ? _buildEmptyState(brightness)
                 : ListView.builder(
                     padding: const EdgeInsets.all(24),
                     itemCount: contacts.length,
@@ -62,21 +63,21 @@ class ContactsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.people_outline,
+            CupertinoIcons.person_3,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No contacts',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -85,7 +86,7 @@ class ContactsScreen extends ConsumerWidget {
           Text(
             'Add a contact to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -118,33 +119,33 @@ class ContactsScreen extends ConsumerWidget {
             DetailItem(
               label: 'Name',
               value: contact.name,
-              icon: Icons.person_outline,
+              icon: CupertinoIcons.person,
             ),
             if (contact.role != null)
               DetailItem(
                 label: 'Role',
                 value: contact.role,
-                icon: Icons.work_outline,
+                icon: CupertinoIcons.briefcase,
               ),
             if (contact.phone != null)
               DetailItem(
                 label: 'Phone',
                 value: contact.phone,
-                icon: Icons.phone_outlined,
+                icon: CupertinoIcons.phone,
                 type: DetailItemType.phone,
               ),
             if (contact.email != null)
               DetailItem(
                 label: 'Email',
                 value: contact.email,
-                icon: Icons.email_outlined,
+                icon: CupertinoIcons.mail,
                 type: DetailItemType.email,
               ),
             if (contact.isPromoter)
               const DetailItem(
                 label: 'Type',
                 value: 'Promoter',
-                icon: Icons.star_outline,
+                icon: CupertinoIcons.star,
               ),
           ],
         ),

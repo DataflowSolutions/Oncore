@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../theme/app_theme.dart';
 
 /// Schedule card widget for displaying schedule items
 /// Shows title, time range, and optional icon
@@ -20,16 +21,16 @@ class ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +38,7 @@ class ScheduleCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -48,7 +49,7 @@ class ScheduleCard extends StatelessWidget {
             Text(
               '$startTime - $endTime',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 12,
               ),
             ),

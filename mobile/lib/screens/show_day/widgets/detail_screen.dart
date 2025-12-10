@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 
 /// A reusable detail screen that shows key-value pairs of information
 /// Layer 3: Detail view for any entity
@@ -73,13 +74,13 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -91,7 +92,7 @@ class _DetailCard extends StatelessWidget {
           if (item.icon != null) ...[
             Icon(
               item.icon,
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -104,7 +105,7 @@ class _DetailCard extends StatelessWidget {
                 Text(
                   item.label,
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -113,7 +114,7 @@ class _DetailCard extends StatelessWidget {
                 Text(
                   item.value ?? '',
                   style: TextStyle(
-                    color: _getValueColor(colorScheme),
+                    color: _getValueColor(brightness),
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -124,11 +125,12 @@ class _DetailCard extends StatelessWidget {
           // Action button for actionable types
           if (_isActionable) ...[
             const SizedBox(width: 8),
-            IconButton(
+            CupertinoButton(
+              padding: EdgeInsets.zero,
               onPressed: () => _performAction(context),
-              icon: Icon(
+              child: Icon(
                 _getActionIcon(),
-                color: colorScheme.primary,
+                color: AppTheme.getPrimaryColor(brightness),
                 size: 20,
               ),
             ),
@@ -138,11 +140,11 @@ class _DetailCard extends StatelessWidget {
     );
   }
 
-  Color _getValueColor(ColorScheme colorScheme) {
+  Color _getValueColor(Brightness brightness) {
     if (_isActionable) {
-      return colorScheme.primary;
+      return AppTheme.getPrimaryColor(brightness);
     }
-    return colorScheme.onSurface;
+    return AppTheme.getForegroundColor(brightness);
   }
 
   bool get _isActionable => 
@@ -153,13 +155,13 @@ class _DetailCard extends StatelessWidget {
   IconData _getActionIcon() {
     switch (item.type) {
       case DetailItemType.phone:
-        return Icons.phone_outlined;
+        return CupertinoIcons.phone;
       case DetailItemType.email:
-        return Icons.email_outlined;
+        return CupertinoIcons.mail;
       case DetailItemType.url:
-        return Icons.open_in_new;
+        return CupertinoIcons.arrow_up_right_square;
       default:
-        return Icons.arrow_forward;
+        return CupertinoIcons.chevron_forward;
     }
   }
 

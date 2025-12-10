@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/env.dart';
@@ -76,14 +76,12 @@ class OncoreApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     print('[DEBUG] OncoreApp.build() called');
     final router = ref.watch(appRouterProvider);
-    final themeMode = ref.watch(themeProvider);
+    final brightness = ref.watch(brightnessProvider);
     
-    return MaterialApp.router(
+    return CupertinoApp.router(
       title: 'Oncore - Tour Management',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      theme: AppTheme.getCupertinoTheme(brightness),
       routerConfig: router,
     );
   }

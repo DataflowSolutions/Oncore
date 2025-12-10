@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 
 /// Person from the people table (for selection)
 class PersonOption {
@@ -157,7 +158,7 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Add Team Member',
@@ -166,32 +167,31 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
           // Search bar
           Padding(
             padding: const EdgeInsets.all(24),
-            child: TextField(
+            child: CupertinoTextField(
               controller: _searchController,
               onChanged: _filterPeople,
-              decoration: InputDecoration(
-                hintText: 'Search people...',
-                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              placeholder: 'Search people...',
+              placeholderStyle: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Icon(CupertinoIcons.search, color: AppTheme.getMutedForegroundColor(brightness)),
               ),
-              style: TextStyle(color: colorScheme.onSurface),
+              decoration: BoxDecoration(
+                color: AppTheme.getCardColor(brightness),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              style: TextStyle(color: AppTheme.getForegroundColor(brightness)),
             ),
           ),
           // Loading or list
           Expanded(
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(color: colorScheme.onSurface),
+                    child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
                   )
                 : _filteredPeople.isEmpty
-                    ? _buildEmptyState(colorScheme)
+                    ? _buildEmptyState(brightness)
                     : Stack(
                         children: [
                           ListView.builder(
@@ -209,9 +209,9 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
                           ),
                           if (_isAdding)
                             Container(
-                              color: colorScheme.surface.withValues(alpha: 0.5),
+                              color: AppTheme.getBackgroundColor(brightness).withValues(alpha: 0.5),
                               child: Center(
-                                child: CircularProgressIndicator(color: colorScheme.onSurface),
+                                child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
                               ),
                             ),
                         ],
@@ -222,21 +222,21 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _searchQuery.isNotEmpty ? Icons.search_off : Icons.people_outline,
+            _searchQuery.isNotEmpty ? CupertinoIcons.search : CupertinoIcons.person_3,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             _searchQuery.isNotEmpty ? 'No matching people' : 'No available people',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -247,7 +247,7 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
                 ? 'Try a different search term'
                 : 'All people are already assigned',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -274,7 +274,7 @@ class SelectablePersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: onTap,
@@ -282,7 +282,7 @@ class SelectablePersonCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -292,14 +292,14 @@ class SelectablePersonCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.15),
+                color: AppTheme.getPrimaryColor(brightness).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
                   _getInitials(name),
                   style: TextStyle(
-                    color: colorScheme.primary,
+                    color: AppTheme.getPrimaryColor(brightness),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -315,7 +315,7 @@ class SelectablePersonCard extends StatelessWidget {
                   Text(
                     name,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
@@ -325,7 +325,7 @@ class SelectablePersonCard extends StatelessWidget {
                     Text(
                       roleTitle ?? _formatMemberType(memberType!),
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 13,
                       ),
                     ),
@@ -335,8 +335,8 @@ class SelectablePersonCard extends StatelessWidget {
             ),
             // Add icon
             Icon(
-              Icons.add_circle_outline,
-              color: colorScheme.primary,
+              CupertinoIcons.plus_circle,
+              color: AppTheme.getPrimaryColor(brightness),
               size: 24,
             ),
           ],

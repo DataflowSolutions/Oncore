@@ -1,80 +1,54 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Key for storing theme preference
-const String _themeKey = 'oncore_theme_mode';
+const String _themeKey = 'oncore_theme_brightness';
 
-/// Theme mode state
-enum AppThemeMode {
-  light,
-  dark,
-  system,
-}
-
-/// Theme state notifier that persists theme preference
-class ThemeNotifier extends StateNotifier<ThemeMode> {
-  ThemeNotifier() : super(ThemeMode.dark) {
-    _loadTheme();
+/// Brightness state notifier that persists theme preference
+class BrightnessNotifier extends StateNotifier<Brightness> {
+  BrightnessNotifier() : super(Brightness.dark) {
+    _loadBrightness();
   }
 
-  /// Load theme from SharedPreferences
-  Future<void> _loadTheme() async {
+  /// Load brightness from SharedPreferences
+  Future<void> _loadBrightness() async {
     final prefs = await SharedPreferences.getInstance();
-    final themeString = prefs.getString(_themeKey);
+    final brightnessString = prefs.getString(_themeKey);
     
-    if (themeString != null) {
-      switch (themeString) {
-        case 'light':
-          state = ThemeMode.light;
-          break;
-        case 'dark':
-          state = ThemeMode.dark;
-          break;
-        case 'system':
-          state = ThemeMode.system;
-          break;
-      }
+    if (brightnessString != null) {
+      state = brightnessString == 'light' ? Brightness.light : Brightness.dark;
     }
   }
 
-  /// Set theme mode and persist
-  Future<void> setThemeMode(ThemeMode mode) async {
-    state = mode;
+  /// Set brightness and persist
+  Future<void> setBrightness(Brightness brightness) async {
+    state = brightness;
     final prefs = await SharedPreferences.getInstance();
-    
-    final themeString = switch (mode) {
-      ThemeMode.light => 'light',
-      ThemeMode.dark => 'dark',
-      ThemeMode.system => 'system',
-    };
-    
-    await prefs.setString(_themeKey, themeString);
+    await prefs.setString(_themeKey, brightness == Brightness.light ? 'light' : 'dark');
   }
 
-  /// Toggle between light and dark mode
-  Future<void> toggleTheme() async {
-    if (state == ThemeMode.dark) {
-      await setThemeMode(ThemeMode.light);
-    } else {
-      await setThemeMode(ThemeMode.dark);
-    }
+  /// Toggle between light and dark
+  Future<void> toggleBrightness() async {
+    await setBrightness(
+      state == Brightness.light ? Brightness.dark : Brightness.light,
+    );
   }
 
   /// Check if dark mode is enabled
-  bool get isDarkMode => state == ThemeMode.dark;
+  bool get isDarkMode => state == Brightness.dark;
 }
 
-/// Provider for theme state
-final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
-  return ThemeNotifier();
+/// Provider for theme brightness
+final brightnessProvider = StateNotifierProvider<BrightnessNotifier, Brightness>((ref) {
+  return BrightnessNotifier();
 });
 
-/// Provider to check if currently in dark mode (considers system theme)
+/// Provider to check if currently in dark mode
 final isDarkModeProvider = Provider<bool>((ref) {
-  final themeMode = ref.watch(themeProvider);
-  
-  // For system mode, we'd need to check the platform brightness
-  // For simplicity, we'll treat system as dark mode
-  return themeMode == ThemeMode.dark || themeMode == ThemeMode.system;
+  return ref.watch(brightnessProvider) == Brightness.dark;
 });
+
+/// Legacy provider for backwards compatibility (deprecated)
+@Deprecated('Use brightnessProvider instead')
+final themeProvider = Provider<Brightness>((ref) => ref.watch(brightnessProvider));

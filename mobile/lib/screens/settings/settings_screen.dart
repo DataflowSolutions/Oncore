@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +7,7 @@ import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/colors.dart';
+import '../../theme/app_theme.dart';
 
 /// Provider for user profile data
 final userProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
@@ -77,8 +78,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final userProfile = ref.watch(userProfileProvider);
     final organizations = ref.watch(userOrganizationsProvider);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     // Initialize controllers with user data
     userProfile.whenData((data) {
@@ -102,62 +102,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
                     // Account Section
-                    _buildSectionTitle('Account', colorScheme),
+                    _buildSectionTitle('Account', brightness),
                     const SizedBox(height: 12),
-                    _buildTextField('First Name', _firstNameController, 'Enter your first name', colorScheme),
-                    _buildTextField('Last Name', _lastNameController, 'Enter your first name', colorScheme),
-                    _buildTextField('Phone Number', _phoneController, 'Enter your number', colorScheme, keyboardType: TextInputType.phone),
-                    _buildTextField('Email', _emailController, 'Enter your email address', colorScheme, enabled: false),
+                    _buildCupertinoTextField('First Name', _firstNameController, 'Enter your first name', brightness),
+                    _buildCupertinoTextField('Last Name', _lastNameController, 'Enter your first name', brightness),
+                    _buildCupertinoTextField('Phone Number', _phoneController, 'Enter your number', brightness, keyboardType: TextInputType.phone),
+                    _buildCupertinoTextField('Email', _emailController, 'Enter your email address', brightness, enabled: false),
                     const SizedBox(height: 8),
-                    _buildButton('Save', colorScheme, _savingProfile ? null : _saveProfile),
+                    _buildButton('Save', brightness, _savingProfile ? null : _saveProfile),
                     
                     const SizedBox(height: 32),
                     
                     // Password Section
-                    _buildSectionTitle('Password', colorScheme),
+                    _buildSectionTitle('Password', brightness),
                     const SizedBox(height: 12),
-                    _buildTextField('Current', _currentPasswordController, 'Enter your current password', colorScheme, obscureText: true),
-                    _buildTextField('New', _newPasswordController, 'Enter your new password', colorScheme, obscureText: true),
-                    _buildTextField('Confirm', _confirmPasswordController, 'Enter your confirm password', colorScheme, obscureText: true),
+                    _buildCupertinoTextField('Current', _currentPasswordController, 'Enter your current password', brightness, obscureText: true),
+                    _buildCupertinoTextField('New', _newPasswordController, 'Enter your new password', brightness, obscureText: true),
+                    _buildCupertinoTextField('Confirm', _confirmPasswordController, 'Enter your confirm password', brightness, obscureText: true),
                     const SizedBox(height: 8),
-                    _buildButton('Save', colorScheme, _savingPassword ? null : _savePassword),
+                    _buildButton('Save', brightness, _savingPassword ? null : _savePassword),
                     
                     const SizedBox(height: 32),
                     
                     // Support Section
-                    _buildSectionTitleWithIcon('Support', Icons.help_outline, colorScheme),
+                    _buildSectionTitleWithIcon('Support', CupertinoIcons.question_circle, brightness),
                     const SizedBox(height: 8),
                     Text(
                       'Email jean@oncore.io or submit a ticket',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                      style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
                     ),
                     const SizedBox(height: 12),
-                    _buildTextArea(_supportController, 'Write your query here...', colorScheme),
+                    _buildTextArea(_supportController, 'Write your query here...', brightness),
                     const SizedBox(height: 12),
-                    _buildButton('Submit', colorScheme, _submitSupport),
+                    _buildButton('Submit', brightness, _submitSupport),
                     
                     const SizedBox(height: 32),
                     
                     // Organizations Section
-                    _buildSectionTitle('Organizations', colorScheme),
+                    _buildSectionTitle('Organizations', brightness),
                     const SizedBox(height: 12),
                     organizations.when(
-                      loading: () => Center(child: CircularProgressIndicator(color: colorScheme.onSurface)),
-                      error: (_, __) => Text('Failed to load organizations', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                      loading: () => Center(child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness))),
+                      error: (_, __) => Text('Failed to load organizations', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
                       data: (orgs) => _buildOrganizationsList(orgs),
                     ),
                     
                     const SizedBox(height: 32),
                     
                     // Settings Section
-                    _buildSectionTitleWithIcon('Settings', Icons.settings_outlined, colorScheme),
+                    _buildSectionTitleWithIcon('Settings', CupertinoIcons.gear, brightness),
                     const SizedBox(height: 16),
-                    _buildToggleRow('Email Notification', _emailNotifications, colorScheme, (value) {
+                    _buildToggleRow('Email Notification', _emailNotifications, brightness, (value) {
                       setState(() => _emailNotifications = value);
                       _showSnackBar('This does nothing at the moment.');
                     }),
                     const SizedBox(height: 16),
-                    _buildDarkModeToggle(colorScheme),
+                    _buildDarkModeToggle(brightness),
                     
                     const SizedBox(height: 48),
                   ],
@@ -167,39 +167,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title, ColorScheme colorScheme) {
+  Widget _buildSectionTitle(String title, Brightness brightness) {
     return Text(
       title,
       style: TextStyle(
-        color: colorScheme.onSurface,
+        color: AppTheme.getForegroundColor(brightness),
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
-  Widget _buildSectionTitleWithIcon(String title, IconData icon, ColorScheme colorScheme) {
+  Widget _buildSectionTitleWithIcon(String title, IconData icon, Brightness brightness) {
     return Row(
       children: [
         Text(
           title,
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: AppTheme.getForegroundColor(brightness),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(width: 8),
-        Icon(icon, color: colorScheme.onSurface, size: 20),
+        Icon(icon, color: AppTheme.getForegroundColor(brightness), size: 20),
       ],
     );
   }
 
-  Widget _buildTextField(
+  Widget _buildCupertinoTextField(
     String label,
     TextEditingController controller,
     String placeholder,
-    ColorScheme colorScheme, {
+    Brightness brightness, {
     bool obscureText = false,
     bool enabled = true,
     TextInputType keyboardType = TextInputType.text,
@@ -211,55 +211,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
           ),
           const SizedBox(height: 6),
-          TextField(
+          CupertinoTextField(
             controller: controller,
             obscureText: obscureText,
             enabled: enabled,
             keyboardType: keyboardType,
             style: TextStyle(
-              color: enabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+              color: enabled ? AppTheme.getForegroundColor(brightness) : AppTheme.getMutedForegroundColor(brightness),
               fontSize: 15,
             ),
-            decoration: InputDecoration(
-              hintText: placeholder,
-              hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.getInputBackgroundColor(brightness),
+              borderRadius: BorderRadius.circular(8),
             ),
+            placeholder: placeholder,
+            placeholderStyle: TextStyle(color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.6)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTextArea(TextEditingController controller, String placeholder, ColorScheme colorScheme) {
-    return TextField(
+  Widget _buildTextArea(TextEditingController controller, String placeholder, Brightness brightness) {
+    return CupertinoTextField(
       controller: controller,
       maxLines: 4,
-      style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
-      decoration: InputDecoration(
-        hintText: placeholder,
-        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
-        filled: true,
-        fillColor: colorScheme.surfaceContainerHighest,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.all(16),
+      style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
+      decoration: BoxDecoration(
+        color: AppTheme.getInputBackgroundColor(brightness),
+        borderRadius: BorderRadius.circular(8),
       ),
+      placeholder: placeholder,
+      placeholderStyle: TextStyle(color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.6)),
+      padding: const EdgeInsets.all(16),
     );
   }
 
-  Widget _buildButton(String label, ColorScheme colorScheme, VoidCallback? onTap) {
+  Widget _buildButton(String label, Brightness brightness, VoidCallback? onTap) {
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
@@ -267,14 +259,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
-            color: onTap != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+            color: onTap != null ? AppTheme.getForegroundColor(brightness) : AppTheme.getMutedForegroundColor(brightness),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: colorScheme.surface,
+              color: AppTheme.getBackgroundColor(brightness),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -285,7 +277,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildOrganizationsList(List<Map<String, dynamic>> orgs) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     return Column(
       children: [
         ...orgs.map((org) {
@@ -297,7 +289,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.info : colorScheme.surfaceContainerHighest,
+                  color: isSelected ? AppColors.info : AppTheme.getInputBackgroundColor(brightness),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -306,7 +298,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       org['name'] as String? ?? 'Organization',
                       style: TextStyle(
-                        color: isSelected ? Colors.white : colorScheme.onSurface,
+                        color: isSelected ? CupertinoColors.white : AppTheme.getForegroundColor(brightness),
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
@@ -315,7 +307,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const Text(
                         'Selected',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: CupertinoColors.white,
                           fontSize: 12,
                         ),
                       ),
@@ -334,13 +326,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: colorScheme.error,
+                  color: AppTheme.getDestructiveColor(brightness),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
                   'Delete',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: CupertinoColors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -354,13 +346,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.info,
+                  color: AppTheme.getPrimaryColor(brightness),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
                   'Add New',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: CupertinoColors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -373,32 +365,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildToggleRow(String label, bool value, ColorScheme colorScheme, ValueChanged<bool> onChanged) {
+  Widget _buildToggleRow(String label, bool value, Brightness brightness, ValueChanged<bool> onChanged) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: AppTheme.getForegroundColor(brightness),
             fontSize: 15,
           ),
         ),
-        Switch(
+        CupertinoSwitch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: AppColors.info,
-          activeTrackColor: AppColors.info.withValues(alpha: 0.5),
-          inactiveThumbColor: colorScheme.onSurfaceVariant,
-          inactiveTrackColor: colorScheme.surfaceContainerHighest,
+          activeColor: AppColors.info,
+          trackColor: AppTheme.getInputBackgroundColor(brightness),
         ),
       ],
     );
   }
 
-  Widget _buildDarkModeToggle(ColorScheme colorScheme) {
-    final themeMode = ref.watch(themeProvider);
-    final isDark = themeMode == ThemeMode.dark;
+  Widget _buildDarkModeToggle(Brightness brightness) {
+    final currentBrightness = ref.watch(brightnessProvider);
+    final isDark = currentBrightness == Brightness.dark;
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -406,21 +396,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Text(
           'Dark Mode',
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: AppTheme.getForegroundColor(brightness),
             fontSize: 15,
           ),
         ),
-        Switch(
+        CupertinoSwitch(
           value: isDark,
           onChanged: (value) {
-            ref.read(themeProvider.notifier).setThemeMode(
-              value ? ThemeMode.dark : ThemeMode.light,
+            ref.read(brightnessProvider.notifier).setBrightness(
+              value ? Brightness.dark : Brightness.light,
             );
           },
-          activeThumbColor: const Color(0xFF3B82F6),
-          activeTrackColor: const Color(0xFF3B82F6).withValues(alpha: 0.5),
-          inactiveThumbColor: colorScheme.onSurfaceVariant,
-          inactiveTrackColor: colorScheme.surfaceContainerHighest,
+          activeColor: const Color(0xFF3B82F6),
+          trackColor: AppTheme.getInputBackgroundColor(brightness),
         ),
       ],
     );

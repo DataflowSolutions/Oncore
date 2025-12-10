@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 
 /// Layer 2: Notes screen - just a big textarea
 class NotesScreen extends ConsumerStatefulWidget {
@@ -115,7 +116,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Notes',
@@ -126,29 +127,23 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           children: [
             // Notes textarea - takes up all available space
             Expanded(
-              child: TextField(
+              child: CupertinoTextField(
                 controller: _notesController,
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
-                cursorColor: colorScheme.onSurface,
                 style: TextStyle(
-                  color: colorScheme.onSurface,
+                  color: AppTheme.getForegroundColor(brightness),
                   fontSize: 16,
                   height: 1.5,
                 ),
-                decoration: InputDecoration(
-                  hintText: 'Write your notes here...',
-                  hintStyle: TextStyle(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                    fontSize: 16,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
+                placeholder: 'Write your notes here...',
+                placeholderStyle: TextStyle(
+                  color: AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
+                  fontSize: 16,
                 ),
+                decoration: const BoxDecoration(),
+                padding: EdgeInsets.zero,
               ),
             ),
             // Auto-save indicator
@@ -162,26 +157,25 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.onSurfaceVariant,
+                        child: CupertinoActivityIndicator(
+                          color: AppTheme.getMutedForegroundColor(brightness),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Saving...',
                         style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
+                          color: AppTheme.getMutedForegroundColor(brightness),
                           fontSize: 13,
                         ),
                       ),
                     ] else if (_hasChanges) ...[
-                      TextButton(
+                      CupertinoButton(
                         onPressed: _saveNotes,
                         child: Text(
                           'Save',
                           style: TextStyle(
-                            color: colorScheme.primary,
+                            color: AppTheme.getPrimaryColor(brightness),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import 'form_widgets.dart';
 import 'add_catering_screen.dart';
@@ -23,7 +24,7 @@ class CateringScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Catering',
@@ -31,7 +32,7 @@ class CateringScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: catering.isEmpty
-                ? _buildEmptyState(colorScheme)
+                ? _buildEmptyState(brightness)
                 : ListView.builder(
                     padding: const EdgeInsets.all(24),
                     itemCount: catering.length,
@@ -57,21 +58,21 @@ class CateringScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.restaurant_outlined,
+            CupertinoIcons.cart,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No catering',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -80,7 +81,7 @@ class CateringScreen extends ConsumerWidget {
           Text(
             'Add catering to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -132,13 +133,13 @@ class _CateringCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -148,7 +149,7 @@ class _CateringCard extends StatelessWidget {
           Text(
             catering.providerName ?? 'Catering',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -158,7 +159,7 @@ class _CateringCard extends StatelessWidget {
             Text(
               [catering.address, catering.city].where((e) => e != null).join(', '),
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
@@ -172,7 +173,7 @@ class _CateringCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
+                      color: AppTheme.getCardColor(brightness),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -181,7 +182,7 @@ class _CateringCard extends StatelessWidget {
                         Text(
                           'Service Time',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                         ),
@@ -189,7 +190,7 @@ class _CateringCard extends StatelessWidget {
                         Text(
                           catering.formattedServiceTime!,
                           style: TextStyle(
-                            color: colorScheme.onSurface,
+                            color: AppTheme.getForegroundColor(brightness),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -205,7 +206,7 @@ class _CateringCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
+                      color: AppTheme.getCardColor(brightness),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -214,7 +215,7 @@ class _CateringCard extends StatelessWidget {
                         Text(
                           'Guests',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                         ),
@@ -222,7 +223,7 @@ class _CateringCard extends StatelessWidget {
                         Text(
                           '${catering.guestCount}',
                           style: TextStyle(
-                            color: colorScheme.onSurface,
+                            color: AppTheme.getForegroundColor(brightness),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -240,7 +241,7 @@ class _CateringCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -249,7 +250,7 @@ class _CateringCard extends StatelessWidget {
                   Text(
                     'Booking Reference',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 12,
                     ),
                   ),
@@ -257,7 +258,7 @@ class _CateringCard extends StatelessWidget {
                   Text(
                     catering.bookingRefs!.join(', '),
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -272,7 +273,7 @@ class _CateringCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -281,7 +282,7 @@ class _CateringCard extends StatelessWidget {
                   Text(
                     'Notes',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 12,
                     ),
                   ),
@@ -289,7 +290,7 @@ class _CateringCard extends StatelessWidget {
                   Text(
                     catering.notes!,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -302,7 +303,7 @@ class _CateringCard extends StatelessWidget {
             const SizedBox(height: 12),
             _ActionRow(
               value: catering.phone!,
-              icon: Icons.phone,
+              icon: CupertinoIcons.phone,
               onTap: onPhoneTap,
             ),
           ],
@@ -311,7 +312,7 @@ class _CateringCard extends StatelessWidget {
             const SizedBox(height: 8),
             _ActionRow(
               value: catering.email!,
-              icon: Icons.email,
+              icon: CupertinoIcons.mail,
               onTap: onEmailTap,
             ),
           ],
@@ -334,12 +335,12 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -349,7 +350,7 @@ class _ActionRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
@@ -359,14 +360,14 @@ class _ActionRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: AppTheme.getCardColor(brightness),
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Icon(
                 icon,
                 size: 16,
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
               ),
             ),
           ),

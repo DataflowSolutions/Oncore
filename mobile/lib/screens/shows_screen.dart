@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/show.dart';
 import '../services/supabase_service.dart';
 
@@ -157,13 +157,13 @@ class _ShowsScreenState extends State<ShowsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return CupertinoPageScaffold(
+      CupertinoNavigationBar: CupertinoNavigationBar(
         title: const Text('🎭 Oncore Shows'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: CupertinoTheme.of(context).inversePrimary,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          CupertinoButton(
+            icon: const Icon(CupertinoIcons.refresh),
             onPressed: _fetchShows,
             tooltip: 'Refresh',
           ),
@@ -184,7 +184,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
+            CupertinoActivityIndicator(),
             SizedBox(height: 16),
             Text('Fetching shows from Supabase...'),
             SizedBox(height: 8),
@@ -204,15 +204,15 @@ class _ShowsScreenState extends State<ShowsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(CupertinoIcons.error_outline, size: 64, color: CupertinoColors.destructiveRed),
             const SizedBox(height: 16),
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: CupertinoColors.destructiveRed),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            CupertinoButton.filled(
               onPressed: _fetchShows,
               child: const Text('Retry'),
             ),
@@ -228,7 +228,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.music_note, size: 64, color: Colors.grey),
+            const Icon(CupertinoIcons.music_note, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
               'No shows found',
@@ -240,9 +240,9 @@ class _ShowsScreenState extends State<ShowsScreen> {
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            CupertinoButton.filled.icon(
               onPressed: _fetchShows,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(CupertinoIcons.refresh),
               label: const Text('Refresh'),
             ),
           ],
@@ -299,7 +299,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
+                              ? CupertinoColors.white
                               : Colors.black,
                         ),
                       ),
@@ -359,7 +359,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+        color: isDark ? const Color(0xFF1F1F1F) : CupertinoColors.white,
         border: Border.all(
           color: isDark ? const Color(0xFF333333) : const Color(0xFFE5E5E5),
           width: 1,
@@ -396,7 +396,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1F1F1F),
+                          color: isDark ? CupertinoColors.white : const Color(0xFF1F1F1F),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -409,7 +409,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isDark 
-                              ? Colors.white.withOpacity(0.5)
+                              ? CupertinoColors.white.withOpacity(0.5)
                               : Colors.black.withOpacity(0.5),
                         ),
                         maxLines: 1,
@@ -429,7 +429,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: isDark 
-                            ? Colors.white.withOpacity(0.5)
+                            ? CupertinoColors.white.withOpacity(0.5)
                             : Colors.black.withOpacity(0.5),
                       ),
                     ),
@@ -441,7 +441,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: isDark 
-                            ? Colors.white.withOpacity(0.5)
+                            ? CupertinoColors.white.withOpacity(0.5)
                             : Colors.black.withOpacity(0.5),
                       ),
                     ),
@@ -460,9 +460,9 @@ class _ShowsScreenState extends State<ShowsScreen> {
     print('[DEBUG] _showDetailsDialog() called for show: ${show.id}');
     print('[DEBUG] Show details - Title: ${show.title}, Venue: ${show.venueName}, City: ${show.venueCity}');
     
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: Text(show.title),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -490,7 +490,7 @@ class _ShowsScreenState extends State<ShowsScreen> {
           ],
         ),
         actions: [
-          TextButton(
+          CupertinoButton(
             onPressed: () {
               print('[DEBUG] Closing details dialog');
               Navigator.pop(context);

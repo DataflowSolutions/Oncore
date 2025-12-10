@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -282,22 +283,22 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   IconData _getFileIcon(DocumentInfo file) {
     final contentType = file.contentType?.toLowerCase() ?? '';
     if (contentType.contains('pdf')) {
-      return Icons.picture_as_pdf;
+      return CupertinoIcons.doc;
     } else if (contentType.startsWith('image/')) {
-      return Icons.image;
+      return CupertinoIcons.photo;
     } else if (contentType.contains('word') || contentType.contains('document')) {
-      return Icons.description;
+      return CupertinoIcons.doc_text;
     } else if (contentType.contains('excel') || contentType.contains('spreadsheet')) {
-      return Icons.table_chart;
+      return CupertinoIcons.table;
     } else if (contentType.contains('text')) {
-      return Icons.article;
+      return CupertinoIcons.doc_plaintext;
     }
-    return Icons.insert_drive_file;
+    return CupertinoIcons.doc;
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Documents',
@@ -306,9 +307,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           // Document list
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CupertinoActivityIndicator())
                 : _files.isEmpty
-                    ? _buildEmptyState(colorScheme)
+                    ? _buildEmptyState(brightness)
                     : ListView.builder(
                         padding: const EdgeInsets.all(24),
                         itemCount: _files.length,
@@ -316,12 +317,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                           final file = _files[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: Material(
-                              color: colorScheme.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(12),
-                              child: InkWell(
-                                onTap: () => _openDocumentViewer(index),
-                                borderRadius: BorderRadius.circular(12),
+                            child: GestureDetector(
+                              onTap: () => _openDocumentViewer(index),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.getCardColor(brightness),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Row(
@@ -339,7 +341,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                                             Text(
                                               file.displayName,
                                               style: TextStyle(
-                                                color: colorScheme.onSurface,
+                                                color: AppTheme.getForegroundColor(brightness),
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -350,7 +352,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                                             Text(
                                               file.formattedSize,
                                               style: TextStyle(
-                                                color: colorScheme.onSurfaceVariant,
+                                                color: AppTheme.getMutedForegroundColor(brightness),
                                                 fontSize: 14,
                                               ),
                                             ),
@@ -358,8 +360,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                                         ),
                                       ),
                                       Icon(
-                                        Icons.chevron_right,
-                                        color: colorScheme.onSurfaceVariant,
+                                        CupertinoIcons.chevron_right,
+                                        color: AppTheme.getMutedForegroundColor(brightness),
                                       ),
                                     ],
                                   ),
@@ -376,24 +378,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             padding: const EdgeInsets.all(24),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: CupertinoButton.filled(
                 onPressed: _isUploading ? null : _pickAndUploadFile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.onSurface,
-                  foregroundColor: colorScheme.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  elevation: 0,
-                ),
                 child: _isUploading
                     ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.surface,
+                        child: CupertinoActivityIndicator(
+                          color: AppTheme.getCardColor(brightness),
                         ),
                       )
                     : const Text(
@@ -411,21 +403,21 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.description_outlined,
+            CupertinoIcons.doc_text,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No documents',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -434,7 +426,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           Text(
             'Add a document to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -505,19 +497,18 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
     final file = _files[_currentFileIndex];
     
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: const Text('Delete File'),
         content: Text('Are you sure you want to delete "${file.displayName}"?'),
         actions: [
-          TextButton(
+          CupertinoButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          CupertinoButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -568,7 +559,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: '',
@@ -585,7 +576,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                     child: Text(
                       _files[_currentFileIndex].displayName,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 14,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -594,7 +585,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                   Text(
                     'File ${_currentFileIndex + 1} of ${_files.length}',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -630,10 +621,10 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                   GestureDetector(
                     onTap: _currentFileIndex > 0 ? _previousFile : null,
                     child: Icon(
-                      Icons.chevron_left,
+                      CupertinoIcons.chevron_left,
                       color: _currentFileIndex > 0
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          ? AppTheme.getForegroundColor(brightness)
+                          : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
                       size: 32,
                     ),
                   ),
@@ -641,10 +632,10 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                   GestureDetector(
                     onTap: _currentFileIndex < _files.length - 1 ? _nextFile : null,
                     child: Icon(
-                      Icons.chevron_right,
+                      CupertinoIcons.chevron_right,
                       color: _currentFileIndex < _files.length - 1
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          ? AppTheme.getForegroundColor(brightness)
+                          : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
                       size: 32,
                     ),
                   ),
@@ -662,32 +653,25 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                   Row(
                     children: [
                       // Delete button
-                      ElevatedButton(
+                      CupertinoButton.filled(
                         onPressed: _deleteCurrentFile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         child: const Text('Delete'),
                       ),
                       const Spacer(),
                       // Copy button
-                      IconButton(
+                      CupertinoButton(
                         onPressed: () {
                           AppToast.info(context, 'Copy coming soon');
                         },
-                        icon: Icon(Icons.copy, color: colorScheme.onSurface),
+                        child: Icon(CupertinoIcons.doc_on_doc, color: AppTheme.getForegroundColor(brightness)),
                       ),
                       // Share button
-                      IconButton(
+                      CupertinoButton(
                         onPressed: () {
                           AppToast.info(context, 'Share coming soon');
                         },
-                        icon: Icon(Icons.ios_share, color: colorScheme.onSurface),
+                        child: Icon(CupertinoIcons.share, color: AppTheme.getForegroundColor(brightness)),
                       ),
                     ],
                   ),
@@ -746,10 +730,10 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CupertinoActivityIndicator());
     }
 
     if (_error != null || _signedUrl == null) {
@@ -757,13 +741,13 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+            Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: CupertinoColors.systemRed),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 'Failed to load file',
-                style: TextStyle(color: colorScheme.onSurface),
+                style: TextStyle(color: AppTheme.getForegroundColor(brightness)),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -775,17 +759,17 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupertinoColors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: _buildContent(colorScheme),
+        child: _buildContent(brightness),
       ),
     );
   }
 
-  Widget _buildContent(ColorScheme colorScheme) {
+  Widget _buildContent(Brightness brightness) {
     // PDF viewer using Syncfusion - loads directly from URL
     if (widget.file.isPdf && _signedUrl != null) {
       return SfPdfViewer.network(
@@ -806,52 +790,48 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
         fit: BoxFit.contain,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                  : null,
-            ),
+          return const Center(
+            child: CupertinoActivityIndicator(),
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          return _buildFileIcon(colorScheme);
+          return _buildFileIcon(brightness);
         },
       );
     }
 
     // Default file icon for other types
-    return _buildFileIcon(colorScheme);
+    return _buildFileIcon(brightness);
   }
 
-  Widget _buildFileIcon(ColorScheme colorScheme) {
+  Widget _buildFileIcon(Brightness brightness) {
     IconData icon;
     final contentType = widget.file.contentType?.toLowerCase() ?? '';
     
     if (contentType.contains('pdf')) {
-      icon = Icons.picture_as_pdf;
+      icon = CupertinoIcons.doc;
     } else if (contentType.contains('word') || contentType.contains('document')) {
-      icon = Icons.description;
+      icon = CupertinoIcons.doc_text;
     } else if (contentType.contains('excel') || contentType.contains('spreadsheet')) {
-      icon = Icons.table_chart;
+      icon = CupertinoIcons.table;
     } else if (contentType.contains('text') || contentType.contains('csv')) {
-      icon = Icons.article;
+      icon = CupertinoIcons.doc_plaintext;
     } else {
-      icon = Icons.insert_drive_file;
+      icon = CupertinoIcons.doc;
     }
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: Colors.grey[400]),
+          Icon(icon, size: 64, color: CupertinoColors.systemGrey),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               widget.file.displayName,
               style: TextStyle(
-                color: Colors.grey[600],
+                color: CupertinoColors.systemGrey,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -865,7 +845,7 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
             Text(
               widget.file.formattedSize,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: CupertinoColors.systemGrey,
                 fontSize: 14,
               ),
             ),

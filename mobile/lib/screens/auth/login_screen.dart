@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 
 /// Login screen - matches the web client's SignInForm
 class LoginScreen extends ConsumerStatefulWidget {
@@ -41,11 +42,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final brightness = CupertinoTheme.brightnessOf(context);
 
-    return Scaffold(
-      body: SafeArea(
+    return CupertinoPageScaffold(
+      child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -81,9 +81,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'oncore',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineMedium?.copyWith(
+                    style: TextStyle(
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
+                      color: AppTheme.getPrimaryColor(brightness),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -92,8 +93,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'Welcome back',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    style: TextStyle(
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
+                      color: AppTheme.getForegroundColor(brightness),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -102,8 +105,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'Sign in to your account to continue',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -115,60 +119,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Email field
-                        TextFormField(
+                        CupertinoTextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
                           enabled: !authState.isLoading,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            hintText: 'you@example.com',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.email_outlined),
+                          placeholder: 'Email',
+                          prefix: const Padding(
+                            padding: EdgeInsets.only(left: 12),
+                            child: Icon(CupertinoIcons.mail, size: 20),
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.getCardColor(brightness),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
                         // Password field
-                        TextFormField(
+                        CupertinoTextField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
                           enabled: !authState.isLoading,
-                          onFieldSubmitted: (_) => _handleSignIn(),
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            hintText: '••••••••',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.lock_outlined),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
+                          placeholder: 'Password',
+                          prefix: const Padding(
+                            padding: EdgeInsets.only(left: 12),
+                            child: Icon(CupertinoIcons.lock, size: 20),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            return null;
-                          },
+                          suffix: CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            minSize: 0,
+                            child: Icon(
+                              _obscurePassword
+                                  ? CupertinoIcons.eye
+                                  : CupertinoIcons.eye_slash,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.getCardColor(brightness),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         const SizedBox(height: 24),
 
@@ -177,17 +180,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: colorScheme.errorContainer,
+                              color: CupertinoColors.destructiveRed.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: colorScheme.error.withOpacity(0.2),
+                                color: CupertinoColors.destructiveRed.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  color: colorScheme.error,
+                                const Icon(
+                                  CupertinoIcons.exclamationmark_circle,
+                                  color: CupertinoColors.destructiveRed,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
@@ -195,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Text(
                                     authState.error!,
                                     style: TextStyle(
-                                      color: colorScheme.onErrorContainer,
+                                      color: AppTheme.getForegroundColor(brightness),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -207,18 +210,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
 
                         // Sign In button
-                        FilledButton(
+                        CupertinoButton.filled(
                           onPressed: authState.isLoading ? null : _handleSignIn,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
                           child: authState.isLoading
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                                  child: CupertinoActivityIndicator(
+                                    color: CupertinoColors.white,
                                   ),
                                 )
                               : const Text(
@@ -241,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Text(
                         "Don't have an account? ",
                         style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
+                          color: AppTheme.getMutedForegroundColor(brightness),
                         ),
                       ),
                       GestureDetector(
@@ -249,7 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: Text(
                           'Sign up',
                           style: TextStyle(
-                            color: colorScheme.primary,
+                            color: AppTheme.getPrimaryColor(brightness),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -280,22 +279,21 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final brightness = CupertinoTheme.brightnessOf(context);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          color: isSelected ? AppTheme.getPrimaryColor(brightness) : AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+            color: isSelected ? CupertinoColors.white : AppTheme.getMutedForegroundColor(brightness),
             fontWeight: FontWeight.w500,
           ),
         ),

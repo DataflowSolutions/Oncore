@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_theme.dart';
 import 'app_toast.dart';
 
 /// Profile dropdown widget that shows user info and account options
@@ -10,10 +11,8 @@ class ProfileDropdown extends ConsumerWidget {
 
   /// Show the profile dropdown as a modal overlay
   static Future<void> show(BuildContext context, WidgetRef ref) {
-    return showModalBottomSheet(
+    return showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (context) => const _ProfileDropdownContent(),
     );
   }
@@ -29,7 +28,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final user = ref.watch(currentUserProvider);
     
     // Get user display name and email
@@ -42,7 +41,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -56,8 +55,8 @@ class _ProfileDropdownContent extends ConsumerWidget {
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Icon(
-                    Icons.close,
-                    color: colorScheme.onSurfaceVariant,
+                    CupertinoIcons.xmark,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     size: 24,
                   ),
                 ),
@@ -74,7 +73,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                 Text(
                   'Profile',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -88,7 +87,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       width: 2,
                     ),
                   ),
@@ -96,7 +95,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                     child: Text(
                       initials,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
                       ),
@@ -109,7 +108,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                 Text(
                   fullName,
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -120,7 +119,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                 Text(
                   email,
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     fontSize: 14,
                   ),
                 ),
@@ -131,26 +130,26 @@ class _ProfileDropdownContent extends ConsumerWidget {
           // Divider
           Container(
             height: 1,
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            color: AppTheme.getBorderColor(brightness).withValues(alpha: 0.3),
           ),
           
           // Add account option
           _buildMenuItem(
             context: context,
-            icon: Icons.add,
+            icon: CupertinoIcons.person_add,
             label: 'Add account',
             onTap: () {
               Navigator.of(context).pop();
               // TODO: Implement add account functionality
               AppToast.info(context, 'Add account coming soon');
             },
-            colorScheme: colorScheme,
+            brightness: brightness,
           ),
           
           // Log out option
           _buildMenuItem(
             context: context,
-            icon: Icons.logout,
+            icon: CupertinoIcons.square_arrow_right,
             label: 'Log out',
             onTap: () async {
               Navigator.of(context).pop();
@@ -159,7 +158,7 @@ class _ProfileDropdownContent extends ConsumerWidget {
                 context.go('/login');
               }
             },
-            colorScheme: colorScheme,
+            brightness: brightness,
           ),
           
           const SizedBox(height: 16),
@@ -173,9 +172,9 @@ class _ProfileDropdownContent extends ConsumerWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    required ColorScheme colorScheme,
+    required Brightness brightness,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -183,14 +182,14 @@ class _ProfileDropdownContent extends ConsumerWidget {
           children: [
             Icon(
               icon,
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               size: 22,
             ),
             const SizedBox(width: 16),
             Text(
               label,
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
                 fontSize: 16,
               ),
             ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../components/components.dart';
@@ -35,9 +35,9 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
   final _notesController = TextEditingController();
   
   DateTime? _checkInDate;
-  TimeOfDay? _checkInTime;
+  DateTime? _checkInTime;
   DateTime? _checkOutDate;
-  TimeOfDay? _checkOutTime;
+  DateTime? _checkOutTime;
   
   bool _isLoading = false;
 
@@ -55,9 +55,9 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
     super.dispose();
   }
 
-  DateTime? _combineDateTime(DateTime? date, TimeOfDay? time) {
+  DateTime? _combineDateTime(DateTime? date, DateTime? time) {
     if (date == null) return null;
-    final effectiveTime = time ?? const TimeOfDay(hour: 12, minute: 0);
+    final effectiveTime = time ?? DateTime.now();
     return DateTime(
       date.year,
       date.month,
@@ -204,7 +204,7 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Name',
                       hint: 'Name',
                       controller: _nameController,
@@ -215,17 +215,17 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
                         return null;
                       },
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Address',
                       hint: 'Address',
                       controller: _addressController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'City',
                       hint: 'City',
                       controller: _cityController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Country',
                       hint: 'Country',
                       controller: _countryController,
@@ -250,29 +250,29 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
                       value: _checkOutTime,
                       onChanged: (time) => setState(() => _checkOutTime = time),
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Book. no.',
                       hint: 'Booking Number',
                       controller: _bookingRefController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Room Type',
                       hint: 'Room Type',
                       controller: _roomTypeController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Phone',
                       hint: 'Phone',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Email',
                       hint: 'Email',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Notes',
                       hint: 'Notes',
                       controller: _notesController,

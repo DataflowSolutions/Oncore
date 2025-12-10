@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
+import '../../../theme/app_theme.dart';
 import 'detail_modal.dart';
 import 'add_schedule_item_screen.dart';
 import 'form_widgets.dart';
@@ -89,7 +90,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return LayerScaffold(
       title: 'Schedule',
@@ -97,7 +98,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
         children: [
           // Timeline - fills remaining space
           Expanded(
-            child: _buildTimeline(colorScheme),
+            child: _buildTimeline(brightness),
           ),
           // Add button at bottom
           if (widget.showId != null && widget.orgId != null)
@@ -124,21 +125,21 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.schedule_outlined,
+            CupertinoIcons.clock,
             size: 48,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No schedule items',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 16,
             ),
           ),
@@ -147,30 +148,33 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
     );
   }
 
-  Widget _buildTimeline(ColorScheme colorScheme) {
+  Widget _buildTimeline(Brightness brightness) {
     if (widget.items.isEmpty) {
-      return _buildEmptyState(colorScheme);
+      return _buildEmptyState(brightness);
     }
     
-    return SingleChildScrollView(
+    return CupertinoScrollbar(
       controller: _scrollController,
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
-      child: SizedBox(
-        height: timelineHeight,
-        child: Stack(
-          children: [
-            // Time intervals (background) - 30 minute intervals
-            ..._buildTimeIntervals(colorScheme),
-            
-            // Schedule items
-            ..._buildScheduleItems(colorScheme),
-          ],
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        child: SizedBox(
+          height: timelineHeight,
+          child: Stack(
+            children: [
+              // Time intervals (background) - 30 minute intervals
+              ..._buildTimeIntervals(brightness),
+              
+              // Schedule items
+              ..._buildScheduleItems(brightness),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  List<Widget> _buildTimeIntervals(ColorScheme colorScheme) {
+  List<Widget> _buildTimeIntervals(Brightness brightness) {
     final widgets = <Widget>[];
     
     // Build 30-minute intervals
@@ -196,7 +200,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                   child: Text(
                     label,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.6),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -208,7 +212,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                 child: Container(
                   height: 1,
                   margin: const EdgeInsets.only(top: 6, right: 16),
-                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  color: AppTheme.getBorderColor(brightness).withValues(alpha: 0.2),
                 ),
               ),
             ],
@@ -225,7 +229,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
           right: 16,
           child: Container(
             height: 1,
-            color: colorScheme.outline.withValues(alpha: 0.1),
+            color: AppTheme.getBorderColor(brightness).withValues(alpha: 0.1),
           ),
         ),
       );
@@ -234,7 +238,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
     return widgets;
   }
 
-  List<Widget> _buildScheduleItems(ColorScheme colorScheme) {
+  List<Widget> _buildScheduleItems(Brightness brightness) {
     final widgets = <Widget>[];
     
     for (final item in widget.items) {
@@ -310,10 +314,10 @@ class _ScheduleEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     // Determine color based on type
-    final (backgroundColor, borderColor) = _getEventColors(colorScheme);
+    final (backgroundColor, borderColor) = _getEventColors(brightness);
     
     // Adjust padding based on height - smaller padding for small items
     final verticalPadding = height < 32 ? 2.0 : (height < 45 ? 4.0 : 6.0);
@@ -337,7 +341,7 @@ class _ScheduleEventCard extends StatelessWidget {
                     child: Text(
                       item.title,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -348,7 +352,7 @@ class _ScheduleEventCard extends StatelessWidget {
                   Text(
                     item.formattedStartTime,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 10,
                     ),
                   ),
@@ -363,7 +367,7 @@ class _ScheduleEventCard extends StatelessWidget {
                     child: Text(
                       item.title,
                       style: TextStyle(
-                        color: colorScheme.onSurface,
+                        color: AppTheme.getForegroundColor(brightness),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -377,7 +381,7 @@ class _ScheduleEventCard extends StatelessWidget {
                     Text(
                       item.timeRange,
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         fontSize: 11,
                       ),
                       maxLines: 1,
@@ -390,16 +394,16 @@ class _ScheduleEventCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          Icons.location_on_outlined,
+                          CupertinoIcons.location,
                           size: 12,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             item.location!,
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                              color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.8),
                               fontSize: 11,
                             ),
                             maxLines: 1,
@@ -415,33 +419,37 @@ class _ScheduleEventCard extends StatelessWidget {
     );
   }
 
-  (Color, Color) _getEventColors(ColorScheme colorScheme) {
+  (Color, Color) _getEventColors(Brightness brightness) {
+    final primary = AppTheme.getPrimaryColor(brightness);
+    final card = AppTheme.getCardColor(brightness);
+    final border = AppTheme.getBorderColor(brightness);
+    
     switch (item.type.toLowerCase()) {
       case 'doors':
       case 'show':
         // Accent color for show-related events
         return (
-          colorScheme.primaryContainer.withValues(alpha: 0.9),
-          colorScheme.primary.withValues(alpha: 0.5),
+          primary.withValues(alpha: 0.2),
+          primary.withValues(alpha: 0.5),
         );
       case 'arrival':
       case 'departure':
         // Different color for travel
         return (
-          colorScheme.tertiaryContainer.withValues(alpha: 0.9),
-          colorScheme.tertiary.withValues(alpha: 0.5),
+          primary.withValues(alpha: 0.15),
+          primary.withValues(alpha: 0.4),
         );
       case 'hotel':
       case 'lodging':
         return (
-          colorScheme.secondaryContainer.withValues(alpha: 0.9),
-          colorScheme.secondary.withValues(alpha: 0.5),
+          primary.withValues(alpha: 0.1),
+          primary.withValues(alpha: 0.3),
         );
       default:
         // Default schedule item
         return (
-          colorScheme.surface,
-          colorScheme.outline.withValues(alpha: 0.4),
+          card,
+          border.withValues(alpha: 0.4),
         );
     }
   }

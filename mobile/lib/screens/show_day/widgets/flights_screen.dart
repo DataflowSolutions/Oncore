@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import 'add_flight_screen.dart';
 import 'form_widgets.dart';
@@ -22,7 +23,7 @@ class FlightsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Flights',
@@ -30,7 +31,7 @@ class FlightsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: flights.isEmpty
-                ? _buildEmptyState(colorScheme)
+                ? _buildEmptyState(brightness)
                 : ListView.builder(
                     padding: const EdgeInsets.all(24),
                     itemCount: flights.length,
@@ -48,21 +49,21 @@ class FlightsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.flight_outlined,
+            CupertinoIcons.airplane,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No flights',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -71,7 +72,7 @@ class FlightsScreen extends ConsumerWidget {
           Text(
             'Add a flight to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -103,13 +104,13 @@ class _FlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -122,7 +123,7 @@ class _FlightCard extends StatelessWidget {
               Text(
                 flight.airline ?? 'Flight',
                 style: TextStyle(
-                  color: colorScheme.onSurface,
+                  color: AppTheme.getForegroundColor(brightness),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -131,13 +132,13 @@ class _FlightCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
+                    color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     flight.flightNumber!,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -150,7 +151,7 @@ class _FlightCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
+              color: AppTheme.getCardColor(brightness),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -163,7 +164,7 @@ class _FlightCard extends StatelessWidget {
                       Text(
                         flight.departAirportCode ?? '---',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -173,7 +174,7 @@ class _FlightCard extends StatelessWidget {
                         Text(
                           flight.departCity!,
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                         ),
@@ -182,7 +183,7 @@ class _FlightCard extends StatelessWidget {
                       Text(
                         flight.formattedDepartTime ?? '--:--',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -196,8 +197,8 @@ class _FlightCard extends StatelessWidget {
                   child: Column(
                     children: [
                       Icon(
-                        Icons.flight,
-                        color: colorScheme.onSurfaceVariant,
+                        CupertinoIcons.airplane,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                         size: 20,
                       ),
                       if (flight.duration != null) ...[
@@ -205,7 +206,7 @@ class _FlightCard extends StatelessWidget {
                         Text(
                           flight.duration!,
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 10,
                           ),
                         ),
@@ -221,7 +222,7 @@ class _FlightCard extends StatelessWidget {
                       Text(
                         flight.arrivalAirportCode ?? '---',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -231,7 +232,7 @@ class _FlightCard extends StatelessWidget {
                         Text(
                           flight.arrivalCity!,
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                           textAlign: TextAlign.right,
@@ -241,7 +242,7 @@ class _FlightCard extends StatelessWidget {
                       Text(
                         flight.formattedArrivalTime ?? '--:--',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: AppTheme.getForegroundColor(brightness),
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -297,12 +298,12 @@ class _DetailChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -311,7 +312,7 @@ class _DetailChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 12,
             ),
           ),
@@ -319,7 +320,7 @@ class _DetailChip extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

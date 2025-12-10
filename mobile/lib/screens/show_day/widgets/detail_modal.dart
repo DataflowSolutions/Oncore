@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Divider;
 import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 
 /// A generic detail modal for displaying information in cards
 /// Matches the design of the web client's detail popups
@@ -24,7 +26,7 @@ class DetailModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return LayerScaffold(
       body: SingleChildScrollView(
@@ -52,7 +54,7 @@ class DetailModal extends StatelessWidget {
             // Actions
             if (actions.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Divider(color: colorScheme.outline),
+              Divider(color: AppTheme.getBorderColor(brightness)),
               const SizedBox(height: 24),
               ...actions.map((action) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -83,12 +85,12 @@ class DetailHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -97,7 +99,7 @@ class DetailHeaderCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -106,14 +108,14 @@ class DetailHeaderCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
             ),
           ],
           if (address != null) ...[
             const SizedBox(height: 4),
             Text(
               address!,
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
             ),
           ],
           if (content != null) ...[
@@ -147,12 +149,12 @@ class DetailSplitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -164,17 +166,17 @@ class DetailSplitCard extends StatelessWidget {
               children: [
                 Text(
                   label1,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   value1,
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                  style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                 ),
                 if (subValue1 != null)
                   Text(
                     subValue1!,
-                    style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 18, fontWeight: FontWeight.w600),
                   ),
               ],
             ),
@@ -184,7 +186,7 @@ class DetailSplitCard extends StatelessWidget {
           Container(
             width: 1,
             height: 60,
-            color: colorScheme.onSurfaceVariant,
+            color: AppTheme.getMutedForegroundColor(brightness),
             margin: const EdgeInsets.symmetric(horizontal: 16),
           ),
           
@@ -195,18 +197,18 @@ class DetailSplitCard extends StatelessWidget {
               children: [
                 Text(
                   label2,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   value2,
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                  style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                   textAlign: TextAlign.right,
                 ),
                 if (subValue2 != null)
                   Text(
                     subValue2!,
-                    style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 18, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.right,
                   ),
               ],
@@ -231,13 +233,13 @@ class DetailValueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -245,12 +247,12 @@ class DetailValueCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
           ),
         ],
       ),
@@ -279,12 +281,12 @@ class FlightRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -297,7 +299,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   'Departure',
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -306,7 +308,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   departAirportCode ?? '---',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -316,7 +318,7 @@ class FlightRouteCard extends StatelessWidget {
                   Text(
                     departCity!,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -325,7 +327,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   departTime ?? '--:--',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -340,15 +342,15 @@ class FlightRouteCard extends StatelessWidget {
             child: Column(
               children: [
                 Icon(
-                  Icons.flight,
-                  color: colorScheme.onSurfaceVariant,
+                  CupertinoIcons.airplane,
+                  color: AppTheme.getMutedForegroundColor(brightness),
                   size: 20,
                 ),
                 const SizedBox(height: 4),
                 Container(
                   width: 1,
                   height: 40,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -362,7 +364,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   'Arrival',
                   style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -371,7 +373,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   arrivalAirportCode ?? '---',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -381,7 +383,7 @@ class FlightRouteCard extends StatelessWidget {
                   Text(
                     arrivalCity!,
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.right,
@@ -391,7 +393,7 @@ class FlightRouteCard extends StatelessWidget {
                 Text(
                   arrivalTime ?? '--:--',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
+                    color: AppTheme.getForegroundColor(brightness),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -421,7 +423,7 @@ class DetailAction {
   
   factory DetailAction.phone(String number) {
     return DetailAction(
-      icon: Icons.phone,
+      icon: CupertinoIcons.phone,
       value: number,
       type: 'phone',
       onTap: () => launchUrl(Uri.parse('tel:$number')),
@@ -430,7 +432,7 @@ class DetailAction {
   
   factory DetailAction.email(String email) {
     return DetailAction(
-      icon: Icons.email,
+      icon: CupertinoIcons.mail,
       value: email,
       type: 'email',
       onTap: () => launchUrl(Uri.parse('mailto:$email')),
@@ -449,7 +451,7 @@ class DetailActionPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -457,7 +459,7 @@ class DetailActionPill extends StatelessWidget {
         vertical: 16,
       ),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -465,21 +467,21 @@ class DetailActionPill extends StatelessWidget {
         children: [
           Text(
             action.value,
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
           ),
           GestureDetector(
             onTap: action.onTap,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: AppTheme.getBackgroundColor(brightness),
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Icon(
                 action.icon,
                 size: 16,
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
               ),
             ),
           ),

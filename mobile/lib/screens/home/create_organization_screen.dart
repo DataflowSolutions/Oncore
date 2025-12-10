@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 import '../home/home_screen.dart';
 
 /// Screen for creating a new organization
@@ -146,18 +147,16 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final brightness = CupertinoTheme.brightnessOf(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Organization'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Create Organization'),
+        leading: CupertinoNavigationBarBackButton(
           onPressed: () => context.go('/'),
         ),
       ),
-      body: SafeArea(
+      child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -168,15 +167,18 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
                 // Header
                 Text(
                   'New Organization',
-                  style: theme.textTheme.headlineMedium?.copyWith(
+                  style: TextStyle(
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.getForegroundColor(brightness),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Create a new organization to manage your shows and team.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -184,99 +186,76 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
                 // Organization Name
                 Text(
                   'Organization Name',
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getForegroundColor(brightness),
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CupertinoTextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter organization name',
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                  placeholder: 'Enter organization name',
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
                   ),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter an organization name';
-                    }
-                    if (value.trim().length < 2) {
-                      return 'Name must be at least 2 characters';
-                    }
-                    return null;
-                  },
+                  decoration: BoxDecoration(
+                    color: AppTheme.getCardColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 const SizedBox(height: 24),
 
                 // Slug
                 Text(
                   'URL Slug',
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getForegroundColor(brightness),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'This will be used in your organization URL',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CupertinoTextField(
                   controller: _slugController,
-                  decoration: InputDecoration(
-                    hintText: 'organization-slug',
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    suffixIcon: _isCheckingSlug
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : _slugAvailable == true
-                            ? const Icon(Icons.check_circle, color: Colors.green)
-                            : _slugAvailable == false
-                                ? const Icon(Icons.error, color: Colors.red)
-                                : null,
-                    errorText: _slugError,
+                  placeholder: 'organization-slug',
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
                   ),
-                  onChanged: (value) {
-                    _checkSlugAvailability(value);
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a slug';
-                    }
-                    if (value.trim().length < 3) {
-                      return 'Slug must be at least 3 characters';
-                    }
-                    if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
-                      return 'Slug can only contain lowercase letters, numbers, and hyphens';
-                    }
-                    return null;
-                  },
+                  decoration: BoxDecoration(
+                    color: AppTheme.getCardColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffix: _isCheckingSlug
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CupertinoActivityIndicator(),
+                          ),
+                        )
+                      : _slugAvailable == true
+                          ? const Padding(
+                              padding: EdgeInsets.only(right: 12),
+                              child: Icon(CupertinoIcons.check_mark_circled, color: CupertinoColors.systemGreen),
+                            )
+                          : _slugAvailable == false
+                              ? const Padding(
+                                  padding: EdgeInsets.only(right: 12),
+                                  child: Icon(CupertinoIcons.exclamationmark_circle, color: CupertinoColors.destructiveRed),
+                                )
+                              : null,
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -285,23 +264,24 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
+                    color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.link,
+                        CupertinoIcons.link,
                         size: 16,
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.getMutedForegroundColor(brightness),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'oncore.io/${_slugController.text.isEmpty ? 'your-slug' : _slugController.text}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                          style: TextStyle(
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontFamily: 'monospace',
+                            fontSize: 13,
                           ),
                         ),
                       ),
@@ -313,23 +293,16 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
                 // Create Button
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
+                  child: CupertinoButton.filled(
                     onPressed: _isSubmitting || _slugAvailable != true
                         ? null
                         : _createOrganization,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
                     child: _isSubmitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                            child: CupertinoActivityIndicator(
+                              color: CupertinoColors.white,
                             ),
                           )
                         : const Text(

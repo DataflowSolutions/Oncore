@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../../providers/auth_provider.dart';
 import '../main/main_shell.dart' show saveLastShow;
@@ -106,7 +107,7 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
   @override
   Widget build(BuildContext context) {
     final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Column(
       children: [
@@ -117,33 +118,16 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
             children: [
               // Search input
               Expanded(
-                child: Container(
-                  height: 44,
+                child: CupertinoSearchTextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  placeholder: 'Search shows...',
+                  style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
+                  itemColor: AppTheme.getMutedForegroundColor(brightness),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
+                    color: AppTheme.getInputBackgroundColor(brightness),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.outline),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) => setState(() => _searchQuery = value),
-                    decoration: InputDecoration(
-                      hintText: 'Search shows...',
-                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                      prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    ),
-                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
                   ),
                 ),
               ),
@@ -155,13 +139,13 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
                   width: 48,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
+                    color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colorScheme.outline),
+                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
                   ),
                   child: Icon(
-                    Icons.filter_list,
-                    color: _showPastShows ? colorScheme.onSurfaceVariant : colorScheme.primary,
+                    CupertinoIcons.line_horizontal_3_decrease,
+                    color: _showPastShows ? AppTheme.getMutedForegroundColor(brightness) : AppTheme.getPrimaryColor(brightness),
                     size: 22,
                   ),
                 ),
@@ -173,27 +157,27 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
         Expanded(
           child: showsAsync.when(
             loading: () => Center(
-              child: CircularProgressIndicator(color: colorScheme.onSurface),
+              child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
             ),
-            error: (error, stack) => _buildErrorState(context, error),
+            error: (error, stack) => _buildErrorState(context, error, brightness),
             data: (shows) {
               final filtered = _filterShows(shows);
               if (shows.isEmpty) {
-                return _buildEmptyState(context);
+                return _buildEmptyState(context, brightness);
               }
               if (filtered.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.search_off, size: 48, color: colorScheme.onSurfaceVariant),
+                      Icon(CupertinoIcons.search, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                       const SizedBox(height: 16),
-                      Text('No shows match your search', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                      Text('No shows match your search', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
                     ],
                   ),
                 );
               }
-              return _buildShowsList(context, filtered);
+              return _buildShowsList(context, filtered, brightness);
             },
           ),
         ),
@@ -202,90 +186,94 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
   }
 
   void _showFilterDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
+        builder: (context, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.getCardColor(brightness),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Filter Shows',
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Filter Shows',
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              SwitchListTile(
-                title: Text('Show past shows', style: TextStyle(color: colorScheme.onSurface)),
-                value: _showPastShows,
-                onChanged: (value) {
-                  setModalState(() => _showPastShows = value);
-                  setState(() => _showPastShows = value);
-                },
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Done'),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Show past shows', style: TextStyle(color: AppTheme.getForegroundColor(brightness))),
+                    CupertinoSwitch(
+                      value: _showPastShows,
+                      onChanged: (value) {
+                        setModalState(() => _showPastShows = value);
+                        setState(() => _showPastShows = value);
+                      },
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton.filled(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, Object error) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildErrorState(BuildContext context, Object error, Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+          Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
           const SizedBox(height: 16),
-          Text('Failed to load shows', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          Text('Failed to load shows', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
           const SizedBox(height: 12),
-          TextButton(
+          CupertinoButton(
             onPressed: () => ref.invalidate(showsByOrgProvider(widget.orgId)),
-            child: Text('Retry', style: TextStyle(color: colorScheme.onSurface)),
+            child: Text('Retry', style: TextStyle(color: AppTheme.getForegroundColor(brightness))),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildEmptyState(BuildContext context, Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_note_outlined, size: 56, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+          Icon(CupertinoIcons.calendar, size: 56, color: AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5)),
           const SizedBox(height: 16),
-          Text('No shows yet', style: TextStyle(color: colorScheme.onSurface, fontSize: 17)),
+          Text('No shows yet', style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 17)),
           const SizedBox(height: 6),
           Text('Add your first show to get started', 
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
+            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14)),
         ],
       ),
     );
   }
 
-  Widget _buildShowsList(BuildContext context, List<Show> shows) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildShowsList(BuildContext context, List<Show> shows, Brightness brightness) {
     // Group shows by month
     final grouped = <String, List<Show>>{};
     for (final show in shows) {
@@ -322,7 +310,7 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
               child: Text(
                 monthYear,
                 style: TextStyle(
-                  color: colorScheme.onSurface,
+                  color: AppTheme.getForegroundColor(brightness),
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -355,7 +343,7 @@ class ShowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return GestureDetector(
       onTap: () async {
@@ -369,9 +357,9 @@ class ShowCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colorScheme.outline),
+          border: Border.all(color: AppTheme.getBorderColor(brightness)),
         ),
         child: Row(
           children: [
@@ -383,7 +371,7 @@ class ShowCard extends StatelessWidget {
                   Text(
                     show.title,
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -393,7 +381,7 @@ class ShowCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     show.artistNamesDisplay,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                    style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
                   ),
                 ],
               ),
@@ -405,12 +393,12 @@ class ShowCard extends StatelessWidget {
               children: [
                 Text(
                   show.venueCity ?? 'TBD',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   show.formattedDate,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 13),
                 ),
               ],
             ),

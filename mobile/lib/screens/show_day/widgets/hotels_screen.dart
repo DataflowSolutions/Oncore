@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
+import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import 'form_widgets.dart';
 import 'add_hotel_screen.dart';
@@ -23,7 +24,7 @@ class HotelsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Hotels',
@@ -31,7 +32,7 @@ class HotelsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: hotels.isEmpty
-                ? _buildEmptyState(colorScheme)
+                ? _buildEmptyState(brightness)
                 : ListView.builder(
                     padding: const EdgeInsets.all(24),
                     itemCount: hotels.length,
@@ -57,21 +58,21 @@ class HotelsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(Brightness brightness) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.hotel_outlined,
+            CupertinoIcons.bed_double,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No hotels',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -80,7 +81,7 @@ class HotelsScreen extends ConsumerWidget {
           Text(
             'Add a hotel to get started',
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
+              color: AppTheme.getMutedForegroundColor(brightness),
               fontSize: 14,
             ),
           ),
@@ -132,13 +133,13 @@ class _HotelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -148,7 +149,7 @@ class _HotelCard extends StatelessWidget {
           Text(
             hotel.hotelName ?? 'Hotel',
             style: TextStyle(
-              color: colorScheme.onSurface,
+              color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -158,7 +159,7 @@ class _HotelCard extends StatelessWidget {
             Text(
               [hotel.address, hotel.city].where((e) => e != null).join(', '),
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
@@ -169,7 +170,7 @@ class _HotelCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -181,7 +182,7 @@ class _HotelCard extends StatelessWidget {
                         Text(
                           'Check-in',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                         ),
@@ -189,7 +190,7 @@ class _HotelCard extends StatelessWidget {
                         Text(
                           hotel.formattedCheckIn ?? '-',
                           style: TextStyle(
-                            color: colorScheme.onSurface,
+                            color: AppTheme.getForegroundColor(brightness),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -200,7 +201,7 @@ class _HotelCard extends StatelessWidget {
                   Container(
                     width: 1,
                     height: 40,
-                    color: colorScheme.outline,
+                    color: AppTheme.getBorderColor(brightness),
                   ),
                   Expanded(
                     child: Column(
@@ -209,7 +210,7 @@ class _HotelCard extends StatelessWidget {
                         Text(
                           'Check-out',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
+                            color: AppTheme.getMutedForegroundColor(brightness),
                             fontSize: 12,
                           ),
                         ),
@@ -217,7 +218,7 @@ class _HotelCard extends StatelessWidget {
                         Text(
                           hotel.formattedCheckOut ?? '-',
                           style: TextStyle(
-                            color: colorScheme.onSurface,
+                            color: AppTheme.getForegroundColor(brightness),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -235,7 +236,7 @@ class _HotelCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
+                color: AppTheme.getCardColor(brightness),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -244,7 +245,7 @@ class _HotelCard extends StatelessWidget {
                   Text(
                     'Booking Reference',
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: AppTheme.getMutedForegroundColor(brightness),
                       fontSize: 12,
                     ),
                   ),
@@ -252,7 +253,7 @@ class _HotelCard extends StatelessWidget {
                   Text(
                     hotel.bookingRefs!.join(', '),
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 14,
                     ),
                   ),
@@ -265,7 +266,7 @@ class _HotelCard extends StatelessWidget {
             const SizedBox(height: 12),
             _ActionRow(
               value: hotel.phone!,
-              icon: Icons.phone,
+              icon: CupertinoIcons.phone,
               onTap: onPhoneTap,
             ),
           ],
@@ -274,7 +275,7 @@ class _HotelCard extends StatelessWidget {
             const SizedBox(height: 8),
             _ActionRow(
               value: hotel.email!,
-              icon: Icons.email,
+              icon: CupertinoIcons.mail,
               onTap: onEmailTap,
             ),
           ],
@@ -297,12 +298,12 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -312,7 +313,7 @@ class _ActionRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: AppTheme.getMutedForegroundColor(brightness),
                 fontSize: 14,
               ),
             ),
@@ -322,14 +323,14 @@ class _ActionRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: AppTheme.getCardColor(brightness),
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.outline),
+                border: Border.all(color: AppTheme.getBorderColor(brightness)),
               ),
               child: Icon(
                 icon,
                 size: 16,
-                color: colorScheme.onSurface,
+                color: AppTheme.getForegroundColor(brightness),
               ),
             ),
           ),

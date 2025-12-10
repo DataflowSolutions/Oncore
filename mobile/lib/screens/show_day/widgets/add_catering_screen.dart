@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../components/components.dart';
@@ -34,7 +34,7 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
   final _notesController = TextEditingController();
   
   DateTime? _serviceDate;
-  TimeOfDay? _serviceTime;
+  DateTime? _serviceTime;
   
   bool _isLoading = false;
 
@@ -51,9 +51,9 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
     super.dispose();
   }
 
-  DateTime? _combineDateTime(DateTime? date, TimeOfDay? time) {
+  DateTime? _combineDateTime(DateTime? date, DateTime? time) {
     if (date == null) return null;
-    final effectiveTime = time ?? const TimeOfDay(hour: 12, minute: 0);
+    final effectiveTime = time ?? DateTime.now();
     return DateTime(
       date.year,
       date.month,
@@ -188,17 +188,17 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Provider',
                       hint: 'Provider Name',
                       controller: _providerNameController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Address',
                       hint: 'Address',
                       controller: _addressController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'City',
                       hint: 'City',
                       controller: _cityController,
@@ -213,30 +213,30 @@ class _AddCateringScreenState extends ConsumerState<AddCateringScreen> {
                       value: _serviceTime,
                       onChanged: (time) => setState(() => _serviceTime = time),
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Guests',
                       hint: 'Guest Count',
                       controller: _guestCountController,
                       keyboardType: TextInputType.number,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Booking',
                       hint: 'Booking Reference',
                       controller: _bookingRefController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Phone',
                       hint: 'Phone',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Email',
                       hint: 'Email',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Notes',
                       hint: 'Notes',
                       controller: _notesController,

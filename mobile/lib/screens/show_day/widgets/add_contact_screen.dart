@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../theme/app_theme.dart';
 import 'form_widgets.dart';
 
 /// Layer 3: Add contact form screen
@@ -76,7 +77,7 @@ class _AddContactScreenState extends ConsumerState<AddContactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: 'Add Contact',
@@ -89,7 +90,7 @@ class _AddContactScreenState extends ConsumerState<AddContactScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Name',
                       hint: 'Name',
                       controller: _nameController,
@@ -100,24 +101,24 @@ class _AddContactScreenState extends ConsumerState<AddContactScreen> {
                         return null;
                       },
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Role',
                       hint: 'Role',
                       controller: _roleController,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Phone',
                       hint: 'Phone',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Email',
                       hint: 'Email',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    FormTextField(
+                    FormCupertinoTextField(
                       label: 'Notes',
                       hint: 'Notes',
                       controller: _notesController,
@@ -132,17 +133,16 @@ class _AddContactScreenState extends ConsumerState<AddContactScreen> {
                           child: Text(
                             'Promoter',
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
+                              color: AppTheme.getMutedForegroundColor(brightness),
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        Switch(
+                        CupertinoSwitch(
                           value: _isPromoter,
                           onChanged: (value) => setState(() => _isPromoter = value),
-                          activeTrackColor: colorScheme.onSurface,
-                          thumbColor: WidgetStateProperty.all(colorScheme.surface),
+                          activeColor: AppTheme.getPrimaryColor(brightness),
                         ),
                       ],
                     ),

@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Autocomplete, Material, ListTile, Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 import '../main/main_shell.dart' show saveLastShow;
 import 'shows_list_screen.dart';
 
@@ -78,28 +80,35 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
+    DateTime? picked;
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: _foreground,
-              onPrimary: Colors.black,
-              surface: _background,
-              onSurface: _foreground,
+      builder: (BuildContext context) {
+        return Container(
+          height: 216,
+          padding: const EdgeInsets.only(top: 6.0),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: SafeArea(
+            top: false,
+            child: CupertinoDatePicker(
+              initialDateTime: _selectedDate,
+              mode: CupertinoDatePickerMode.date,
+              minimumDate: DateTime.now().subtract(const Duration(days: 365)),
+              maximumDate: DateTime.now().add(const Duration(days: 365 * 3)),
+              onDateTimeChanged: (DateTime newDate) {
+                picked = newDate;
+              },
             ),
           ),
-          child: child!,
         );
       },
     );
     
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() => _selectedDate = picked!);
     }
   }
 
@@ -248,7 +257,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
                 // Show Name
                 _buildLabel('Show Name *'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildCupertinoTextField(
                   controller: _titleController,
                   hint: 'Enter show name',
                   validator: (value) {
@@ -263,7 +272,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
                 // City
                 _buildLabel('City'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildCupertinoTextField(
                   controller: _cityController,
                   hint: 'Enter city',
                 ),
@@ -285,38 +294,21 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: CupertinoButton(
                         onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _foreground,
-                          side: const BorderSide(color: _border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
                         child: const Text('Cancel'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: CupertinoButton.filled(
                         onPressed: _isSubmitting ? null : _createShow,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _foreground,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
                         child: _isSubmitting
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black,
+                                child: CupertinoActivityIndicator(
+                                  color: CupertinoColors.white,
                                 ),
                               )
                             : const Text(
@@ -347,37 +339,25 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildCupertinoTextField({
     required TextEditingController controller,
     required String hint,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      style: const TextStyle(color: _foreground),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: _muted),
-        filled: true,
-        fillColor: _inputBg,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _foreground),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: CupertinoTextField(
+        controller: controller,
+        placeholder: hint,
+        style: const TextStyle(color: _foreground),
+        placeholderStyle: const TextStyle(color: _muted),
+        decoration: null,
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -401,7 +381,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
               style: const TextStyle(color: _foreground, fontSize: 16),
             ),
             const Spacer(),
-            const Icon(Icons.calendar_today, color: _muted, size: 20),
+            const Icon(CupertinoIcons.calendar_today, color: _muted, size: 20),
           ],
         ),
       ),
@@ -422,7 +402,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
             SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: _muted),
+              child: CupertinoActivityIndicator(color: _muted),
             ),
             SizedBox(width: 12),
             Text('Loading artists...', style: TextStyle(color: _muted)),
@@ -449,53 +429,53 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
           controller.text = _selectedArtistName!;
         }
         
-        return TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          style: const TextStyle(color: _foreground),
-          decoration: InputDecoration(
-            hintText: 'Search or create an artist...',
-            hintStyle: const TextStyle(color: _muted),
-            filled: true,
-            fillColor: _inputBg,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _foreground),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            suffixIcon: controller.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: _muted, size: 20),
-                    onPressed: () {
-                      controller.clear();
-                      _artistController.clear();
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: _inputBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _border),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: CupertinoTextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  placeholder: 'Search or create an artist...',
+                  style: const TextStyle(color: _foreground),
+                  placeholderStyle: const TextStyle(color: _muted),
+                  decoration: null,
+                  padding: EdgeInsets.zero,
+                  onChanged: (value) {
+                    _artistController.text = value;
+                    // If the user is typing, clear the selected artist ID
+                    // (will create new artist if no match found)
+                    if (_selectedArtistName != value) {
                       setState(() {
                         _selectedArtistId = null;
                         _selectedArtistName = null;
                       });
-                    },
-                  )
-                : const Icon(Icons.search, color: _muted, size: 20),
+                    }
+                  },
+                ),
+              ),
+              if (controller.text.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    controller.clear();
+                    _artistController.clear();
+                    setState(() {
+                      _selectedArtistId = null;
+                      _selectedArtistName = null;
+                    });
+                  },
+                  child: const Icon(CupertinoIcons.clear, color: _muted, size: 20),
+                )
+              else
+                const Icon(CupertinoIcons.search, color: _muted, size: 20),
+            ],
           ),
-          onChanged: (value) {
-            _artistController.text = value;
-            // If the user is typing, clear the selected artist ID
-            // (will create new artist if no match found)
-            if (_selectedArtistName != value) {
-              setState(() {
-                _selectedArtistId = null;
-                _selectedArtistName = null;
-              });
-            }
-          },
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
@@ -522,7 +502,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
                     return ListTile(
                       dense: true,
                       leading: isSelected 
-                          ? const Icon(Icons.check, color: _foreground, size: 18)
+                          ? const Icon(CupertinoIcons.checkmark, color: _foreground, size: 18)
                           : const SizedBox(width: 18),
                       title: Text(
                         artist['name'] as String? ?? '',
@@ -533,10 +513,10 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
                   }),
                   // Show "Create new artist" option if query doesn't match exactly
                   if (query.isNotEmpty && !exactMatchExists) ...[
-                    const Divider(color: _border, height: 1),
+                    Divider(color: _border, height: 1),
                     ListTile(
                       dense: true,
-                      leading: const Icon(Icons.add, color: _foreground, size: 18),
+                      leading: const Icon(CupertinoIcons.add, color: _foreground, size: 18),
                       title: Text(
                         'Create "$query" as new artist',
                         style: const TextStyle(color: _foreground),
@@ -570,10 +550,8 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
 
 /// Show the create show modal as a bottom sheet
 Future<void> showCreateShowModal(BuildContext context, String orgId) {
-  return showModalBottomSheet(
+  return showCupertinoModalPopup(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (context) => CreateShowModal(orgId: orgId),
   );
 }

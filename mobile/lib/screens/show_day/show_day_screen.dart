@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../components/components.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
+import '../../theme/app_theme.dart';
 import '../main/main_shell.dart' show saveLastShow;
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
@@ -61,7 +62,7 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
     print('[DEBUG] Building for showId: ${widget.showId}');
     print('═══════════════════════════════════════');
     
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final showAsync = ref.watch(showDetailProvider(widget.showId));
     final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
     
@@ -75,7 +76,7 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
         loading: () {
           print('[DEBUG] showDetailProvider is LOADING');
           return Center(
-            child: CircularProgressIndicator(color: colorScheme.onSurface),
+            child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
           );
         },
         error: (error, stack) {
@@ -87,22 +88,22 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+                Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load show: $error',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                TextButton(
+                CupertinoButton(
                   onPressed: () {
                     print('[DEBUG] Retry button pressed for showDetailProvider');
                     ref.invalidate(showDetailProvider(widget.showId));
                   },
                   child: Text(
                     'Retry',
-                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                   ),
                 ),
               ],
@@ -117,21 +118,21 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.event_busy, size: 48, color: colorScheme.onSurfaceVariant),
+                  Icon(CupertinoIcons.calendar_badge_minus, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                   const SizedBox(height: 16),
                   Text(
                     'Show not found',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                   ),
                   const SizedBox(height: 12),
-                  TextButton(
+                  CupertinoButton(
                     onPressed: () {
                       print('[DEBUG] Going back from null show');
                       context.pop();
                     },
                     child: Text(
                       'Go back',
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                      style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                     ),
                   ),
                 ],
@@ -144,7 +145,7 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
             loading: () {
               print('[DEBUG] assignmentsAsync is LOADING');
               return Center(
-                child: CircularProgressIndicator(color: colorScheme.onSurface),
+                child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
               );
             },
             error: (error, stack) {
@@ -156,22 +157,22 @@ class _ShowDayScreenState extends ConsumerState<ShowDayScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 48, color: colorScheme.onSurfaceVariant),
+                    Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                     const SizedBox(height: 16),
                     Text(
                       'Failed to load assignments: $error',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
+                    CupertinoButton(
                       onPressed: () {
                         print('[DEBUG] Retry button pressed for assignmentsAsync');
                         ref.invalidate(showAssignmentsProvider(widget.showId));
                       },
                       child: Text(
                         'Retry',
-                        style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                        style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                       ),
                     ),
                   ],
@@ -285,12 +286,12 @@ class _ShowDayContent extends ConsumerWidget {
           // Action bar
           ActionBar(
             actions: [
-              ActionItem(icon: Icons.people_outline, onTap: openTeamScreen),
-              ActionItem(icon: Icons.schedule, onTap: openFullSchedule),
-              ActionItem(icon: Icons.fullscreen, onTap: () {}),
-              ActionItem(icon: Icons.refresh, onTap: () => _refresh(ref)),
-              ActionItem(icon: Icons.download_outlined, onTap: () {}),
-              ActionItem(icon: Icons.share_outlined, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.people_outline, onTap: openTeamScreen),
+              ActionItem(icon: CupertinoIcons.schedule, onTap: openFullSchedule),
+              ActionItem(icon: CupertinoIcons.fullscreen, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.refresh, onTap: () => _refresh(ref)),
+              ActionItem(icon: CupertinoIcons.download_outlined, onTap: () {}),
+              ActionItem(icon: CupertinoIcons.share_outlined, onTap: () {}),
             ],
           ),
 
@@ -512,13 +513,13 @@ class _FlightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: colorScheme.outline, width: 1),
-          bottom: BorderSide(color: colorScheme.outline, width: 1),
+          top: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
+          bottom: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -829,17 +830,17 @@ class _InfoCardsGrid extends StatelessWidget {
   }
 
   void _showDocumentsModal(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: colorScheme.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return Padding(
+        final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.getCardColor(brightness),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -851,14 +852,15 @@ class _InfoCardsGrid extends StatelessWidget {
                   Text(
                     'Documents',
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: AppTheme.getForegroundColor(brightness),
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: colorScheme.onSurface),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
                     onPressed: () => Navigator.pop(context),
+                    child: Icon(CupertinoIcons.xmark, color: AppTheme.getForegroundColor(brightness)),
                   ),
                 ],
               ),
@@ -869,7 +871,7 @@ class _InfoCardsGrid extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'No documents attached',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
                     ),
                   ),
                 )
@@ -879,13 +881,13 @@ class _InfoCardsGrid extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
+                      color: AppTheme.getInputBackgroundColor(brightness),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          doc.isPdf ? Icons.picture_as_pdf : Icons.description,
+                          doc.isPdf ? CupertinoIcons.doc_text : CupertinoIcons.doc,
                           color: const Color(0xFFA78BFA),
                         ),
                         const SizedBox(width: 16),
@@ -895,11 +897,11 @@ class _InfoCardsGrid extends StatelessWidget {
                             children: [
                               Text(
                                 doc.displayName,
-                                style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                                style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
                               ),
                               Text(
                                 doc.formattedSize,
-                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                                style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 12),
                               ),
                             ],
                           ),
@@ -917,116 +919,111 @@ class _InfoCardsGrid extends StatelessWidget {
   }
 
   void _showContactsModal(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: colorScheme.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      isScrollControlled: true,
       builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return DraggableScrollableSheet(
-          initialChildSize: 0.5,
-          minChildSize: 0.3,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) => Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Contacts',
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+        final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: AppTheme.getCardColor(brightness),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Contacts',
+                    style: TextStyle(
+                      color: AppTheme.getForegroundColor(brightness),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: colorScheme.onSurface),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: contacts.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No contacts attached',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          itemCount: contacts.length,
-                          itemBuilder: (context, index) {
-                            final contact = contacts[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHigh,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF34D399).withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: const Icon(
-                                        Icons.person,
-                                        color: Color(0xFF34D399),
-                                        size: 20,
-                                      ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => Navigator.pop(context),
+                    child: Icon(CupertinoIcons.xmark, color: AppTheme.getForegroundColor(brightness)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: contacts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No contacts attached',
+                          style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: contacts.length,
+                        itemBuilder: (context, index) {
+                          final contact = contacts[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppTheme.getInputBackgroundColor(brightness),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF34D399).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
+                                    child: const Icon(
+                                      CupertinoIcons.person,
+                                      color: Color(0xFF34D399),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          contact.name,
+                                          style: TextStyle(
+                                            color: AppTheme.getForegroundColor(brightness),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (contact.role != null)
                                           Text(
-                                            contact.name,
+                                            contact.role!,
+                                            style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 12),
+                                          ),
+                                        if (contact.email != null || contact.phone != null)
+                                          Text(
+                                            [contact.email, contact.phone]
+                                                .where((e) => e != null)
+                                                .join(' • '),
                                             style: TextStyle(
-                                              color: colorScheme.onSurface,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.8),
+                                              fontSize: 12,
                                             ),
                                           ),
-                                          if (contact.role != null)
-                                            Text(
-                                              contact.role!,
-                                              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
-                                            ),
-                                          if (contact.email != null || contact.phone != null)
-                                            Text(
-                                              [contact.email, contact.phone]
-                                                  .where((e) => e != null)
-                                                  .join(' • '),
-                                              style: TextStyle(
-                                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                      ],
                                     ),
-                                    if (contact.isPromoter)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
+                                  ),
+                                  if (contact.isPromoter)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 4,
                                         ),

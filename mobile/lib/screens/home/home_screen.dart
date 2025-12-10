@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../components/components.dart';
+import '../../components/cupertino_components.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../theme/theme.dart';
 
 /// Organization model matching the RPC response
 class Organization {
@@ -55,49 +58,45 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final organizationsAsync = ref.watch(userOrganizationsProvider);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final brightness = ref.watch(brightnessProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(
           'oncore',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
+          style: AppTheme.headlineTextStyle(brightness).copyWith(
+            color: AppTheme.getPrimaryColor(brightness),
           ),
         ),
-        centerTitle: false,
-        actions: [
-          // User email
-          if (authState.user?.email != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // User email
+            if (authState.user?.email != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
                 child: Text(
                   authState.user!.email!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTheme.footnoteTextStyle(brightness),
                 ),
               ),
+            // Sign out button
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.square_arrow_right, size: 24),
+              onPressed: () async {
+                await ref.read(authProvider.notifier).signOut();
+              },
             ),
-          // Sign out button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () async {
-              await ref.read(authProvider.notifier).signOut();
-            },
-          ),
-        ],
+          ],
+        ),
       ),
-      body: organizationsAsync.when(
-        loading: () => const Center(
+      child: organizationsAsync.when(
+        loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              CupertinoActivityIndicator(radius: 14),
               SizedBox(height: 16),
               Text('Loading organizations...'),
             ],
@@ -110,28 +109,34 @@ class HomeScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.error_outline,
+                  CupertinoIcons.exclamationmark_triangle,
                   size: 64,
-                  color: colorScheme.error,
+                  color: CupertinoColors.systemRed,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load organizations',
-                  style: theme.textTheme.titleMedium,
+                  style: AppTheme.title3TextStyle(brightness),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   error.toString(),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  style: AppTheme.bodyTextStyle(brightness).copyWith(
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                FilledButton.icon(
+                CupertinoButton.filled(
                   onPressed: () => ref.invalidate(userOrganizationsProvider),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(CupertinoIcons.refresh, size: 20),
+                      SizedBox(width: 8),
+                      Text('Retry'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -152,143 +157,156 @@ class HomeScreen extends ConsumerWidget {
               final org = organizations.first;
               context.go('/org/${org.orgId}/shows', extra: org.name);
             });
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Center(
+              child: CupertinoActivityIndicator(radius: 14),
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(userOrganizationsProvider);
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: organizations.length + 1, // +1 for header
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          return CustomScrollView(
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: () async {
+                  ref.invalidate(userOrganizationsProvider);
+                },
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Your Organizations',
+                                style: AppTheme.title2TextStyle(brightness),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${organizations.length} organization${organizations.length != 1 ? 's' : ''}',
+                                style: AppTheme.footnoteTextStyle(brightness),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final org = organizations[index - 1];
+                      return _OrganizationCard(organization: org);
+                    },
+                    childCount: organizations.length + 1,
+                  ),
+                ),
+              ),
+              // Add button at bottom
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverToBoxAdapter(
+                  child: CupertinoButton.filled(
+                    onPressed: () {
+                      context.push('/create-org');
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Your Organizations',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${organizations.length} organization${organizations.length != 1 ? 's' : ''}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        Icon(CupertinoIcons.add, size: 20),
+                        SizedBox(width: 8),
+                        Text('New Organization'),
                       ],
                     ),
-                  );
-                }
-
-                final org = organizations[index - 1];
-                return _OrganizationCard(organization: org);
-              },
-            ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
-      ),
-      floatingActionButton: organizationsAsync.maybeWhen(
-        data: (_) => FloatingActionButton.extended(
-          onPressed: () {
-            context.push('/create-org');
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('New Organization'),
-        ),
-        orElse: () => null,
       ),
     );
   }
 }
 
 /// Organization card widget
-class _OrganizationCard extends StatelessWidget {
+class _OrganizationCard extends ConsumerWidget {
   final Organization organization;
 
   const _OrganizationCard({required this.organization});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brightness = ref.watch(brightnessProvider);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          // Navigate to organization shows list
-          context.go(
-            '/org/${organization.orgId}/shows',
-            extra: organization.name,
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Organization avatar
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    organization.name.substring(0, 1).toUpperCase(),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return GestureDetector(
+      onTap: () {
+        // Navigate to organization shows list
+        context.go(
+          '/org/${organization.orgId}/shows',
+          extra: organization.name,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(brightness),
+          border: Border.all(
+            color: AppTheme.getCardBorderColor(brightness),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Organization avatar
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.getPrimaryColor(brightness).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  organization.name.substring(0, 1).toUpperCase(),
+                  style: AppTheme.title1TextStyle(brightness).copyWith(
+                    color: AppTheme.getPrimaryColor(brightness),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              // Organization info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      organization.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+            ),
+            const SizedBox(width: 16),
+            // Organization info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    organization.name,
+                    style: AppTheme.headlineTextStyle(brightness),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _RoleBadge(role: organization.role),
+                      const SizedBox(width: 8),
+                      Text(
+                        '/${organization.slug}',
+                        style: AppTheme.footnoteTextStyle(brightness),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        _RoleBadge(role: organization.role),
-                        const SizedBox(width: 8),
-                        Text(
-                          '/${organization.slug}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
-              // Arrow icon
-              Icon(
-                Icons.chevron_right,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
+            ),
+            // Arrow icon
+            Icon(
+              CupertinoIcons.chevron_right,
+              color: AppTheme.getMutedForegroundColor(brightness),
+              size: 20,
+            ),
+          ],
         ),
       ),
     );
@@ -296,31 +314,31 @@ class _OrganizationCard extends StatelessWidget {
 }
 
 /// Role badge widget
-class _RoleBadge extends StatelessWidget {
+class _RoleBadge extends ConsumerWidget {
   final String role;
 
   const _RoleBadge({required this.role});
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brightness = ref.watch(brightnessProvider);
     
     Color backgroundColor;
     Color textColor;
     
     switch (role.toLowerCase()) {
       case 'owner':
-        backgroundColor = Colors.purple.shade100;
-        textColor = Colors.purple.shade900;
+        backgroundColor = CupertinoColors.systemPurple.withOpacity(0.2);
+        textColor = CupertinoColors.systemPurple;
         break;
       case 'admin':
-        backgroundColor = Colors.blue.shade100;
-        textColor = Colors.blue.shade900;
+        backgroundColor = CupertinoColors.systemBlue.withOpacity(0.2);
+        textColor = CupertinoColors.systemBlue;
         break;
       case 'member':
       default:
-        backgroundColor = colorScheme.surfaceContainerHighest;
-        textColor = colorScheme.onSurfaceVariant;
+        backgroundColor = AppTheme.getCardBorderColor(brightness);
+        textColor = AppTheme.getMutedForegroundColor(brightness);
     }
 
     return Container(
@@ -331,9 +349,8 @@ class _RoleBadge extends StatelessWidget {
       ),
       child: Text(
         role.toLowerCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+        style: AppTheme.caption1TextStyle(brightness).copyWith(
+          fontWeight: FontWeight.w600,
           color: textColor,
         ),
       ),
@@ -342,15 +359,14 @@ class _RoleBadge extends StatelessWidget {
 }
 
 /// Empty state when user has no organizations
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends ConsumerWidget {
   final VoidCallback onCreateOrg;
 
   const _EmptyState({required this.onCreateOrg});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brightness = ref.watch(brightnessProvider);
 
     return Center(
       child: Padding(
@@ -359,30 +375,34 @@ class _EmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.business_outlined,
+              CupertinoIcons.building_2_fill,
               size: 80,
-              color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+              color: AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
             ),
             const SizedBox(height: 24),
             Text(
               'No organizations yet',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTheme.title2TextStyle(brightness),
             ),
             const SizedBox(height: 8),
             Text(
               'Create your first organization to get started managing your tours.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              style: AppTheme.bodyTextStyle(brightness).copyWith(
+                color: AppTheme.getMutedForegroundColor(brightness),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            FilledButton.icon(
+            CupertinoButton.filled(
               onPressed: onCreateOrg,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Organization'),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.add, size: 20),
+                  SizedBox(width: 8),
+                  Text('Create Organization'),
+                ],
+              ),
             ),
           ],
         ),

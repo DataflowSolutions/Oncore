@@ -41,12 +41,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Supabase.initialize(
     url: 'https://tabcxfaqqkfbchbxgogl.supabase.co',
     anonKey: 'YOUR_ANON_KEY_HERE', // Get from Supabase Dashboard
   );
-  
+
   runApp(const OncoreApp());
 }
 
@@ -99,7 +99,7 @@ class AuthService {
   }
 
   User? get currentUser => _supabase.auth.currentUser;
-  
+
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 }
 ```
@@ -119,7 +119,7 @@ class ShowService {
         .select('*, venues(*)')
         .eq('org_id', orgId)
         .order('date', ascending: false);
-    
+
     return List<Map<String, dynamic>>.from(response);
   }
 
@@ -129,7 +129,7 @@ class ShowService {
         .insert(show)
         .select()
         .single();
-    
+
     return response;
   }
 
@@ -143,7 +143,7 @@ class ShowService {
         .eq('id', showId)
         .select()
         .single();
-    
+
     return response;
   }
 
@@ -171,7 +171,7 @@ class AdvancingService {
       'p_show_id': showId,
       'p_org_id': orgId,
     });
-    
+
     return response;
   }
 
@@ -180,7 +180,7 @@ class AdvancingService {
     final response = await _supabase.rpc('verify_access_code', params: {
       'p_access_code': accessCode.toUpperCase(),
     });
-    
+
     return response;
   }
 
@@ -197,7 +197,7 @@ class AdvancingService {
       'p_catering': catering,
       'p_notes': notes,
     });
-    
+
     return response;
   }
 
@@ -219,7 +219,7 @@ class AdvancingService {
         ''')
         .eq('id', sessionId)
         .single();
-    
+
     return response;
   }
 
@@ -229,7 +229,7 @@ class AdvancingService {
     void Function(Map<String, dynamic>) callback,
   ) {
     final channel = _supabase.channel('session:$sessionId');
-    
+
     channel
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -254,7 +254,7 @@ class AdvancingService {
           callback: (payload) => callback(payload.newRecord),
         )
         .subscribe();
-    
+
     return channel;
   }
 }
@@ -279,7 +279,7 @@ class EdgeFunctionsService {
     required Map<String, dynamic> data,
   }) async {
     final token = _supabase.auth.currentSession?.accessToken;
-    
+
     final response = await http.post(
       Uri.parse('$_baseUrl/send-email'),
       headers: {
@@ -301,7 +301,7 @@ class EdgeFunctionsService {
 
   Future<String> generateAdvancingPDF(String sessionId) async {
     final token = _supabase.auth.currentSession?.accessToken;
-    
+
     final response = await http.post(
       Uri.parse('$_baseUrl/generate-advancing-pdf'),
       headers: {
@@ -342,13 +342,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _authService.signIn(
         _emailController.text,
         _passwordController.text,
       );
-      
+
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/dashboard');
       }
@@ -416,12 +416,15 @@ class _LoginScreenState extends State<LoginScreen> {
 ## Key Differences from Web
 
 ### 1. No Server Actions
+
 Flutter can't use Next.js Server Actions. Instead:
+
 - Use Supabase client directly
 - Call RPC functions
 - Call Edge Functions via HTTP
 
 ### 2. State Management
+
 Use Provider, Riverpod, or Bloc instead of React state:
 
 ```dart
@@ -435,7 +438,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _user = Supabase.instance.client.auth.currentUser;
-    
+
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       _user = data.session?.user;
       notifyListeners();
@@ -447,6 +450,7 @@ class AuthProvider extends ChangeNotifier {
 ```
 
 ### 3. Navigation
+
 Use go_router instead of Next.js routing:
 
 ```dart

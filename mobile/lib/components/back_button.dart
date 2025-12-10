@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Reusable back button component for Layer 2+ screens.
 /// Provides consistent styling and behavior across the app.
 /// 
 /// Usage:
 /// ```dart
-/// AppBar(
+/// CupertinoNavigationBar(
 ///   leading: const BackButton(),
 ///   // or with custom label:
 ///   leading: const BackButton(label: 'Cancel'),
@@ -33,24 +33,27 @@ class BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    return TextButton.icon(
+    return CupertinoButton(
+      padding: const EdgeInsets.only(left: 8),
       onPressed: onPressed ?? () => Navigator.of(context).pop(),
-      icon: Icon(
-        Icons.arrow_back_ios,
-        size: 16,
-        color: colorScheme.onSurfaceVariant,
-      ),
-      label: showLabel
-          ? Text(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.back,
+            size: 20,
+            color: AppTheme.getMutedForegroundColor(brightness),
+          ),
+          if (showLabel) ...[
+            const SizedBox(width: 4),
+            Text(
               label,
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            )
-          : const SizedBox.shrink(),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.only(left: 16),
-        alignment: Alignment.centerLeft,
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -122,36 +125,49 @@ class LayerScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      extendBodyBehindAppBar: extendBodyBehindAppBar,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        leadingWidth: showBackLabel ? 100 : 56,
+    return CupertinoPageScaffold(
+      backgroundColor: AppTheme.getBackgroundColor(brightness),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: AppTheme.getBackgroundColor(brightness),
+        border: null,
         leading: BackButton(
           label: backLabel,
           showLabel: showBackLabel,
           onPressed: onBack,
         ),
-        title: titleWidget ?? (title != null
+        middle: titleWidget ?? (title != null
             ? Text(
                 title!,
                 style: TextStyle(
-                  color: colorScheme.onSurface,
+                  color: AppTheme.getForegroundColor(brightness),
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               )
             : null),
-        centerTitle: false,
-        actions: actions,
+        trailing: actions != null && actions!.isNotEmpty
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: actions!,
+              )
+            : null,
       ),
-      body: body,
-      floatingActionButton: floatingActionButton,
-      bottomNavigationBar: bottomNavigationBar,
+      child: SafeArea(
+        top: false, // Navigation bar handles this
+        child: Stack(
+          children: [
+            body,
+            if (floatingActionButton != null)
+              Positioned(
+                right: 16,
+                bottom: bottomNavigationBar != null ? 80 : 16,
+                child: floatingActionButton!,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
