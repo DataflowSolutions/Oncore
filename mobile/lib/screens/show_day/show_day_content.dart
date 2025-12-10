@@ -392,7 +392,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HorizontalCardList(
-          height: 100,
+          height: 80,
           children: items.map((item) {
             String dateStr = '';
             try {

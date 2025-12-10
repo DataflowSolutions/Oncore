@@ -83,18 +83,22 @@ class _HorizontalCardListState extends State<HorizontalCardList> {
     
     return SizedBox(
       height: widget.height,
-      child: CupertinoScrollbar(
+      child: RawScrollbar(
         controller: _scrollController,
-        thumbVisibility: true,
+        thumbVisibility: false,
         thickness: 3,
         radius: const Radius.circular(4),
-        child: ListView.separated(
-          controller: _scrollController,
-          scrollDirection: Axis.horizontal,
-          padding: widget.padding,
-          itemCount: widget.children.length,
-          separatorBuilder: (context, index) => const SizedBox(width: 16),
-          itemBuilder: (context, index) => widget.children[index],
+        thumbColor: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: ListView.separated(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            padding: widget.padding.copyWith(bottom: 10),
+            itemCount: widget.children.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            itemBuilder: (context, index) => widget.children[index],
+          ),
         ),
       ),
     );
