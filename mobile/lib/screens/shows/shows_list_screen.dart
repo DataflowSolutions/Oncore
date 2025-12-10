@@ -249,7 +249,7 @@ class ShowCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.getBorderColor(brightness)),
+          border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
         ),
         child: Row(
           children: [

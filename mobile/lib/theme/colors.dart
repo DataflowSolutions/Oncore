@@ -83,7 +83,7 @@ abstract final class AppColors {
   static const darkCardCell = Color(0xFF323232);            // rgb(50,50,50)
   static const darkCardCellHover = Color(0xFF3C3C3C);       // rgb(60,60,60)
   static const darkCardForeground = Color(0xFFF2F2F2);      // #f2f2f2
-  static const darkCardBorder = Color(0x0DFFFFFF);          // rgba(255,255,255,0.05)
+  static const darkCardBorder = Color(0x0DFFFFFF);          // rgba(255,255,255,0.025) in hex: #0DFFFFFF
   static const darkCardCellBorder = Color(0x12FFFFFF);      // rgba(255,255,255,0.07)
   
   // Current org (special)
