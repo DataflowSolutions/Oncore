@@ -430,17 +430,11 @@ class _MainShellState extends ConsumerState<MainShell> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Import button
-              GestureDetector(
-                onTap: () => _showImportDialog(brightness),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(CupertinoIcons.arrow_up_doc, color: AppTheme.getForegroundColor(brightness), size: 22),
-                ),
-              ),
+              
               // Settings icon
               GestureDetector(
                 onTap: () => context.push('/org/${widget.orgId}/settings'),
-                child: Icon(CupertinoIcons.settings, color: AppTheme.getForegroundColor(brightness), size: 22),
+                child: Icon(CupertinoIcons.settings, color: AppTheme.getForegroundColor(brightness) , size: 28),
               ),
             ],
           ),
