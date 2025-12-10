@@ -6,6 +6,9 @@ import '../../theme/app_theme.dart';
 import '../shows/shows_list_screen.dart';
 import '../shows/create_show_modal.dart';
 import '../network/network_screen.dart';
+import '../network/create_person_modal.dart';
+import '../network/create_promoter_modal.dart';
+import '../network/create_venue_modal.dart';
 import '../calendar/calendar_content.dart';
 import '../show_day/show_day_content.dart';
 import '../../components/profile_dropdown.dart';
@@ -328,21 +331,34 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   void _handleNetworkAdd(BuildContext context) {
-    // TODO: Implement add functionality for each network tab
-    // For now, show a placeholder message
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text('Add ${_networkTab == NetworkTab.team ? 'Team Member' : _networkTab == NetworkTab.promoters ? 'Promoter' : 'Venue'}'),
-        content: const Text('This feature is coming soon!'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('OK'),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
+    if (_networkTab == NetworkTab.team) {
+      // Show create person modal
+      showCreatePersonModal(
+        context,
+        widget.orgId,
+        onPersonCreated: () {
+          // Refresh will happen automatically via provider invalidation
+        },
+      );
+    } else if (_networkTab == NetworkTab.promoters) {
+      // Show create promoter modal
+      showCreatePromoterModal(
+        context,
+        widget.orgId,
+        onPromoterCreated: () {
+          // Refresh will happen automatically via provider invalidation
+        },
+      );
+    } else if (_networkTab == NetworkTab.venues) {
+      // Show create venue modal
+      showCreateVenueModal(
+        context,
+        widget.orgId,
+        onVenueCreated: () {
+          // Refresh will happen automatically via provider invalidation
+        },
+      );
+    }
   }
 
   void _showImportDialog(Brightness brightness) {
