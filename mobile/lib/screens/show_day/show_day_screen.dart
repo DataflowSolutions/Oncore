@@ -302,7 +302,19 @@ class _ShowDayContent extends ConsumerWidget {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
             data: (items) {
-              if (items.isEmpty) return const SizedBox.shrink();
+              if (items.isEmpty) {
+                // Show empty state with add option
+                return Column(
+                  children: [
+                    _ScheduleEmptyState(
+                      showId: showId,
+                      orgId: show.orgId,
+                      onItemAdded: () => ref.invalidate(showScheduleProvider(showId)),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }
               
               // Filter for upcoming items
               final now = DateTime.now();
@@ -499,6 +511,85 @@ class _UpcomingScheduleSection extends StatelessWidget {
                 value: item.notes!,
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty state for schedule section
+class _ScheduleEmptyState extends StatelessWidget {
+  final String showId;
+  final String orgId;
+  final VoidCallback? onItemAdded;
+
+  const _ScheduleEmptyState({
+    required this.showId,
+    required this.orgId,
+    this.onItemAdded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    
+    return GestureDetector(
+      onTap: () => _openAddScheduleItem(context),
+      child: Container(
+        width: 180,
+        height: 100,
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(brightness),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppTheme.getCardBorderColor(brightness),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.calendar_badge_plus,
+              size: 32,
+              color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No schedule items',
+              style: TextStyle(
+                color: AppTheme.getMutedForegroundColor(brightness),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap to add',
+              style: TextStyle(
+                color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.7),
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAddScheduleItem(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => AddScheduleItemScreen(
+          showId: showId,
+          orgId: orgId,
+          onItemAdded: () {
+            onItemAdded?.call();
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );

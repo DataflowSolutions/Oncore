@@ -225,45 +225,11 @@ class _ShowDayBody extends ConsumerWidget {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
             data: (items) {
-              if (items.isEmpty) return const SizedBox.shrink();
-
-              // Filter for upcoming items
-              final now = DateTime.now();
-              final sortedItems = List<ScheduleItem>.from(items);
-              sortedItems.sort((a, b) => a.startTime.compareTo(b.startTime));
-
-              // Find index of first upcoming item
-              int upcomingIndex = sortedItems.indexWhere((item) {
-                try {
-                  final itemTime = DateTime.parse(item.startTime);
-                  return itemTime.isAfter(now);
-                } catch (_) {
-                  return false;
-                }
-              });
-
-              if (upcomingIndex == -1) {
-                upcomingIndex = sortedItems.length;
-              }
-
-              int startIndex = upcomingIndex;
-              int endIndex = upcomingIndex + 5;
-
-              if (endIndex > sortedItems.length) {
-                endIndex = sortedItems.length;
-                startIndex = endIndex - 5;
-              }
-
-              if (startIndex < 0) startIndex = 0;
-
-              final displayItems = sortedItems.sublist(startIndex, endIndex);
-
-              if (displayItems.isEmpty) return const SizedBox.shrink();
-
-              return Column(
-                children: [
-                  _UpcomingScheduleSection(items: displayItems),
-                ],
+              return _ScheduleSection(
+                items: items,
+                showId: showId,
+                orgId: show.orgId,
+                onItemAdded: () => ref.invalidate(showScheduleProvider(showId)),
               );
             },
           ),
@@ -336,6 +302,243 @@ class _ShowDayBody extends ConsumerWidget {
     ref.invalidate(showCateringProvider(showId));
     ref.invalidate(showDocumentsProvider(showId));
     ref.invalidate(showContactsProvider(showId));
+  }
+}
+
+/// Schedule section wrapper with empty state support
+class _ScheduleSection extends StatelessWidget {
+  final List<ScheduleItem> items;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onItemAdded;
+
+  const _ScheduleSection({
+    required this.items,
+    required this.showId,
+    required this.orgId,
+    this.onItemAdded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return GestureDetector(
+      onTap: () => _openFullSchedule(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (items.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getCardColor(brightness),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.calendar, color: AppTheme.getMutedForegroundColor(brightness)),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Schedule',
+                        style: TextStyle(
+                          color: AppTheme.getForegroundColor(brightness),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Not Added',
+                        style: TextStyle(
+                          color: AppTheme.getMutedForegroundColor(brightness),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        CupertinoIcons.chevron_right,
+                        color: AppTheme.getMutedForegroundColor(brightness),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              _buildScheduleItems(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleItems(BuildContext context) {
+    // Filter for upcoming items
+    final now = DateTime.now();
+    final sortedItems = List<ScheduleItem>.from(items);
+    sortedItems.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    // Find index of first upcoming item
+    int upcomingIndex = sortedItems.indexWhere((item) {
+      try {
+        final itemTime = DateTime.parse(item.startTime);
+        return itemTime.isAfter(now);
+      } catch (_) {
+        return false;
+      }
+    });
+
+    if (upcomingIndex == -1) {
+      upcomingIndex = sortedItems.length;
+    }
+
+    int startIndex = upcomingIndex;
+    int endIndex = upcomingIndex + 5;
+
+    if (endIndex > sortedItems.length) {
+      endIndex = sortedItems.length;
+      startIndex = endIndex - 5;
+    }
+
+    if (startIndex < 0) startIndex = 0;
+
+    final displayItems = sortedItems.sublist(startIndex, endIndex);
+
+    return HorizontalCardList(
+      height: 80,
+      children: [
+        ...displayItems.map((item) {
+          String dateStr = '';
+          try {
+            final dt = DateTime.parse(item.startTime);
+            const months = [
+              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+            ];
+            dateStr = '${dt.day} ${months[dt.month - 1]}';
+          } catch (_) {}
+
+          return GestureDetector(
+            onTap: () => _showScheduleDetails(context, item),
+            child: UpcomingScheduleCard(
+              title: item.title,
+              time: item.formattedStartTime,
+              endTime: item.formattedEndTime,
+              date: dateStr,
+            ),
+          );
+        }),
+        // Add "Create New" card at the end
+        GestureDetector(
+          onTap: () => _openAddScheduleItem(context),
+          child: _CreateNewScheduleCard(),
+        ),
+      ],
+    );
+  }
+
+  void _openFullSchedule(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => FullScheduleScreen(
+          items: items,
+          showTitle: 'Show', // Could pass show title if available
+          showDate: DateTime.now(), // Could pass actual show date
+          showId: showId,
+          orgId: orgId,
+          onItemAdded: onItemAdded,
+        ),
+      ),
+    );
+  }
+
+  void _openAddScheduleItem(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => AddScheduleItemScreen(
+          showId: showId,
+          orgId: orgId,
+          onItemAdded: () {
+            onItemAdded?.call();
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showScheduleDetails(BuildContext context, ScheduleItem item) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => DetailModal(
+          title: item.title,
+          subtitle: item.type.toUpperCase(),
+          address: item.location,
+          content: [
+            DetailSplitCard(
+              label1: 'Start Time',
+              value1: item.formattedStartTime,
+              label2: 'End Time',
+              value2: item.formattedEndTime ?? '-',
+            ),
+            if (item.notes != null && item.notes!.isNotEmpty)
+              DetailValueCard(
+                label: 'Notes',
+                value: item.notes!,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Create New" card for schedule items
+class _CreateNewScheduleCard extends StatelessWidget {
+  const _CreateNewScheduleCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return Container(
+      width: 180,
+      height: 80,
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(brightness),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppTheme.getCardBorderColor(brightness),
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.add_circled,
+              color: AppTheme.getMutedForegroundColor(brightness),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Add Item',
+              style: TextStyle(
+                color: AppTheme.getMutedForegroundColor(brightness),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
