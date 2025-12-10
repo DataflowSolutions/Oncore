@@ -69,8 +69,6 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-# Port to use for the auth (gotrue) service.
-port = 15422
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
 site_url = "http://127.0.0.1:3000"
