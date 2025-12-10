@@ -57,12 +57,16 @@ class ShowsContent extends ConsumerStatefulWidget {
   final String orgId;
   final String orgName;
   final void Function(String showId)? onShowSelected;
+  final String searchQuery;
+  final bool showPastShows;
 
   const ShowsContent({
     super.key,
     required this.orgId,
     required this.orgName,
     this.onShowSelected,
+    this.searchQuery = '',
+    this.showPastShows = true,
   });
 
   @override
@@ -70,23 +74,12 @@ class ShowsContent extends ConsumerStatefulWidget {
 }
 
 class _ShowsContentState extends ConsumerState<ShowsContent> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  // Filter state - can be expanded for more filter options
-  bool _showPastShows = true;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   List<Show> _filterShows(List<Show> shows) {
     var filtered = shows;
     
     // Filter by search query
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
+    if (widget.searchQuery.isNotEmpty) {
+      final query = widget.searchQuery.toLowerCase();
       filtered = filtered.where((show) {
         return show.title.toLowerCase().contains(query) ||
             (show.venueName?.toLowerCase().contains(query) ?? false) ||
@@ -96,7 +89,7 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
     }
     
     // Filter past shows
-    if (!_showPastShows) {
+    if (!widget.showPastShows) {
       final now = DateTime.now();
       filtered = filtered.where((show) => show.date.isAfter(now.subtract(const Duration(days: 1)))).toList();
     }
@@ -109,133 +102,30 @@ class _ShowsContentState extends ConsumerState<ShowsContent> {
     final showsAsync = ref.watch(showsByOrgProvider(widget.orgId));
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
 
-    return Column(
-      children: [
-        // Search bar and filter button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              // Search input
-              Expanded(
-                child: CupertinoSearchTextField(
-                  controller: _searchController,
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                  placeholder: 'Search shows...',
-                  style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
-                  itemColor: AppTheme.getMutedForegroundColor(brightness),
-                  decoration: BoxDecoration(
-                    color: AppTheme.getInputBackgroundColor(brightness),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Filter button - enlarged with more spacing
-              GestureDetector(
-                onTap: _showFilterDialog,
-                child: Container(
-                  width: 48,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.getCardColor(brightness),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.line_horizontal_3_decrease,
-                    color: _showPastShows ? AppTheme.getMutedForegroundColor(brightness) : AppTheme.getPrimaryColor(brightness),
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Shows list
-        Expanded(
-          child: showsAsync.when(
-            loading: () => Center(
-              child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
-            ),
-            error: (error, stack) => _buildErrorState(context, error, brightness),
-            data: (shows) {
-              final filtered = _filterShows(shows);
-              if (shows.isEmpty) {
-                return _buildEmptyState(context, brightness);
-              }
-              if (filtered.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(CupertinoIcons.search, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
-                      const SizedBox(height: 16),
-                      Text('No shows match your search', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
-                    ],
-                  ),
-                );
-              }
-              return _buildShowsList(context, filtered, brightness);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showFilterDialog() {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          decoration: BoxDecoration(
-            color: AppTheme.getCardColor(brightness),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: SafeArea(
+    return showsAsync.when(
+      loading: () => Center(
+        child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+      ),
+      error: (error, stack) => _buildErrorState(context, error, brightness),
+      data: (shows) {
+        final filtered = _filterShows(shows);
+        if (shows.isEmpty) {
+          return _buildEmptyState(context, brightness);
+        }
+        if (filtered.isEmpty) {
+          return Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Filter Shows',
-                  style: TextStyle(
-                    color: AppTheme.getForegroundColor(brightness),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Show past shows', style: TextStyle(color: AppTheme.getForegroundColor(brightness))),
-                    CupertinoSwitch(
-                      value: _showPastShows,
-                      onChanged: (value) {
-                        setModalState(() => _showPastShows = value);
-                        setState(() => _showPastShows = value);
-                      },
-                    ),
-                  ],
-                ),
+                Icon(CupertinoIcons.search, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
                 const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoButton.filled(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Done'),
-                  ),
-                ),
+                Text('No shows match your search', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
               ],
             ),
-          ),
-        ),
-      ),
+          );
+        }
+        return _buildShowsList(context, filtered, brightness);
+      },
     );
   }
 

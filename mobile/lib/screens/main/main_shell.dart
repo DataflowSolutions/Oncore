@@ -81,6 +81,11 @@ class _MainShellState extends ConsumerState<MainShell> {
   NetworkTab _networkTab = NetworkTab.team;
   bool _isInitialized = false;
   String? _currentShowId;
+  
+  // Shows search/filter state
+  final TextEditingController _showsSearchController = TextEditingController();
+  String _showsSearchQuery = '';
+  bool _showPastShows = true;
 
   @override
   void initState() {
@@ -124,6 +129,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   void dispose() {
     _pageController.dispose();
+    _showsSearchController.dispose();
     super.dispose();
   }
 
@@ -161,6 +167,60 @@ class _MainShellState extends ConsumerState<MainShell> {
       0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
+    );
+  }
+
+  void _showFilterDialog() {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.getCardColor(brightness),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Filter Shows',
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Show past shows', style: TextStyle(color: AppTheme.getForegroundColor(brightness))),
+                    CupertinoSwitch(
+                      value: _showPastShows,
+                      onChanged: (value) {
+                        setModalState(() => _showPastShows = value);
+                        setState(() => _showPastShows = value);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton.filled(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -252,22 +312,24 @@ class _MainShellState extends ConsumerState<MainShell> {
                   child: PageView(
                     controller: _pageController,
                     onPageChanged: _onPageChanged,
-                    children: [
-                      // Tab 0: Day view
-                      ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
-                      // Tab 1: Shows (list or calendar)
-                      _showsViewMode == ShowsViewMode.calendar
-                          ? CalendarContent(
-                              orgId: widget.orgId,
-                              orgName: widget.orgName,
-                              onShowSelected: _onShowSelected,
-                            )
-                          : ShowsContent(
-                              orgId: widget.orgId,
-                              orgName: widget.orgName,
-                              onShowSelected: _onShowSelected,
-                            ),
-                      // Tab 2: Network
+                  children: [
+                    // Tab 0: Day view
+                    ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
+                    // Tab 1: Shows (list or calendar)
+                    _showsViewMode == ShowsViewMode.calendar
+                        ? CalendarContent(
+                            orgId: widget.orgId,
+                            orgName: widget.orgName,
+                            onShowSelected: _onShowSelected,
+                          )
+                        : ShowsContent(
+                            orgId: widget.orgId,
+                            orgName: widget.orgName,
+                            onShowSelected: _onShowSelected,
+                            searchQuery: _showsSearchQuery,
+                            showPastShows: _showPastShows,
+                          ),
+                    // Tab 2: Network
                       NetworkContent(
                         orgId: widget.orgId,
                         orgName: widget.orgName,
@@ -439,28 +501,28 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CupertinoSearchTextField(
+                    controller: _showsSearchController,
+                    onChanged: (value) => setState(() => _showsSearchQuery = value),
+                    placeholder: 'Search shows...',
+                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
+                    itemColor: AppTheme.getMutedForegroundColor(brightness),
                     decoration: BoxDecoration(
                       color: AppTheme.getInputBackgroundColor(brightness),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(CupertinoIcons.search, color: AppTheme.getMutedForegroundColor(brightness), size: 20),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Search',
-                          style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 15),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Icon(CupertinoIcons.slider_horizontal_3, color: AppTheme.getMutedForegroundColor(brightness), size: 22),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: _showFilterDialog,
+                  child: Icon(
+                    CupertinoIcons.slider_horizontal_3,
+                    color: _showPastShows ? AppTheme.getMutedForegroundColor(brightness) : AppTheme.getPrimaryColor(brightness),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () => showCreateShowModal(context, widget.orgId),
                   child: Container(
