@@ -823,26 +823,18 @@ class _UnifiedInfoGrid extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.getCardColor(brightness),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.getBorderColor(brightness)),
+        border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: AppTheme.getForegroundColor(brightness),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            title,
+            style: TextStyle(
+              color: AppTheme.getForegroundColor(brightness),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
