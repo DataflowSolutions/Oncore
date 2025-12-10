@@ -87,6 +87,11 @@ class _MainShellState extends ConsumerState<MainShell> {
   String _showsSearchQuery = '';
   bool _showPastShows = true;
 
+  // Network search/filter state
+  final TextEditingController _networkSearchController = TextEditingController();
+  String _networkSearchQuery = '';
+  String? _memberTypeFilter; // null = All, 'artist', 'agent', 'manager', 'crew'
+
   @override
   void initState() {
     super.initState();
@@ -130,6 +135,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   void dispose() {
     _pageController.dispose();
     _showsSearchController.dispose();
+    _networkSearchController.dispose();
     super.dispose();
   }
 
@@ -220,6 +226,121 @@ class _MainShellState extends ConsumerState<MainShell> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  String _getNetworkSearchPlaceholder() {
+    switch (_networkTab) {
+      case NetworkTab.team:
+        return 'Search team members...';
+      case NetworkTab.promoters:
+        return 'Search promoters...';
+      case NetworkTab.venues:
+        return 'Search venues...';
+    }
+  }
+
+  void _showNetworkFilterDialog() {
+    if (_networkTab != NetworkTab.team) {
+      // Only Team tab has filters for now
+      return;
+    }
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Filter by Member Type'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _memberTypeFilter = null);
+              Navigator.pop(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('All Members'),
+                if (_memberTypeFilter == null) ...[const SizedBox(width: 8), const Icon(CupertinoIcons.check_mark, size: 18)],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _memberTypeFilter = 'artist');
+              Navigator.pop(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Artists'),
+                if (_memberTypeFilter == 'artist') ...[const SizedBox(width: 8), const Icon(CupertinoIcons.check_mark, size: 18)],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _memberTypeFilter = 'agent');
+              Navigator.pop(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Agents'),
+                if (_memberTypeFilter == 'agent') ...[const SizedBox(width: 8), const Icon(CupertinoIcons.check_mark, size: 18)],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _memberTypeFilter = 'manager');
+              Navigator.pop(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Managers'),
+                if (_memberTypeFilter == 'manager') ...[const SizedBox(width: 8), const Icon(CupertinoIcons.check_mark, size: 18)],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _memberTypeFilter = 'crew');
+              Navigator.pop(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Crew'),
+                if (_memberTypeFilter == 'crew') ...[const SizedBox(width: 8), const Icon(CupertinoIcons.check_mark, size: 18)],
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _handleNetworkAdd(BuildContext context) {
+    // TODO: Implement add functionality for each network tab
+    // For now, show a placeholder message
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Add ${_networkTab == NetworkTab.team ? 'Team Member' : _networkTab == NetworkTab.promoters ? 'Promoter' : 'Venue'}'),
+        content: const Text('This feature is coming soon!'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
       ),
     );
   }
@@ -335,6 +456,8 @@ class _MainShellState extends ConsumerState<MainShell> {
                         orgName: widget.orgName,
                         activeTab: _networkTab,
                         onTabChanged: (tab) => setState(() => _networkTab = tab),
+                        searchQuery: _networkSearchQuery,
+                        memberTypeFilter: _memberTypeFilter,
                       ),
                     ],
                   ),
@@ -484,11 +607,12 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   Widget _buildBottomSection(Brightness brightness) {
     final isShowsTab = _currentTabIndex == 1;
+    final isNetworkTab = _currentTabIndex == 2;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Search row - only show for Shows tab
+        // Search row - show for Shows and Network tabs
         if (isShowsTab) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -519,6 +643,52 @@ class _MainShellState extends ConsumerState<MainShell> {
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () => showCreateShowModal(context, widget.orgId),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.getForegroundColor(brightness),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(CupertinoIcons.add, color: AppTheme.getBackgroundColor(brightness), size: 24),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        // Network search/filter row
+        if (isNetworkTab) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CupertinoSearchTextField(
+                    controller: _networkSearchController,
+                    onChanged: (value) => setState(() => _networkSearchQuery = value),
+                    placeholder: _getNetworkSearchPlaceholder(),
+                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
+                    itemColor: AppTheme.getMutedForegroundColor(brightness),
+                    decoration: BoxDecoration(
+                      color: AppTheme.getInputBackgroundColor(brightness),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => _showNetworkFilterDialog(),
+                  child: Icon(
+                    CupertinoIcons.slider_horizontal_3,
+                    color: _memberTypeFilter != null ? AppTheme.getPrimaryColor(brightness) : AppTheme.getMutedForegroundColor(brightness),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => _handleNetworkAdd(context),
                   child: Container(
                     width: 40,
                     height: 40,

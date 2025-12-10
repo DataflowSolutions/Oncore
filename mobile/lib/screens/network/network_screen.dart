@@ -187,6 +187,8 @@ class NetworkContent extends ConsumerStatefulWidget {
   final String orgName;
   final NetworkTab activeTab;
   final ValueChanged<NetworkTab>? onTabChanged;
+  final String searchQuery;
+  final String? memberTypeFilter;
 
   const NetworkContent({
     super.key,
@@ -194,6 +196,8 @@ class NetworkContent extends ConsumerStatefulWidget {
     required this.orgName,
     this.activeTab = NetworkTab.team,
     this.onTabChanged,
+    this.searchQuery = '',
+    this.memberTypeFilter,
   });
 
   @override
@@ -201,15 +205,6 @@ class NetworkContent extends ConsumerStatefulWidget {
 }
 
 class _NetworkContentState extends ConsumerState<NetworkContent> {
-  final _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -217,32 +212,11 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         // Title
         _buildTitle(),
         const SizedBox(height: 12),
-        // Search bar
-        _buildSearchBar(),
-        const SizedBox(height: 12),
         // Content
         Expanded(
           child: _buildContent(),
         ),
       ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: CupertinoSearchTextField(
-        controller: _searchController,
-        style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
-        itemColor: AppTheme.getMutedForegroundColor(brightness),
-        placeholder: 'Search...',
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value.toLowerCase();
-          });
-        },
-      ),
     );
   }
 
@@ -300,20 +274,28 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         child: Text('Error: $error', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
       ),
       data: (members) {
-        // Filter by search query
-        final filtered = _searchQuery.isEmpty
-            ? members
-            : members.where((m) =>
-                m.name.toLowerCase().contains(_searchQuery) ||
-                (m.phone?.toLowerCase().contains(_searchQuery) ?? false) ||
-                (m.email?.toLowerCase().contains(_searchQuery) ?? false) ||
-                (m.memberType?.toLowerCase().contains(_searchQuery) ?? false)
-              ).toList();
+        var filtered = members;
+        
+        // Apply member type filter first
+        if (widget.memberTypeFilter != null) {
+          filtered = filtered.where((m) => m.memberType?.toLowerCase() == widget.memberTypeFilter).toList();
+        }
+        
+        // Then apply search query
+        if (widget.searchQuery.isNotEmpty) {
+          final query = widget.searchQuery.toLowerCase();
+          filtered = filtered.where((m) =>
+              m.name.toLowerCase().contains(query) ||
+              (m.phone?.toLowerCase().contains(query) ?? false) ||
+              (m.email?.toLowerCase().contains(query) ?? false) ||
+              (m.memberType?.toLowerCase().contains(query) ?? false)
+            ).toList();
+        }
 
         if (filtered.isEmpty) {
           return Center(
             child: Text(
-              _searchQuery.isEmpty ? 'No team members' : 'No results match your search',
+              widget.searchQuery.isEmpty && widget.memberTypeFilter == null ? 'No team members' : 'No results match your search',
               style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
             ),
           );
@@ -446,15 +428,32 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         child: Text('Error: $error', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
       ),
       data: (promoters) {
-        if (promoters.isEmpty) {
+        var filtered = promoters;
+        
+        // Apply search query
+        if (widget.searchQuery.isNotEmpty) {
+          final query = widget.searchQuery.toLowerCase();
+          filtered = filtered.where((p) =>
+              p.name.toLowerCase().contains(query) ||
+              (p.company?.toLowerCase().contains(query) ?? false) ||
+              (p.email?.toLowerCase().contains(query) ?? false) ||
+              p.location.toLowerCase().contains(query) ||
+              p.venueNames.any((v) => v.toLowerCase().contains(query))
+            ).toList();
+        }
+        
+        if (filtered.isEmpty) {
           return Center(
-            child: Text('No promoters', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
+            child: Text(
+              widget.searchQuery.isEmpty ? 'No promoters' : 'No results match your search',
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
+            ),
           );
         }
         return ListView.builder(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
-          itemCount: promoters.length,
-          itemBuilder: (context, index) => _buildPromoterCard(promoters[index]),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) => _buildPromoterCard(filtered[index]),
         );
       },
     );
@@ -569,15 +568,31 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
         child: Text('Error: $error', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
       ),
       data: (venues) {
-        if (venues.isEmpty) {
+        var filtered = venues;
+        
+        // Apply search query
+        if (widget.searchQuery.isNotEmpty) {
+          final query = widget.searchQuery.toLowerCase();
+          filtered = filtered.where((v) =>
+              v.name.toLowerCase().contains(query) ||
+              v.location.toLowerCase().contains(query) ||
+              (v.address?.toLowerCase().contains(query) ?? false) ||
+              v.promoterNames.any((p) => p.toLowerCase().contains(query))
+            ).toList();
+        }
+        
+        if (filtered.isEmpty) {
           return Center(
-            child: Text('No venues', style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness))),
+            child: Text(
+              widget.searchQuery.isEmpty ? 'No venues' : 'No results match your search',
+              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
+            ),
           );
         }
         return ListView.builder(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 75),
-          itemCount: venues.length,
-          itemBuilder: (context, index) => _buildVenueCard(venues[index]),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) => _buildVenueCard(filtered[index]),
         );
       },
     );
