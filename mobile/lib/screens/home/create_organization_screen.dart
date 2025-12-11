@@ -152,9 +152,7 @@ class _CreateOrganizationScreenState extends ConsumerState<CreateOrganizationScr
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Create Organization'),
-        leading: CupertinoNavigationBarBackButton(
-          onPressed: () => context.go('/'),
-        ),
+        leading: const BackButton(),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
