@@ -67,6 +67,14 @@ abstract final class AppColors {
   // Popover
   static const lightPopover = Color(0xFFFFFFFF);            // #ffffff
   static const lightPopoverForeground = Color(0xFF0A0A0A);  // #0a0a0a
+  
+  // Auth Tabs (unselected)
+  static const lightAuthTabBg = Color(0xFFF5F5F5);          // #f5f5f5
+  static const lightAuthTabText = Color(0xFF737373);        // #737373 - muted
+  
+  // Auth Tabs (selected)
+  static const lightAuthTabSelectedBg = Color(0xFF171717);  // #171717 - dark primary
+  static const lightAuthTabSelectedText = Color(0xFFFAFAFA); // #fafafa - light text for contrast
 
   // ============================================
   // DARK THEME COLORS (from .dark in CSS)
@@ -83,7 +91,7 @@ abstract final class AppColors {
   static const darkCardCell = Color(0xFF323232);            // rgb(50,50,50)
   static const darkCardCellHover = Color(0xFF3C3C3C);       // rgb(60,60,60)
   static const darkCardForeground = Color(0xFFF2F2F2);      // #f2f2f2
-  static const darkCardBorder = Color(0x0DFFFFFF);          // rgba(255,255,255,0.025) in hex: #0DFFFFFF
+  static const darkCardBorder = Color(0x0D646464);          // #646464
   static const darkCardCellBorder = Color(0x12FFFFFF);      // rgba(255,255,255,0.07)
   
   // Current org (special)
@@ -144,6 +152,14 @@ abstract final class AppColors {
   // Popover
   static const darkPopover = Color(0xFF141414);             // #141414
   static const darkPopoverForeground = Color(0xFFF2F2F2);   // #f2f2f2
+  
+  // Auth Tabs (unselected)
+  static const darkAuthTabBg = Color(0xFF0F0F0F);           // rgb(40,40,40)
+  static const darkAuthTabText = Color(0xFFF0F0F0);         // rgb(175,175,175) - muted
+  
+  // Auth Tabs (selected)
+  static const darkAuthTabSelectedBg = Color(0xFFF0F0F0);   // rgb(240,240,240) - bright bg
+  static const darkAuthTabSelectedText = Color(0xFF0F0F0F); // rgb(20,20,20) - dark text for contrast
 
   // ============================================
   // SHARED SEMANTIC COLORS (same in both themes)

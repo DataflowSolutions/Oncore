@@ -148,6 +148,26 @@ class AppTheme {
       : AppColors.darkInputBorder;
   }
 
+  // ============================================
+  // AUTH TAB COLORS
+  // ============================================
+  
+  /// Get auth tab background color (unselected)
+  static Color get lightAuthTabBg => AppColors.lightAuthTabBg;
+  static Color get darkAuthTabBg => AppColors.darkAuthTabBg;
+  
+  /// Get auth tab text color (unselected)
+  static Color get lightAuthTabText => AppColors.lightAuthTabText;
+  static Color get darkAuthTabText => AppColors.darkAuthTabText;
+  
+  /// Get auth tab background color (selected)
+  static Color get lightAuthTabSelectedBg => AppColors.lightAuthTabSelectedBg;
+  static Color get darkAuthTabSelectedBg => AppColors.darkAuthTabSelectedBg;
+  
+  /// Get auth tab text color (selected)
+  static Color get lightAuthTabSelectedText => AppColors.lightAuthTabSelectedText;
+  static Color get darkAuthTabSelectedText => AppColors.darkAuthTabSelectedText;
+
   /// Get button background color for brightness
   static Color getButtonBackgroundColor(Brightness brightness) {
     return brightness == Brightness.light 

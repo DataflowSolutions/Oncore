@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/components.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/colors.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../main/controllers/main_shell_controller.dart' show saveLastShow;
@@ -344,7 +345,11 @@ class _ScheduleSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
+                    border: Border.all(
+                      color: brightness == Brightness.dark 
+                        ? AppColors.darkCardBorder 
+                        : AppTheme.getBorderColor(brightness),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -694,7 +699,11 @@ class _FlightsSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.getBorderColor(brightness)),
+                    border: Border.all(
+                      color: brightness == Brightness.dark 
+                        ? AppColors.darkCardBorder 
+                        : AppTheme.getBorderColor(brightness),
+                    ),
                   ),
                   child: Row(
                     children: [

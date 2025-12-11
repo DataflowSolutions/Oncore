@@ -280,20 +280,25 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.brightnessOf(context);
+    final isDark = brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.getPrimaryColor(brightness) : AppTheme.getCardColor(brightness),
+          color: isSelected 
+            ? (isDark ? AppTheme.darkAuthTabSelectedBg : AppTheme.lightAuthTabSelectedBg)
+            : (isDark ? AppTheme.darkAuthTabBg : AppTheme.lightAuthTabBg),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? CupertinoColors.white : AppTheme.getMutedForegroundColor(brightness),
+            color: isSelected
+              ? (isDark ? AppTheme.darkAuthTabSelectedText : AppTheme.lightAuthTabSelectedText)
+              : (isDark ? AppTheme.darkAuthTabText : AppTheme.lightAuthTabText),
             fontWeight: FontWeight.w500,
           ),
         ),
