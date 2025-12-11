@@ -312,40 +312,12 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   void _openTeamMemberDetail(TeamMember member) {
     Navigator.of(context).push(
       SwipeablePageRoute(
-        builder: (context) => DetailScreen(
-          title: member.name,
-          items: [
-            DetailItem(
-              label: 'Name',
-              value: member.name,
-              icon: CupertinoIcons.person,
-            ),
-            if (member.memberType != null)
-              DetailItem(
-                label: 'Member Type',
-                value: member.memberType,
-                icon: CupertinoIcons.person_badge_plus,
-              ),
-            if (member.phone != null)
-              DetailItem(
-                label: 'Phone',
-                value: member.phone,
-                icon: CupertinoIcons.phone,
-                type: DetailItemType.phone,
-              ),
-            if (member.email != null)
-              DetailItem(
-                label: 'Email',
-                value: member.email,
-                icon: CupertinoIcons.mail,
-                type: DetailItemType.email,
-              ),
-            DetailItem(
-              label: 'Status',
-              value: member.isActive ? 'Active (has account)' : 'Pending',
-              icon: CupertinoIcons.info,
-            ),
-          ],
+        builder: (context) => _TeamMemberDetailScreen(
+          member: member,
+          orgId: widget.orgId,
+          onDeleted: () {
+            ref.invalidate(teamMembersProvider(widget.orgId));
+          },
         ),
       ),
     );
@@ -462,47 +434,12 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   void _openPromoterDetail(Promoter promoter) {
     Navigator.of(context).push(
       SwipeablePageRoute(
-        builder: (context) => DetailScreen(
-          title: promoter.name,
-          items: [
-            DetailItem(
-              label: 'Name',
-              value: promoter.name,
-              icon: CupertinoIcons.person,
-            ),
-            if (promoter.company != null)
-              DetailItem(
-                label: 'Company',
-                value: promoter.company,
-                icon: CupertinoIcons.building_2_fill,
-              ),
-            if (promoter.location.isNotEmpty)
-              DetailItem(
-                label: 'Location',
-                value: promoter.location,
-                icon: CupertinoIcons.location,
-              ),
-            if (promoter.phone != null)
-              DetailItem(
-                label: 'Phone',
-                value: promoter.phone,
-                icon: CupertinoIcons.phone,
-                type: DetailItemType.phone,
-              ),
-            if (promoter.email != null)
-              DetailItem(
-                label: 'Email',
-                value: promoter.email,
-                icon: CupertinoIcons.mail,
-                type: DetailItemType.email,
-              ),
-            if (promoter.venueNames.isNotEmpty)
-              DetailItem(
-                label: 'Venues',
-                value: promoter.venueNames.join(', '),
-                icon: CupertinoIcons.placemark,
-              ),
-          ],
+        builder: (context) => _PromoterDetailScreen(
+          promoter: promoter,
+          orgId: widget.orgId,
+          onDeleted: () {
+            ref.invalidate(promotersProvider(widget.orgId));
+          },
         ),
       ),
     );
@@ -601,59 +538,12 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
   void _openVenueDetail(Venue venue) {
     Navigator.of(context).push(
       SwipeablePageRoute(
-        builder: (context) => DetailScreen(
-          title: venue.name,
-          items: [
-            DetailItem(
-              label: 'Name',
-              value: venue.name,
-              icon: CupertinoIcons.placemark,
-            ),
-            if (venue.location.isNotEmpty)
-              DetailItem(
-                label: 'Location',
-                value: venue.location,
-                icon: CupertinoIcons.location,
-              ),
-            if (venue.address != null)
-              DetailItem(
-                label: 'Address',
-                value: venue.address,
-                icon: CupertinoIcons.house,
-              ),
-            if (venue.capacity != null)
-              DetailItem(
-                label: 'Capacity',
-                value: '${venue.capacity}',
-                icon: CupertinoIcons.person_3,
-              ),
-            if (venue.phone != null)
-              DetailItem(
-                label: 'Phone',
-                value: venue.phone,
-                icon: CupertinoIcons.phone,
-                type: DetailItemType.phone,
-              ),
-            if (venue.email != null)
-              DetailItem(
-                label: 'Email',
-                value: venue.email,
-                icon: CupertinoIcons.mail,
-                type: DetailItemType.email,
-              ),
-            if (venue.promoterNames.isNotEmpty)
-              DetailItem(
-                label: 'Promoters',
-                value: venue.promoterNames.join(', '),
-                icon: CupertinoIcons.person,
-              ),
-            if (venue.showCount > 0)
-              DetailItem(
-                label: 'Shows',
-                value: '${venue.showCount} shows',
-                icon: CupertinoIcons.calendar,
-              ),
-          ],
+        builder: (context) => _VenueDetailScreen(
+          venue: venue,
+          orgId: widget.orgId,
+          onDeleted: () {
+            ref.invalidate(venuesProvider(widget.orgId));
+          },
         ),
       ),
     );
@@ -734,6 +624,486 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Detail screen for a team member with delete functionality
+class _TeamMemberDetailScreen extends ConsumerStatefulWidget {
+  final TeamMember member;
+  final String orgId;
+  final VoidCallback? onDeleted;
+
+  const _TeamMemberDetailScreen({
+    required this.member,
+    required this.orgId,
+    this.onDeleted,
+  });
+
+  @override
+  ConsumerState<_TeamMemberDetailScreen> createState() => _TeamMemberDetailScreenState();
+}
+
+class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen> {
+  bool _isDeleting = false;
+
+  Future<void> _deleteMember() async {
+    // Show confirmation dialog
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Remove Team Member'),
+        content: Text('Are you sure you want to remove ${widget.member.name} from your organization?'),
+        actions: [
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+
+      // Use RPC function to delete the person
+      await supabase.rpc('app_delete_person', params: {
+        'p_person_id': widget.member.id,
+      });
+
+      if (mounted) {
+        widget.onDeleted?.call();
+        Navigator.of(context).pop();
+        AppToast.success(context, '${widget.member.name} removed successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(context, 'Failed to remove team member: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return Stack(
+      children: [
+        DetailScreen(
+          title: widget.member.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: widget.member.name,
+              icon: CupertinoIcons.person,
+            ),
+            if (widget.member.memberType != null)
+              DetailItem(
+                label: 'Member Type',
+                value: widget.member.memberType,
+                icon: CupertinoIcons.person_badge_plus,
+              ),
+            if (widget.member.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: widget.member.phone,
+                icon: CupertinoIcons.phone,
+                type: DetailItemType.phone,
+              ),
+            if (widget.member.email != null)
+              DetailItem(
+                label: 'Email',
+                value: widget.member.email,
+                icon: CupertinoIcons.mail,
+                type: DetailItemType.email,
+              ),
+            DetailItem(
+              label: 'Status',
+              value: widget.member.isActive ? 'Active (has account)' : 'Pending',
+              icon: CupertinoIcons.info,
+            ),
+          ],
+          trailing: GestureDetector(
+            onTap: _isDeleting ? null : _deleteMember,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.getDestructiveColor(brightness),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: _isDeleting
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Text(
+                        'Remove from Organization',
+                        style: TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        if (_isDeleting)
+          Container(
+            color: AppTheme.getBackgroundColor(brightness).withValues(alpha: 0.5),
+            child: Center(
+              child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Detail screen for a promoter with delete functionality
+class _PromoterDetailScreen extends ConsumerStatefulWidget {
+  final Promoter promoter;
+  final String orgId;
+  final VoidCallback? onDeleted;
+
+  const _PromoterDetailScreen({
+    required this.promoter,
+    required this.orgId,
+    this.onDeleted,
+  });
+
+  @override
+  ConsumerState<_PromoterDetailScreen> createState() => _PromoterDetailScreenState();
+}
+
+class _PromoterDetailScreenState extends ConsumerState<_PromoterDetailScreen> {
+  bool _isDeleting = false;
+
+  Future<void> _deletePromoter() async {
+    // Show confirmation dialog
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Remove Promoter'),
+        content: Text('Are you sure you want to remove ${widget.promoter.name} from your organization?'),
+        actions: [
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+
+      // Use RPC function to delete the promoter
+      final result = await supabase.rpc('app_delete_promoter', params: {
+        'p_promoter_id': widget.promoter.id,
+      });
+
+      // Check if the result indicates an error (e.g., has shows)
+      if (result is Map && result['success'] == false) {
+        if (mounted) {
+          AppToast.error(context, result['error'] ?? 'Failed to remove promoter');
+        }
+        return;
+      }
+
+      if (mounted) {
+        widget.onDeleted?.call();
+        Navigator.of(context).pop();
+        AppToast.success(context, '${widget.promoter.name} removed successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(context, 'Failed to remove promoter: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return Stack(
+      children: [
+        DetailScreen(
+          title: widget.promoter.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: widget.promoter.name,
+              icon: CupertinoIcons.person,
+            ),
+            if (widget.promoter.company != null)
+              DetailItem(
+                label: 'Company',
+                value: widget.promoter.company,
+                icon: CupertinoIcons.building_2_fill,
+              ),
+            if (widget.promoter.location.isNotEmpty)
+              DetailItem(
+                label: 'Location',
+                value: widget.promoter.location,
+                icon: CupertinoIcons.location,
+              ),
+            if (widget.promoter.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: widget.promoter.phone,
+                icon: CupertinoIcons.phone,
+                type: DetailItemType.phone,
+              ),
+            if (widget.promoter.email != null)
+              DetailItem(
+                label: 'Email',
+                value: widget.promoter.email,
+                icon: CupertinoIcons.mail,
+                type: DetailItemType.email,
+              ),
+            if (widget.promoter.venueNames.isNotEmpty)
+              DetailItem(
+                label: 'Venues',
+                value: widget.promoter.venueNames.join(', '),
+                icon: CupertinoIcons.placemark,
+              ),
+          ],
+          trailing: GestureDetector(
+            onTap: _isDeleting ? null : _deletePromoter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.getDestructiveColor(brightness),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: _isDeleting
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Text(
+                        'Remove from Organization',
+                        style: TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        if (_isDeleting)
+          Container(
+            color: AppTheme.getBackgroundColor(brightness).withValues(alpha: 0.5),
+            child: Center(
+              child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Detail screen for a venue with delete functionality
+class _VenueDetailScreen extends ConsumerStatefulWidget {
+  final Venue venue;
+  final String orgId;
+  final VoidCallback? onDeleted;
+
+  const _VenueDetailScreen({
+    required this.venue,
+    required this.orgId,
+    this.onDeleted,
+  });
+
+  @override
+  ConsumerState<_VenueDetailScreen> createState() => _VenueDetailScreenState();
+}
+
+class _VenueDetailScreenState extends ConsumerState<_VenueDetailScreen> {
+  bool _isDeleting = false;
+
+  Future<void> _deleteVenue() async {
+    // Show confirmation dialog
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Remove Venue'),
+        content: Text('Are you sure you want to remove ${widget.venue.name} from your organization?'),
+        actions: [
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+
+      // Use RPC function to delete the venue
+      final result = await supabase.rpc('delete_venue', params: {
+        'p_venue_id': widget.venue.id,
+      });
+
+      // Check if the result indicates an error (e.g., has shows)
+      if (result is Map && result['success'] == false) {
+        if (mounted) {
+          AppToast.error(context, result['error'] ?? 'Failed to remove venue');
+        }
+        return;
+      }
+
+      if (mounted) {
+        widget.onDeleted?.call();
+        Navigator.of(context).pop();
+        AppToast.success(context, '${widget.venue.name} removed successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(context, 'Failed to remove venue: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return Stack(
+      children: [
+        DetailScreen(
+          title: widget.venue.name,
+          items: [
+            DetailItem(
+              label: 'Name',
+              value: widget.venue.name,
+              icon: CupertinoIcons.placemark,
+            ),
+            if (widget.venue.location.isNotEmpty)
+              DetailItem(
+                label: 'Location',
+                value: widget.venue.location,
+                icon: CupertinoIcons.location,
+              ),
+            if (widget.venue.address != null)
+              DetailItem(
+                label: 'Address',
+                value: widget.venue.address,
+                icon: CupertinoIcons.house,
+              ),
+            if (widget.venue.capacity != null)
+              DetailItem(
+                label: 'Capacity',
+                value: '${widget.venue.capacity}',
+                icon: CupertinoIcons.person_3,
+              ),
+            if (widget.venue.phone != null)
+              DetailItem(
+                label: 'Phone',
+                value: widget.venue.phone,
+                icon: CupertinoIcons.phone,
+                type: DetailItemType.phone,
+              ),
+            if (widget.venue.email != null)
+              DetailItem(
+                label: 'Email',
+                value: widget.venue.email,
+                icon: CupertinoIcons.mail,
+                type: DetailItemType.email,
+              ),
+            if (widget.venue.promoterNames.isNotEmpty)
+              DetailItem(
+                label: 'Promoters',
+                value: widget.venue.promoterNames.join(', '),
+                icon: CupertinoIcons.person,
+              ),
+            if (widget.venue.showCount > 0)
+              DetailItem(
+                label: 'Shows',
+                value: '${widget.venue.showCount} shows',
+                icon: CupertinoIcons.calendar,
+              ),
+          ],
+          trailing: GestureDetector(
+            onTap: _isDeleting ? null : _deleteVenue,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.getDestructiveColor(brightness),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: _isDeleting
+                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                    : const Text(
+                        'Remove from Organization',
+                        style: TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        if (_isDeleting)
+          Container(
+            color: AppTheme.getBackgroundColor(brightness).withValues(alpha: 0.5),
+            child: Center(
+              child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+            ),
+          ),
+      ],
     );
   }
 }
