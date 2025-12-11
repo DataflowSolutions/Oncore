@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../../providers/auth_provider.dart';
-import '../main/main_shell.dart' show saveLastShow;
+import '../main/controllers/main_shell_controller.dart' show saveLastShow;
 
 /// Provider for fetching shows by organization with artist assignments
 final showsByOrgProvider = FutureProvider.family<List<Show>, String>((ref, orgId) async {

@@ -5,7 +5,7 @@ import '../../components/components.dart';
 import '../../models/show.dart';
 import '../../models/show_day.dart';
 import '../../theme/app_theme.dart';
-import '../main/main_shell.dart' show saveLastShow;
+import '../main/controllers/main_shell_controller.dart' show saveLastShow;
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
 import 'widgets/detail_modal.dart';

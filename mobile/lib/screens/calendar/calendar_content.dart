@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../shows/shows_list_screen.dart';
-import '../main/main_shell.dart' show saveLastShow;
+import '../main/controllers/main_shell_controller.dart' show saveLastShow;
 
 /// Calendar content widget - just the calendar content, no shell/nav
 /// Used inside MainShell for Layer 1 Shows calendar view

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../components/components.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
-import '../main/main_shell.dart' show saveLastShow;
+import '../main/controllers/main_shell_controller.dart' show saveLastShow;
 import 'shows_list_screen.dart';
 
 /// Modal for creating a new show - matches web client functionality
