@@ -167,21 +167,24 @@ class _AddTeamMemberScreenState extends ConsumerState<AddTeamMemberScreen> {
           // Search bar
           Padding(
             padding: const EdgeInsets.all(24),
-            child: CupertinoTextField(
-              controller: _searchController,
-              onChanged: _filterPeople,
-              placeholder: 'Search people...',
-              placeholderStyle: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
-              prefix: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Icon(CupertinoIcons.search, color: AppTheme.getMutedForegroundColor(brightness)),
+            child: SizedBox(
+              height: 40,
+              child: CupertinoTextField(
+                controller: _searchController,
+                onChanged: _filterPeople,
+                placeholder: 'Search people...',
+                placeholderStyle: TextStyle(color: AppTheme.getMutedForegroundColor(brightness)),
+                prefix: Padding(
+                  padding: const EdgeInsets.only(left: 14),
+                  child: Icon(CupertinoIcons.search, color: AppTheme.getMutedForegroundColor(brightness)),
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.getCardColor(brightness),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                style: TextStyle(color: AppTheme.getForegroundColor(brightness)),
               ),
-              decoration: BoxDecoration(
-                color: AppTheme.getCardColor(brightness),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              style: TextStyle(color: AppTheme.getForegroundColor(brightness)),
             ),
           ),
           // Loading or list

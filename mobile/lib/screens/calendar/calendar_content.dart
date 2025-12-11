@@ -99,6 +99,7 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
       padding: const EdgeInsets.only(bottom: 150),
       child: PageView.builder(
         controller: _pageController,
+        scrollDirection: Axis.vertical,
         onPageChanged: _onPageChanged,
         itemBuilder: (context, page) {
           final monthDate = _getMonthFromPage(page);
@@ -309,18 +310,60 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3), width: 0.5),
         ),
-        child: Text(
-          show.venueCity ?? show.title,
-          style: TextStyle(
-            color: AppTheme.getForegroundColor(brightness),
-            fontSize: 8,
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              show.venueCity ?? show.title,
+              style: TextStyle(
+                color: AppTheme.getForegroundColor(brightness),
+                fontSize: 8,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // Show timing info if available
+            if (show.doorsAt != null || show.setTime != null) ...[
+              const SizedBox(height: 1),
+              Text(
+                _formatTimeInfo(show),
+                style: TextStyle(
+                  color: AppTheme.getMutedForegroundColor(brightness),
+                  fontSize: 7,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
         ),
       ),
     );
+  }
+
+  String _formatTimeInfo(Show show) {
+    if (show.doorsAt != null) {
+      return 'Doors: ${_formatTime(show.doorsAt!)}';
+    } else if (show.setTime != null) {
+      return 'Set: ${_formatTime(show.setTime!)}';
+    }
+    return '';
+  }
+
+  String _formatTime(String timeStr) {
+    try {
+      // Try parsing as ISO string
+      if (timeStr.contains('T')) {
+        final dt = DateTime.parse(timeStr);
+        return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      }
+      // Already in HH:mm format
+      return timeStr;
+    } catch (_) {
+      return timeStr;
+    }
   }
 
   String _getMonthName(int month) {

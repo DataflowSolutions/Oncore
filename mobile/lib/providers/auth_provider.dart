@@ -107,23 +107,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      print('[AUTH DEBUG] Attempting signup for: $email');
+      print('[AUTH DEBUG] Supabase URL: ${_supabase.auth.currentSession}');
+      
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
       );
 
+      print('[AUTH DEBUG] Signup response - user: ${response.user?.id}, session: ${response.session?.accessToken != null}');
+      
       state = state.copyWith(isLoading: false);
 
       // Return true if signup was successful
       // Note: User might need to confirm email depending on Supabase settings
       return response.user != null;
     } on AuthException catch (e) {
+      print('[AUTH DEBUG] AuthException: ${e.message}, statusCode: ${e.statusCode}');
       state = state.copyWith(
         isLoading: false,
         error: _getFriendlySignUpError(e.message),
       );
       return false;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[AUTH DEBUG] Unexpected error: $e');
+      print('[AUTH DEBUG] Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'An unexpected error occurred. Please try again.',

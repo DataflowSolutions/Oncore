@@ -87,13 +87,17 @@ class _MainShellState extends ConsumerState<MainShell> {
   
   // Shows search/filter state
   final TextEditingController _showsSearchController = TextEditingController();
+  final FocusNode _showsSearchFocusNode = FocusNode();
   String _showsSearchQuery = '';
   bool _showPastShows = true;
+  bool _isShowsSearchFocused = false;
 
   // Network search/filter state
   final TextEditingController _networkSearchController = TextEditingController();
+  final FocusNode _networkSearchFocusNode = FocusNode();
   String _networkSearchQuery = '';
   String? _memberTypeFilter; // null = All, 'artist', 'agent', 'manager', 'crew'
+  bool _isNetworkSearchFocused = false;
 
   @override
   void initState() {
@@ -103,7 +107,28 @@ class _MainShellState extends ConsumerState<MainShell> {
     _showsViewMode = widget.initialShowsViewMode ?? ShowsViewMode.list;
     _pageController = PageController(initialPage: widget.initialTabIndex);
     
+    // Add focus listeners for search bars
+    _showsSearchFocusNode.addListener(_onShowsSearchFocusChange);
+    _networkSearchFocusNode.addListener(_onNetworkSearchFocusChange);
+    
     _initialize();
+  }
+
+  void _onShowsSearchFocusChange() {
+    setState(() {
+      _isShowsSearchFocused = _showsSearchFocusNode.hasFocus;
+    });
+  }
+
+  void _onNetworkSearchFocusChange() {
+    setState(() {
+      _isNetworkSearchFocused = _networkSearchFocusNode.hasFocus;
+    });
+  }
+
+  void _unfocusSearch() {
+    _showsSearchFocusNode.unfocus();
+    _networkSearchFocusNode.unfocus();
   }
 
   Future<void> _initialize() async {
@@ -139,6 +164,10 @@ class _MainShellState extends ConsumerState<MainShell> {
     _pageController.dispose();
     _showsSearchController.dispose();
     _networkSearchController.dispose();
+    _showsSearchFocusNode.removeListener(_onShowsSearchFocusChange);
+    _networkSearchFocusNode.removeListener(_onNetworkSearchFocusChange);
+    _showsSearchFocusNode.dispose();
+    _networkSearchFocusNode.dispose();
     super.dispose();
   }
 
@@ -438,57 +467,61 @@ class _MainShellState extends ConsumerState<MainShell> {
     return CupertinoPageScaffold(
       backgroundColor: AppTheme.getBackgroundColor(brightness),
       child: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // Brand header
-                _buildBrandHeader(brightness),
-                _buildTopBar(brightness),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    onPageChanged: _onPageChanged,
-                  children: [
-                    // Tab 0: Day view
-                    ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
-                    // Tab 1: Shows (list or calendar)
-                    _showsViewMode == ShowsViewMode.calendar
-                        ? CalendarContent(
-                            orgId: widget.orgId,
-                            orgName: widget.orgName,
-                            onShowSelected: _onShowSelected,
-                          )
-                        : ShowsContent(
-                            orgId: widget.orgId,
-                            orgName: widget.orgName,
-                            onShowSelected: _onShowSelected,
-                            searchQuery: _showsSearchQuery,
-                            showPastShows: _showPastShows,
-                          ),
-                    // Tab 2: Network
-                      NetworkContent(
-                        orgId: widget.orgId,
-                        orgName: widget.orgName,
-                        activeTab: _networkTab,
-                        onTabChanged: (tab) => setState(() => _networkTab = tab),
-                        searchQuery: _networkSearchQuery,
-                        memberTypeFilter: _memberTypeFilter,
-                      ),
-                    ],
+        child: GestureDetector(
+          onTap: _unfocusSearch,
+          behavior: HitTestBehavior.translucent,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  // Brand header
+                  _buildBrandHeader(brightness),
+                  _buildTopBar(brightness),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: _onPageChanged,
+                    children: [
+                      // Tab 0: Day view
+                      ShowDayContent(orgId: widget.orgId, showId: _currentShowId),
+                      // Tab 1: Shows (list or calendar)
+                      _showsViewMode == ShowsViewMode.calendar
+                          ? CalendarContent(
+                              orgId: widget.orgId,
+                              orgName: widget.orgName,
+                              onShowSelected: _onShowSelected,
+                            )
+                          : ShowsContent(
+                              orgId: widget.orgId,
+                              orgName: widget.orgName,
+                              onShowSelected: _onShowSelected,
+                              searchQuery: _showsSearchQuery,
+                              showPastShows: _showPastShows,
+                            ),
+                      // Tab 2: Network
+                        NetworkContent(
+                          orgId: widget.orgId,
+                          orgName: widget.orgName,
+                          activeTab: _networkTab,
+                          onTabChanged: (tab) => setState(() => _networkTab = tab),
+                          searchQuery: _networkSearchQuery,
+                          memberTypeFilter: _memberTypeFilter,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                // Spacer for bottom navigation
-                const SizedBox(),
-              ],
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: _buildBottomSection(brightness),
-            ),
-          ],
+                  // Spacer for bottom navigation
+                  const SizedBox(),
+                ],
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: _buildBottomSection(brightness),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -635,15 +668,20 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: Row(
               children: [
                 Expanded(
-                  child: CupertinoSearchTextField(
-                    controller: _showsSearchController,
-                    onChanged: (value) => setState(() => _showsSearchQuery = value),
-                    placeholder: 'Search shows...',
-                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
-                    itemColor: AppTheme.getMutedForegroundColor(brightness),
-                    decoration: BoxDecoration(
-                      color: AppTheme.getInputBackgroundColor(brightness),
-                      borderRadius: BorderRadius.circular(24),
+                  child: SizedBox(
+                    height: 40,
+                    child: CupertinoSearchTextField(
+                      controller: _showsSearchController,
+                      focusNode: _showsSearchFocusNode,
+                      onChanged: (value) => setState(() => _showsSearchQuery = value),
+                      placeholder: 'Search shows...',
+                      style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
+                      itemColor: AppTheme.getMutedForegroundColor(brightness),
+                      prefixInsets: const EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
+                      decoration: BoxDecoration(
+                        color: AppTheme.getInputBackgroundColor(brightness),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
                   ),
                 ),
@@ -672,7 +710,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          if (!_isShowsSearchFocused) const SizedBox(height: 16),
         ],
         // Network search/filter row
         if (isNetworkTab) ...[
@@ -681,15 +719,20 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: Row(
               children: [
                 Expanded(
-                  child: CupertinoSearchTextField(
-                    controller: _networkSearchController,
-                    onChanged: (value) => setState(() => _networkSearchQuery = value),
-                    placeholder: _getNetworkSearchPlaceholder(),
-                    style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
-                    itemColor: AppTheme.getMutedForegroundColor(brightness),
-                    decoration: BoxDecoration(
-                      color: AppTheme.getInputBackgroundColor(brightness),
-                      borderRadius: BorderRadius.circular(24),
+                  child: SizedBox(
+                    height: 40,
+                    child: CupertinoSearchTextField(
+                      controller: _networkSearchController,
+                      focusNode: _networkSearchFocusNode,
+                      onChanged: (value) => setState(() => _networkSearchQuery = value),
+                      placeholder: _getNetworkSearchPlaceholder(),
+                      style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 15),
+                      itemColor: AppTheme.getMutedForegroundColor(brightness),
+                      prefixInsets: const EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
+                      decoration: BoxDecoration(
+                        color: AppTheme.getInputBackgroundColor(brightness),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
                   ),
                 ),
@@ -720,14 +763,15 @@ class _MainShellState extends ConsumerState<MainShell> {
           ),
           const SizedBox(height: 16),
         ],
-        // Bottom navigation - always visible on Layer 1
-        ColoredBox(
-          color: CupertinoColors.systemBackground.withOpacity(0),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0), // (1, 2, 3, 4) = (left, top, right, bottom)
-            child: _buildBottomNav(brightness),
+        // Bottom navigation - hide when Shows search is focused
+        if (!(isShowsTab && _isShowsSearchFocused))
+          ColoredBox(
+            color: CupertinoColors.systemBackground.withOpacity(0),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 0), // (1, 2, 3, 4) = (left, top, right, bottom)
+              child: _buildBottomNav(brightness),
+            ),
           ),
-        ),
       ],
     );
   }
