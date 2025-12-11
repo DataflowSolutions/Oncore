@@ -147,18 +147,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       data: (orgs) => _buildOrganizationsList(orgs),
                     ),
                     
-                    const SizedBox(height: 32),
-                    
-                    // Settings Section
-                    _buildSectionTitleWithIcon('Settings', CupertinoIcons.gear, brightness),
-                    const SizedBox(height: 16),
-                    _buildToggleRow('Email Notification', _emailNotifications, brightness, (value) {
-                      setState(() => _emailNotifications = value);
-                      _showSnackBar('This does nothing at the moment.');
-                    }),
-                    const SizedBox(height: 16),
-                    _buildDarkModeToggle(brightness),
-                    
                     const SizedBox(height: 48),
                   ],
                 ),
@@ -349,10 +337,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   color: AppTheme.getPrimaryColor(brightness),
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Text(
+                child: Text(
                   'Add New',
                   style: TextStyle(
-                    color: CupertinoColors.white,
+                    color: AppTheme.getBackgroundColor(brightness),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
