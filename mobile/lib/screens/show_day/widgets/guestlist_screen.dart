@@ -3,20 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../theme/app_theme.dart';
+import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_guest_screen.dart';
 import 'detail_screen.dart';
 
 /// Layer 2: Guestlist screen showing all guests for a show
 class GuestlistScreen extends ConsumerWidget {
-  final List<GuestInfo> guests;
   final String showId;
   final String orgId;
   final VoidCallback? onGuestAdded;
 
   const GuestlistScreen({
     super.key,
-    required this.guests,
     required this.showId,
     required this.orgId,
     this.onGuestAdded,
@@ -25,57 +24,73 @@ class GuestlistScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-
-    // Calculate total guest count
-    final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
+    final guestsAsync = ref.watch(showGuestlistProvider(showId));
 
     return LayerScaffold(
       title: 'Guestlist',
-      body: Column(
-        children: [
-          // Summary header
-          if (guests.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${guests.length} entries',
-                    style: TextStyle(
-                      color: AppTheme.getMutedForegroundColor(brightness),
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    '$totalGuests total guests',
-                    style: TextStyle(
-                      color: AppTheme.getMutedForegroundColor(brightness),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+      body: guestsAsync.when(
+        loading: () => Center(
+          child: CupertinoActivityIndicator(),
+        ),
+        error: (error, stack) => Center(
+          child: Text(
+            'Failed to load guestlist',
+            style: TextStyle(
+              color: AppTheme.getMutedForegroundColor(brightness),
             ),
-          Expanded(
-            child: guests.isEmpty
-                ? _buildEmptyState(brightness)
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: guests.length,
-                    itemBuilder: (context, index) {
-                      final guest = guests[index];
-                      return _GuestCard(
-                        guest: guest,
-                        onTap: () => _openGuestDetail(context, guest),
-                      );
-                    },
+          ),
+        ),
+        data: (guests) {
+          // Calculate total guest count
+          final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
+
+          return Column(
+            children: [
+              // Summary header
+              if (guests.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${guests.length} entries',
+                        style: TextStyle(
+                          color: AppTheme.getMutedForegroundColor(brightness),
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '$totalGuests total guests',
+                        style: TextStyle(
+                          color: AppTheme.getMutedForegroundColor(brightness),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-          ),
-          AddButton(
-            onPressed: () => _openAddGuest(context),
-          ),
-        ],
+                ),
+              Expanded(
+                child: guests.isEmpty
+                    ? _buildEmptyState(brightness)
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: guests.length,
+                        itemBuilder: (context, index) {
+                          final guest = guests[index];
+                          return _GuestCard(
+                            guest: guest,
+                            onTap: () => _openGuestDetail(context, guest),
+                          );
+                        },
+                      ),
+              ),
+              AddButton(
+                onPressed: () => _openAddGuest(context, ref),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -112,13 +127,14 @@ class GuestlistScreen extends ConsumerWidget {
     );
   }
 
-  void _openAddGuest(BuildContext context) {
+  void _openAddGuest(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddGuestScreen(
           showId: showId,
           orgId: orgId,
           onGuestAdded: () {
+            ref.invalidate(showGuestlistProvider(showId));
             onGuestAdded?.call();
             Navigator.of(context).pop();
           },

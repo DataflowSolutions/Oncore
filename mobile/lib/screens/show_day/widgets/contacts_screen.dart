@@ -4,20 +4,19 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../theme/app_theme.dart';
+import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_contact_screen.dart';
 import 'detail_screen.dart';
 
 /// Layer 2: Contacts list screen showing all contacts for a show
 class ContactsScreen extends ConsumerWidget {
-  final List<ContactInfo> contacts;
   final String showId;
   final String orgId;
   final VoidCallback? onContactAdded;
 
   const ContactsScreen({
     super.key,
-    required this.contacts,
     required this.showId,
     required this.orgId,
     this.onContactAdded,
@@ -26,37 +25,51 @@ class ContactsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final contactsAsync = ref.watch(showContactsProvider(showId));
 
     return LayerScaffold(
       title: 'Contacts',
       body: Column(
         children: [
           Expanded(
-            child: contacts.isEmpty
-                ? _buildEmptyState(brightness)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: contacts.length,
-                    itemBuilder: (context, index) {
-                      final contact = contacts[index];
-                      return ContactCard(
-                        name: contact.name,
-                        role: contact.role,
-                        phone: contact.phone,
-                        email: contact.email,
-                        onTap: () => _openContactDetail(context, contact),
-                        onPhoneTap: contact.phone != null
-                            ? () => _launchPhone(contact.phone!)
-                            : null,
-                        onEmailTap: contact.email != null
-                            ? () => _launchEmail(contact.email!)
-                            : null,
-                      );
-                    },
+            child: contactsAsync.when(
+              loading: () => Center(
+                child: CupertinoActivityIndicator(),
+              ),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Failed to load contacts',
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
+                ),
+              ),
+              data: (contacts) => contacts.isEmpty
+                  ? _buildEmptyState(brightness)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(24),
+                      itemCount: contacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = contacts[index];
+                        return ContactCard(
+                          name: contact.name,
+                          role: contact.role,
+                          phone: contact.phone,
+                          email: contact.email,
+                          onTap: () => _openContactDetail(context, contact),
+                          onPhoneTap: contact.phone != null
+                              ? () => _launchPhone(contact.phone!)
+                              : null,
+                          onEmailTap: contact.email != null
+                              ? () => _launchEmail(contact.email!)
+                              : null,
+                        );
+                      },
+                    ),
+            ),
           ),
           AddButton(
-            onPressed: () => _openAddContact(context),
+            onPressed: () => _openAddContact(context, ref),
           ),
         ],
       ),
@@ -95,13 +108,14 @@ class ContactsScreen extends ConsumerWidget {
     );
   }
 
-  void _openAddContact(BuildContext context) {
+  void _openAddContact(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddContactScreen(
           showId: showId,
           orgId: orgId,
           onContactAdded: () {
+            ref.invalidate(showContactsProvider(showId));
             onContactAdded?.call();
             Navigator.of(context).pop();
           },

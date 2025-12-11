@@ -3,19 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
+import '../providers/show_day_providers.dart';
 import 'add_flight_screen.dart';
 import 'form_widgets.dart';
 
 /// Layer 2: Flights list screen showing all flights for a show
 class FlightsScreen extends ConsumerWidget {
-  final List<FlightInfo> flights;
   final String showId;
   final String orgId;
   final VoidCallback? onFlightAdded;
 
   const FlightsScreen({
     super.key,
-    required this.flights,
     required this.showId,
     required this.orgId,
     this.onFlightAdded,
@@ -24,25 +23,39 @@ class FlightsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final flightsAsync = ref.watch(showFlightsProvider(showId));
 
     return LayerScaffold(
       title: 'Flights',
       body: Column(
         children: [
           Expanded(
-            child: flights.isEmpty
-                ? _buildEmptyState(brightness)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: flights.length,
-                    itemBuilder: (context, index) {
-                      final flight = flights[index];
-                      return _FlightCard(flight: flight);
-                    },
+            child: flightsAsync.when(
+              loading: () => Center(
+                child: CupertinoActivityIndicator(),
+              ),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Failed to load flights',
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
+                ),
+              ),
+              data: (flights) => flights.isEmpty
+                  ? _buildEmptyState(brightness)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(24),
+                      itemCount: flights.length,
+                      itemBuilder: (context, index) {
+                        final flight = flights[index];
+                        return _FlightCard(flight: flight);
+                      },
+                    ),
+            ),
           ),
           AddButton(
-            onPressed: () => _openAddFlight(context),
+            onPressed: () => _openAddFlight(context, ref),
           ),
         ],
       ),
@@ -81,13 +94,15 @@ class FlightsScreen extends ConsumerWidget {
     );
   }
 
-  void _openAddFlight(BuildContext context) {
+  void _openAddFlight(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddFlightScreen(
           showId: showId,
           orgId: orgId,
           onFlightAdded: () {
+            // Invalidate the provider to refresh the data
+            ref.invalidate(showFlightsProvider(showId));
             onFlightAdded?.call();
             Navigator.of(context).pop();
           },

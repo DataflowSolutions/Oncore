@@ -4,19 +4,18 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
+import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_catering_screen.dart';
 
 /// Layer 2: Catering list screen showing all catering for a show
 class CateringScreen extends ConsumerWidget {
-  final List<CateringInfo> catering;
   final String showId;
   final String orgId;
   final VoidCallback? onCateringAdded;
 
   const CateringScreen({
     super.key,
-    required this.catering,
     required this.showId,
     required this.orgId,
     this.onCateringAdded,
@@ -25,33 +24,47 @@ class CateringScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final cateringAsync = ref.watch(showCateringProvider(showId));
 
     return LayerScaffold(
       title: 'Catering',
       body: Column(
         children: [
           Expanded(
-            child: catering.isEmpty
-                ? _buildEmptyState(brightness)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: catering.length,
-                    itemBuilder: (context, index) {
-                      final item = catering[index];
-                      return _CateringCard(
-                        catering: item,
-                        onPhoneTap: item.phone != null
-                            ? () => _launchPhone(item.phone!)
-                            : null,
-                        onEmailTap: item.email != null
-                            ? () => _launchEmail(item.email!)
-                            : null,
-                      );
-                    },
+            child: cateringAsync.when(
+              loading: () => Center(
+                child: CupertinoActivityIndicator(),
+              ),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Failed to load catering',
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
+                ),
+              ),
+              data: (catering) => catering.isEmpty
+                  ? _buildEmptyState(brightness)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(24),
+                      itemCount: catering.length,
+                      itemBuilder: (context, index) {
+                        final item = catering[index];
+                        return _CateringCard(
+                          catering: item,
+                          onPhoneTap: item.phone != null
+                              ? () => _launchPhone(item.phone!)
+                              : null,
+                          onEmailTap: item.email != null
+                              ? () => _launchEmail(item.email!)
+                              : null,
+                        );
+                      },
+                    ),
+            ),
           ),
           AddButton(
-            onPressed: () => _openAddCatering(context),
+            onPressed: () => _openAddCatering(context, ref),
           ),
         ],
       ),
@@ -90,13 +103,14 @@ class CateringScreen extends ConsumerWidget {
     );
   }
 
-  void _openAddCatering(BuildContext context) {
+  void _openAddCatering(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddCateringScreen(
           showId: showId,
           orgId: orgId,
           onCateringAdded: () {
+            ref.invalidate(showCateringProvider(showId));
             onCateringAdded?.call();
             Navigator.of(context).pop();
           },

@@ -4,19 +4,18 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../components/components.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
+import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_hotel_screen.dart';
 
 /// Layer 2: Hotels list screen showing all lodging for a show
 class HotelsScreen extends ConsumerWidget {
-  final List<LodgingInfo> hotels;
   final String showId;
   final String orgId;
   final VoidCallback? onHotelAdded;
 
   const HotelsScreen({
     super.key,
-    required this.hotels,
     required this.showId,
     required this.orgId,
     this.onHotelAdded,
@@ -25,33 +24,47 @@ class HotelsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final hotelsAsync = ref.watch(showLodgingProvider(showId));
 
     return LayerScaffold(
       title: 'Hotels',
       body: Column(
         children: [
           Expanded(
-            child: hotels.isEmpty
-                ? _buildEmptyState(brightness)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: hotels.length,
-                    itemBuilder: (context, index) {
-                      final hotel = hotels[index];
-                      return _HotelCard(
-                        hotel: hotel,
-                        onPhoneTap: hotel.phone != null
-                            ? () => _launchPhone(hotel.phone!)
-                            : null,
-                        onEmailTap: hotel.email != null
-                            ? () => _launchEmail(hotel.email!)
-                            : null,
-                      );
-                    },
+            child: hotelsAsync.when(
+              loading: () => Center(
+                child: CupertinoActivityIndicator(),
+              ),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Failed to load hotels',
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
                   ),
+                ),
+              ),
+              data: (hotels) => hotels.isEmpty
+                  ? _buildEmptyState(brightness)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(24),
+                      itemCount: hotels.length,
+                      itemBuilder: (context, index) {
+                        final hotel = hotels[index];
+                        return _HotelCard(
+                          hotel: hotel,
+                          onPhoneTap: hotel.phone != null
+                              ? () => _launchPhone(hotel.phone!)
+                              : null,
+                          onEmailTap: hotel.email != null
+                              ? () => _launchEmail(hotel.email!)
+                              : null,
+                        );
+                      },
+                    ),
+            ),
           ),
           AddButton(
-            onPressed: () => _openAddHotel(context),
+            onPressed: () => _openAddHotel(context, ref),
           ),
         ],
       ),
@@ -90,13 +103,14 @@ class HotelsScreen extends ConsumerWidget {
     );
   }
 
-  void _openAddHotel(BuildContext context) {
+  void _openAddHotel(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddHotelScreen(
           showId: showId,
           orgId: orgId,
           onHotelAdded: () {
+            ref.invalidate(showLodgingProvider(showId));
             onHotelAdded?.call();
             Navigator.of(context).pop();
           },

@@ -244,13 +244,15 @@ class _ShowDayContent extends ConsumerWidget {
     final scheduleItems = scheduleAsync.valueOrNull ?? [];
 
     void openFullSchedule() {
-      print('[DEBUG] openFullSchedule called with ${scheduleItems.length} items');
+      print('[DEBUG] openFullSchedule called');
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => FullScheduleScreen(
-            items: scheduleItems,
             showTitle: show.title,
             showDate: show.date,
+            showId: showId,
+            orgId: show.orgId,
+            onItemAdded: () => ref.invalidate(showScheduleProvider(showId)),
           ),
         ),
       );
@@ -261,7 +263,6 @@ class _ShowDayContent extends ConsumerWidget {
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => TeamScreen(
-            assignments: assignments,
             showId: showId,
             orgId: show.orgId,
             onMemberAdded: () => ref.invalidate(showAssignmentsProvider(showId)),

@@ -1,36 +1,36 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../theme/app_theme.dart';
+import '../providers/show_day_providers.dart';
 import 'detail_modal.dart';
 import 'add_schedule_item_screen.dart';
 import 'form_widgets.dart';
 
 /// Full schedule screen showing a timeline view of all schedule items
 /// Similar to the desktop ScheduleTimeline component
-class FullScheduleScreen extends StatefulWidget {
-  final List<ScheduleItem> items;
+class FullScheduleScreen extends ConsumerStatefulWidget {
   final String showTitle;
   final DateTime showDate;
-  final String? showId;
-  final String? orgId;
+  final String showId;
+  final String orgId;
   final VoidCallback? onItemAdded;
 
   const FullScheduleScreen({
     super.key,
-    required this.items,
     required this.showTitle,
     required this.showDate,
-    this.showId,
-    this.orgId,
+    required this.showId,
+    required this.orgId,
     this.onItemAdded,
   });
 
   @override
-  State<FullScheduleScreen> createState() => _FullScheduleScreenState();
+  ConsumerState<FullScheduleScreen> createState() => _FullScheduleScreenState();
 }
 
-class _FullScheduleScreenState extends State<FullScheduleScreen> {
+class _FullScheduleScreenState extends ConsumerState<FullScheduleScreen> {
   final ScrollController _scrollController = ScrollController();
   
   // Timeline configuration - matches desktop
@@ -43,25 +43,16 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   static const double rightPadding = 16.0;
   
   @override
-  void initState() {
-    super.initState();
-    // Scroll to first event after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToFirstEvent();
-    });
-  }
-
-  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToFirstEvent() {
-    if (widget.items.isEmpty) return;
+  void _scrollToFirstEvent(List<ScheduleItem> items) {
+    if (items.isEmpty) return;
     
     // Find earliest event
-    final sortedItems = List<ScheduleItem>.from(widget.items)
+    final sortedItems = List<ScheduleItem>.from(items)
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
     
     final firstItem = sortedItems.first;
@@ -91,32 +82,55 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final scheduleAsync = ref.watch(showScheduleProvider(widget.showId));
     
     return LayerScaffold(
       title: 'Schedule',
-      body: Column(
-        children: [
-          // Timeline - fills remaining space
-          Expanded(
-            child: _buildTimeline(brightness),
-          ),
-          // Add button at bottom
-          if (widget.showId != null && widget.orgId != null)
-            AddButton(
-              onPressed: () => _openAddScheduleItem(context),
+      body: scheduleAsync.when(
+        loading: () => Center(
+          child: CupertinoActivityIndicator(),
+        ),
+        error: (error, stack) => Center(
+          child: Text(
+            'Failed to load schedule',
+            style: TextStyle(
+              color: AppTheme.getMutedForegroundColor(brightness),
             ),
-        ],
+          ),
+        ),
+        data: (items) {
+          // Scroll to first event when data loads
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToFirstEvent(items);
+          });
+          
+          return Column(
+            children: [
+              // Timeline - fills remaining space
+              Expanded(
+                child: items.isEmpty
+                    ? _buildEmptyState(brightness)
+                    : _buildTimeline(brightness, items),
+              ),
+              // Add button at bottom
+              AddButton(
+                onPressed: () => _openAddScheduleItem(context, items),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  void _openAddScheduleItem(BuildContext context) {
+  void _openAddScheduleItem(BuildContext context, List<ScheduleItem> items) {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddScheduleItemScreen(
-          showId: widget.showId!,
-          orgId: widget.orgId!,
+          showId: widget.showId,
+          orgId: widget.orgId,
           onItemAdded: () {
+            ref.invalidate(showScheduleProvider(widget.showId));
             widget.onItemAdded?.call();
             Navigator.of(context).pop();
           },
@@ -148,11 +162,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
     );
   }
 
-  Widget _buildTimeline(Brightness brightness) {
-    if (widget.items.isEmpty) {
-      return _buildEmptyState(brightness);
-    }
-    
+  Widget _buildTimeline(Brightness brightness, List<ScheduleItem> items) {
     return CupertinoScrollbar(
       controller: _scrollController,
       child: SingleChildScrollView(
@@ -166,7 +176,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
               ..._buildTimeIntervals(brightness),
               
               // Schedule items
-              ..._buildScheduleItems(brightness),
+              ..._buildScheduleItems(brightness, items),
             ],
           ),
         ),
@@ -238,10 +248,10 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
     return widgets;
   }
 
-  List<Widget> _buildScheduleItems(Brightness brightness) {
+  List<Widget> _buildScheduleItems(Brightness brightness, List<ScheduleItem> items) {
     final widgets = <Widget>[];
     
-    for (final item in widget.items) {
+    for (final item in items) {
       final startMinutes = _parseTimeToMinutes(item.startTime);
       if (startMinutes == null) continue;
       

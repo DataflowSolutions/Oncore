@@ -4,19 +4,18 @@ import '../../../components/components.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../theme/app_theme.dart';
+import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_team_member_screen.dart';
 
 /// Layer 2: Team screen showing all assigned people for a show
 class TeamScreen extends ConsumerStatefulWidget {
-  final List<AssignedPerson> assignments;
   final String showId;
   final String orgId;
   final VoidCallback? onMemberAdded;
 
   const TeamScreen({
     super.key,
-    required this.assignments,
     required this.showId,
     required this.orgId,
     this.onMemberAdded,
@@ -67,6 +66,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       });
 
       if (mounted) {
+        ref.invalidate(showAssignmentsProvider(widget.showId));
         widget.onMemberAdded?.call(); // Refresh the list
       }
     } catch (e) {
@@ -96,39 +96,53 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final supabase = ref.read(supabaseClientProvider);
     final currentUserEmail = supabase.auth.currentUser?.email;
+    final assignmentsAsync = ref.watch(showAssignmentsProvider(widget.showId));
 
     return LayerScaffold(
       title: 'Team',
       body: Stack(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: widget.assignments.isEmpty
-                    ? _buildEmptyState(brightness)
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(24),
-                        itemCount: widget.assignments.length,
-                        itemBuilder: (context, index) {
-                          final person = widget.assignments[index];
-                          // Check if this is the first artist (owner) - they cannot be removed
-                          final isOwner = index == 0 && person.isArtist;
-                          return TeamMemberCard(
-                            name: person.name,
-                            memberType: person.memberType,
-                            duty: person.duty,
-                            isOwner: isOwner,
-                            onDelete: isOwner 
-                                ? null  // Owner cannot be deleted
-                                : () => _deleteMember(person),
-                          );
-                        },
-                      ),
+          assignmentsAsync.when(
+            loading: () => Center(
+              child: CupertinoActivityIndicator(),
+            ),
+            error: (error, stack) => Center(
+              child: Text(
+                'Failed to load team',
+                style: TextStyle(
+                  color: AppTheme.getMutedForegroundColor(brightness),
+                ),
               ),
-              AddButton(
-                onPressed: () => _openAddTeamMember(context),
-              ),
-            ],
+            ),
+            data: (assignments) => Column(
+              children: [
+                Expanded(
+                  child: assignments.isEmpty
+                      ? _buildEmptyState(brightness)
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(24),
+                          itemCount: assignments.length,
+                          itemBuilder: (context, index) {
+                            final person = assignments[index];
+                            // Check if this is the first artist (owner) - they cannot be removed
+                            final isOwner = index == 0 && person.isArtist;
+                            return TeamMemberCard(
+                              name: person.name,
+                              memberType: person.memberType,
+                              duty: person.duty,
+                              isOwner: isOwner,
+                              onDelete: isOwner 
+                                  ? null  // Owner cannot be deleted
+                                  : () => _deleteMember(person),
+                            );
+                          },
+                        ),
+                ),
+                AddButton(
+                  onPressed: () => _openAddTeamMember(context),
+                ),
+              ],
+            ),
           ),
           if (_isDeleting)
             Container(
@@ -175,13 +189,17 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   }
 
   void _openAddTeamMember(BuildContext context) {
+    final assignmentsAsync = ref.read(showAssignmentsProvider(widget.showId));
+    final existingAssignments = assignmentsAsync.valueOrNull ?? [];
+    
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => AddTeamMemberScreen(
           showId: widget.showId,
           orgId: widget.orgId,
-          existingAssignments: widget.assignments,
+          existingAssignments: existingAssignments,
           onMemberAdded: () {
+            ref.invalidate(showAssignmentsProvider(widget.showId));
             widget.onMemberAdded?.call();
             Navigator.of(context).pop();
           },

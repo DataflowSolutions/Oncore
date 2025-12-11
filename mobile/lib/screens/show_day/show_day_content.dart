@@ -172,7 +172,6 @@ class _ShowDayBody extends ConsumerWidget {
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => FullScheduleScreen(
-            items: scheduleItems,
             showTitle: show.title,
             showDate: show.date,
             showId: showId,
@@ -187,7 +186,6 @@ class _ShowDayBody extends ConsumerWidget {
       Navigator.of(context).push(
         SwipeablePageRoute(
           builder: (_) => TeamScreen(
-            assignments: assignments,
             showId: showId,
             orgId: show.orgId,
             onMemberAdded: () => ref.invalidate(showAssignmentsProvider(showId)),
@@ -454,7 +452,6 @@ class _ScheduleSection extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => FullScheduleScreen(
-          items: items,
           showTitle: 'Show', // Could pass show title if available
           showDate: DateTime.now(), // Could pass actual show date
           showId: showId,
@@ -761,7 +758,6 @@ class _FlightsSection extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => FlightsScreen(
-          flights: flights,
           showId: showId,
           orgId: orgId,
           onFlightAdded: onFlightAdded,
@@ -1119,7 +1115,6 @@ class _UnifiedInfoGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => HotelsScreen(
-          hotels: lodging,
           showId: showId,
           orgId: orgId,
           onHotelAdded: onLodgingAdded,
@@ -1132,7 +1127,6 @@ class _UnifiedInfoGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => CateringScreen(
-          catering: catering,
           showId: showId,
           orgId: orgId,
           onCateringAdded: onCateringAdded,
@@ -1145,7 +1139,6 @@ class _UnifiedInfoGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => ContactsScreen(
-          contacts: contacts,
           showId: showId,
           orgId: orgId,
           onContactAdded: onContactAdded,
@@ -1171,7 +1164,6 @@ class _UnifiedInfoGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => GuestlistScreen(
-          guests: guests,
           showId: showId,
           orgId: orgId,
           onGuestAdded: onGuestAdded,
@@ -1374,7 +1366,6 @@ class _LodgingCateringSection extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => HotelsScreen(
-          hotels: lodging,
           showId: showId,
           orgId: orgId,
           onHotelAdded: onLodgingAdded,
@@ -1387,7 +1378,6 @@ class _LodgingCateringSection extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => CateringScreen(
-          catering: catering,
           showId: showId,
           orgId: orgId,
           onCateringAdded: onCateringAdded,
@@ -1544,7 +1534,6 @@ class _InfoCardsGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => ContactsScreen(
-          contacts: contacts,
           showId: showId,
           orgId: orgId,
           onContactAdded: onContactAdded,
@@ -1570,7 +1559,6 @@ class _InfoCardsGrid extends StatelessWidget {
     Navigator.of(context).push(
       SwipeablePageRoute(
         builder: (context) => GuestlistScreen(
-          guests: guests,
           showId: showId,
           orgId: orgId,
           onGuestAdded: onGuestAdded,
