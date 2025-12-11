@@ -61,7 +61,7 @@ final showDetailProvider = FutureProvider.family<Show?, String>((ref, showId) as
             venueCountry = venueData['country'] as String?;
             venueAddress = venueData['address'] as String?;
             venueCapacity = venueData['capacity'] as int?;
-            print('[DEBUG] Venue data from RPC: $venueName, $venueCity');
+            print('[DEBUG] Venue data (UPDATED): $venueName, $venueCity');
           }
         }
       } catch (venueError) {
@@ -70,6 +70,20 @@ final showDetailProvider = FutureProvider.family<Show?, String>((ref, showId) as
       }
     }
     
+    // Parse fee fields - FORCE UPDATE
+    final feeRaw = showData['fee'];
+    double? fee;
+    if (feeRaw != null) {
+      fee = (feeRaw is num) ? feeRaw.toDouble() : double.tryParse(feeRaw.toString());
+    }
+    final feeCurrency = showData['fee_currency'] as String?;
+    final feePaidPercent = showData['fee_paid_percent'] as int?;
+
+    print('═══════════════════════════════════════');
+    print('[DEBUG] Parsed fee: $fee');
+    print('[DEBUG] Parsed feePaidPercent: $feePaidPercent');
+    print('═══════════════════════════════════════');
+
     final show = Show(
       id: showData['id'] as String,
       title: showData['title'] as String? ?? 'Untitled Show',
@@ -85,6 +99,9 @@ final showDetailProvider = FutureProvider.family<Show?, String>((ref, showId) as
       doorsAt: showData['doors_at'] as String?,
       notes: showData['notes'] as String?,
       status: showData['status'] as String?,
+      fee: fee,
+      feeCurrency: feeCurrency,
+      feePaidPercent: feePaidPercent,
       createdAt: showData['created_at'] != null
           ? DateTime.parse(showData['created_at'] as String)
           : null,
@@ -504,5 +521,28 @@ final showNotesProvider = FutureProvider.family<String?, String>((ref, showId) a
   } catch (e) {
     print('⚠️ Error loading notes: $e');
     return null;
+  }
+});
+
+/// Provider for fetching costs for a show
+final showCostsProvider = FutureProvider.family<List<ShowCost>, String>((ref, showId) async {
+  print('[DEBUG] showCostsProvider called with showId: $showId');
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  try {
+    print('[DEBUG] Using RPC: get_show_costs($showId)');
+    final response = await supabase.rpc('get_show_costs', params: {'p_show_id': showId});
+    
+    if (response == null) {
+      print('[DEBUG] No costs found');
+      return [];
+    }
+    
+    final List<dynamic> data = response as List<dynamic>;
+    print('[DEBUG] Costs loaded: ${data.length} items');
+    return data.map((json) => ShowCost.fromJson(json as Map<String, dynamic>)).toList();
+  } catch (e) {
+    print('⚠️ Error loading costs: $e');
+    return [];
   }
 });

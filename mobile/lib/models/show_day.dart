@@ -408,6 +408,63 @@ class GuestInfo {
   }
 }
 
+/// Show cost/expense item
+class ShowCost {
+  final String id;
+  final String name;
+  final double amount;
+  final String currency;
+  final String? notes;
+  final DateTime? createdAt;
+
+  ShowCost({
+    required this.id,
+    required this.name,
+    required this.amount,
+    this.currency = 'USD',
+    this.notes,
+    this.createdAt,
+  });
+
+  factory ShowCost.fromJson(Map<String, dynamic> json) {
+    final amountRaw = json['amount'];
+    double amount = 0;
+    if (amountRaw != null) {
+      amount = (amountRaw is num) ? amountRaw.toDouble() : double.tryParse(amountRaw.toString()) ?? 0;
+    }
+    
+    return ShowCost(
+      id: json['id'] as String,
+      name: json['name'] as String? ?? 'Unnamed',
+      amount: amount,
+      currency: json['currency'] as String? ?? 'USD',
+      notes: json['notes'] as String?,
+      createdAt: json['created_at'] != null 
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
+    );
+  }
+
+  /// Format amount for display
+  String get formattedAmount {
+    final symbol = _getCurrencySymbol(currency);
+    return '$symbol${amount.toStringAsFixed(0)}';
+  }
+  
+  /// Get currency symbol
+  static String _getCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'USD': return '\$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      case 'SEK': return 'kr';
+      case 'NOK': return 'kr';
+      case 'DKK': return 'kr';
+      default: return '\$';
+    }
+  }
+}
+
 /// Assigned person
 class AssignedPerson {
   final String personId;

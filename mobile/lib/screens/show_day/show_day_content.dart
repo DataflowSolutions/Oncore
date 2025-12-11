@@ -8,6 +8,8 @@ import '../main/main_shell.dart' show saveLastShow;
 import 'providers/show_day_providers.dart';
 import 'widgets/widgets.dart';
 import 'widgets/detail_modal.dart';
+import 'fee_screen.dart';
+import 'costs_screen.dart';
 
 /// Show Day Content widget - just the content, no CupertinoPageScaffold/nav
 /// Used inside MainShell for Layer 1 Day view
@@ -153,6 +155,7 @@ class _ShowDayBody extends ConsumerWidget {
     final contactsAsync = ref.watch(showContactsProvider(showId));
     final guestlistAsync = ref.watch(showGuestlistProvider(showId));
     final notesAsync = ref.watch(showNotesProvider(showId));
+    final costsAsync = ref.watch(showCostsProvider(showId));
 
     // Get artist name
     final artists = assignments.where((a) => a.isArtist).toList();
@@ -255,7 +258,9 @@ class _ShowDayBody extends ConsumerWidget {
             documents: documentsAsync.value ?? [],
             contacts: contactsAsync.value ?? [],
             guests: guestlistAsync.value ?? [],
+            costs: costsAsync.value ?? [],
             notes: notesAsync.value,
+            show: show,
             showId: showId,
             orgId: show.orgId,
             onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
@@ -264,6 +269,8 @@ class _ShowDayBody extends ConsumerWidget {
             onDocumentAdded: () => ref.invalidate(showDocumentsProvider(showId)),
             onGuestAdded: () => ref.invalidate(showGuestlistProvider(showId)),
             onNotesChanged: () => ref.invalidate(showNotesProvider(showId)),
+            onCostsChanged: () => ref.invalidate(showCostsProvider(showId)),
+            onFeeChanged: () => ref.invalidate(showDetailProvider(showId)),
           ),
 
           const SizedBox(height: 32),
@@ -876,14 +883,16 @@ class _CreateNewFlightCard extends StatelessWidget {
   }
 }
 
-/// Unified 2x3 grid for Hotel, Food, Contacts, Documents, Guestlist, Notes
+/// Unified 2x4 grid for Hotel, Food, Contacts, Documents, Guestlist, Notes, Fee, Costs
 class _UnifiedInfoGrid extends StatelessWidget {
   final List<LodgingInfo> lodging;
   final List<CateringInfo> catering;
   final List<DocumentInfo> documents;
   final List<ContactInfo> contacts;
   final List<GuestInfo> guests;
+  final List<ShowCost> costs;
   final String? notes;
+  final Show show;
   final String showId;
   final String orgId;
   final VoidCallback? onLodgingAdded;
@@ -892,6 +901,8 @@ class _UnifiedInfoGrid extends StatelessWidget {
   final VoidCallback? onDocumentAdded;
   final VoidCallback? onGuestAdded;
   final VoidCallback? onNotesChanged;
+  final VoidCallback? onCostsChanged;
+  final VoidCallback? onFeeChanged;
 
   const _UnifiedInfoGrid({
     required this.lodging,
@@ -899,7 +910,9 @@ class _UnifiedInfoGrid extends StatelessWidget {
     required this.documents,
     required this.contacts,
     required this.guests,
+    required this.costs,
     this.notes,
+    required this.show,
     required this.showId,
     required this.orgId,
     this.onLodgingAdded,
@@ -908,10 +921,13 @@ class _UnifiedInfoGrid extends StatelessWidget {
     this.onDocumentAdded,
     this.onGuestAdded,
     this.onNotesChanged,
+    this.onCostsChanged,
+    this.onFeeChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    print('[DEBUG] _UnifiedInfoGrid build. Show Fee: ${show.fee}, Paid: ${show.feePaidPercent}');
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
 
@@ -1015,9 +1031,56 @@ class _UnifiedInfoGrid extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          // Row 4: Fee, Costs
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openFeeScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Fee',
+                    CupertinoIcons.money_dollar_circle,
+                    brightness,
+                    subtitle: _getFeeSubtitle(show),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openCostsScreen(context),
+                  child: _buildEmptyCard(
+                    context,
+                    'Costs',
+                    CupertinoIcons.creditcard,
+                    brightness,
+                    subtitle: costs.isEmpty 
+                        ? 'Not Added' 
+                        : '${costs.length} item${costs.length > 1 ? 's' : ''}',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  String _getFeeSubtitle(Show show) {
+    print('[DEBUG] _getFeeSubtitle called. Fee: ${show.fee}, Paid: ${show.feePaidPercent}');
+    if (show.fee != null && show.fee! > 0) {
+      final fee = show.formattedFee;
+      if (show.feePaidPercent != null && show.feePaidPercent! > 0) {
+        return '$fee (${show.feePaidPercent}% paid)';
+      }
+      return fee;
+    } else if (show.feePaidPercent != null && show.feePaidPercent! > 0) {
+      return 'Fee not set (${show.feePaidPercent}% paid)';
+    }
+    return 'Not Added';
   }
 
   Widget _buildEmptyCard(BuildContext context, String title, IconData icon, Brightness brightness, {String? subtitle}) {
@@ -1125,6 +1188,32 @@ class _UnifiedInfoGrid extends StatelessWidget {
           showId: showId,
           orgId: orgId,
           onNotesChanged: onNotesChanged,
+        ),
+      ),
+    );
+  }
+
+  void _openFeeScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => FeeScreen(
+          show: show,
+          showId: showId,
+          orgId: orgId,
+          onFeeChanged: onFeeChanged,
+        ),
+      ),
+    );
+  }
+
+  void _openCostsScreen(BuildContext context) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => CostsScreen(
+          costs: costs,
+          showId: showId,
+          orgId: orgId,
+          onCostsChanged: onCostsChanged,
         ),
       ),
     );

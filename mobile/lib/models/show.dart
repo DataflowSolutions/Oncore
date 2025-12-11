@@ -21,6 +21,11 @@ class Show {
   final String? notes;
   final String? status;
   
+  // Fee fields
+  final double? fee;
+  final String? feeCurrency;
+  final int? feePaidPercent;
+  
   final DateTime? createdAt;
   
   // Artist names from show_assignments (set after fetching)
@@ -41,6 +46,9 @@ class Show {
     this.doorsAt,
     this.notes,
     this.status,
+    this.fee,
+    this.feeCurrency,
+    this.feePaidPercent,
     this.createdAt,
     this.artistNames = const [],
   });
@@ -108,6 +116,15 @@ class Show {
         }
       }
 
+      // Parse fee fields
+      final feeRaw = json['fee'];
+      double? fee;
+      if (feeRaw != null) {
+        fee = (feeRaw is num) ? feeRaw.toDouble() : double.tryParse(feeRaw.toString());
+      }
+      final feeCurrency = json['fee_currency'] as String?;
+      final feePaidPercent = json['fee_paid_percent'] as int?;
+
       print('✅ Successfully parsed Show: id=$id, title=$title, date=$date');
       return Show(
         id: id,
@@ -125,6 +142,9 @@ class Show {
         doorsAt: doorsAt,
         notes: notes,
         status: status,
+        fee: fee,
+        feeCurrency: feeCurrency,
+        feePaidPercent: feePaidPercent,
         createdAt: createdAt,
       );
     } catch (e, stackTrace) {
@@ -169,7 +189,12 @@ class Show {
   }
   
   /// Create a copy with updated artist names
-  Show copyWith({List<String>? artistNames}) {
+  Show copyWith({
+    List<String>? artistNames,
+    double? fee,
+    String? feeCurrency,
+    int? feePaidPercent,
+  }) {
     return Show(
       id: id,
       title: title,
@@ -185,8 +210,39 @@ class Show {
       doorsAt: doorsAt,
       notes: notes,
       status: status,
+      fee: fee ?? this.fee,
+      feeCurrency: feeCurrency ?? this.feeCurrency,
+      feePaidPercent: feePaidPercent ?? this.feePaidPercent,
       createdAt: createdAt,
       artistNames: artistNames ?? this.artistNames,
     );
+  }
+  
+  /// Format fee for display
+  String get formattedFee {
+    if (fee == null) return '';
+    final currency = feeCurrency ?? 'USD';
+    final symbol = _getCurrencySymbol(currency);
+    return '$symbol${fee!.toStringAsFixed(0)}';
+  }
+  
+  /// Get currency symbol
+  static String _getCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'USD': return '\$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      case 'SEK': return 'kr';
+      case 'NOK': return 'kr';
+      case 'DKK': return 'kr';
+      default: return '\$';
+    }
+  }
+  
+  /// Get fee paid display
+  String get feePaidDisplay {
+    if (feePaidPercent == null || feePaidPercent == 0) return 'Not paid';
+    if (feePaidPercent == 100) return 'Paid in full';
+    return '$feePaidPercent% paid';
   }
 }
