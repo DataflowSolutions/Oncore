@@ -9,6 +9,7 @@ import '../../../components/components.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../services/document_share_service.dart';
 
 /// Layer 2: Documents list screen - shows list of documents
 class DocumentsScreen extends ConsumerStatefulWidget {
@@ -491,6 +492,36 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
     }
   }
 
+  Future<void> _copyDocumentLink() async {
+    if (_files.isEmpty) return;
+
+    final file = _files[_currentFileIndex];
+    final supabase = ref.read(supabaseClientProvider);
+    final shareService = DocumentShareService(supabase: supabase);
+
+    await shareService.copyLinkToClipboard(
+      document: file,
+      context: context,
+    );
+  }
+
+  Future<void> _shareDocument() async {
+    if (_files.isEmpty) return;
+
+    final file = _files[_currentFileIndex];
+    final supabase = ref.read(supabaseClientProvider);
+    final shareService = DocumentShareService(supabase: supabase);
+
+    // Get the show title if available (we can fetch from route params or database)
+    final showTitle = 'Show Document'; // Default fallback
+
+    await shareService.shareDocument(
+      document: file,
+      showTitle: showTitle,
+      context: context,
+    );
+  }
+
   Future<void> _deleteCurrentFile() async {
     if (_files.isEmpty) return;
     
@@ -661,16 +692,12 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                       const Spacer(),
                       // Copy button
                       CupertinoButton(
-                        onPressed: () {
-                          AppToast.info(context, 'Copy coming soon');
-                        },
+                        onPressed: _copyDocumentLink,
                         child: Icon(CupertinoIcons.doc_on_doc, color: AppTheme.getForegroundColor(brightness)),
                       ),
                       // Share button
                       CupertinoButton(
-                        onPressed: () {
-                          AppToast.info(context, 'Share coming soon');
-                        },
+                        onPressed: _shareDocument,
                         child: Icon(CupertinoIcons.share, color: AppTheme.getForegroundColor(brightness)),
                       ),
                     ],

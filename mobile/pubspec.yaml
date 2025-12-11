@@ -67,6 +67,9 @@ dependencies:
   # PDF viewer for documents
   syncfusion_flutter_pdfviewer: ^27.1.58
 
+  # Share functionality for documents
+  share_plus: ^7.2.0
+
   # Note: google_fonts package added for future use when Special Gothic Expanded One
   # becomes available. Currently not used as the font isn't in the package yet.
   # google_fonts: ^6.2.1
