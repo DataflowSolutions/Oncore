@@ -6,7 +6,6 @@ import '../network/create_person_modal.dart';
 import '../network/create_promoter_modal.dart';
 import '../network/create_venue_modal.dart';
 import 'controllers/main_shell_controller.dart';
-import 'controllers/main_shell_navigation_service.dart';
 import 'dialogs/shows_filter_dialog.dart';
 import 'dialogs/network_filter_dialog.dart';
 import 'widgets/main_shell_bottom_nav.dart';
@@ -16,20 +15,20 @@ import 'widgets/main_shell_toggles.dart';
 import 'widgets/main_shell_content.dart';
 
 /// Main shell that wraps Day, Shows (list/calendar), Network screens
-/// This is Layer 1 - always shows the bottom navigation bar
-/// All three tabs are swipeable and at the same hierarchy level
+/// Uses a FLAT PageView structure for seamless continuous swiping:
+/// Day → Shows List → Shows Calendar → Network Team → Network Promoters → Network Venues
 class MainShell extends ConsumerStatefulWidget {
   final String orgId;
   final String orgName;
   final int initialTabIndex; // 0=Day, 1=Shows, 2=Network
-  final String? showId; // Optional: specific show to display in Day view
+  final String? showId;
   final ShowsViewMode? initialShowsViewMode;
 
   const MainShell({
     super.key,
     required this.orgId,
     required this.orgName,
-    this.initialTabIndex = 1, // Default to Shows
+    this.initialTabIndex = 1,
     this.showId,
     this.initialShowsViewMode,
   });
@@ -40,7 +39,6 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   late MainShellController _controller;
-  late MainShellNavigationService _navigationService;
   bool _isInitialized = false;
 
   // Shows search/filter state
@@ -55,27 +53,21 @@ class _MainShellState extends ConsumerState<MainShell> {
   final FocusNode _networkSearchFocusNode = FocusNode();
   String _networkSearchQuery = '';
   String? _memberTypeFilter;
-  bool _isNetworkSearchFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
+    _initializeController();
     _initializeFocusListeners();
     _loadPersistedState();
   }
 
-  void _initializeControllers() {
+  void _initializeController() {
     final initialShowsViewMode = widget.initialShowsViewMode ?? ShowsViewMode.list;
     _controller = MainShellController(
       initialTabIndex: widget.initialTabIndex,
       initialShowsViewMode: initialShowsViewMode,
       currentShowId: widget.showId,
-    );
-
-    _navigationService = MainShellNavigationService(
-      controller: _controller,
-      onSaveLastShow: saveLastShow,
     );
   }
 
@@ -83,16 +75,14 @@ class _MainShellState extends ConsumerState<MainShell> {
     _showsSearchFocusNode.addListener(() {
       setState(() => _isShowsSearchFocused = _showsSearchFocusNode.hasFocus);
     });
-    _networkSearchFocusNode.addListener(() {
-      setState(() => _isNetworkSearchFocused = _networkSearchFocusNode.hasFocus);
-    });
   }
 
   Future<void> _loadPersistedState() async {
     if (widget.initialShowsViewMode == null) {
       final savedMode = await getShowsViewMode();
-      if (mounted) {
-        setState(() => _controller.updateShowsViewMode(savedMode));
+      if (mounted && savedMode == ShowsViewMode.calendar) {
+        // Navigate to calendar if it was the last saved mode
+        _controller.navigateToShowsView(savedMode);
       }
     }
 
@@ -119,6 +109,24 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _unfocusSearch() {
     _showsSearchFocusNode.unfocus();
     _networkSearchFocusNode.unfocus();
+  }
+
+  void _onPageChanged(int flatIndex) {
+    setState(() {
+      _controller.updateFromFlatIndex(flatIndex);
+      // Save shows view mode when changing to a shows page
+      if (flatIndex == FlatPageIndex.showsList || flatIndex == FlatPageIndex.showsCalendar) {
+        saveShowsViewMode(_controller.showsViewMode);
+      }
+    });
+  }
+
+  void _onShowSelected(String showId) {
+    setState(() {
+      _controller.currentShowId = showId;
+      saveLastShow(widget.orgId, showId);
+    });
+    _controller.navigateToFlatPage(FlatPageIndex.day);
   }
 
   String _getNetworkSearchPlaceholder() {
@@ -174,16 +182,8 @@ class _MainShellState extends ConsumerState<MainShell> {
                     orgName: widget.orgName,
                     currentShowId: _controller.currentShowId,
                     controller: _controller,
-                    onPageChanged: (index) => setState(() => _controller.updateTabIndex(index)),
-                    onShowsPageChanged: (index) {
-                      setState(() => _controller.updateShowsPageIndex(index));
-                      saveShowsViewMode(_controller.showsViewMode);
-                    },
-                    onNetworkPageChanged: (index) {
-                      setState(() => _controller.updateNetworkPageIndex(index));
-                    },
-                    onShowSelected: (showId) => _navigationService.selectShow(showId, widget.orgId),
-                    onNetworkTabChanged: (tab) => _navigationService.navigateToNetworkTab(tab),
+                    onPageChanged: _onPageChanged,
+                    onShowSelected: _onShowSelected,
                     showsSearchQuery: _showsSearchQuery,
                     showPastShows: _showPastShows,
                     networkSearchQuery: _networkSearchQuery,
@@ -210,12 +210,18 @@ class _MainShellState extends ConsumerState<MainShell> {
       0 => null,
       1 => ShowsViewToggle(
           currentMode: _controller.showsViewMode,
-          onModeChanged: (mode) => _navigationService.navigateToShowsView(mode),
+          onModeChanged: (mode) {
+            _controller.navigateToShowsView(mode);
+            setState(() {});
+          },
           brightness: brightness,
         ),
       2 => NetworkTabToggle(
           currentTab: _controller.networkTab,
-          onTabChanged: (tab) => _navigationService.navigateToNetworkTab(tab),
+          onTabChanged: (tab) {
+            _controller.navigateToNetworkTab(tab);
+            setState(() {});
+          },
           brightness: brightness,
         ),
       _ => null,
@@ -270,7 +276,10 @@ class _MainShellState extends ConsumerState<MainShell> {
         if (!(isShowsTab && _isShowsSearchFocused))
           MainShellBottomNav(
             currentTabIndex: _controller.currentTabIndex,
-            onTabSelected: (index) => _navigationService.navigateToMainTab(index),
+            onTabSelected: (index) {
+              _controller.navigateToMainTab(index);
+              setState(() {});
+            },
             brightness: brightness,
           ),
       ],

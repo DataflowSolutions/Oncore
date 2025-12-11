@@ -5,17 +5,15 @@ import '../../network/network_screen.dart' hide NetworkTab;
 import '../../show_day/show_day_content.dart';
 import '../controllers/main_shell_controller.dart';
 
-/// Main content area with swipeable pages
+/// Main content area with a SINGLE flat PageView for seamless continuous swiping
+/// Pages: Day → Shows List → Shows Calendar → Network Team → Network Promoters → Network Venues
 class MainShellContent extends StatelessWidget {
   final String orgId;
   final String orgName;
   final String? currentShowId;
   final MainShellController controller;
   final ValueChanged<int> onPageChanged;
-  final ValueChanged<int> onShowsPageChanged;
-  final ValueChanged<int> onNetworkPageChanged;
   final ValueChanged<String> onShowSelected;
-  final ValueChanged<NetworkTab> onNetworkTabChanged;
   final String showsSearchQuery;
   final bool showPastShows;
   final String networkSearchQuery;
@@ -28,10 +26,7 @@ class MainShellContent extends StatelessWidget {
     required this.currentShowId,
     required this.controller,
     required this.onPageChanged,
-    required this.onShowsPageChanged,
-    required this.onNetworkPageChanged,
     required this.onShowSelected,
-    required this.onNetworkTabChanged,
     required this.showsSearchQuery,
     required this.showPastShows,
     required this.networkSearchQuery,
@@ -45,52 +40,51 @@ class MainShellContent extends StatelessWidget {
         controller: controller.pageController,
         onPageChanged: onPageChanged,
         children: [
-          // Tab 0: Day view
+          // Page 0: Day
           ShowDayContent(orgId: orgId, showId: currentShowId),
-          // Tab 1: Shows (swipeable between list and calendar)
-          _buildShowsPages(),
-          // Tab 2: Network (swipeable between team/promoters/venues)
-          _buildNetworkPages(),
+          // Page 1: Shows List
+          ShowsContent(
+            orgId: orgId,
+            orgName: orgName,
+            onShowSelected: onShowSelected,
+            searchQuery: showsSearchQuery,
+            showPastShows: showPastShows,
+          ),
+          // Page 2: Shows Calendar
+          CalendarContent(
+            orgId: orgId,
+            orgName: orgName,
+            onShowSelected: onShowSelected,
+          ),
+          // Page 3: Network Team
+          NetworkContent(
+            orgId: orgId,
+            orgName: orgName,
+            activeTab: NetworkTab.team,
+            onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
+            searchQuery: networkSearchQuery,
+            memberTypeFilter: memberTypeFilter,
+          ),
+          // Page 4: Network Promoters
+          NetworkContent(
+            orgId: orgId,
+            orgName: orgName,
+            activeTab: NetworkTab.promoters,
+            onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
+            searchQuery: networkSearchQuery,
+            memberTypeFilter: memberTypeFilter,
+          ),
+          // Page 5: Network Venues
+          NetworkContent(
+            orgId: orgId,
+            orgName: orgName,
+            activeTab: NetworkTab.venues,
+            onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
+            searchQuery: networkSearchQuery,
+            memberTypeFilter: memberTypeFilter,
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildShowsPages() {
-    return PageView(
-      controller: controller.showsPageController,
-      onPageChanged: onShowsPageChanged,
-      children: [
-        ShowsContent(
-          orgId: orgId,
-          orgName: orgName,
-          onShowSelected: onShowSelected,
-          searchQuery: showsSearchQuery,
-          showPastShows: showPastShows,
-        ),
-        CalendarContent(
-          orgId: orgId,
-          orgName: orgName,
-          onShowSelected: onShowSelected,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNetworkPages() {
-    return PageView(
-      controller: controller.networkPageController,
-      onPageChanged: onNetworkPageChanged,
-      children: NetworkTab.values.map((tab) {
-        return NetworkContent(
-          orgId: orgId,
-          orgName: orgName,
-          activeTab: tab,
-          onTabChanged: onNetworkTabChanged,
-          searchQuery: networkSearchQuery,
-          memberTypeFilter: memberTypeFilter,
-        );
-      }).toList(),
     );
   }
 }
