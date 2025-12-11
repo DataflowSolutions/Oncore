@@ -24,6 +24,7 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
   final _cityController = TextEditingController();
   final _artistController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  bool _isDatePickerExpanded = false;
   
   // Artist selection
   String? _selectedArtistId;
@@ -76,39 +77,6 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
       }
     } catch (e) {
       setState(() => _loadingArtists = false);
-    }
-  }
-
-  Future<void> _selectDate() async {
-    DateTime? picked;
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          height: 216,
-          padding: const EdgeInsets.only(top: 6.0),
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: SafeArea(
-            top: false,
-            child: CupertinoDatePicker(
-              initialDateTime: _selectedDate,
-              mode: CupertinoDatePickerMode.date,
-              minimumDate: DateTime.now().subtract(const Duration(days: 365)),
-              maximumDate: DateTime.now().add(const Duration(days: 365 * 3)),
-              onDateTimeChanged: (DateTime newDate) {
-                picked = newDate;
-              },
-            ),
-          ),
-        );
-      },
-    );
-    
-    if (picked != null) {
-      setState(() => _selectedDate = picked!);
     }
   }
 
@@ -366,24 +334,65 @@ class _CreateShowModalState extends ConsumerState<CreateShowModal> {
     final formattedDate = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
     
     return GestureDetector(
-      onTap: _selectDate,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: _inputBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Text(
-              formattedDate,
-              style: const TextStyle(color: _foreground, fontSize: 16),
+      onTap: () {
+        if (_isDatePickerExpanded) {
+          setState(() => _isDatePickerExpanded = false);
+        }
+      },
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isDatePickerExpanded = !_isDatePickerExpanded;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: _inputBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _border),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(color: _foreground, fontSize: 16),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _isDatePickerExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                    color: _muted,
+                    size: 20,
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
-            const Icon(CupertinoIcons.calendar_today, color: _muted, size: 20),
-          ],
-        ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isDatePickerExpanded
+                ? GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      height: 216,
+                      margin: const EdgeInsets.only(top: 8),
+                      child: CupertinoDatePicker(
+                        initialDateTime: _selectedDate,
+                        mode: CupertinoDatePickerMode.date,
+                        minimumDate: DateTime.now().subtract(const Duration(days: 365)),
+                        maximumDate: DateTime.now().add(const Duration(days: 365 * 3)),
+                        onDateTimeChanged: (DateTime newDate) {
+                          setState(() => _selectedDate = newDate);
+                        },
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }

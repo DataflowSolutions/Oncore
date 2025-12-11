@@ -80,7 +80,7 @@ class FormCupertinoTextField extends StatelessWidget {
 }
 
 /// Date picker field for forms
-class FormDateField extends StatelessWidget {
+class FormDateField extends StatefulWidget {
   final String label;
   final String? hint;
   final DateTime? value;
@@ -97,75 +97,153 @@ class FormDateField extends StatelessWidget {
   });
 
   @override
+  State<FormDateField> createState() => _FormDateFieldState();
+}
+
+class _FormDateFieldState extends State<FormDateField> with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  bool _isAutoScrolling = false;
+  final GlobalKey _pickerKey = GlobalKey();
+  final Object _tapRegionGroupId = Object();
+  ScrollPosition? _scrollPosition;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollPosition?.removeListener(_onParentScroll);
+    _scrollPosition = Scrollable.maybeOf(context)?.position;
+    _scrollPosition?.addListener(_onParentScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollPosition?.removeListener(_onParentScroll);
+    super.dispose();
+  }
+
+  void _onParentScroll() {
+    if (_isExpanded && !_isAutoScrolling) {
+      setState(() => _isExpanded = false);
+    }
+  }
+
+  void _togglePicker() async {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+    
+    if (_isExpanded) {
+      // Disable scroll-to-close during auto-scroll
+      _isAutoScrolling = true;
+      
+      // Wait for the animation to start, then scroll
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (_pickerKey.currentContext != null) {
+        await Scrollable.ensureVisible(
+          _pickerKey.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.5, // Center it
+        );
+      }
+      
+      // Re-enable scroll-to-close after auto-scroll completes
+      await Future.delayed(const Duration(milliseconds: 100));
+      _isAutoScrolling = false;
+    }
+  }
+
+  void _closePicker() {
+    if (_isExpanded) {
+      setState(() => _isExpanded = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    final displayText = value != null
-        ? '${value!.day}/${value!.month}/${value!.year}'
-        : (hint ?? 'Date');
+    final displayText = widget.value != null
+        ? '${widget.value!.day}/${widget.value!.month}/${widget.value!.year}'
+        : (widget.hint ?? 'Date');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppTheme.getMutedForegroundColor(brightness),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: enabled ? () async {
-                DateTime tempDate = value ?? DateTime.now();
-                await showCupertinoModalPopup(
-                  context: context,
-                  builder: (BuildContext context) => Container(
-                    height: 216,
-                    padding: const EdgeInsets.only(top: 6.0),
-                    margin: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
+          TapRegion(
+            groupId: _tapRegionGroupId,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: AppTheme.getMutedForegroundColor(brightness),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                    color: CupertinoColors.systemBackground.resolveFrom(context),
-                    child: SafeArea(
-                      top: false,
-                      child: CupertinoDatePicker(
-                        initialDateTime: tempDate,
-                        mode: CupertinoDatePickerMode.date,
-                        onDateTimeChanged: (DateTime newDate) {
-                          tempDate = newDate;
-                        },
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: widget.enabled ? _togglePicker : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            displayText,
+                            style: TextStyle(
+                              color: widget.value != null 
+                                  ? AppTheme.getForegroundColor(brightness) 
+                                  : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Icon(
+                            _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                            size: 16,
+                            color: AppTheme.getMutedForegroundColor(brightness),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-                onChanged?.call(tempDate);
-              } : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
-                    ),
-                  ),
                 ),
-                child: Text(
-                  displayText,
-                  style: TextStyle(
-                    color: value != null 
-                        ? AppTheme.getForegroundColor(brightness) 
-                        : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+              ],
             ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? TapRegion(
+                    groupId: _tapRegionGroupId,
+                    onTapOutside: (_) => _closePicker(),
+                    child: Container(
+                      key: _pickerKey,
+                      height: 216,
+                      margin: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: CupertinoDatePicker(
+                        initialDateTime: widget.value ?? DateTime.now(),
+                        mode: CupertinoDatePickerMode.date,
+                        onDateTimeChanged: (DateTime newDate) {
+                          widget.onChanged?.call(newDate);
+                        },
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -174,7 +252,7 @@ class FormDateField extends StatelessWidget {
 }
 
 /// Time picker field for forms
-class FormTimeField extends StatelessWidget {
+class FormTimeField extends StatefulWidget {
   final String label;
   final String? hint;
   final DateTime? value;
@@ -191,87 +269,164 @@ class FormTimeField extends StatelessWidget {
   });
 
   @override
+  State<FormTimeField> createState() => _FormTimeFieldState();
+}
+
+class _FormTimeFieldState extends State<FormTimeField> with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  bool _isAutoScrolling = false;
+  final GlobalKey _pickerKey = GlobalKey();
+  final Object _tapRegionGroupId = Object();
+  ScrollPosition? _scrollPosition;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollPosition?.removeListener(_onParentScroll);
+    _scrollPosition = Scrollable.maybeOf(context)?.position;
+    _scrollPosition?.addListener(_onParentScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollPosition?.removeListener(_onParentScroll);
+    super.dispose();
+  }
+
+  void _onParentScroll() {
+    if (_isExpanded && !_isAutoScrolling) {
+      setState(() => _isExpanded = false);
+    }
+  }
+
+  void _togglePicker() async {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+    
+    if (_isExpanded) {
+      // Disable scroll-to-close during auto-scroll
+      _isAutoScrolling = true;
+      
+      // Wait for the animation to start, then scroll
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (_pickerKey.currentContext != null) {
+        await Scrollable.ensureVisible(
+          _pickerKey.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.5, // Center it
+        );
+      }
+      
+      // Re-enable scroll-to-close after auto-scroll completes
+      await Future.delayed(const Duration(milliseconds: 100));
+      _isAutoScrolling = false;
+    }
+  }
+
+  void _closePicker() {
+    if (_isExpanded) {
+      setState(() => _isExpanded = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
-    final displayText = value != null
-        ? '${value!.hour.toString().padLeft(2, '0')}:${value!.minute.toString().padLeft(2, '0')}'
-        : (hint ?? 'Time');
+    final displayText = widget.value != null
+        ? '${widget.value!.hour.toString().padLeft(2, '0')}:${widget.value!.minute.toString().padLeft(2, '0')}'
+        : (widget.hint ?? 'Time');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppTheme.getMutedForegroundColor(brightness),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: enabled ? () async {
-                final now = DateTime.now();
-                final initialTime = value ?? now;
-                Duration tempDuration = Duration(
-                  hours: initialTime.hour,
-                  minutes: initialTime.minute,
-                );
-                await showCupertinoModalPopup(
-                  context: context,
-                  builder: (BuildContext context) => Container(
-                    height: 216,
-                    padding: const EdgeInsets.only(top: 6.0),
-                    margin: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
+          TapRegion(
+            groupId: _tapRegionGroupId,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: AppTheme.getMutedForegroundColor(brightness),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                    color: CupertinoColors.systemBackground.resolveFrom(context),
-                    child: SafeArea(
-                      top: false,
-                      child: CupertinoTimerPicker(
-                        mode: CupertinoTimerPickerMode.hm,
-                        initialTimerDuration: tempDuration,
-                        onTimerDurationChanged: (Duration newDuration) {
-                          tempDuration = newDuration;
-                        },
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: widget.enabled ? _togglePicker : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            displayText,
+                            style: TextStyle(
+                              color: widget.value != null 
+                                  ? AppTheme.getForegroundColor(brightness) 
+                                  : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Icon(
+                            _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                            size: 16,
+                            color: AppTheme.getMutedForegroundColor(brightness),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-                final newTime = DateTime(
-                  now.year,
-                  now.month,
-                  now.day,
-                  tempDuration.inHours,
-                  tempDuration.inMinutes % 60,
-                );
-                onChanged?.call(newTime);
-              } : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppTheme.getBorderColor(brightness).withOpacity(0.5),
-                    ),
-                  ),
                 ),
-                child: Text(
-                  displayText,
-                  style: TextStyle(
-                    color: value != null 
-                        ? AppTheme.getForegroundColor(brightness) 
-                        : AppTheme.getMutedForegroundColor(brightness).withOpacity(0.5),
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+              ],
             ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? TapRegion(
+                    groupId: _tapRegionGroupId,
+                    onTapOutside: (_) => _closePicker(),
+                    child: Container(
+                      key: _pickerKey,
+                      height: 216,
+                      margin: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: CupertinoTimerPicker(
+                        mode: CupertinoTimerPickerMode.hm,
+                        initialTimerDuration: Duration(
+                          hours: widget.value?.hour ?? DateTime.now().hour,
+                          minutes: widget.value?.minute ?? DateTime.now().minute,
+                        ),
+                        onTimerDurationChanged: (Duration newDuration) {
+                          final now = DateTime.now();
+                          final newTime = DateTime(
+                            now.year,
+                            now.month,
+                            now.day,
+                            newDuration.inHours,
+                            newDuration.inMinutes % 60,
+                          );
+                          widget.onChanged?.call(newTime);
+                        },
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
