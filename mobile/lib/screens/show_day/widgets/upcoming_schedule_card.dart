@@ -25,8 +25,8 @@ class UpcomingScheduleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 180, // Reduced from 200
-        padding: const EdgeInsets.all(12), // Reduced from 16
+        width: 180,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
@@ -41,13 +41,13 @@ class UpcomingScheduleCard extends StatelessWidget {
               title,
               style: TextStyle(
                 color: AppTheme.getForegroundColor(brightness),
-                fontSize: 13, // Reduced from 14
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6), // Reduced from 8
+            const SizedBox(height: 8), // Symmetrical spacing
             // Bottom row: Time on left, Date on right (no icons)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -81,8 +81,12 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (widget.initialShowsViewMode == null) {
       final savedMode = await getShowsViewMode();
       if (mounted && savedMode == ShowsViewMode.calendar) {
-        // Navigate to calendar if it was the last saved mode
-        _controller.navigateToShowsView(savedMode);
+        // Wait for the PageView to be attached before navigating
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _controller.navigateToShowsView(savedMode);
+          }
+        });
       }
     }
 

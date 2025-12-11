@@ -13,14 +13,14 @@ class BrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Center(
         child: Text(
-          'Oncore',
+          'oncore',
           style: TextStyle(
             color: AppTheme.getForegroundColor(brightness),
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
           ),
         ),
@@ -45,7 +45,7 @@ class MainShellTopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Row(
         children: [
           GestureDetector(

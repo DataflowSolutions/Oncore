@@ -68,7 +68,7 @@ class FlightCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12), // Reduced from 12
+            const SizedBox(height: 16), // Increased spacing between rows
             
               // Middle row: Route with big codes - spans full width
               Row(
@@ -128,7 +128,7 @@ class FlightCard extends StatelessWidget {
                 ],
               ),
             
-            const SizedBox(height: 8), // Reduced from 12
+            const SizedBox(height: 16), // Increased spacing between rows
             
               // Bottom row: Times
               Row(

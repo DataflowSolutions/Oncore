@@ -613,8 +613,8 @@ class _FlightsSection extends StatelessWidget {
           bottom: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

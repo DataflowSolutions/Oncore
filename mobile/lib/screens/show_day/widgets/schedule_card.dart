@@ -26,7 +26,7 @@ class ScheduleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: AppTheme.getCardColor(brightness),
           borderRadius: BorderRadius.circular(8),
@@ -45,7 +45,7 @@ class ScheduleCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6), // Symmetrical spacing
             Text(
               '$startTime - $endTime',
               style: TextStyle(
