@@ -5,6 +5,8 @@ import '../shows/create_show_modal.dart';
 import '../network/create_person_modal.dart';
 import '../network/create_promoter_modal.dart';
 import '../network/create_venue_modal.dart';
+import '../network/network_screen.dart' show promotersProvider, venuesProvider;
+import '../shows/shows_list_screen.dart' show showsByOrgProvider;
 import 'controllers/main_shell_controller.dart';
 import 'dialogs/shows_filter_dialog.dart';
 import 'dialogs/network_filter_dialog.dart';
@@ -45,7 +47,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   final TextEditingController _showsSearchController = TextEditingController();
   final FocusNode _showsSearchFocusNode = FocusNode();
   String _showsSearchQuery = '';
-  bool _showPastShows = true;
+  ShowsFilters _showsFilters = ShowsFilters.defaults();
   bool _isShowsSearchFocused = false;
 
   // Network search/filter state
@@ -53,6 +55,10 @@ class _MainShellState extends ConsumerState<MainShell> {
   final FocusNode _networkSearchFocusNode = FocusNode();
   String _networkSearchQuery = '';
   String? _memberTypeFilter;
+  String? _promoterCountryFilter;
+  String? _promoterCityFilter;
+  String? _venueCountryFilter;
+  String? _venueCityFilter;
 
   @override
   void initState() {
@@ -189,9 +195,13 @@ class _MainShellState extends ConsumerState<MainShell> {
                     onPageChanged: _onPageChanged,
                     onShowSelected: _onShowSelected,
                     showsSearchQuery: _showsSearchQuery,
-                    showPastShows: _showPastShows,
+                    showsFilters: _showsFilters,
                     networkSearchQuery: _networkSearchQuery,
                     memberTypeFilter: _memberTypeFilter,
+                    promoterCountryFilter: _promoterCountryFilter,
+                    promoterCityFilter: _promoterCityFilter,
+                    venueCountryFilter: _venueCountryFilter,
+                    venueCityFilter: _venueCityFilter,
                   ),
                   const SizedBox(),
                 ],
@@ -247,11 +257,57 @@ class _MainShellState extends ConsumerState<MainShell> {
             onChanged: (value) => setState(() => _showsSearchQuery = value),
             onFilterTap: () => showShowsFilterDialog(
               context: context,
-              showPastShows: _showPastShows,
-              onShowPastShowsChanged: (value) => setState(() => _showPastShows = value),
+              availableArtists: (() {
+                final showsAsync = ref.read(showsByOrgProvider(widget.orgId));
+                final shows = showsAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final artists = <String>{
+                  for (final s in shows)
+                    for (final a in s.artistNames)
+                      if (a.trim().isNotEmpty) a.trim(),
+                }.toList()..sort();
+                return artists;
+              })(),
+              availableShows: (() {
+                final showsAsync = ref.read(showsByOrgProvider(widget.orgId));
+                final shows = showsAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final titles = <String>{
+                  for (final s in shows)
+                    if (s.title.trim().isNotEmpty) s.title.trim(),
+                }.toList()..sort();
+                return titles;
+              })(),
+              availableVenues: (() {
+                final showsAsync = ref.read(showsByOrgProvider(widget.orgId));
+                final shows = showsAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final venues = <String>{
+                  for (final s in shows)
+                    if ((s.venueName ?? '').trim().isNotEmpty) s.venueName!.trim(),
+                }.toList()..sort();
+                return venues;
+              })(),
+              availableCities: (() {
+                final showsAsync = ref.read(showsByOrgProvider(widget.orgId));
+                final shows = showsAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final cities = <String>{
+                  for (final s in shows)
+                    if ((s.venueCity ?? '').trim().isNotEmpty) s.venueCity!.trim(),
+                }.toList()..sort();
+                return cities;
+              })(),
+              availableCountries: (() {
+                final showsAsync = ref.read(showsByOrgProvider(widget.orgId));
+                final shows = showsAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final countries = <String>{
+                  for (final s in shows)
+                    if ((s.venueCountry ?? '').trim().isNotEmpty) s.venueCountry!.trim(),
+                }.toList()..sort();
+                return countries;
+              })(),
+              filters: _showsFilters,
+              onFiltersChanged: (value) => setState(() => _showsFilters = value),
             ),
             onAddTap: () => showCreateShowModal(context, widget.orgId),
-            isFilterActive: !_showPastShows,
+            isFilterActive: _showsFilters.isActive,
             brightness: brightness,
           ),
           if (!_isShowsSearchFocused) const SizedBox(height: 16),
@@ -264,15 +320,71 @@ class _MainShellState extends ConsumerState<MainShell> {
             onChanged: (value) => setState(() => _networkSearchQuery = value),
             onFilterTap: () {
               if (_controller.networkTab == NetworkTab.team) {
-                showNetworkFilterDialog(
+                showNetworkTeamRoleFilterDialog(
                   context: context,
                   currentFilter: _memberTypeFilter,
                   onFilterChanged: (value) => setState(() => _memberTypeFilter = value),
                 );
+                return;
+              }
+
+              if (_controller.networkTab == NetworkTab.promoters) {
+                final promotersAsync = ref.read(promotersProvider(widget.orgId));
+                final promoters = promotersAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final countries = <String>{
+                  for (final p in promoters)
+                    if (p.country != null && p.country!.trim().isNotEmpty) p.country!.trim(),
+                }.toList()..sort();
+                final cities = <String>{
+                  for (final p in promoters)
+                    if (p.city != null && p.city!.trim().isNotEmpty) p.city!.trim(),
+                }.toList()..sort();
+                showNetworkLocationFilterDialog(
+                  context: context,
+                  title: 'Filter Promoters',
+                  availableCountries: countries,
+                  availableCities: cities,
+                  currentCountry: _promoterCountryFilter,
+                  currentCity: _promoterCityFilter,
+                  onChanged: ({country, city}) => setState(() {
+                    _promoterCountryFilter = country;
+                    _promoterCityFilter = city;
+                  }),
+                );
+                return;
+              }
+
+              if (_controller.networkTab == NetworkTab.venues) {
+                final venuesAsync = ref.read(venuesProvider(widget.orgId));
+                final venues = venuesAsync.maybeWhen(data: (d) => d, orElse: () => const []);
+                final countries = <String>{
+                  for (final v in venues)
+                    if (v.country != null && v.country!.trim().isNotEmpty) v.country!.trim(),
+                }.toList()..sort();
+                final cities = <String>{
+                  for (final v in venues)
+                    if (v.city != null && v.city!.trim().isNotEmpty) v.city!.trim(),
+                }.toList()..sort();
+                showNetworkLocationFilterDialog(
+                  context: context,
+                  title: 'Filter Venues',
+                  availableCountries: countries,
+                  availableCities: cities,
+                  currentCountry: _venueCountryFilter,
+                  currentCity: _venueCityFilter,
+                  onChanged: ({country, city}) => setState(() {
+                    _venueCountryFilter = country;
+                    _venueCityFilter = city;
+                  }),
+                );
               }
             },
             onAddTap: _handleNetworkAdd,
-            isFilterActive: _memberTypeFilter != null,
+            isFilterActive: switch (_controller.networkTab) {
+              NetworkTab.team => _memberTypeFilter != null,
+              NetworkTab.promoters => _promoterCountryFilter != null || _promoterCityFilter != null,
+              NetworkTab.venues => _venueCountryFilter != null || _venueCityFilter != null,
+            },
             brightness: brightness,
           ),
           const SizedBox(height: 16),

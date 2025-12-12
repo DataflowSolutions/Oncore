@@ -4,6 +4,7 @@ import '../../calendar/calendar_content.dart';
 import '../../network/network_screen.dart' hide NetworkTab;
 import '../../show_day/show_day_content.dart';
 import '../controllers/main_shell_controller.dart';
+import '../dialogs/shows_filter_dialog.dart';
 
 /// Main content area with a SINGLE flat PageView for seamless continuous swiping
 /// Pages: Day → Shows List → Shows Calendar → Network Team → Network Promoters → Network Venues
@@ -15,9 +16,13 @@ class MainShellContent extends StatelessWidget {
   final ValueChanged<int> onPageChanged;
   final ValueChanged<String> onShowSelected;
   final String showsSearchQuery;
-  final bool showPastShows;
+  final ShowsFilters showsFilters;
   final String networkSearchQuery;
   final String? memberTypeFilter;
+  final String? promoterCountryFilter;
+  final String? promoterCityFilter;
+  final String? venueCountryFilter;
+  final String? venueCityFilter;
 
   const MainShellContent({
     super.key,
@@ -28,9 +33,13 @@ class MainShellContent extends StatelessWidget {
     required this.onPageChanged,
     required this.onShowSelected,
     required this.showsSearchQuery,
-    required this.showPastShows,
+    required this.showsFilters,
     required this.networkSearchQuery,
     this.memberTypeFilter,
+    this.promoterCountryFilter,
+    this.promoterCityFilter,
+    this.venueCountryFilter,
+    this.venueCityFilter,
   });
 
   @override
@@ -48,7 +57,7 @@ class MainShellContent extends StatelessWidget {
             orgName: orgName,
             onShowSelected: onShowSelected,
             searchQuery: showsSearchQuery,
-            showPastShows: showPastShows,
+            filters: showsFilters,
           ),
           // Page 2: Shows Calendar
           CalendarContent(
@@ -64,6 +73,8 @@ class MainShellContent extends StatelessWidget {
             onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
             searchQuery: networkSearchQuery,
             memberTypeFilter: memberTypeFilter,
+            countryFilter: null,
+            cityFilter: null,
           ),
           // Page 4: Network Promoters
           NetworkContent(
@@ -73,6 +84,8 @@ class MainShellContent extends StatelessWidget {
             onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
             searchQuery: networkSearchQuery,
             memberTypeFilter: memberTypeFilter,
+            countryFilter: promoterCountryFilter,
+            cityFilter: promoterCityFilter,
           ),
           // Page 5: Network Venues
           NetworkContent(
@@ -82,6 +95,8 @@ class MainShellContent extends StatelessWidget {
             onTabChanged: (tab) => controller.navigateToNetworkTab(tab),
             searchQuery: networkSearchQuery,
             memberTypeFilter: memberTypeFilter,
+            countryFilter: venueCountryFilter,
+            cityFilter: venueCityFilter,
           ),
         ],
       ),

@@ -233,6 +233,8 @@ class NetworkContent extends ConsumerStatefulWidget {
   final ValueChanged<NetworkTab>? onTabChanged;
   final String searchQuery;
   final String? memberTypeFilter;
+  final String? countryFilter;
+  final String? cityFilter;
 
   const NetworkContent({
     super.key,
@@ -242,6 +244,8 @@ class NetworkContent extends ConsumerStatefulWidget {
     this.onTabChanged,
     this.searchQuery = '',
     this.memberTypeFilter,
+    this.countryFilter,
+    this.cityFilter,
   });
 
   @override
@@ -471,6 +475,20 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
       ),
       data: (promoters) {
         var filtered = promoters;
+
+        // Apply country/city filters (promoters)
+        if (widget.countryFilter != null) {
+          final country = widget.countryFilter!.trim().toLowerCase();
+          filtered = filtered
+              .where((p) => (p.country ?? '').trim().toLowerCase() == country)
+              .toList();
+        }
+        if (widget.cityFilter != null) {
+          final city = widget.cityFilter!.trim().toLowerCase();
+          filtered = filtered
+              .where((p) => (p.city ?? '').trim().toLowerCase() == city)
+              .toList();
+        }
         
         // Apply search query
         if (widget.searchQuery.isNotEmpty) {
@@ -576,6 +594,20 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
       ),
       data: (venues) {
         var filtered = venues;
+
+        // Apply country/city filters (venues)
+        if (widget.countryFilter != null) {
+          final country = widget.countryFilter!.trim().toLowerCase();
+          filtered = filtered
+              .where((v) => (v.country ?? '').trim().toLowerCase() == country)
+              .toList();
+        }
+        if (widget.cityFilter != null) {
+          final city = widget.cityFilter!.trim().toLowerCase();
+          filtered = filtered
+              .where((v) => (v.city ?? '').trim().toLowerCase() == city)
+              .toList();
+        }
         
         // Apply search query
         if (widget.searchQuery.isNotEmpty) {
