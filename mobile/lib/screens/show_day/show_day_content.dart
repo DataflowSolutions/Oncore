@@ -502,6 +502,26 @@ class _ScheduleSection extends StatelessWidget {
                 value: item.notes!,
               ),
           ],
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openEditScheduleItem(context, item);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openEditScheduleItem(BuildContext context, ScheduleItem item) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditScheduleItemScreen(
+          showId: showId,
+          orgId: orgId,
+          item: item,
+          onItemUpdated: () {
+            onItemAdded?.call();
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );
@@ -842,6 +862,26 @@ class _FlightsSection extends StatelessWidget {
                 value: flight.ticketNumber!,
               ),
           ],
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openEditFlight(context, flight);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openEditFlight(BuildContext context, FlightInfo flight) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditFlightScreen(
+          showId: showId,
+          orgId: orgId,
+          flight: flight,
+          onFlightUpdated: () {
+            onFlightAdded?.call();
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );

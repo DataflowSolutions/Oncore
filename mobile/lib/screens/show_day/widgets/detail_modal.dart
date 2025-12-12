@@ -13,6 +13,10 @@ class DetailModal extends StatelessWidget {
   final Widget? headerContent;
   final List<Widget> content;
   final List<DetailAction> actions;
+  
+  /// Optional callback for edit action in nav bar.
+  /// When provided, shows "Edit" text button in the navigation bar's trailing position.
+  final VoidCallback? onEdit;
 
   const DetailModal({
     super.key,
@@ -22,6 +26,7 @@ class DetailModal extends StatelessWidget {
     this.headerContent,
     required this.content,
     this.actions = const [],
+    this.onEdit,
   });
 
   @override
@@ -29,6 +34,21 @@ class DetailModal extends StatelessWidget {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
     
     return LayerScaffold(
+      actions: onEdit != null
+          ? [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: onEdit,
+                child: Text(
+                  'Edit',
+                  style: TextStyle(
+                    color: CupertinoTheme.of(context).primaryColor,
+                    fontSize: 17,
+                  ),
+                ),
+              ),
+            ]
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

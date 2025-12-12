@@ -360,7 +360,11 @@ class _ShowDayContent extends ConsumerWidget {
 
               return Column(
                 children: [
-                  _UpcomingScheduleSection(items: displayItems),
+                  _UpcomingScheduleSection(
+                    items: displayItems,
+                    showId: showId,
+                    orgId: show.orgId,
+                  ),
                 ],
               );
             },
@@ -371,7 +375,11 @@ class _ShowDayContent extends ConsumerWidget {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
             data: (flights) => flights.isNotEmpty
-                ? _FlightsSection(flights: flights)
+                ? _FlightsSection(
+                    flights: flights,
+                    showId: showId,
+                    orgId: show.orgId,
+                  )
                 : const SizedBox.shrink(),
           ),
 
@@ -456,8 +464,14 @@ class _ShowDayContent extends ConsumerWidget {
 /// Upcoming schedule section with horizontal scroll
 class _UpcomingScheduleSection extends StatelessWidget {
   final List<ScheduleItem> items;
+  final String showId;
+  final String orgId;
 
-  const _UpcomingScheduleSection({required this.items});
+  const _UpcomingScheduleSection({
+    required this.items,
+    required this.showId,
+    required this.orgId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -512,6 +526,25 @@ class _UpcomingScheduleSection extends StatelessWidget {
                 value: item.notes!,
               ),
           ],
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openEditScheduleItem(context, item);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openEditScheduleItem(BuildContext context, ScheduleItem item) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditScheduleItemScreen(
+          showId: showId,
+          orgId: orgId,
+          item: item,
+          onItemUpdated: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );
@@ -600,8 +633,14 @@ class _ScheduleEmptyState extends StatelessWidget {
 /// Flights section with horizontal scroll
 class _FlightsSection extends StatelessWidget {
   final List<FlightInfo> flights;
+  final String showId;
+  final String orgId;
 
-  const _FlightsSection({required this.flights});
+  const _FlightsSection({
+    required this.flights,
+    required this.showId,
+    required this.orgId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -707,6 +746,25 @@ class _FlightsSection extends StatelessWidget {
                 value: flight.ticketNumber!,
               ),
           ],
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openEditFlight(context, flight);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openEditFlight(BuildContext context, FlightInfo flight) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditFlightScreen(
+          showId: showId,
+          orgId: orgId,
+          flight: flight,
+          onFlightUpdated: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );

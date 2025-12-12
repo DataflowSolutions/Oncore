@@ -277,7 +277,7 @@ class _FullScheduleScreenState extends ConsumerState<FullScheduleScreen> {
             item: item,
             height: height,
             onTap: () => _showItemDetails(item),
-            onEditTap: () => _openEditScheduleItem(item),
+            onEditTap: null,
           ),
         ),
       );
@@ -306,6 +306,27 @@ class _FullScheduleScreenState extends ConsumerState<FullScheduleScreen> {
                 value: item.notes!,
               ),
           ],
+          onEdit: () {
+            // Close detail page first, then open edit.
+            Navigator.of(context).pop();
+            _openEditScheduleItemFromDetail(item);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openEditScheduleItemFromDetail(ScheduleItem item) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditScheduleItemScreen(
+          showId: widget.showId,
+          orgId: widget.orgId,
+          item: item,
+          onItemUpdated: () {
+            ref.invalidate(showScheduleProvider(widget.showId));
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );
