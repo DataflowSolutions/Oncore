@@ -16,6 +16,7 @@ class TeamMember {
   final String? email;
   final String? memberType;
   final String? userId;
+  final bool isVirtual;
 
   TeamMember({
     required this.id,
@@ -24,6 +25,7 @@ class TeamMember {
     this.email,
     this.memberType,
     this.userId,
+    this.isVirtual = false,
   });
 
   factory TeamMember.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,8 @@ class TeamMember {
   }
 
   bool get isActive => userId != null;
+
+  bool get isOwner => (memberType ?? '').toLowerCase() == 'owner';
 }
 
 /// Promoter model
@@ -156,10 +160,38 @@ class Venue {
 /// Provider for fetching team members
 final teamMembersProvider = FutureProvider.family<List<TeamMember>, String>((ref, orgId) async {
   final supabase = ref.watch(supabaseClientProvider);
+  final currentUser = ref.watch(currentUserProvider);
   
   final response = await supabase.rpc('get_org_people', params: {'p_org_id': orgId});
   final List<dynamic> data = response as List<dynamic>;
-  return data.map((json) => TeamMember.fromJson(json as Map<String, dynamic>)).toList();
+  final members = data
+      .map((json) => TeamMember.fromJson(json as Map<String, dynamic>))
+      .toList();
+
+  // Ensure the signed-in user (typically the org owner) shows up in the list.
+  if (currentUser != null) {
+    final alreadyIncluded = members.any((m) => m.userId == currentUser.id);
+    if (!alreadyIncluded) {
+      final fullName = currentUser.userMetadata?['full_name'] as String?;
+      final displayName = (fullName != null && fullName.trim().isNotEmpty)
+          ? fullName.trim()
+          : (currentUser.email ?? 'You');
+
+      return [
+        TeamMember(
+          id: currentUser.id,
+          name: displayName,
+          email: currentUser.email,
+          memberType: 'Owner',
+          userId: currentUser.id,
+          isVirtual: true,
+        ),
+        ...members,
+      ];
+    }
+  }
+
+  return members;
 });
 
 /// Provider for fetching promoters
@@ -325,6 +357,9 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
 
   Widget _buildTeamCard(TeamMember member) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final currentUserId = ref.watch(currentUserProvider)?.id;
+    final isSelf = currentUserId != null && member.userId == currentUserId;
+    final showOwnerLabel = member.isOwner || (member.isVirtual && isSelf);
     
     return GestureDetector(
       onTap: () => _openTeamMemberDetail(member),
@@ -366,22 +401,45 @@ class _NetworkContentState extends ConsumerState<NetworkContent> {
               ),
             ),
             // Right side: Member type badge only
-            if (member.memberType != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.getForegroundColor(brightness),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  member.memberType!,
-                  style: TextStyle(
-                    color: AppTheme.getBackgroundColor(brightness),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showOwnerLabel)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.getForegroundColor(brightness),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Owner',
+                      style: TextStyle(
+                        color: AppTheme.getBackgroundColor(brightness),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                if (showOwnerLabel && member.memberType != null && member.memberType!.toLowerCase() != 'owner')
+                  const SizedBox(width: 8),
+                if (member.memberType != null && member.memberType!.toLowerCase() != 'owner')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.getForegroundColor(brightness),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      member.memberType!,
+                      style: TextStyle(
+                        color: AppTheme.getBackgroundColor(brightness),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -701,6 +759,8 @@ class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen
   @override
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final isOwner = widget.member.isOwner;
+    final canRemove = !isOwner && !widget.member.isVirtual;
 
     return Stack(
       children: [
@@ -738,29 +798,31 @@ class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen
               icon: CupertinoIcons.info,
             ),
           ],
-          trailing: GestureDetector(
-            onTap: _isDeleting ? null : _deleteMember,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.getDestructiveColor(brightness),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: _isDeleting
-                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                    : const Text(
-                        'Remove from Organization',
-                        style: TextStyle(
-                          color: CupertinoColors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            ),
-          ),
+          trailing: canRemove
+              ? GestureDetector(
+                  onTap: _isDeleting ? null : _deleteMember,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.getDestructiveColor(brightness),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: _isDeleting
+                          ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                          : const Text(
+                              'Remove from Organization',
+                              style: TextStyle(
+                                color: CupertinoColors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                )
+              : null,
         ),
         if (_isDeleting)
           Container(
