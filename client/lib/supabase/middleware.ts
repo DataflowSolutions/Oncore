@@ -5,9 +5,18 @@ import { logger } from "../logger";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
-// Canonical environment variables
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Canonical environment variables with validation
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error(
+    "[MIDDLEWARE] ❌ Missing required Supabase credentials:\n" +
+    `  NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL ? "✓" : "❌ missing"}\n` +
+    `  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? "✓" : "❌ missing"}\n` +
+    "Check your .env.local file in the client directory."
+  );
+}
 
 // Lightweight logger for middleware
 const mwLogger = {
@@ -67,6 +76,12 @@ function isStaticResource(pathname: string): boolean {
  */
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Early exit if Supabase is not configured
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    logger.error("[MIDDLEWARE] Supabase not configured. Missing credentials.");
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
 
   // Skip auth entirely for static assets and Next.js internals
   if (isStaticResource(pathname)) {

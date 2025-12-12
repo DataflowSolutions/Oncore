@@ -14,7 +14,10 @@ const nextConfig: NextConfig = {
 
   // Experimental features
   experimental: {
-    // Add experimental features as needed
+    // Server Actions body size limit (Next.js 16)
+    serverActions: {
+      bodySizeLimit: '100mb', // Increase from default 1MB to support large file uploads
+    },
   },
 
   // Rewrites for local development

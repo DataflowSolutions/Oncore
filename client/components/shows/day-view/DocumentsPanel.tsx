@@ -3,18 +3,14 @@
 import { useState, useRef } from "react";
 import {
   FileText,
-  Upload,
   Eye,
   Download,
-  Plus,
   Loader2,
   Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Popup } from "@/components/ui/popup";
-import { Input } from "@/components/ui/input";
 import { logger } from "@/lib/logger";
 import { formatDate } from "@/lib/utils";
 import {
@@ -91,14 +87,22 @@ const getFileIcon = (contentType: string | null) => {
   return "📎";
 };
 
-const categorizeDocument = (label: string | null): string => {
+// Category tag format: [category:value] at start of label
+// This is parsed for categorization but stripped for display
+const CATEGORY_TAG_REGEX = /^\[category:([^\]]+)\]\s*/;
+
+const extractCategoryFromLabel = (label: string | null): string => {
   if (!label) return "other";
+  const match = label.match(CATEGORY_TAG_REGEX);
+  if (match) {
+    return match[1];
+  }
+  // Fallback: try to infer from label text (for legacy documents)
   const lower = label.toLowerCase();
   if (lower.includes("contract")) return "contract";
   if (lower.includes("rider") || lower.includes("tech")) return "rider";
   if (lower.includes("advancing")) return "advancing";
-  if (lower.includes("boarding") || lower.includes("pass"))
-    return "boarding_pass";
+  if (lower.includes("boarding") || lower.includes("pass")) return "boarding_pass";
   if (lower.includes("visa")) return "visa";
   return "other";
 };
@@ -119,11 +123,9 @@ export function DocumentsPanel({
 }: DocumentsPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCreatingDoc, setIsCreatingDoc] = useState(false);
-  const [newDocLabel, setNewDocLabel] = useState("");
-  const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
+  const [isUploadingCategory, setIsUploadingCategory] = useState(false);
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
-  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const categoryFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Preview modal state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -134,82 +136,56 @@ export function DocumentsPanel({
 
   const canUpload = Boolean(orgSlug && showId);
 
-  const handleCreateDocument = async () => {
-    if (!canUpload || !selectedCategory || !newDocLabel.trim()) return;
-
-    setIsCreatingDoc(true);
-    try {
-      // Get the category label to prefix the document name
-      const categoryLabel = documentCategories.find(c => c.value === selectedCategory)?.label || "";
-      
-      // For "other" category, just use the label as-is
-      // For specific categories, prefix with category name so it gets categorized correctly
-      const finalLabel = selectedCategory === "other" 
-        ? newDocLabel 
-        : `${categoryLabel}: ${newDocLabel}`;
-
-      const result = await createAdvancingDocument(
-        orgSlug!,
-        showId!,
-        "artist", // Default to "artist" (our documents)
-        finalLabel
-      );
-
-      if (result.success) {
-        setNewDocLabel("");
-        // The page should revalidate automatically
-      } else {
-        logger.error("Failed to create document", result.error);
-        alert(`Failed to create document: ${result.error}`);
-      }
-    } catch (error) {
-      logger.error("Error creating document", error);
-      alert("Failed to create document");
-    } finally {
-      setIsCreatingDoc(false);
-    }
+  const createDocumentLabelForCategory = (category: string, fileName: string) => {
+    // Store category as a tag at the start of the label for reliable categorization
+    // Format: [category:value] filename
+    return `[category:${category}] ${fileName}`;
   };
 
-  const handleFileUpload = async (documentId: string, file: File) => {
-    if (!canUpload) return;
+  const handleCategoryUpload = async (category: string, files: FileList | null) => {
+    if (!canUpload || !files || files.length === 0) return;
 
-    setUploadingDocId(documentId);
+    setIsUploadingCategory(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      for (const file of Array.from(files)) {
+        const label = createDocumentLabelForCategory(category, file.name);
 
-      const result = await uploadAdvancingFile(
-        orgSlug!,
-        showId!,
-        documentId,
-        formData
-      );
+        const createResult = await createAdvancingDocument(
+          orgSlug!,
+          showId!,
+          "artist",
+          label
+        );
 
-      if (!result.success) {
-        logger.error("File upload failed", result.error);
-        alert(`Upload failed: ${result.error}`);
+        if (!createResult.success || !createResult.data?.id) {
+          logger.error("Failed to create document", createResult.error);
+          alert(`Failed to create document: ${createResult.error}`);
+          continue;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadResult = await uploadAdvancingFile(
+          orgSlug!,
+          showId!,
+          createResult.data.id,
+          formData
+        );
+
+        if (!uploadResult.success) {
+          logger.error("File upload failed", uploadResult.error);
+          alert(`Upload failed: ${uploadResult.error}`);
+        }
       }
     } catch (error) {
       logger.error("Error uploading file", error);
       alert("Failed to upload file");
     } finally {
-      setUploadingDocId(null);
-    }
-  };
-
-  const handleFileSelect = (documentId: string, files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    handleFileUpload(documentId, file);
-  };
-
-  const handleDrop = (documentId: string, e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileUpload(documentId, files[0]);
+      setIsUploadingCategory(false);
+      if (categoryFileInputRef.current) {
+        categoryFileInputRef.current.value = "";
+      }
     }
   };
 
@@ -286,18 +262,19 @@ export function DocumentsPanel({
     }
   };
 
-  // Count documents per category
+  // Count documents per category (count files, not document containers)
   const categoryCounts = documentCategories.map((category) => {
-    const count = documents.filter(
-      (doc) => categorizeDocument(doc.label) === category.value
-    ).length;
-    return { ...category, count };
+    const docsInCategory = documents.filter(
+      (doc) => extractCategoryFromLabel(doc.label) === category.value
+    );
+    const fileCount = docsInCategory.reduce((acc, doc) => acc + (doc.files?.length || 0), 0);
+    return { ...category, count: fileCount };
   });
 
   // Get documents for selected category
   const selectedCategoryDocs = selectedCategory
     ? documents.filter(
-        (doc) => categorizeDocument(doc.label) === selectedCategory
+        (doc) => extractCategoryFromLabel(doc.label) === selectedCategory
       )
     : [];
 
@@ -324,6 +301,14 @@ export function DocumentsPanel({
                   setSelectedCategory(category.value);
                   setIsModalOpen(true);
                 }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedCategory(category.value);
+                  setIsModalOpen(true);
+                  handleCategoryUpload(category.value, e.dataTransfer.files);
+                }}
+                onDragOver={handleDragOver}
               >
                 <span className="z-10 text-xs font-header">
                   {category.label}
@@ -351,202 +336,137 @@ export function DocumentsPanel({
         className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
       >
         <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-          {/* Create New Document Section */}
-          {canUpload && (
-            <div className="border-2 border-dashed border-neutral-700 rounded-lg p-4 bg-neutral-900/50">
-              <h4 className="font-semibold text-sm mb-3">Add New Document</h4>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder={`e.g., ${selectedCategoryLabel} 2025`}
-                  value={newDocLabel}
-                  onChange={(e) => setNewDocLabel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateDocument();
-                  }}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleCreateDocument}
-                  disabled={isCreatingDoc || !newDocLabel.trim()}
-                >
-                  {isCreatingDoc ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create
-                    </>
-                  )}
-                </Button>
+          {/* Category Upload Area (acts like the container) */}
+          {canUpload && selectedCategory && (
+            <div>
+              <input
+                ref={categoryFileInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) =>
+                  handleCategoryUpload(selectedCategory, e.target.files)
+                }
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                multiple
+              />
+              <div
+                className="border-2 border-dashed border-neutral-700 rounded-lg p-4 text-center hover:border-neutral-600 hover:bg-neutral-800/30 transition-colors cursor-pointer"
+                onClick={() => categoryFileInputRef.current?.click()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCategoryUpload(selectedCategory, e.dataTransfer.files);
+                }}
+                onDragOver={handleDragOver}
+              >
+                {isUploadingCategory ? (
+                  <>
+                    <Loader2 className="w-6 h-6 mx-auto mb-1 text-neutral-500 animate-spin" />
+                    <p className="text-xs text-neutral-500">Uploading...</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-neutral-400">
+                      Drop files here or click to upload
+                    </p>
+                    <p className="text-xs text-neutral-600 mt-1">
+                      PDF, DOC, DOCX, TXT, JPG, PNG
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
 
-          {/* Existing Documents */}
+          {/* Existing Documents - Flat file list like mobile */}
           <div>
             <h4 className="font-semibold mb-3">
-              Uploaded Documents ({selectedCategoryDocs.length})
+              Uploaded Files ({selectedCategoryDocs.reduce((acc, doc) => acc + (doc.files?.length || 0), 0)})
             </h4>
 
-            {selectedCategoryDocs.length === 0 ? (
+            {selectedCategoryDocs.length === 0 || selectedCategoryDocs.every(doc => !doc.files?.length) ? (
               <div className="bg-neutral-800/50 rounded-lg p-6 text-center">
                 <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-600" />
                 <p className="text-sm text-neutral-400 mb-1">
-                  No {selectedCategoryLabel.toLowerCase()} documents yet
+                  No {selectedCategoryLabel.toLowerCase()} files yet
                 </p>
                 <p className="text-xs text-neutral-500">
                   {canUpload
-                    ? "Create a new document above to get started"
-                    : "Documents will appear here once uploaded in the Advancing section"}
+                    ? "Upload a file above to get started"
+                    : "Files will appear here once uploaded"}
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {selectedCategoryDocs.map((doc) => {
-                  const files = doc.files || [];
-                  return (
+              <div className="space-y-2">
+                {selectedCategoryDocs.flatMap((doc) => 
+                  (doc.files || []).map((file) => (
                     <div
-                      key={doc.id}
-                      className="border border-neutral-700 rounded-lg p-4 bg-neutral-900/60"
+                      key={file.id}
+                      className="flex items-center justify-between bg-neutral-800/50 border border-neutral-700 rounded-md p-3"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h5 className="font-medium text-sm">
-                            {doc.label || "Untitled Document"}
-                          </h5>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-base flex-shrink-0">
+                          {getFileIcon(file.content_type)}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {file.original_name || "Unnamed file"}
+                          </p>
                           <p className="text-xs text-neutral-500">
-                            {formatDate(doc.created_at, { format: "date" })}
+                            {formatFileSize(file.size_bytes)} •{" "}
+                            {formatDate(file.created_at, { format: "short-date" })}
                           </p>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {files.length} {files.length === 1 ? "file" : "files"}
-                        </Badge>
                       </div>
-
-                      {/* Files */}
-                      {files.length > 0 && (
-                        <div className="space-y-2 mb-3">
-                          {files.map((file) => (
-                            <div
-                              key={file.id}
-                              className="flex items-center justify-between bg-neutral-800/50 border border-neutral-700 rounded-md p-3"
-                            >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <span className="text-base flex-shrink-0">
-                                  {getFileIcon(file.content_type)}
-                                </span>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium truncate">
-                                    {file.original_name || "Unnamed file"}
-                                  </p>
-                                  <p className="text-xs text-neutral-500">
-                                    {formatFileSize(file.size_bytes)} •{" "}
-                                    {formatDate(file.created_at, { format: "short-date" })}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                {canPreview(file.content_type) && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                      handlePreviewFile(
-                                        file.storage_path,
-                                        file.original_name || "file",
-                                        file.content_type ||
-                                          "application/octet-stream"
-                                      )
-                                    }
-                                    title="Preview"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    handleDownloadFile(
-                                      file.storage_path,
-                                      file.original_name || "file"
-                                    )
-                                  }
-                                  title="Download"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </Button>
-                                {canUpload && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleDeleteFile(file.id)}
-                                    disabled={deletingFileId === file.id}
-                                    title="Delete"
-                                  >
-                                    {deletingFileId === file.id ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Upload Area */}
-                      {canUpload && (
-                        <div>
-                          <input
-                            ref={(el) => {
-                              fileInputRefs.current[doc.id] = el;
-                            }}
-                            type="file"
-                            className="hidden"
-                            onChange={(e) =>
-                              handleFileSelect(doc.id, e.target.files)
-                            }
-                            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
-                          />
-                          <div
-                            className="border-2 border-dashed border-neutral-700 rounded-lg p-4 text-center hover:border-neutral-600 hover:bg-neutral-800/30 transition-colors cursor-pointer"
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {canPreview(file.content_type) && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={() =>
-                              fileInputRefs.current[doc.id]?.click()
+                              handlePreviewFile(
+                                file.storage_path,
+                                file.original_name || "file",
+                                file.content_type || "application/octet-stream"
+                              )
                             }
-                            onDrop={(e) => handleDrop(doc.id, e)}
-                            onDragOver={handleDragOver}
+                            title="Preview"
                           >
-                            {uploadingDocId === doc.id ? (
-                              <>
-                                <Loader2 className="w-6 h-6 mx-auto mb-1 text-neutral-500 animate-spin" />
-                                <p className="text-xs text-neutral-500">
-                                  Uploading...
-                                </p>
-                              </>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            handleDownloadFile(
+                              file.storage_path,
+                              file.original_name || "file"
+                            )
+                          }
+                          title="Download"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        {canUpload && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteFile(file.id)}
+                            disabled={deletingFileId === file.id}
+                            title="Delete"
+                          >
+                            {deletingFileId === file.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <>
-                                <Upload className="w-6 h-6 mx-auto mb-1 text-neutral-500" />
-                                <p className="text-xs text-neutral-400">
-                                  Drop files here or click to upload
-                                </p>
-                                <p className="text-xs text-neutral-600 mt-1">
-                                  PDF, DOC, DOCX, TXT, JPG, PNG
-                                </p>
-                              </>
+                              <Trash2 className="w-4 h-4" />
                             )}
-                          </div>
-                        </div>
-                      )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
+                  ))
+                )}
               </div>
             )}
           </div>
