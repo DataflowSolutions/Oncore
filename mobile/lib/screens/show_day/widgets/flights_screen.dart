@@ -5,6 +5,7 @@ import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
 import '../providers/show_day_providers.dart';
 import 'add_flight_screen.dart';
+import 'edit_flight_screen.dart';
 import 'form_widgets.dart';
 
 /// Layer 2: Flights list screen showing all flights for a show
@@ -49,7 +50,10 @@ class FlightsScreen extends ConsumerWidget {
                       itemCount: flights.length,
                       itemBuilder: (context, index) {
                         final flight = flights[index];
-                        return _FlightCard(flight: flight);
+                        return _FlightCard(
+                          flight: flight,
+                          onEditTap: () => _openEditFlight(context, ref, flight),
+                        );
                       },
                     ),
             ),
@@ -110,12 +114,32 @@ class FlightsScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _openEditFlight(BuildContext context, WidgetRef ref, FlightInfo flight) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditFlightScreen(
+          showId: showId,
+          orgId: orgId,
+          flight: flight,
+          onFlightUpdated: () {
+            ref.invalidate(showFlightsProvider(showId));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _FlightCard extends StatelessWidget {
   final FlightInfo flight;
+  final VoidCallback? onEditTap;
 
-  const _FlightCard({required this.flight});
+  const _FlightCard({
+    required this.flight,
+    this.onEditTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,18 +155,30 @@ class _FlightCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Airline and flight number
+          // Airline and flight number with edit button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                flight.airline ?? 'Flight',
-                style: TextStyle(
-                  color: AppTheme.getForegroundColor(brightness),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  flight.airline ?? 'Flight',
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+              if (onEditTap != null)
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: onEditTap,
+                  child: Icon(
+                    CupertinoIcons.pencil,
+                    color: AppTheme.getMutedForegroundColor(brightness),
+                    size: 20,
+                  ),
+                ),
               if (flight.flightNumber != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

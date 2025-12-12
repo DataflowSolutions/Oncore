@@ -4,6 +4,9 @@ import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../components/components.dart';
 import '../show_day/widgets/detail_screen.dart';
+import 'edit_person_screen.dart';
+import 'edit_promoter_screen.dart';
+import 'edit_venue_screen.dart';
 
 /// Network tab types
 enum NetworkTab { team, promoters, venues }
@@ -16,6 +19,7 @@ class TeamMember {
   final String? email;
   final String? memberType;
   final String? userId;
+  final String? notes;
   final bool isVirtual;
 
   TeamMember({
@@ -25,6 +29,7 @@ class TeamMember {
     this.email,
     this.memberType,
     this.userId,
+    this.notes,
     this.isVirtual = false,
   });
 
@@ -36,6 +41,7 @@ class TeamMember {
       email: json['email'] as String?,
       memberType: json['member_type'] as String?,
       userId: json['user_id'] as String?,
+      notes: json['notes'] as String?,
     );
   }
 
@@ -53,6 +59,7 @@ class Promoter {
   final String? company;
   final String? city;
   final String? country;
+  final String? notes;
   final List<String> venueNames;
 
   Promoter({
@@ -63,6 +70,7 @@ class Promoter {
     this.company,
     this.city,
     this.country,
+    this.notes,
     this.venueNames = const [],
   });
 
@@ -83,6 +91,7 @@ class Promoter {
       company: json['company'] as String?,
       city: json['city'] as String?,
       country: json['country'] as String?,
+      notes: json['notes'] as String?,
       venueNames: venueNames,
     );
   }
@@ -103,6 +112,7 @@ class Venue {
   final String? phone;
   final String? email;
   final int? capacity;
+  final String? notes;
   final int showCount;
   final List<String> promoterNames;
 
@@ -115,6 +125,7 @@ class Venue {
     this.phone,
     this.email,
     this.capacity,
+    this.notes,
     this.showCount = 0,
     this.promoterNames = const [],
   });
@@ -146,6 +157,7 @@ class Venue {
       phone: phone,
       email: email,
       capacity: json['capacity'] as int?,
+      notes: json['notes'] as String?,
       showCount: json['show_count'] as int? ?? 0,
       promoterNames: promoterNames,
     );
@@ -705,6 +717,20 @@ class _TeamMemberDetailScreen extends ConsumerStatefulWidget {
 class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen> {
   bool _isDeleting = false;
 
+  void _openEditScreen() {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditPersonScreen(
+          orgId: widget.orgId,
+          member: widget.member,
+        ),
+      ),
+    ).then((_) {
+      // Refresh the team members list when returning from edit
+      ref.invalidate(teamMembersProvider(widget.orgId));
+    });
+  }
+
   Future<void> _deleteMember() async {
     // Show confirmation dialog
     final confirmed = await showCupertinoDialog<bool>(
@@ -798,8 +824,35 @@ class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen
               icon: CupertinoIcons.info,
             ),
           ],
-          trailing: canRemove
-              ? GestureDetector(
+          trailing: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Edit button
+              GestureDetector(
+                onTap: _openEditScreen,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getForegroundColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: AppTheme.getBackgroundColor(brightness),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (canRemove) ...[
+                const SizedBox(height: 12),
+                // Delete button
+                GestureDetector(
                   onTap: _isDeleting ? null : _deleteMember,
                   child: Container(
                     width: double.infinity,
@@ -821,8 +874,10 @@ class _TeamMemberDetailScreenState extends ConsumerState<_TeamMemberDetailScreen
                             ),
                     ),
                   ),
-                )
-              : null,
+                ),
+              ],
+            ],
+          ),
         ),
         if (_isDeleting)
           Container(
@@ -854,6 +909,20 @@ class _PromoterDetailScreen extends ConsumerStatefulWidget {
 
 class _PromoterDetailScreenState extends ConsumerState<_PromoterDetailScreen> {
   bool _isDeleting = false;
+
+  void _openEditScreen() {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditPromoterScreen(
+          orgId: widget.orgId,
+          promoter: widget.promoter,
+        ),
+      ),
+    ).then((_) {
+      // Refresh the promoters list when returning from edit
+      ref.invalidate(promotersProvider(widget.orgId));
+    });
+  }
 
   Future<void> _deletePromoter() async {
     // Show confirmation dialog
@@ -961,28 +1030,57 @@ class _PromoterDetailScreenState extends ConsumerState<_PromoterDetailScreen> {
                 icon: CupertinoIcons.placemark,
               ),
           ],
-          trailing: GestureDetector(
-            onTap: _isDeleting ? null : _deletePromoter,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.getDestructiveColor(brightness),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: _isDeleting
-                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                    : const Text(
-                        'Remove from Organization',
-                        style: TextStyle(
-                          color: CupertinoColors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+          trailing: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Edit button
+              GestureDetector(
+                onTap: _openEditScreen,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getForegroundColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: AppTheme.getBackgroundColor(brightness),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              // Delete button
+              GestureDetector(
+                onTap: _isDeleting ? null : _deletePromoter,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getDestructiveColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: _isDeleting
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : const Text(
+                            'Remove from Organization',
+                            style: TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (_isDeleting)
@@ -1015,6 +1113,20 @@ class _VenueDetailScreen extends ConsumerStatefulWidget {
 
 class _VenueDetailScreenState extends ConsumerState<_VenueDetailScreen> {
   bool _isDeleting = false;
+
+  void _openEditScreen() {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditVenueScreen(
+          orgId: widget.orgId,
+          venue: widget.venue,
+        ),
+      ),
+    ).then((_) {
+      // Refresh the venues list when returning from edit
+      ref.invalidate(venuesProvider(widget.orgId));
+    });
+  }
 
   Future<void> _deleteVenue() async {
     // Show confirmation dialog
@@ -1134,28 +1246,57 @@ class _VenueDetailScreenState extends ConsumerState<_VenueDetailScreen> {
                 icon: CupertinoIcons.calendar,
               ),
           ],
-          trailing: GestureDetector(
-            onTap: _isDeleting ? null : _deleteVenue,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.getDestructiveColor(brightness),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: _isDeleting
-                    ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                    : const Text(
-                        'Remove from Organization',
-                        style: TextStyle(
-                          color: CupertinoColors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+          trailing: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Edit button
+              GestureDetector(
+                onTap: _openEditScreen,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getForegroundColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: AppTheme.getBackgroundColor(brightness),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              // Delete button
+              GestureDetector(
+                onTap: _isDeleting ? null : _deleteVenue,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getDestructiveColor(brightness),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: _isDeleting
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                        : const Text(
+                            'Remove from Organization',
+                            style: TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (_isDeleting)

@@ -7,6 +7,7 @@ import '../../../models/show_day.dart';
 import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_catering_screen.dart';
+import 'edit_catering_screen.dart';
 
 /// Layer 2: Catering list screen showing all catering for a show
 class CateringScreen extends ConsumerWidget {
@@ -58,6 +59,7 @@ class CateringScreen extends ConsumerWidget {
                           onEmailTap: item.email != null
                               ? () => _launchEmail(item.email!)
                               : null,
+                          onEditTap: () => _openEditCatering(context, ref, item),
                         );
                       },
                     ),
@@ -132,17 +134,35 @@ class CateringScreen extends ConsumerWidget {
       await launchUrl(uri);
     }
   }
+
+  void _openEditCatering(BuildContext context, WidgetRef ref, CateringInfo catering) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditCateringScreen(
+          showId: showId,
+          orgId: orgId,
+          catering: catering,
+          onCateringUpdated: () {
+            ref.invalidate(showCateringProvider(showId));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _CateringCard extends StatelessWidget {
   final CateringInfo catering;
   final VoidCallback? onPhoneTap;
   final VoidCallback? onEmailTap;
+  final VoidCallback? onEditTap;
 
   const _CateringCard({
     required this.catering,
     this.onPhoneTap,
     this.onEmailTap,
+    this.onEditTap,
   });
 
   @override
@@ -159,14 +179,31 @@ class _CateringCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Provider name
-          Text(
-            catering.providerName ?? 'Catering',
-            style: TextStyle(
-              color: AppTheme.getForegroundColor(brightness),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          // Provider name with edit button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  catering.providerName ?? 'Catering',
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (onEditTap != null)
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: onEditTap,
+                  child: Icon(
+                    CupertinoIcons.pencil,
+                    color: AppTheme.getMutedForegroundColor(brightness),
+                    size: 20,
+                  ),
+                ),
+            ],
           ),
           if (catering.address != null || catering.city != null) ...[
             const SizedBox(height: 4),

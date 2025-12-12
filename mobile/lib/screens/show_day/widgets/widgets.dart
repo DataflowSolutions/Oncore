@@ -30,3 +30,8 @@ export 'add_schedule_item_screen.dart';
 export 'add_catering_screen.dart';
 export 'add_guest_screen.dart';
 export 'add_team_member_screen.dart';
+export 'edit_hotel_screen.dart';
+export 'edit_flight_screen.dart';
+export 'edit_catering_screen.dart';
+export 'edit_guest_screen.dart';
+export 'edit_schedule_item_screen.dart';

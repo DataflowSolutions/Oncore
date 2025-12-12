@@ -1,0 +1,281 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../components/components.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../models/show_day.dart';
+import 'form_widgets.dart';
+
+/// Layer 3: Edit catering form screen - prefilled with existing data
+class EditCateringScreen extends ConsumerStatefulWidget {
+  final String showId;
+  final String orgId;
+  final CateringInfo catering;
+  final VoidCallback? onCateringUpdated;
+
+  const EditCateringScreen({
+    super.key,
+    required this.showId,
+    required this.orgId,
+    required this.catering,
+    this.onCateringUpdated,
+  });
+
+  @override
+  ConsumerState<EditCateringScreen> createState() => _EditCateringScreenState();
+}
+
+class _EditCateringScreenState extends ConsumerState<EditCateringScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _providerNameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _cityController;
+  late final TextEditingController _guestCountController;
+  late final TextEditingController _bookingRefController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _notesController;
+  
+  DateTime? _serviceDate;
+  DateTime? _serviceTime;
+  
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with existing data
+    _providerNameController = TextEditingController(text: widget.catering.providerName ?? '');
+    _addressController = TextEditingController(text: widget.catering.address ?? '');
+    _cityController = TextEditingController(text: widget.catering.city ?? '');
+    _guestCountController = TextEditingController(
+      text: widget.catering.guestCount?.toString() ?? '',
+    );
+    _bookingRefController = TextEditingController(
+      text: widget.catering.bookingRefs?.isNotEmpty == true 
+          ? widget.catering.bookingRefs!.first 
+          : '',
+    );
+    _phoneController = TextEditingController(text: widget.catering.phone ?? '');
+    _emailController = TextEditingController(text: widget.catering.email ?? '');
+    _notesController = TextEditingController(text: widget.catering.notes ?? '');
+    
+    // Parse existing dates
+    if (widget.catering.serviceAt != null) {
+      try {
+        final dt = DateTime.parse(widget.catering.serviceAt!);
+        _serviceDate = DateTime(dt.year, dt.month, dt.day);
+        _serviceTime = dt;
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    _providerNameController.dispose();
+    _addressController.dispose();
+    _cityController.dispose();
+    _guestCountController.dispose();
+    _bookingRefController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  DateTime? _combineDateTime(DateTime? date, DateTime? time) {
+    if (date == null) return null;
+    final effectiveTime = time ?? DateTime.now();
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      effectiveTime.hour,
+      effectiveTime.minute,
+    );
+  }
+
+  Future<void> _saveCatering() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+      
+      final serviceAt = _combineDateTime(_serviceDate, _serviceTime);
+      
+      // Parse booking refs into array
+      final bookingRefs = _bookingRefController.text.trim().isNotEmpty
+          ? [_bookingRefController.text.trim()]
+          : <String>[];
+      
+      // Parse guest count
+      int? guestCount;
+      if (_guestCountController.text.trim().isNotEmpty) {
+        guestCount = int.tryParse(_guestCountController.text.trim());
+      }
+
+      // Use RPC function to update
+      await supabase.rpc('update_catering', params: {
+        'p_catering_id': widget.catering.id,
+        'p_provider_name': _providerNameController.text.trim().isEmpty ? null : _providerNameController.text.trim(),
+        'p_address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        'p_city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+        'p_service_at': serviceAt?.toIso8601String(),
+        'p_guest_count': guestCount,
+        'p_booking_refs': bookingRefs.isEmpty ? null : bookingRefs,
+        'p_phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'p_email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        'p_notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      });
+
+      // Sync to schedule if service time is set
+      if (serviceAt != null) {
+        await _syncCateringToSchedule(
+          supabase: supabase,
+          cateringId: widget.catering.id,
+          providerName: _providerNameController.text.trim(),
+          city: _cityController.text.trim(),
+          serviceAt: serviceAt,
+        );
+      }
+
+      if (mounted) {
+        widget.onCateringUpdated?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(context, 'Failed to update catering: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _syncCateringToSchedule({
+    required SupabaseClient supabase,
+    required String cateringId,
+    required String providerName,
+    required String city,
+    required DateTime serviceAt,
+  }) async {
+    try {
+      // Delete any existing schedule items for this catering
+      final existingItems = await supabase
+          .rpc('get_schedule_items_for_show', params: {'p_show_id': widget.showId});
+      
+      if (existingItems != null) {
+        final List<dynamic> items = existingItems as List<dynamic>;
+        for (final item in items) {
+          if (item['source'] == 'advancing_catering' && item['source_ref'] == cateringId) {
+            await supabase.rpc('delete_schedule_item', params: {
+              'p_item_id': item['id'],
+            });
+          }
+        }
+      }
+
+      // Create new schedule item
+      final location = city.isEmpty ? null : city;
+
+      await supabase.rpc('create_schedule_item', params: {
+        'p_org_id': widget.orgId,
+        'p_show_id': widget.showId,
+        'p_title': 'Catering${providerName.isEmpty ? '' : ' - $providerName'}',
+        'p_starts_at': serviceAt.toIso8601String(),
+        'p_location': location,
+        'p_item_type': 'catering',
+        'p_auto_generated': true,
+        'p_source': 'advancing_catering',
+        'p_source_ref': cateringId,
+      });
+    } catch (e) {
+      // Don't throw - schedule sync is optional
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayerScaffold(
+      title: 'Edit Catering',
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    FormCupertinoTextField(
+                      label: 'Provider',
+                      hint: 'Provider Name',
+                      controller: _providerNameController,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Address',
+                      hint: 'Address',
+                      controller: _addressController,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'City',
+                      hint: 'City',
+                      controller: _cityController,
+                    ),
+                    FormDateField(
+                      label: 'Service',
+                      value: _serviceDate,
+                      onChanged: (date) => setState(() => _serviceDate = date),
+                    ),
+                    FormTimeField(
+                      label: 'Service',
+                      value: _serviceTime,
+                      onChanged: (time) => setState(() => _serviceTime = time),
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Guests',
+                      hint: 'Guest Count',
+                      controller: _guestCountController,
+                      keyboardType: TextInputType.number,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Book. no.',
+                      hint: 'Booking Number',
+                      controller: _bookingRefController,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Phone',
+                      hint: 'Phone',
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Email',
+                      hint: 'Email',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    FormCupertinoTextField(
+                      label: 'Notes',
+                      hint: 'Notes',
+                      controller: _notesController,
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            FormSubmitButton(
+              label: 'Save',
+              onPressed: _saveCatering,
+              isLoading: _isLoading,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

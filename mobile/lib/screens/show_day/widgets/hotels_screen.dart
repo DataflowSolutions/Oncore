@@ -7,6 +7,7 @@ import '../../../models/show_day.dart';
 import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_hotel_screen.dart';
+import 'edit_hotel_screen.dart';
 
 /// Layer 2: Hotels list screen showing all lodging for a show
 class HotelsScreen extends ConsumerWidget {
@@ -58,6 +59,7 @@ class HotelsScreen extends ConsumerWidget {
                           onEmailTap: hotel.email != null
                               ? () => _launchEmail(hotel.email!)
                               : null,
+                          onEditTap: () => _openEditHotel(context, ref, hotel),
                         );
                       },
                     ),
@@ -132,17 +134,35 @@ class HotelsScreen extends ConsumerWidget {
       await launchUrl(uri);
     }
   }
+
+  void _openEditHotel(BuildContext context, WidgetRef ref, LodgingInfo hotel) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditHotelScreen(
+          showId: showId,
+          orgId: orgId,
+          hotel: hotel,
+          onHotelUpdated: () {
+            ref.invalidate(showLodgingProvider(showId));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _HotelCard extends StatelessWidget {
   final LodgingInfo hotel;
   final VoidCallback? onPhoneTap;
   final VoidCallback? onEmailTap;
+  final VoidCallback? onEditTap;
 
   const _HotelCard({
     required this.hotel,
     this.onPhoneTap,
     this.onEmailTap,
+    this.onEditTap,
   });
 
   @override
@@ -159,14 +179,31 @@ class _HotelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hotel name
-          Text(
-            hotel.hotelName ?? 'Hotel',
-            style: TextStyle(
-              color: AppTheme.getForegroundColor(brightness),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          // Hotel name with edit button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  hotel.hotelName ?? 'Hotel',
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (onEditTap != null)
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: onEditTap,
+                  child: Icon(
+                    CupertinoIcons.pencil,
+                    color: AppTheme.getMutedForegroundColor(brightness),
+                    size: 20,
+                  ),
+                ),
+            ],
           ),
           if (hotel.address != null || hotel.city != null) ...[
             const SizedBox(height: 4),

@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../providers/show_day_providers.dart';
 import 'detail_modal.dart';
 import 'add_schedule_item_screen.dart';
+import 'edit_schedule_item_screen.dart';
 import 'form_widgets.dart';
 
 /// Full schedule screen showing a timeline view of all schedule items
@@ -276,6 +277,7 @@ class _FullScheduleScreenState extends ConsumerState<FullScheduleScreen> {
             item: item,
             height: height,
             onTap: () => _showItemDetails(item),
+            onEditTap: () => _openEditScheduleItem(item),
           ),
         ),
       );
@@ -308,6 +310,22 @@ class _FullScheduleScreenState extends ConsumerState<FullScheduleScreen> {
       ),
     );
   }
+
+  void _openEditScheduleItem(ScheduleItem item) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditScheduleItemScreen(
+          showId: widget.showId,
+          orgId: widget.orgId,
+          item: item,
+          onItemUpdated: () {
+            ref.invalidate(showScheduleProvider(widget.showId));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
 
 /// Individual schedule event card on the timeline
@@ -315,11 +333,13 @@ class _ScheduleEventCard extends StatelessWidget {
   final ScheduleItem item;
   final double height;
   final VoidCallback onTap;
+  final VoidCallback? onEditTap;
 
   const _ScheduleEventCard({
     required this.item,
     required this.height,
     required this.onTap,
+    this.onEditTap,
   });
 
   @override
@@ -335,6 +355,7 @@ class _ScheduleEventCard extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onEditTap,
       child: Container(
         decoration: BoxDecoration(
           color: backgroundColor,

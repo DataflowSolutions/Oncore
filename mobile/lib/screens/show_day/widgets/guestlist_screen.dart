@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../providers/show_day_providers.dart';
 import 'form_widgets.dart';
 import 'add_guest_screen.dart';
+import 'edit_guest_screen.dart';
 import 'detail_screen.dart';
 
 /// Layer 2: Guestlist screen showing all guests for a show
@@ -81,6 +82,7 @@ class GuestlistScreen extends ConsumerWidget {
                           return _GuestCard(
                             guest: guest,
                             onTap: () => _openGuestDetail(context, guest),
+                            onEditTap: () => _openEditGuest(context, ref, guest),
                           );
                         },
                       ),
@@ -191,14 +193,35 @@ class GuestlistScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _openEditGuest(BuildContext context, WidgetRef ref, GuestInfo guest) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => EditGuestScreen(
+          showId: showId,
+          orgId: orgId,
+          guest: guest,
+          onGuestUpdated: () {
+            ref.invalidate(showGuestlistProvider(showId));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
 
 /// Guest card showing name on left and count on right
 class _GuestCard extends StatelessWidget {
   final GuestInfo guest;
   final VoidCallback? onTap;
+  final VoidCallback? onEditTap;
 
-  const _GuestCard({required this.guest, this.onTap});
+  const _GuestCard({
+    required this.guest,
+    this.onTap,
+    this.onEditTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +280,19 @@ class _GuestCard extends StatelessWidget {
                 ),
               ),
             ),
+            // Edit button
+            if (onEditTap != null) ...[
+              const SizedBox(width: 8),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: onEditTap,
+                child: Icon(
+                  CupertinoIcons.pencil,
+                  color: AppTheme.getMutedForegroundColor(brightness),
+                  size: 20,
+                ),
+              ),
+            ],
             // Chevron
             const SizedBox(width: 8),
             Icon(
