@@ -64,6 +64,8 @@ class MainShellContent extends StatelessWidget {
             orgId: orgId,
             orgName: orgName,
             onShowSelected: onShowSelected,
+            searchQuery: showsSearchQuery,
+            filters: showsFilters,
           ),
           // Page 3: Network Team
           NetworkContent(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/show.dart';
 import '../shows/shows_list_screen.dart';
+import '../main/dialogs/shows_filter_dialog.dart';
 import '../main/controllers/main_shell_controller.dart' show saveLastShow;
 
 /// Calendar content widget - just the calendar content, no shell/nav
@@ -12,12 +13,16 @@ class CalendarContent extends ConsumerStatefulWidget {
   final String orgId;
   final String orgName;
   final void Function(String showId)? onShowSelected;
+  final String searchQuery;
+  final ShowsFilters filters;
 
   const CalendarContent({
     super.key,
     required this.orgId,
     required this.orgName,
     this.onShowSelected,
+    this.searchQuery = '',
+    this.filters = const ShowsFilters(),
   });
 
   @override
@@ -65,8 +70,67 @@ class _CalendarContentState extends ConsumerState<CalendarContent> {
         child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
       ),
       error: (error, stack) => _buildErrorState(brightness),
-      data: (shows) => _buildCalendar(shows, brightness),
+      data: (shows) => _buildCalendar(_filterShows(shows), brightness),
     );
+  }
+
+  DateTime _startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
+  DateTime _endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
+
+  List<Show> _filterShows(List<Show> shows) {
+    var filtered = shows;
+
+    // Date span filter
+    if (widget.filters.fromDate != null) {
+      final from = _startOfDay(widget.filters.fromDate!);
+      filtered = filtered.where((s) => !s.date.isBefore(from)).toList();
+    }
+    if (widget.filters.toDate != null) {
+      final to = _endOfDay(widget.filters.toDate!);
+      filtered = filtered.where((s) => !s.date.isAfter(to)).toList();
+    }
+
+    bool matchesAnyValue(String? value, Set<String> selected) {
+      if (selected.isEmpty) return true;
+      final v = (value ?? '').trim().toLowerCase();
+      if (v.isEmpty) return false;
+      return selected.any((s) => s.trim().toLowerCase() == v);
+    }
+
+    bool matchesArtist(Show show, Set<String> selected) {
+      if (selected.isEmpty) return true;
+      return show.artistNames.any((a) => selected.any((s) => s.trim().toLowerCase() == a.trim().toLowerCase()));
+    }
+
+    if (widget.filters.artists.isNotEmpty) {
+      filtered = filtered.where((s) => matchesArtist(s, widget.filters.artists)).toList();
+    }
+    if (widget.filters.shows.isNotEmpty) {
+      filtered = filtered.where((s) => matchesAnyValue(s.title, widget.filters.shows)).toList();
+    }
+    if (widget.filters.venues.isNotEmpty) {
+      filtered = filtered.where((s) => matchesAnyValue(s.venueName, widget.filters.venues)).toList();
+    }
+    if (widget.filters.cities.isNotEmpty) {
+      filtered = filtered.where((s) => matchesAnyValue(s.venueCity, widget.filters.cities)).toList();
+    }
+    if (widget.filters.countries.isNotEmpty) {
+      filtered = filtered.where((s) => matchesAnyValue(s.venueCountry, widget.filters.countries)).toList();
+    }
+
+    // Search query (shared across shows list + calendar)
+    if (widget.searchQuery.isNotEmpty) {
+      final query = widget.searchQuery.toLowerCase();
+      filtered = filtered.where((show) {
+        return show.title.toLowerCase().contains(query) ||
+            show.artistNamesDisplay.toLowerCase().contains(query) ||
+            (show.venueName?.toLowerCase().contains(query) ?? false) ||
+            (show.venueCity?.toLowerCase().contains(query) ?? false) ||
+            (show.venueCountry?.toLowerCase().contains(query) ?? false);
+      }).toList();
+    }
+
+    return filtered;
   }
 
   Widget _buildErrorState(Brightness brightness) {
