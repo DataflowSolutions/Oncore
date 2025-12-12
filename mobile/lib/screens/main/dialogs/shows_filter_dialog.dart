@@ -168,6 +168,25 @@ class _ShowsFilterDialogContentState extends State<_ShowsFilterDialogContent> {
     widget.onFiltersChanged(next);
   }
 
+  Future<void> _openMultiSelect({
+    required String title,
+    required List<String> options,
+    required Set<String> selected,
+    required ValueChanged<Set<String>> onChanged,
+  }) async {
+    await Navigator.of(context).push(
+      CupertinoPageRoute<void>(
+        builder: (context) => _MultiSelectPickerScreen(
+          title: title,
+          options: options,
+          selected: selected,
+          brightness: widget.brightness,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
   Set<String> _toggle(Set<String> current, String value) {
     final next = <String>{...current};
     if (next.contains(value)) {
@@ -254,60 +273,95 @@ class _ShowsFilterDialogContentState extends State<_ShowsFilterDialogContent> {
                           ),
                         ),
 
-                        if (widget.availableArtists.isNotEmpty) ...[
-                          _MultiSelectCardSection(
-                            brightness: widget.brightness,
-                            title: 'Artists',
-                            options: widget.availableArtists,
-                            selected: _filters.artists,
-                            onToggle: (v) => _updateFilters(_filters.copyWith(artists: _toggle(_filters.artists, v))),
-                            onClear: () => _updateFilters(_filters.copyWith(artists: const {})),
+                        oc.CupertinoSectionHeader(title: 'Filters', padding: const EdgeInsets.fromLTRB(16, 18, 16, 8)),
+                        oc.CupertinoCard(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          padding: EdgeInsets.zero,
+                          backgroundColor: sheetColor,
+                          child: Column(
+                            children: [
+                              if (widget.availableArtists.isNotEmpty) ...[
+                                oc.CupertinoListTile(
+                                  title: const Text('Artists'),
+                                  trailing: _ValueChevron(
+                                    brightness: widget.brightness,
+                                    value: _filters.artists.isEmpty ? 'All' : '${_filters.artists.length} selected',
+                                  ),
+                                  onTap: () => _openMultiSelect(
+                                    title: 'Artists',
+                                    options: widget.availableArtists,
+                                    selected: _filters.artists,
+                                    onChanged: (next) => _updateFilters(_filters.copyWith(artists: next)),
+                                  ),
+                                ),
+                                const oc.CupertinoDivider(indent: 16),
+                              ],
+                              if (widget.availableShows.isNotEmpty) ...[
+                                oc.CupertinoListTile(
+                                  title: const Text('Show name'),
+                                  trailing: _ValueChevron(
+                                    brightness: widget.brightness,
+                                    value: _filters.shows.isEmpty ? 'All' : '${_filters.shows.length} selected',
+                                  ),
+                                  onTap: () => _openMultiSelect(
+                                    title: 'Show name',
+                                    options: widget.availableShows,
+                                    selected: _filters.shows,
+                                    onChanged: (next) => _updateFilters(_filters.copyWith(shows: next)),
+                                  ),
+                                ),
+                                const oc.CupertinoDivider(indent: 16),
+                              ],
+                              if (widget.availableVenues.isNotEmpty) ...[
+                                oc.CupertinoListTile(
+                                  title: const Text('Venue name'),
+                                  trailing: _ValueChevron(
+                                    brightness: widget.brightness,
+                                    value: _filters.venues.isEmpty ? 'All' : '${_filters.venues.length} selected',
+                                  ),
+                                  onTap: () => _openMultiSelect(
+                                    title: 'Venue name',
+                                    options: widget.availableVenues,
+                                    selected: _filters.venues,
+                                    onChanged: (next) => _updateFilters(_filters.copyWith(venues: next)),
+                                  ),
+                                ),
+                                const oc.CupertinoDivider(indent: 16),
+                              ],
+                              if (widget.availableCities.isNotEmpty) ...[
+                                oc.CupertinoListTile(
+                                  title: const Text('City'),
+                                  trailing: _ValueChevron(
+                                    brightness: widget.brightness,
+                                    value: _filters.cities.isEmpty ? 'All' : '${_filters.cities.length} selected',
+                                  ),
+                                  onTap: () => _openMultiSelect(
+                                    title: 'City',
+                                    options: widget.availableCities,
+                                    selected: _filters.cities,
+                                    onChanged: (next) => _updateFilters(_filters.copyWith(cities: next)),
+                                  ),
+                                ),
+                                const oc.CupertinoDivider(indent: 16),
+                              ],
+                              if (widget.availableCountries.isNotEmpty) ...[
+                                oc.CupertinoListTile(
+                                  title: const Text('Country'),
+                                  trailing: _ValueChevron(
+                                    brightness: widget.brightness,
+                                    value: _filters.countries.isEmpty ? 'All' : '${_filters.countries.length} selected',
+                                  ),
+                                  onTap: () => _openMultiSelect(
+                                    title: 'Country',
+                                    options: widget.availableCountries,
+                                    selected: _filters.countries,
+                                    onChanged: (next) => _updateFilters(_filters.copyWith(countries: next)),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ],
-
-                        if (widget.availableShows.isNotEmpty) ...[
-                          _MultiSelectCardSection(
-                            brightness: widget.brightness,
-                            title: 'Show name',
-                            options: widget.availableShows,
-                            selected: _filters.shows,
-                            onToggle: (v) => _updateFilters(_filters.copyWith(shows: _toggle(_filters.shows, v))),
-                            onClear: () => _updateFilters(_filters.copyWith(shows: const {})),
-                          ),
-                        ],
-
-                        if (widget.availableVenues.isNotEmpty) ...[
-                          _MultiSelectCardSection(
-                            brightness: widget.brightness,
-                            title: 'Venue name',
-                            options: widget.availableVenues,
-                            selected: _filters.venues,
-                            onToggle: (v) => _updateFilters(_filters.copyWith(venues: _toggle(_filters.venues, v))),
-                            onClear: () => _updateFilters(_filters.copyWith(venues: const {})),
-                          ),
-                        ],
-
-                        if (widget.availableCities.isNotEmpty) ...[
-                          _MultiSelectCardSection(
-                            brightness: widget.brightness,
-                            title: 'City',
-                            options: widget.availableCities,
-                            selected: _filters.cities,
-                            onToggle: (v) => _updateFilters(_filters.copyWith(cities: _toggle(_filters.cities, v))),
-                            onClear: () => _updateFilters(_filters.copyWith(cities: const {})),
-                          ),
-                        ],
-
-                        if (widget.availableCountries.isNotEmpty) ...[
-                          _MultiSelectCardSection(
-                            brightness: widget.brightness,
-                            title: 'Country',
-                            options: widget.availableCountries,
-                            selected: _filters.countries,
-                            onToggle: (v) => _updateFilters(_filters.copyWith(countries: _toggle(_filters.countries, v))),
-                            onClear: () => _updateFilters(_filters.copyWith(countries: const {})),
-                          ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
@@ -420,65 +474,109 @@ class _ValueChevron extends StatelessWidget {
   }
 }
 
-class _MultiSelectCardSection extends StatelessWidget {
-  final Brightness brightness;
+class _MultiSelectPickerScreen extends StatefulWidget {
   final String title;
   final List<String> options;
   final Set<String> selected;
-  final ValueChanged<String> onToggle;
-  final VoidCallback onClear;
+  final Brightness brightness;
+  final ValueChanged<Set<String>> onChanged;
 
-  const _MultiSelectCardSection({
-    required this.brightness,
+  const _MultiSelectPickerScreen({
     required this.title,
     required this.options,
     required this.selected,
-    required this.onToggle,
-    required this.onClear,
+    required this.brightness,
+    required this.onChanged,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final sheetColor = AppTheme.getCardColor(brightness);
+  State<_MultiSelectPickerScreen> createState() => _MultiSelectPickerScreenState();
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        oc.CupertinoSectionHeader(title: title, padding: const EdgeInsets.fromLTRB(16, 18, 16, 8)),
-        oc.CupertinoCard(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-          padding: EdgeInsets.zero,
-          backgroundColor: sheetColor,
-          child: Column(
-            children: [
-              if (selected.isNotEmpty) ...[
-                oc.CupertinoListTile(
-                  title: Text(
-                    'Clear selection',
-                    style: TextStyle(color: AppTheme.getPrimaryColor(brightness)),
-                  ),
-                  onTap: onClear,
-                ),
-                const oc.CupertinoDivider(indent: 16),
-              ],
-              for (int i = 0; i < options.length; i++) ...[
-                oc.CupertinoListTile(
-                  title: Text(options[i]),
-                  trailing: selected.contains(options[i])
-                      ? Icon(
-                          CupertinoIcons.check_mark,
-                          size: 18,
-                          color: AppTheme.getForegroundColor(brightness),
-                        )
-                      : const SizedBox.shrink(),
-                  onTap: () => onToggle(options[i]),
-                ),
-                if (i != options.length - 1) const oc.CupertinoDivider(indent: 16),
-              ],
-            ],
-          ),
+class _MultiSelectPickerScreenState extends State<_MultiSelectPickerScreen> {
+  late Set<String> _selected;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = <String>{...widget.selected};
+  }
+
+  void _toggleValue(String value) {
+    final next = <String>{..._selected};
+    if (next.contains(value)) {
+      next.remove(value);
+    } else {
+      next.add(value);
+    }
+    setState(() => _selected = next);
+    widget.onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final background = AppTheme.getBackgroundColor(widget.brightness);
+    final sheetColor = AppTheme.getCardColor(widget.brightness);
+    final filtered = _query.trim().isEmpty
+        ? widget.options
+        : widget.options
+            .where((o) => o.toLowerCase().contains(_query.trim().toLowerCase()))
+            .toList();
+
+    return CupertinoPageScaffold(
+      backgroundColor: background,
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(widget.title),
+        trailing: _selected.isEmpty
+            ? null
+            : CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() => _selected = const {});
+                  widget.onChanged(const {});
+                },
+                child: const Text('Clear'),
+              ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.only(top: 12, bottom: 24),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CupertinoSearchTextField(
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
+            const SizedBox(height: 12),
+            oc.CupertinoCard(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              padding: EdgeInsets.zero,
+              backgroundColor: sheetColor,
+              child: Column(
+                children: [
+                  for (int i = 0; i < filtered.length; i++) ...[
+                    oc.CupertinoListTile(
+                      title: Text(filtered[i]),
+                      trailing: _selected.contains(filtered[i])
+                          ? Icon(
+                              CupertinoIcons.check_mark,
+                              size: 18,
+                              color: AppTheme.getForegroundColor(widget.brightness),
+                            )
+                          : const SizedBox.shrink(),
+                      onTap: () => _toggleValue(filtered[i]),
+                    ),
+                    if (i != filtered.length - 1) const oc.CupertinoDivider(indent: 16),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

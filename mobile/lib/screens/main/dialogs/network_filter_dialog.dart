@@ -129,56 +129,20 @@ class _NetworkLocationFilterContentState extends State<_NetworkLocationFilterCon
     widget.onChanged(country: _country, city: _city);
   }
 
-  Future<void> _pickFromActionSheet({
+  Future<void> _openSingleSelect({
     required String title,
     required List<String> options,
     required String? selected,
     required ValueChanged<String?> onSelected,
   }) async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text(title),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              onSelected(null);
-              Navigator.pop(context);
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('All'),
-                if (selected == null) ...[
-                  const SizedBox(width: 8),
-                  const Icon(CupertinoIcons.check_mark, size: 18),
-                ],
-              ],
-            ),
-          ),
-          ...options.map(
-            (o) => CupertinoActionSheetAction(
-              onPressed: () {
-                onSelected(o);
-                Navigator.pop(context);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(o),
-                  if (selected?.toLowerCase() == o.toLowerCase()) ...[
-                    const SizedBox(width: 8),
-                    const Icon(CupertinoIcons.check_mark, size: 18),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+    await Navigator.of(context).push(
+      CupertinoPageRoute<void>(
+        builder: (context) => _SingleSelectPickerScreen(
+          title: title,
+          options: options,
+          selected: selected,
+          brightness: widget.brightness,
+          onSelected: onSelected,
         ),
       ),
     );
@@ -230,7 +194,7 @@ class _NetworkLocationFilterContentState extends State<_NetworkLocationFilterCon
                                 brightness: widget.brightness,
                                 value: _country ?? 'All',
                               ),
-                              onTap: () => _pickFromActionSheet(
+                              onTap: () => _openSingleSelect(
                                 title: 'Country',
                                 options: widget.availableCountries,
                                 selected: _country,
@@ -247,7 +211,7 @@ class _NetworkLocationFilterContentState extends State<_NetworkLocationFilterCon
                                 brightness: widget.brightness,
                                 value: _city ?? 'All',
                               ),
-                              onTap: () => _pickFromActionSheet(
+                              onTap: () => _openSingleSelect(
                                 title: 'City',
                                 options: widget.availableCities,
                                 selected: _city,
@@ -369,6 +333,106 @@ class _ValueChevron extends StatelessWidget {
           color: AppTheme.getMutedForegroundColor(brightness),
         ),
       ],
+    );
+  }
+}
+
+class _SingleSelectPickerScreen extends StatefulWidget {
+  final String title;
+  final List<String> options;
+  final String? selected;
+  final Brightness brightness;
+  final ValueChanged<String?> onSelected;
+
+  const _SingleSelectPickerScreen({
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.brightness,
+    required this.onSelected,
+  });
+
+  @override
+  State<_SingleSelectPickerScreen> createState() => _SingleSelectPickerScreenState();
+}
+
+class _SingleSelectPickerScreenState extends State<_SingleSelectPickerScreen> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final background = AppTheme.getBackgroundColor(widget.brightness);
+    final sheetColor = AppTheme.getCardColor(widget.brightness);
+    final selectedLower = widget.selected?.trim().toLowerCase();
+
+    final filtered = _query.trim().isEmpty
+        ? widget.options
+        : widget.options
+            .where((o) => o.toLowerCase().contains(_query.trim().toLowerCase()))
+            .toList();
+
+    return CupertinoPageScaffold(
+      backgroundColor: background,
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(widget.title),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.only(top: 12, bottom: 24),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CupertinoSearchTextField(
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
+            const SizedBox(height: 12),
+            oc.CupertinoSectionHeader(title: 'Options', padding: const EdgeInsets.fromLTRB(16, 0, 16, 8)),
+            oc.CupertinoCard(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              padding: EdgeInsets.zero,
+              backgroundColor: sheetColor,
+              child: Column(
+                children: [
+                  oc.CupertinoListTile(
+                    title: const Text('All'),
+                    trailing: selectedLower == null
+                        ? Icon(
+                            CupertinoIcons.check_mark,
+                            size: 18,
+                            color: AppTheme.getForegroundColor(widget.brightness),
+                          )
+                        : const SizedBox.shrink(),
+                    onTap: () {
+                      widget.onSelected(null);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  if (filtered.isNotEmpty) const oc.CupertinoDivider(indent: 16),
+                  for (int i = 0; i < filtered.length; i++) ...[
+                    oc.CupertinoListTile(
+                      title: Text(filtered[i]),
+                      trailing: selectedLower == filtered[i].trim().toLowerCase()
+                          ? Icon(
+                              CupertinoIcons.check_mark,
+                              size: 18,
+                              color: AppTheme.getForegroundColor(widget.brightness),
+                            )
+                          : const SizedBox.shrink(),
+                      onTap: () {
+                        widget.onSelected(filtered[i]);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    if (i != filtered.length - 1) const oc.CupertinoDivider(indent: 16),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
