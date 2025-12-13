@@ -19,11 +19,7 @@ class ShowDayContent extends ConsumerStatefulWidget {
   final String orgId;
   final String? showId;
 
-  const ShowDayContent({
-    super.key,
-    required this.orgId,
-    this.showId,
-  });
+  const ShowDayContent({super.key, required this.orgId, this.showId});
 
   @override
   ConsumerState<ShowDayContent> createState() => _ShowDayContentState();
@@ -50,8 +46,9 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-    
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+
     // If no showId provided, show empty state
     if (widget.showId == null) {
       return _buildEmptyState(brightness);
@@ -62,24 +59,37 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
 
     return showAsync.when(
       loading: () => Center(
-        child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+        child: CupertinoActivityIndicator(
+          color: AppTheme.getForegroundColor(brightness),
+        ),
       ),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
+            Icon(
+              CupertinoIcons.exclamationmark_circle,
+              size: 48,
+              color: AppTheme.getMutedForegroundColor(brightness),
+            ),
             const SizedBox(height: 16),
             Text(
               'Failed to load show',
-              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
+              style: TextStyle(
+                color: AppTheme.getMutedForegroundColor(brightness),
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 12),
             CupertinoButton(
-              onPressed: () => ref.invalidate(showDetailProvider(widget.showId!)),
+              onPressed: () =>
+                  ref.invalidate(showDetailProvider(widget.showId!)),
               child: Text(
                 'Retry',
-                style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 14),
+                style: TextStyle(
+                  color: AppTheme.getForegroundColor(brightness),
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
@@ -91,17 +101,26 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
         }
         return assignmentsAsync.when(
           loading: () => Center(
-            child: CupertinoActivityIndicator(color: AppTheme.getForegroundColor(brightness)),
+            child: CupertinoActivityIndicator(
+              color: AppTheme.getForegroundColor(brightness),
+            ),
           ),
           error: (error, stack) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: AppTheme.getMutedForegroundColor(brightness)),
+                Icon(
+                  CupertinoIcons.exclamationmark_circle,
+                  size: 48,
+                  color: AppTheme.getMutedForegroundColor(brightness),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load show data',
-                  style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14),
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -121,12 +140,29 @@ class _ShowDayContentState extends ConsumerState<ShowDayContent> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(CupertinoIcons.calendar, size: 56, color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5)),
+          Icon(
+            CupertinoIcons.calendar,
+            size: 56,
+            color: AppTheme.getMutedForegroundColor(
+              brightness,
+            ).withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
-          Text('No show selected', style: TextStyle(color: AppTheme.getForegroundColor(brightness), fontSize: 17)),
+          Text(
+            'No show selected',
+            style: TextStyle(
+              color: AppTheme.getForegroundColor(brightness),
+              fontSize: 17,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text('Open a show from the Shows tab',
-              style: TextStyle(color: AppTheme.getMutedForegroundColor(brightness), fontSize: 14)),
+          Text(
+            'Open a show from the Shows tab',
+            style: TextStyle(
+              color: AppTheme.getMutedForegroundColor(brightness),
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -165,7 +201,7 @@ class _ShowDayBody extends ConsumerWidget {
     // Format day and date
     final dayTime = _formatDayTime(show);
     final date = _formatDate(show.date);
-    
+
     // Get schedule items for navigation
     final scheduleItems = scheduleAsync.valueOrNull ?? [];
 
@@ -189,7 +225,8 @@ class _ShowDayBody extends ConsumerWidget {
           builder: (_) => TeamScreen(
             showId: showId,
             orgId: show.orgId,
-            onMemberAdded: () => ref.invalidate(showAssignmentsProvider(showId)),
+            onMemberAdded: () =>
+                ref.invalidate(showAssignmentsProvider(showId)),
           ),
         ),
       );
@@ -214,7 +251,10 @@ class _ShowDayBody extends ConsumerWidget {
               ActionItem(icon: CupertinoIcons.person_2, onTap: openTeamScreen),
               ActionItem(icon: CupertinoIcons.clock, onTap: openFullSchedule),
               ActionItem(icon: CupertinoIcons.fullscreen, onTap: () {}),
-              ActionItem(icon: CupertinoIcons.refresh, onTap: () => _refresh(ref)),
+              ActionItem(
+                icon: CupertinoIcons.refresh,
+                onTap: () => _refresh(ref),
+              ),
               ActionItem(icon: CupertinoIcons.arrow_down_doc, onTap: () {}),
               ActionItem(icon: CupertinoIcons.share, onTap: () {}),
             ],
@@ -250,10 +290,20 @@ class _ShowDayBody extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Unified 2x3 grid: Hotel, Food, Contacts, Documents, Guestlist, Notes
-          _UnifiedInfoGrid(
+          // Hospitality section (Hotels & Restaurants)
+          _HospitalitySection(
             lodging: lodgingAsync.value ?? [],
             catering: cateringAsync.value ?? [],
+            showId: showId,
+            orgId: show.orgId,
+            onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
+            onCateringAdded: () => ref.invalidate(showCateringProvider(showId)),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Shortcuts section (Documents, Tickets, Contacts, Guestlist, Fee, Costs, Notes, Mix)
+          _ShortcutsSection(
             documents: documentsAsync.value ?? [],
             contacts: contactsAsync.value ?? [],
             guests: guestlistAsync.value ?? [],
@@ -262,10 +312,9 @@ class _ShowDayBody extends ConsumerWidget {
             show: show,
             showId: showId,
             orgId: show.orgId,
-            onLodgingAdded: () => ref.invalidate(showLodgingProvider(showId)),
-            onCateringAdded: () => ref.invalidate(showCateringProvider(showId)),
             onContactAdded: () => ref.invalidate(showContactsProvider(showId)),
-            onDocumentAdded: () => ref.invalidate(showDocumentsProvider(showId)),
+            onDocumentAdded: () =>
+                ref.invalidate(showDocumentsProvider(showId)),
             onGuestAdded: () => ref.invalidate(showGuestlistProvider(showId)),
             onNotesChanged: () => ref.invalidate(showNotesProvider(showId)),
             onCostsChanged: () => ref.invalidate(showCostsProvider(showId)),
@@ -293,8 +342,18 @@ class _ShowDayBody extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -327,7 +386,8 @@ class _ScheduleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: () => _openFullSchedule(context),
@@ -336,6 +396,19 @@ class _ScheduleSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Section title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Schedule',
+                style: TextStyle(
+                  color: AppTheme.getForegroundColor(brightness),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -346,14 +419,17 @@ class _ScheduleSection extends StatelessWidget {
                     color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: brightness == Brightness.dark 
-                        ? AppColors.darkCardBorder 
-                        : AppTheme.getBorderColor(brightness),
+                      color: brightness == Brightness.dark
+                          ? AppColors.darkCardBorder
+                          : AppTheme.getBorderColor(brightness),
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.calendar, color: AppTheme.getMutedForegroundColor(brightness)),
+                      Icon(
+                        CupertinoIcons.calendar,
+                        color: AppTheme.getMutedForegroundColor(brightness),
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         'Schedule',
@@ -428,8 +504,18 @@ class _ScheduleSection extends StatelessWidget {
           try {
             final dt = DateTime.parse(item.startTime);
             const months = [
-              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
             ];
             dateStr = '${dt.day} ${months[dt.month - 1]}';
           } catch (_) {}
@@ -497,10 +583,7 @@ class _ScheduleSection extends StatelessWidget {
               value2: item.formattedEndTime ?? '-',
             ),
             if (item.notes != null && item.notes!.isNotEmpty)
-              DetailValueCard(
-                label: 'Notes',
-                value: item.notes!,
-              ),
+              DetailValueCard(label: 'Notes', value: item.notes!),
           ],
           onEdit: () {
             Navigator.of(context).pop();
@@ -534,7 +617,8 @@ class _CreateNewScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       width: 180,
@@ -579,8 +663,9 @@ class _UpcomingScheduleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-    
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+
     // Empty state when no schedule items
     if (items.isEmpty) {
       return Column(
@@ -619,7 +704,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
         ],
       );
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -630,8 +715,18 @@ class _UpcomingScheduleSection extends StatelessWidget {
             try {
               final dt = DateTime.parse(item.startTime);
               const months = [
-                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
               ];
               dateStr = '${dt.day} ${months[dt.month - 1]}';
             } catch (_) {}
@@ -667,10 +762,7 @@ class _UpcomingScheduleSection extends StatelessWidget {
               value2: item.formattedEndTime ?? '-',
             ),
             if (item.notes != null && item.notes!.isNotEmpty)
-              DetailValueCard(
-                label: 'Notes',
-                value: item.notes!,
-              ),
+              DetailValueCard(label: 'Notes', value: item.notes!),
           ],
         ),
       ),
@@ -694,22 +786,29 @@ class _FlightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return GestureDetector(
       onTap: () => _openFlightsScreen(context),
       child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
-            bottom: BorderSide(color: AppTheme.getBorderColor(brightness), width: 1),
-          ),
-        ),
         padding: const EdgeInsets.symmetric(vertical: 16),
-        margin: const EdgeInsets.only(bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Section title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Flights',
+                style: TextStyle(
+                  color: AppTheme.getForegroundColor(brightness),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             if (flights.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -720,14 +819,17 @@ class _FlightsSection extends StatelessWidget {
                     color: AppTheme.getCardColor(brightness),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: brightness == Brightness.dark 
-                        ? AppColors.darkCardBorder 
-                        : AppTheme.getBorderColor(brightness),
+                      color: brightness == Brightness.dark
+                          ? AppColors.darkCardBorder
+                          : AppTheme.getBorderColor(brightness),
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.airplane, color: AppTheme.getMutedForegroundColor(brightness)),
+                      Icon(
+                        CupertinoIcons.airplane,
+                        color: AppTheme.getMutedForegroundColor(brightness),
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         'Flights',
@@ -757,19 +859,21 @@ class _FlightsSection extends StatelessWidget {
             else
               HorizontalCardList(
                 children: [
-                  ...flights.map((flight) => GestureDetector(
-                    onTap: () => _showFlightDetails(context, flight),
-                    child: FlightCard(
-                      flightNumber: flight.displayFlightNumber,
-                      departure: flight.departAirportCode ?? '???',
-                      departureCity: flight.departCity,
-                      arrival: flight.arrivalAirportCode ?? '???',
-                      arrivalCity: flight.arrivalCity,
-                      departureTime: flight.formattedDepartTime ?? '--:--',
-                      arrivalTime: flight.formattedArrivalTime ?? '--:--',
-                      duration: flight.duration,
+                  ...flights.map(
+                    (flight) => GestureDetector(
+                      onTap: () => _showFlightDetails(context, flight),
+                      child: FlightCard(
+                        flightNumber: flight.displayFlightNumber,
+                        departure: flight.departAirportCode ?? '???',
+                        departureCity: flight.departCity,
+                        arrival: flight.arrivalAirportCode ?? '???',
+                        arrivalCity: flight.arrivalCity,
+                        departureTime: flight.formattedDepartTime ?? '--:--',
+                        arrivalTime: flight.formattedArrivalTime ?? '--:--',
+                        duration: flight.duration,
+                      ),
                     ),
-                  )),
+                  ),
                   // Add "Create New" card at the end
                   GestureDetector(
                     onTap: () => _openAddFlight(context),
@@ -812,15 +916,9 @@ class _FlightsSection extends StatelessWidget {
               arrivalTime: flight.formattedArrivalTime,
             ),
             if (flight.duration != null)
-              DetailValueCard(
-                label: 'Duration',
-                value: flight.duration!,
-              ),
+              DetailValueCard(label: 'Duration', value: flight.duration!),
             if (flight.gate != null)
-              DetailValueCard(
-                label: 'Gate',
-                value: flight.gate!,
-              ),
+              DetailValueCard(label: 'Gate', value: flight.gate!),
             if (flight.boardingGroup != null)
               DetailValueCard(
                 label: 'Boarding Group',
@@ -832,25 +930,16 @@ class _FlightsSection extends StatelessWidget {
                 value: flight.boardingSequence!,
               ),
             if (flight.passengerName != null)
-              DetailValueCard(
-                label: 'Passenger',
-                value: flight.passengerName!,
-              ),
+              DetailValueCard(label: 'Passenger', value: flight.passengerName!),
             if (flight.travelClass != null)
               DetailValueCard(
                 label: 'Travel Class',
                 value: flight.travelClass!,
               ),
             if (flight.seatNumber != null)
-              DetailValueCard(
-                label: 'Seat',
-                value: flight.seatNumber!,
-              ),
+              DetailValueCard(label: 'Seat', value: flight.seatNumber!),
             if (flight.aircraftModel != null)
-              DetailValueCard(
-                label: 'Aircraft',
-                value: flight.aircraftModel!,
-              ),
+              DetailValueCard(label: 'Aircraft', value: flight.aircraftModel!),
             if (flight.bookingRef != null)
               DetailValueCard(
                 label: 'Booking Reference',
@@ -907,7 +996,8 @@ class _FlightsSection extends StatelessWidget {
 class _CreateNewFlightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return Container(
       width: 200,
@@ -928,235 +1018,80 @@ class _CreateNewFlightCard extends StatelessWidget {
   }
 }
 
-/// Unified 2x4 grid for Hotel, Food, Contacts, Documents, Guestlist, Notes, Fee, Costs
-class _UnifiedInfoGrid extends StatelessWidget {
+/// Hospitality section (Hotels & Restaurants) - horizontal scrollable cards
+class _HospitalitySection extends StatelessWidget {
   final List<LodgingInfo> lodging;
   final List<CateringInfo> catering;
-  final List<DocumentInfo> documents;
-  final List<ContactInfo> contacts;
-  final List<GuestInfo> guests;
-  final List<ShowCost> costs;
-  final String? notes;
-  final Show show;
   final String showId;
   final String orgId;
   final VoidCallback? onLodgingAdded;
   final VoidCallback? onCateringAdded;
-  final VoidCallback? onContactAdded;
-  final VoidCallback? onDocumentAdded;
-  final VoidCallback? onGuestAdded;
-  final VoidCallback? onNotesChanged;
-  final VoidCallback? onCostsChanged;
-  final VoidCallback? onFeeChanged;
 
-  const _UnifiedInfoGrid({
+  const _HospitalitySection({
     required this.lodging,
     required this.catering,
-    required this.documents,
-    required this.contacts,
-    required this.guests,
-    required this.costs,
-    this.notes,
-    required this.show,
     required this.showId,
     required this.orgId,
     this.onLodgingAdded,
     this.onCateringAdded,
-    this.onContactAdded,
-    this.onDocumentAdded,
-    this.onGuestAdded,
-    this.onNotesChanged,
-    this.onCostsChanged,
-    this.onFeeChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    print('[DEBUG] _UnifiedInfoGrid build. Show Fee: ${show.fee}, Paid: ${show.feePaidPercent}');
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
-    final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          // Row 1: Hotel, Food
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openHotelsScreen(context),
-                  child: lodging.isNotEmpty
-                      ? InfoCard(
-                          title: lodging.first.hotelName ?? 'Hotel',
-                          subtitle: lodging.length > 1
-                              ? '${lodging.length} hotels'
-                              : lodging.first.timeRange,
-                          type: InfoCardType.hotel,
-                        )
-                      : _buildEmptyCard(context, 'Hotel', CupertinoIcons.bed_double, brightness),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openCateringScreen(context),
-                  child: catering.isNotEmpty
-                      ? InfoCard(
-                          title: catering.first.providerName ?? 'Food',
-                          subtitle: catering.length > 1
-                              ? '${catering.length} restaurants'
-                              : catering.first.formattedServiceTime,
-                          type: InfoCardType.restaurant,
-                        )
-                      : _buildEmptyCard(context, 'Food', CupertinoIcons.cart, brightness),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Row 2: Contacts, Documents
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openContactsScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Contacts',
-                    CupertinoIcons.person_3,
-                    brightness,
-                    subtitle: contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openDocumentsScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Documents',
-                    CupertinoIcons.doc_text,
-                    brightness,
-                    subtitle: documents.isEmpty ? 'Not Added' : '${documents.length} files',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Row 3: Guestlist, Notes
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openGuestlistScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Guestlist',
-                    CupertinoIcons.list_bullet,
-                    brightness,
-                    subtitle: guests.isEmpty ? 'Not Added' : '$totalGuests guests',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openNotesScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Notes',
-                    CupertinoIcons.doc,
-                    brightness,
-                    subtitle: notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Row 4: Fee, Costs
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openFeeScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Fee',
-                    CupertinoIcons.money_dollar_circle,
-                    brightness,
-                    subtitle: _getFeeSubtitle(show),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openCostsScreen(context),
-                  child: _buildEmptyCard(
-                    context,
-                    'Costs',
-                    CupertinoIcons.creditcard,
-                    brightness,
-                    subtitle: costs.isEmpty 
-                        ? 'Not Added' 
-                        : '${costs.length} item${costs.length > 1 ? 's' : ''}',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getFeeSubtitle(Show show) {
-    print('[DEBUG] _getFeeSubtitle called. Fee: ${show.fee}, Paid: ${show.feePaidPercent}');
-    if (show.fee != null && show.fee! > 0) {
-      final fee = show.formattedFee;
-      if (show.feePaidPercent != null && show.feePaidPercent! > 0) {
-        return '$fee (${show.feePaidPercent}% paid)';
-      }
-      return fee;
-    } else if (show.feePaidPercent != null && show.feePaidPercent! > 0) {
-      return 'Fee not set (${show.feePaidPercent}% paid)';
-    }
-    return 'Not Added';
-  }
-
-  Widget _buildEmptyCard(BuildContext context, String title, IconData icon, Brightness brightness, {String? subtitle}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(brightness),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'Hospitality',
             style: TextStyle(
               color: AppTheme.getForegroundColor(brightness),
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle ?? 'Not Added',
-            style: TextStyle(
-              color: AppTheme.getMutedForegroundColor(brightness),
-              fontSize: 13,
+        ),
+        const SizedBox(height: 12),
+        // Horizontal scrollable cards
+        HorizontalCardList(
+          height: 80,
+          children: [
+            // Hotel card
+            GestureDetector(
+              onTap: () => _openHotelsScreen(context),
+              child: _HospitalityCard(
+                icon: CupertinoIcons.bed_double,
+                title: lodging.isNotEmpty
+                    ? (lodging.first.hotelName ?? 'Hotel')
+                    : 'The Plaza Hotel',
+                subtitle: lodging.isNotEmpty
+                    ? (lodging.first.timeRange ?? '15:00 - 11:00 (+1)')
+                    : '15:00 - 11:00 (+1)',
+                hasData: lodging.isNotEmpty,
+              ),
             ),
-          ),
-        ],
-      ),
+            // Restaurant card
+            GestureDetector(
+              onTap: () => _openCateringScreen(context),
+              child: _HospitalityCard(
+                icon: CupertinoIcons.cart,
+                title: catering.isNotEmpty
+                    ? (catering.first.providerName ?? 'Restaurant')
+                    : 'Brasserie Astoria',
+                subtitle: catering.isNotEmpty
+                    ? (catering.first.formattedServiceTime ??
+                          '15:00 - 11:00 (+1)')
+                    : '15:00 - 11:00 (+1)',
+                hasData: catering.isNotEmpty,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1180,6 +1115,222 @@ class _UnifiedInfoGrid extends StatelessWidget {
           orgId: orgId,
           onCateringAdded: onCateringAdded,
         ),
+      ),
+    );
+  }
+}
+
+/// Hospitality card widget
+class _HospitalityCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool hasData;
+
+  const _HospitalityCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.hasData = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(brightness),
+        borderRadius: BorderRadius.circular(40), // Pill-shaped rounded corners
+        border: Border.all(color: AppTheme.getCardBorderColor(brightness)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: hasData
+                ? AppTheme.getForegroundColor(brightness)
+                : AppTheme.getMutedForegroundColor(brightness),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.getForegroundColor(brightness),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: AppTheme.getMutedForegroundColor(brightness),
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shortcuts section with circular buttons matching design
+class _ShortcutsSection extends StatelessWidget {
+  final List<DocumentInfo> documents;
+  final List<ContactInfo> contacts;
+  final List<GuestInfo> guests;
+  final List<ShowCost> costs;
+  final String? notes;
+  final Show show;
+  final String showId;
+  final String orgId;
+  final VoidCallback? onContactAdded;
+  final VoidCallback? onDocumentAdded;
+  final VoidCallback? onGuestAdded;
+  final VoidCallback? onNotesChanged;
+  final VoidCallback? onCostsChanged;
+  final VoidCallback? onFeeChanged;
+
+  const _ShortcutsSection({
+    required this.documents,
+    required this.contacts,
+    required this.guests,
+    required this.costs,
+    this.notes,
+    required this.show,
+    required this.showId,
+    required this.orgId,
+    this.onContactAdded,
+    this.onDocumentAdded,
+    this.onGuestAdded,
+    this.onNotesChanged,
+    this.onCostsChanged,
+    this.onFeeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
+    final hasFee = show.fee != null && show.fee! > 0;
+    final hasNotes = notes != null && notes!.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Shortcuts',
+            style: TextStyle(
+              color: AppTheme.getForegroundColor(brightness),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Row 1: Documents, Tickets, Contacts, Guestlist
+          Row(
+            children: [
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.doc_text,
+                  label: 'Documents',
+                  count: documents.isNotEmpty ? documents.length : null,
+                  hasData: documents.isNotEmpty,
+                  onTap: () => _openDocumentsScreen(context),
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.airplane,
+                  label: 'Tickets',
+                  count: null, // Tickets not implemented yet
+                  hasData: false,
+                  onTap: () {}, // TODO: Implement tickets screen
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.person_crop_square,
+                  label: 'Contacts',
+                  count: contacts.isNotEmpty ? contacts.length : null,
+                  hasData: contacts.isNotEmpty,
+                  onTap: () => _openContactsScreen(context),
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.list_bullet,
+                  label: 'Guestlist',
+                  count: totalGuests > 0 ? totalGuests : null,
+                  hasData: guests.isNotEmpty,
+                  onTap: () => _openGuestlistScreen(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Row 2: Fee, Costs, Notes, Mix
+          Row(
+            children: [
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.money_dollar,
+                  label: 'Fee',
+                  count: null,
+                  hasData: hasFee,
+                  onTap: () => _openFeeScreen(context),
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.circle_grid_hex,
+                  label: 'Costs',
+                  count: costs.isNotEmpty ? costs.length : null,
+                  hasData: costs.isNotEmpty,
+                  onTap: () => _openCostsScreen(context),
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.pencil,
+                  label: 'Notes',
+                  count: null,
+                  hasData: hasNotes,
+                  onTap: () => _openNotesScreen(context),
+                ),
+              ),
+              Expanded(
+                child: _ShortcutButton(
+                  icon: CupertinoIcons.text_justify,
+                  label: 'Mix',
+                  count: null,
+                  hasData: false,
+                  onTap: () {}, // TODO: Implement mix screen
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1261,6 +1412,101 @@ class _UnifiedInfoGrid extends StatelessWidget {
   }
 }
 
+/// Circular shortcut button with optional badge
+class _ShortcutButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int? count;
+  final bool hasData;
+  final VoidCallback onTap;
+
+  const _ShortcutButton({
+    required this.icon,
+    required this.label,
+    this.count,
+    required this.hasData,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    // When hasData is true, icon should be light/white, otherwise grayed out
+    final iconColor = hasData
+        ? AppTheme.getForegroundColor(brightness)
+        : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5);
+
+    final labelColor = hasData
+        ? AppTheme.getForegroundColor(brightness)
+        : AppTheme.getMutedForegroundColor(brightness);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          // Circular button with badge
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppTheme.getCardColor(brightness),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: hasData
+                        ? AppTheme.getCardBorderColor(brightness)
+                        : AppTheme.getCardBorderColor(
+                            brightness,
+                          ).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              // Badge with count
+              if (count != null && count! > 0)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: const TextStyle(
+                        color: CupertinoColors.black,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Label
+          Text(
+            label,
+            style: TextStyle(color: labelColor, fontSize: 12),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Lodging & Catering section (Combined grid)
 class _LodgingCateringSection extends StatelessWidget {
   final List<LodgingInfo> lodging;
@@ -1283,129 +1529,144 @@ class _LodgingCateringSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          ..._buildRows(context),
-        ],
-      ),
+      child: Column(children: [..._buildRows(context)]),
     );
   }
 
   List<Widget> _buildRows(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
     final widgets = <Widget>[];
 
     // Hotels tile - always show, with navigation to full list
-    widgets.add(GestureDetector(
-      onTap: () => _openHotelsScreen(context),
-      child: lodging.isNotEmpty
-          ? InfoCard(
-              title: lodging.first.hotelName ?? 'Hotel',
-              subtitle: lodging.length > 1 
-                  ? '${lodging.length} hotels' 
-                  : lodging.first.timeRange,
-              type: InfoCardType.hotel,
-            )
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.getCardColor(brightness),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.getBorderColor(brightness)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(CupertinoIcons.bed_double, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Hotel',
-                        style: TextStyle(
-                          color: AppTheme.getForegroundColor(brightness),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+    widgets.add(
+      GestureDetector(
+        onTap: () => _openHotelsScreen(context),
+        child: lodging.isNotEmpty
+            ? InfoCard(
+                title: lodging.first.hotelName ?? 'Hotel',
+                subtitle: lodging.length > 1
+                    ? '${lodging.length} hotels'
+                    : lodging.first.timeRange,
+                type: InfoCardType.hotel,
+              )
+            : Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.getCardColor(brightness),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppTheme.getBorderColor(brightness),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.bed_double,
+                          size: 16,
+                          color: AppTheme.getMutedForegroundColor(brightness),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Not Added',
-                    style: TextStyle(
-                      color: AppTheme.getMutedForegroundColor(brightness),
-                      fontSize: 13,
+                        const SizedBox(width: 8),
+                        Text(
+                          'Hotel',
+                          style: TextStyle(
+                            color: AppTheme.getForegroundColor(brightness),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Not Added',
+                      style: TextStyle(
+                        color: AppTheme.getMutedForegroundColor(brightness),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-    ));
+      ),
+    );
 
     // Food tile - always show, with navigation to full list
-    widgets.add(GestureDetector(
-      onTap: () => _openCateringScreen(context),
-      child: catering.isNotEmpty
-          ? InfoCard(
-              title: catering.first.providerName ?? 'Food',
-              subtitle: catering.length > 1 
-                  ? '${catering.length} restaurants' 
-                  : catering.first.formattedServiceTime,
-              type: InfoCardType.restaurant,
-            )
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.getCardColor(brightness),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.getBorderColor(brightness)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(CupertinoIcons.cart, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Food',
-                        style: TextStyle(
-                          color: AppTheme.getForegroundColor(brightness),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+    widgets.add(
+      GestureDetector(
+        onTap: () => _openCateringScreen(context),
+        child: catering.isNotEmpty
+            ? InfoCard(
+                title: catering.first.providerName ?? 'Food',
+                subtitle: catering.length > 1
+                    ? '${catering.length} restaurants'
+                    : catering.first.formattedServiceTime,
+                type: InfoCardType.restaurant,
+              )
+            : Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.getCardColor(brightness),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppTheme.getBorderColor(brightness),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.cart,
+                          size: 16,
+                          color: AppTheme.getMutedForegroundColor(brightness),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Not Added',
-                    style: TextStyle(
-                      color: AppTheme.getMutedForegroundColor(brightness),
-                      fontSize: 13,
+                        const SizedBox(width: 8),
+                        Text(
+                          'Food',
+                          style: TextStyle(
+                            color: AppTheme.getForegroundColor(brightness),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Not Added',
+                      style: TextStyle(
+                        color: AppTheme.getMutedForegroundColor(brightness),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-    ));
+      ),
+    );
 
     final rows = <Widget>[];
     for (var i = 0; i < widgets.length; i += 2) {
       final left = widgets[i];
       final right = i + 1 < widgets.length ? widgets[i + 1] : null;
 
-      rows.add(Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Expanded(child: left),
-            const SizedBox(width: 12),
-            Expanded(child: right ?? const SizedBox.shrink()),
-          ],
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Expanded(child: left),
+              const SizedBox(width: 12),
+              Expanded(child: right ?? const SizedBox.shrink()),
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     return rows;
@@ -1464,7 +1725,8 @@ class _InfoCardsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     // Calculate total guest count
     final totalGuests = guests.fold<int>(0, (sum, g) => sum + g.guestCount);
@@ -1482,7 +1744,9 @@ class _InfoCardsGrid extends StatelessWidget {
                   child: _buildInfoTile(
                     context,
                     'Contacts',
-                    contacts.isEmpty ? 'Not Added' : '${contacts.length} contacts',
+                    contacts.isEmpty
+                        ? 'Not Added'
+                        : '${contacts.length} contacts',
                     brightness,
                     CupertinoIcons.person_3,
                   ),
@@ -1495,7 +1759,9 @@ class _InfoCardsGrid extends StatelessWidget {
                   child: _buildInfoTile(
                     context,
                     'Documents',
-                    documents.isEmpty ? 'Not Added' : '${documents.length} files',
+                    documents.isEmpty
+                        ? 'Not Added'
+                        : '${documents.length} files',
                     brightness,
                     CupertinoIcons.doc_text,
                   ),
@@ -1526,7 +1792,9 @@ class _InfoCardsGrid extends StatelessWidget {
                   child: _buildInfoTile(
                     context,
                     'Notes',
-                    notes == null || notes!.isEmpty ? 'Not Added' : 'View Notes',
+                    notes == null || notes!.isEmpty
+                        ? 'Not Added'
+                        : 'View Notes',
                     brightness,
                     CupertinoIcons.doc,
                   ),
@@ -1539,7 +1807,13 @@ class _InfoCardsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(BuildContext context, String title, String subtitle, Brightness brightness, IconData icon) {
+  Widget _buildInfoTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    Brightness brightness,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1552,7 +1826,11 @@ class _InfoCardsGrid extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: AppTheme.getMutedForegroundColor(brightness)),
+              Icon(
+                icon,
+                size: 16,
+                color: AppTheme.getMutedForegroundColor(brightness),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
