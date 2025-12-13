@@ -8,10 +8,12 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../components/components.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/show_day.dart';
+import '../../../models/document_category.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/document_share_service.dart';
 
-/// Layer 2: Documents list screen - shows list of documents
+/// Layer 2: Document Categories screen - shows list of document categories
+/// This is the first screen after clicking "Documents"
 class DocumentsScreen extends ConsumerStatefulWidget {
   final List<DocumentInfo> documents;
   final String showId;
@@ -32,8 +34,8 @@ class DocumentsScreen extends ConsumerStatefulWidget {
 
 class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   List<DocumentInfo> _files = [];
+  Map<String, String> _fileLabelMap = {}; // Maps file ID to document label
   bool _isLoading = true;
-  bool _isUploading = false;
 
   @override
   void initState() {
@@ -43,57 +45,66 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   Future<void> _loadFiles() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final supabase = ref.read(supabaseClientProvider);
-      
+
       // Step 1: Get or create show_advancing session using RPC (same as web client)
       print('[DEBUG] Getting advancing session for show: ${widget.showId}');
-      final advancing = await supabase.rpc('get_or_create_show_advancing', params: {
-        'p_show_id': widget.showId,
-        'p_status': 'draft',
-      });
-      
+      final advancing = await supabase.rpc(
+        'get_or_create_show_advancing',
+        params: {'p_show_id': widget.showId, 'p_status': 'draft'},
+      );
+
       if (advancing == null) {
         print('[DEBUG] No advancing session found');
         setState(() {
           _files = [];
+          _fileLabelMap = {};
           _isLoading = false;
         });
         return;
       }
-      
+
       final sessionId = advancing['id'] as String;
       print('[DEBUG] Got session_id: $sessionId');
-      
+
       // Step 2: Use RPC to get documents with files (same as web client)
-      final response = await supabase.rpc('get_advancing_documents', params: {
-        'p_session_id': sessionId,
-      });
-      
+      final response = await supabase.rpc(
+        'get_advancing_documents',
+        params: {'p_session_id': sessionId},
+      );
+
       final List<dynamic> documents = response as List<dynamic>;
       print('[DEBUG] Loaded ${documents.length} documents');
-      
-      // Step 3: Extract all files from all documents
+
+      // Step 3: Extract all files from all documents with their labels
       final List<DocumentInfo> allFiles = [];
+      final Map<String, String> labelMap = {};
+
       for (var i = 0; i < documents.length; i++) {
         final doc = documents[i];
-        print('[DEBUG] Document $i: ${doc['label']}');
-        
+        final docLabel = doc['label'] as String? ?? '';
+        print('[DEBUG] Document $i: $docLabel');
+
         final filesData = doc['files'];
         print('[DEBUG] Files data type: ${filesData.runtimeType}');
         print('[DEBUG] Files data: $filesData');
-        
+
         if (filesData is String) {
           // It might be a JSON string, try parsing it
           try {
             final parsed = jsonDecode(filesData);
             if (parsed is List) {
-              print('[DEBUG] Parsed JSON string to list with ${parsed.length} files');
+              print(
+                '[DEBUG] Parsed JSON string to list with ${parsed.length} files',
+              );
               for (var file in parsed) {
                 if (file is Map<String, dynamic>) {
                   print('[DEBUG] Adding file: ${file['original_name']}');
-                  allFiles.add(DocumentInfo.fromJson(file));
+                  final docInfo = DocumentInfo.fromJson(file);
+                  allFiles.add(docInfo);
+                  labelMap[docInfo.id] = docLabel;
                 }
               }
             }
@@ -101,20 +112,27 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             print('[DEBUG] Failed to parse files as JSON: $e');
           }
         } else if (filesData is List) {
-          print('[DEBUG] Files is already a list with ${filesData.length} items');
+          print(
+            '[DEBUG] Files is already a list with ${filesData.length} items',
+          );
           for (var file in filesData) {
-            print('[DEBUG] Processing file: ${file is Map ? file['original_name'] : file.runtimeType}');
+            print(
+              '[DEBUG] Processing file: ${file is Map ? file['original_name'] : file.runtimeType}',
+            );
             if (file is Map<String, dynamic>) {
               print('[DEBUG] Adding file: ${file['original_name']}');
-              allFiles.add(DocumentInfo.fromJson(file));
+              final docInfo = DocumentInfo.fromJson(file);
+              allFiles.add(docInfo);
+              labelMap[docInfo.id] = docLabel;
             }
           }
         }
       }
-      
+
       print('[DEBUG] Total files extracted: ${allFiles.length}');
       setState(() {
         _files = allFiles;
+        _fileLabelMap = labelMap;
         _isLoading = false;
       });
     } catch (e) {
@@ -126,11 +144,173 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     }
   }
 
+  /// Get the category for a file based on its document label
+  DocumentCategory _getCategoryForFile(DocumentInfo file) {
+    final label = _fileLabelMap[file.id];
+    return extractCategoryFromLabel(label);
+  }
+
+  /// Count documents per category
+  int _countDocumentsInCategory(DocumentCategory category) {
+    return _files.where((file) => _getCategoryForFile(file) == category).length;
+  }
+
+  /// Get files for a specific category
+  List<DocumentInfo> _getFilesForCategory(DocumentCategory category) {
+    return _files
+        .where((file) => _getCategoryForFile(file) == category)
+        .toList();
+  }
+
+  void _openCategoryDocuments(DocumentCategory category) {
+    Navigator.of(context).push(
+      SwipeablePageRoute(
+        builder: (context) => _CategoryDocumentsScreen(
+          category: category,
+          files: _getFilesForCategory(category),
+          allFiles: _files,
+          showId: widget.showId,
+          orgId: widget.orgId,
+          onDocumentChanged: () {
+            _loadFiles();
+            widget.onDocumentAdded?.call();
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
+
+    return LayerScaffold(
+      title: 'Documents',
+      body: _isLoading
+          ? const Center(child: CupertinoActivityIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: ListView.separated(
+                itemCount: allDocumentCategories.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final category = allDocumentCategories[index];
+                  final count = _countDocumentsInCategory(category);
+
+                  return GestureDetector(
+                    onTap: () => _openCategoryDocuments(category),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.getCardColor(brightness),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    category.label,
+                                    style: TextStyle(
+                                      color: AppTheme.getForegroundColor(
+                                        brightness,
+                                      ),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    count == 0
+                                        ? 'No documents'
+                                        : count == 1
+                                        ? '1 document'
+                                        : '$count documents',
+                                    style: TextStyle(
+                                      color: AppTheme.getMutedForegroundColor(
+                                        brightness,
+                                      ),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              CupertinoIcons.chevron_right,
+                              color: AppTheme.getMutedForegroundColor(
+                                brightness,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+    );
+  }
+}
+
+/// Layer 3: Category Documents screen - shows documents filtered by category
+class _CategoryDocumentsScreen extends ConsumerStatefulWidget {
+  final DocumentCategory category;
+  final List<DocumentInfo> files;
+  final List<DocumentInfo> allFiles;
+  final String showId;
+  final String orgId;
+  final VoidCallback onDocumentChanged;
+
+  const _CategoryDocumentsScreen({
+    required this.category,
+    required this.files,
+    required this.allFiles,
+    required this.showId,
+    required this.orgId,
+    required this.onDocumentChanged,
+  });
+
+  @override
+  ConsumerState<_CategoryDocumentsScreen> createState() =>
+      _CategoryDocumentsScreenState();
+}
+
+class _CategoryDocumentsScreenState
+    extends ConsumerState<_CategoryDocumentsScreen> {
+  late List<DocumentInfo> _files;
+  bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _files = List.from(widget.files);
+  }
+
   Future<void> _pickAndUploadFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv'],
+        allowedExtensions: [
+          'pdf',
+          'png',
+          'jpg',
+          'jpeg',
+          'gif',
+          'webp',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'txt',
+          'csv',
+        ],
         withData: true,
       );
 
@@ -151,7 +331,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         fileBytes: file.bytes!,
         contentType: _getContentType(file.extension),
       );
-
     } catch (e) {
       if (mounted) {
         AppToast.error(context, 'Failed to pick file: $e');
@@ -200,60 +379,68 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }) async {
     try {
       final supabase = ref.read(supabaseClientProvider);
-      final user = supabase.auth.currentUser;
-      
+
       // Step 1: Get or create show_advancing session
       final advancingResponse = await supabase.rpc(
         'get_or_create_show_advancing',
         params: {'p_show_id': widget.showId},
       );
-      
+
       final advancingSession = advancingResponse as Map<String, dynamic>;
       final sessionId = advancingSession['id'] as String;
-      
+
       // Step 2: Create an advancing_document to hold this file
+      // Use category tag in label and appropriate party type
+      final label = createDocumentLabelWithCategory(widget.category, fileName);
       final documentResponse = await supabase.rpc(
         'create_advancing_document',
         params: {
           'p_session_id': sessionId,
-          'p_party_type': 'artist', // Default to artist, could be made configurable
-          'p_label': fileName, // Use filename as label
+          'p_party_type': widget.category.partyType,
+          'p_label': label,
         },
       );
-      
+
       final document = documentResponse as Map<String, dynamic>;
       final documentId = document['id'] as String;
-      
+
       // Step 3: Generate unique file path
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final random = DateTime.now().microsecondsSinceEpoch % 100000;
       final fileExt = fileName.split('.').last;
       final uniqueFileName = '$timestamp-$random.$fileExt';
-      final storagePath = '${widget.orgId}/shows/${widget.showId}/advancing/$sessionId/$uniqueFileName';
-      
+      final storagePath =
+          '${widget.orgId}/shows/${widget.showId}/advancing/$sessionId/$uniqueFileName';
+
       // Step 4: Upload to storage
       await supabase.storage
           .from('advancing-files')
-          .uploadBinary(storagePath, fileBytes, fileOptions: FileOptions(contentType: contentType));
-      
+          .uploadBinary(
+            storagePath,
+            fileBytes,
+            fileOptions: FileOptions(contentType: contentType),
+          );
+
       // Step 5: Create file record linked to advancing_document using RPC
-      await supabase.rpc('upload_advancing_file', params: {
-        'p_org_id': widget.orgId,
-        'p_document_id': documentId,
-        'p_storage_path': storagePath,
-        'p_original_name': fileName,
-        'p_content_type': contentType,
-        'p_size_bytes': fileBytes.length,
-      });
+      await supabase.rpc(
+        'upload_advancing_file',
+        params: {
+          'p_org_id': widget.orgId,
+          'p_document_id': documentId,
+          'p_storage_path': storagePath,
+          'p_original_name': fileName,
+          'p_content_type': contentType,
+          'p_size_bytes': fileBytes.length,
+        },
+      );
 
-      // Reload files
-      await _loadFiles();
-      
-      // Notify parent
-      widget.onDocumentAdded?.call();
+      // Notify parent to reload files
+      widget.onDocumentChanged();
 
+      // Go back to refresh the category list
       if (mounted) {
         AppToast.success(context, 'File uploaded successfully');
+        Navigator.of(context).pop();
       }
     } catch (e) {
       print('═══════════════════════════════════════');
@@ -273,8 +460,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           initialIndex: initialIndex,
           showId: widget.showId,
           onDocumentDeleted: () {
-            _loadFiles();
-            widget.onDocumentAdded?.call();
+            widget.onDocumentChanged();
+            Navigator.of(context).pop();
           },
         ),
       ),
@@ -287,9 +474,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return CupertinoIcons.doc;
     } else if (contentType.startsWith('image/')) {
       return CupertinoIcons.photo;
-    } else if (contentType.contains('word') || contentType.contains('document')) {
+    } else if (contentType.contains('word') ||
+        contentType.contains('document')) {
       return CupertinoIcons.doc_text;
-    } else if (contentType.contains('excel') || contentType.contains('spreadsheet')) {
+    } else if (contentType.contains('excel') ||
+        contentType.contains('spreadsheet')) {
       return CupertinoIcons.table;
     } else if (contentType.contains('text')) {
       return CupertinoIcons.doc_plaintext;
@@ -299,79 +488,86 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
-      title: 'Documents',
+      title: widget.category.label,
       body: Column(
         children: [
           // Document list
           Expanded(
-            child: _isLoading
-                ? const Center(child: CupertinoActivityIndicator())
-                : _files.isEmpty
-                    ? _buildEmptyState(brightness)
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(24),
-                        itemCount: _files.length,
-                        itemBuilder: (context, index) {
-                          final file = _files[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: GestureDetector(
-                              onTap: () => _openDocumentViewer(index),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.getCardColor(brightness),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        _getFileIcon(file),
-                                        color: const Color(0xFFA78BFA),
-                                        size: 32,
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              file.displayName,
-                                              style: TextStyle(
-                                                color: AppTheme.getForegroundColor(brightness),
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              file.formattedSize,
-                                              style: TextStyle(
-                                                color: AppTheme.getMutedForegroundColor(brightness),
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(
-                                        CupertinoIcons.chevron_right,
-                                        color: AppTheme.getMutedForegroundColor(brightness),
-                                      ),
-                                    ],
+            child: _files.isEmpty
+                ? _buildEmptyState(brightness)
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: _files.length,
+                    itemBuilder: (context, index) {
+                      final file = _files[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: GestureDetector(
+                          onTap: () => _openDocumentViewer(index),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.getCardColor(brightness),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _getFileIcon(file),
+                                    color: const Color(0xFFA78BFA),
+                                    size: 32,
                                   ),
-                                ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          file.displayName,
+                                          style: TextStyle(
+                                            color: AppTheme.getForegroundColor(
+                                              brightness,
+                                            ),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          file.formattedSize,
+                                          style: TextStyle(
+                                            color:
+                                                AppTheme.getMutedForegroundColor(
+                                                  brightness,
+                                                ),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    color: AppTheme.getMutedForegroundColor(
+                                      brightness,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
 
           // Add Document button
@@ -412,11 +608,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           Icon(
             CupertinoIcons.doc_text,
             size: 64,
-            color: AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.5),
+            color: AppTheme.getMutedForegroundColor(
+              brightness,
+            ).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'No documents',
+            'No ${widget.category.label.toLowerCase()}',
             style: TextStyle(
               color: AppTheme.getForegroundColor(brightness),
               fontSize: 18,
@@ -437,7 +635,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 }
 
-/// Layer 3: Document viewer with swipe navigation
+/// Layer 4: Document viewer with swipe navigation
 class _DocumentViewerScreen extends ConsumerStatefulWidget {
   final List<DocumentInfo> files;
   final int initialIndex;
@@ -452,7 +650,8 @@ class _DocumentViewerScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_DocumentViewerScreen> createState() => _DocumentViewerScreenState();
+  ConsumerState<_DocumentViewerScreen> createState() =>
+      _DocumentViewerScreenState();
 }
 
 class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
@@ -499,10 +698,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
     final supabase = ref.read(supabaseClientProvider);
     final shareService = DocumentShareService(supabase: supabase);
 
-    await shareService.copyLinkToClipboard(
-      document: file,
-      context: context,
-    );
+    await shareService.copyLinkToClipboard(document: file, context: context);
   }
 
   Future<void> _shareDocument() async {
@@ -524,9 +720,9 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 
   Future<void> _deleteCurrentFile() async {
     if (_files.isEmpty) return;
-    
+
     final file = _files[_currentFileIndex];
-    
+
     // Show confirmation dialog
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
@@ -550,17 +746,15 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 
     try {
       final supabase = ref.read(supabaseClientProvider);
-      
+
       // Delete from storage
-      await supabase.storage
-          .from('advancing-files')
-          .remove([file.storagePath]);
-      
+      await supabase.storage.from('advancing-files').remove([file.storagePath]);
+
       // Delete from database using RPC function
-      await supabase.rpc('delete_file', params: {
-        'p_file_id': file.id,
-        'p_show_id': widget.showId,
-      });
+      await supabase.rpc(
+        'delete_file',
+        params: {'p_file_id': file.id, 'p_show_id': widget.showId},
+      );
 
       // Update state
       setState(() {
@@ -575,7 +769,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 
       if (mounted) {
         AppToast.success(context, 'File deleted');
-        
+
         // If no files left, go back
         if (_files.isEmpty) {
           Navigator.of(context).pop();
@@ -590,7 +784,8 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     return LayerScaffold(
       title: '',
@@ -623,7 +818,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                 ],
               ),
             ),
-          
+
           // File viewer
           Expanded(
             child: _files.isEmpty
@@ -635,9 +830,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                     },
                     itemCount: _files.length,
                     itemBuilder: (context, index) {
-                      return _FileViewer(
-                        file: _files[index],
-                      );
+                      return _FileViewer(file: _files[index]);
                     },
                   ),
           ),
@@ -655,18 +848,24 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                       CupertinoIcons.chevron_left,
                       color: _currentFileIndex > 0
                           ? AppTheme.getForegroundColor(brightness)
-                          : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
+                          : AppTheme.getMutedForegroundColor(
+                              brightness,
+                            ).withValues(alpha: 0.3),
                       size: 32,
                     ),
                   ),
                   const SizedBox(width: 24),
                   GestureDetector(
-                    onTap: _currentFileIndex < _files.length - 1 ? _nextFile : null,
+                    onTap: _currentFileIndex < _files.length - 1
+                        ? _nextFile
+                        : null,
                     child: Icon(
                       CupertinoIcons.chevron_right,
                       color: _currentFileIndex < _files.length - 1
                           ? AppTheme.getForegroundColor(brightness)
-                          : AppTheme.getMutedForegroundColor(brightness).withValues(alpha: 0.3),
+                          : AppTheme.getMutedForegroundColor(
+                              brightness,
+                            ).withValues(alpha: 0.3),
                       size: 32,
                     ),
                   ),
@@ -686,19 +885,28 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
                       // Delete button
                       CupertinoButton.filled(
                         onPressed: _deleteCurrentFile,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         child: const Text('Delete'),
                       ),
                       const Spacer(),
                       // Copy button
                       CupertinoButton(
                         onPressed: _copyDocumentLink,
-                        child: Icon(CupertinoIcons.doc_on_doc, color: AppTheme.getForegroundColor(brightness)),
+                        child: Icon(
+                          CupertinoIcons.doc_on_doc,
+                          color: AppTheme.getForegroundColor(brightness),
+                        ),
                       ),
                       // Share button
                       CupertinoButton(
                         onPressed: _shareDocument,
-                        child: Icon(CupertinoIcons.share, color: AppTheme.getForegroundColor(brightness)),
+                        child: Icon(
+                          CupertinoIcons.share,
+                          color: AppTheme.getForegroundColor(brightness),
+                        ),
                       ),
                     ],
                   ),
@@ -715,9 +923,7 @@ class _DocumentViewerScreenState extends ConsumerState<_DocumentViewerScreen> {
 class _FileViewer extends ConsumerStatefulWidget {
   final DocumentInfo file;
 
-  const _FileViewer({
-    required this.file,
-  });
+  const _FileViewer({required this.file});
 
   @override
   ConsumerState<_FileViewer> createState() => _FileViewerState();
@@ -737,12 +943,12 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
   Future<void> _loadFile() async {
     try {
       final supabase = ref.read(supabaseClientProvider);
-      
+
       // Get signed URL for the file (valid for 1 hour)
       final url = await supabase.storage
           .from('advancing-files')
           .createSignedUrl(widget.file.storagePath, 3600);
-      
+
       setState(() {
         _signedUrl = url;
         _isLoading = false;
@@ -757,7 +963,8 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness =
+        CupertinoTheme.of(context).brightness ?? Brightness.light;
 
     if (_isLoading) {
       return const Center(child: CupertinoActivityIndicator());
@@ -768,13 +975,19 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: CupertinoColors.systemRed),
+            Icon(
+              CupertinoIcons.exclamationmark_circle,
+              size: 48,
+              color: CupertinoColors.systemRed,
+            ),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 'Failed to load file',
-                style: TextStyle(color: AppTheme.getForegroundColor(brightness)),
+                style: TextStyle(
+                  color: AppTheme.getForegroundColor(brightness),
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -817,9 +1030,7 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
         fit: BoxFit.contain,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
-          return const Center(
-            child: CupertinoActivityIndicator(),
-          );
+          return const Center(child: CupertinoActivityIndicator());
         },
         errorBuilder: (context, error, stackTrace) {
           return _buildFileIcon(brightness);
@@ -834,12 +1045,14 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
   Widget _buildFileIcon(Brightness brightness) {
     IconData icon;
     final contentType = widget.file.contentType?.toLowerCase() ?? '';
-    
+
     if (contentType.contains('pdf')) {
       icon = CupertinoIcons.doc;
-    } else if (contentType.contains('word') || contentType.contains('document')) {
+    } else if (contentType.contains('word') ||
+        contentType.contains('document')) {
       icon = CupertinoIcons.doc_text;
-    } else if (contentType.contains('excel') || contentType.contains('spreadsheet')) {
+    } else if (contentType.contains('excel') ||
+        contentType.contains('spreadsheet')) {
       icon = CupertinoIcons.table;
     } else if (contentType.contains('text') || contentType.contains('csv')) {
       icon = CupertinoIcons.doc_plaintext;
@@ -871,10 +1084,7 @@ class _FileViewerState extends ConsumerState<_FileViewer> {
             const SizedBox(height: 8),
             Text(
               widget.file.formattedSize,
-              style: TextStyle(
-                color: CupertinoColors.systemGrey,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: CupertinoColors.systemGrey, fontSize: 14),
             ),
           ],
         ],
